@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in and create an account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+[data-stage]{transition:opacity 280ms cubic-bezier(0.2,0,0,1),transform 420ms cubic-bezier(0.2,0,0,1)}
+[data-stage][data-phase="out"]{opacity:0;transform:translateX(calc(var(--dir,1)*-32px));transition:opacity 180ms cubic-bezier(0.4,0,1,1),transform 180ms cubic-bezier(0.4,0,1,1)}
+[data-stage][data-phase="pre"]{opacity:0;transform:translateX(calc(var(--dir,1)*32px));transition:none}
+[data-bar]{transition:width 420ms cubic-bezier(0.2,0,0,1)}
+[data-press]{transition:transform 180ms cubic-bezier(0.2,0,0,1),background-color 180ms cubic-bezier(0.2,0,0,1),border-color 180ms cubic-bezier(0.2,0,0,1),box-shadow 180ms cubic-bezier(0.2,0,0,1)}
+[data-press]:active{transform:scale(0.97)}
+[data-cta]:hover{background-color:#004FB3}
+[data-quiet]:hover{background-color:#E6F0FE}
+[data-choice]:hover{border-color:#0064E0;box-shadow:0 0 0 3px #E6F0FE}
+[data-field]{transition:border-color 180ms cubic-bezier(0.2,0,0,1),box-shadow 180ms cubic-bezier(0.2,0,0,1)}
+[data-field]:focus-within{border-color:#0064E0;box-shadow:0 0 0 3px #E6F0FE}
+[data-field][data-invalid="true"]{border-color:#C2181B}
+[data-field] input,[data-field] select{outline:none}
+[data-check]{stroke-dasharray:40;stroke-dashoffset:40;animation:draw 620ms cubic-bezier(0.2,0,0,1) 180ms forwards}
+[data-badge]{animation:pop 420ms cubic-bezier(0.3,1.3,0.4,1) both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{transform:scale(0.6);opacity:0}to{transform:none;opacity:1}}
+button:focus-visible,a:focus-visible{outline:3px solid #0064E0;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+[data-stage],[data-stage][data-phase="out"],[data-stage][data-phase="pre"]{transform:none;transition:opacity 180ms linear}
+[data-check]{animation:none;stroke-dashoffset:0}[data-badge]{animation:none}
+}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; padding: 32px 24px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px">
+
+<main style="width: 100%; max-width: 1000px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); overflow: hidden">
+<div style="height: 4px; background: #ECEDF2"><div data-bar style="height: 4px; width: {{ progress }}; background: #0064E0; border-radius: 0 999px 999px 0"></div></div>
+<div data-stage data-phase="{{ phase }}" style="--dir: {{ dir }}; display: flex; flex-wrap: wrap; gap: 32px 56px; padding: 48px; box-sizing: border-box; min-height: 440px">
+
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<a href="/website/Landing.dc.html" aria-label="Yahel home" style="width: 44px; height: 44px; border-radius: 12px; background: #0064E0; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#FFFFFF" stroke="none"/></svg>
+</a>
+<h1 style="margin: 8px 0 0; font-size: 36px; line-height: 1.12; font-weight: 700; letter-spacing: -0.025em; text-wrap: balance">{{ title }}</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59; max-width: 380px; text-wrap: pretty">{{ sub }}</p>
+<sc-if value="{{ showChip }}" hint-placeholder-val="{{ false }}">
+<button type="button" data-press data-quiet onClick="{{ changeAccount }}" aria-label="Use a different account" style="align-self: flex-start; font: inherit; font-size: 15px; font-weight: 500; color: #0B0B0D; background: #FFFFFF; border: 1px solid #8E909B; min-height: 44px; padding: 0 14px 0 6px; border-radius: 999px; cursor: pointer; display: flex; align-items: center; gap: 8px">
+<span style="width: 28px; height: 28px; border-radius: 999px; background: #E6F0FE; color: #0064E0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700">{{ chipInitial }}</span>{{ chipText }}
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>
+</button>
+</sc-if>
+</div>
+
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 20px; justify-content: space-between">
+
+<sc-if value="{{ isChoose }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<button type="button" data-press data-choice onClick="{{ choosePersonal }}" style="font: inherit; text-align: left; color: #0B0B0D; background: #FFFFFF; border: 1px solid #8E909B; border-radius: 16px; padding: 18px; cursor: pointer; display: flex; align-items: center; gap: 16px">
+<span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 999px; background: #E6F0FE; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0064E0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1-3.4 3.7-5 7-5s6 1.6 7 5"/></svg>
+</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 600">For myself</span><span style="font-size: 15px; line-height: 1.4; color: #4E4F59">A free personal account with your own address.</span></span>
+</button>
+<button type="button" data-press data-choice onClick="{{ chooseBusiness }}" style="font: inherit; text-align: left; color: #0B0B0D; background: #FFFFFF; border: 1px solid #8E909B; border-radius: 16px; padding: 18px; cursor: pointer; display: flex; align-items: center; gap: 16px">
+<span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: #E6F0FE; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0064E0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V7.5A1.5 1.5 0 0 1 5.5 6H13v14M13 10h5.5A1.5 1.5 0 0 1 20 11.5V20M3 20h18M7.5 10h2M7.5 14h2"/></svg>
+</span>
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 17px; font-weight: 600">For work or my business</span><span style="font-size: 15px; line-height: 1.4; color: #4E4F59">Addresses on your company domain, with admin controls.</span></span>
+</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<sc-for list="{{ fields }}" as="f" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="{{ f.id }}" style="font-size: 15px; font-weight: 600">{{ f.label }}</label>
+<div data-field data-invalid="{{ f.invalid }}" style="display: flex; align-items: center; min-height: 52px; border: 1px solid #8E909B; border-radius: 12px; background: #FFFFFF; padding: 0 14px; gap: 8px">
+<sc-if value="{{ f.isInput }}" hint-placeholder-val="{{ true }}">
+<input id="{{ f.id }}" type="{{ f.type }}" autocomplete="{{ f.autocomplete }}" value="{{ f.value }}" onChange="{{ f.onChange }}" onKeyDown="{{ f.onKeyDown }}" aria-invalid="{{ f.invalid }}" aria-describedby="{{ f.noteId }}" style="flex: 1 1 0; min-width: 0; font: inherit; font-size: 17px; color: #0B0B0D; background: transparent; border: 0; padding: 0; height: 50px">
+</sc-if>
+<sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+<select id="{{ f.id }}" value="{{ f.value }}" onChange="{{ f.onChange }}" aria-invalid="{{ f.invalid }}" aria-describedby="{{ f.noteId }}" style="flex: 1 1 0; min-width: 0; font: inherit; font-size: 17px; color: #0B0B0D; background: transparent; border: 0; padding: 0; height: 50px">
+<sc-for list="{{ f.options }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+</select>
+</sc-if>
+<span style="font-size: 17px; color: #4E4F59; white-space: nowrap">{{ f.suffix }}</span>
+</div>
+<div id="{{ f.noteId }}" style="font-size: 13px; line-height: 1.4; color: {{ f.noteColor }}">{{ f.note }}</div>
+</div>
+</sc-for>
+<sc-if value="{{ showRules }}" hint-placeholder-val="{{ false }}">
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 15px">
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="2">
+<li style="display: flex; align-items: center; gap: 10px; color: {{ r.color }}">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="{{ r.mark }}"/></svg>{{ r.text }}
+</li>
+</sc-for>
+</ul>
+</sc-if>
+<sc-if value="{{ hasAlt }}" hint-placeholder-val="{{ false }}">
+<button type="button" data-press data-quiet onClick="{{ altAction }}" style="align-self: flex-start; font: inherit; font-size: 15px; font-weight: 600; color: #0064E0; background: transparent; border: 0; min-height: 44px; padding: 0 10px; margin-left: -10px; border-radius: 10px; cursor: pointer">{{ altLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<dl style="margin: 0; border: 1px solid rgba(11,11,13,0.14); border-radius: 16px; overflow: hidden">
+<sc-for list="{{ summary }}" as="row" hint-placeholder-count="3">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; border-top: {{ row.border }}; font-size: 15px"><dt style="color: #4E4F59">{{ row.label }}</dt><dd style="margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere">{{ row.value }}</dd></div>
+</sc-for>
+</dl>
+<p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4E4F59">By creating an account you agree to the <a href="/website/Landing.dc.html">Terms</a> and confirm you have read the <a href="/website/Landing.dc.html">Privacy notice</a>.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 20px; align-items: flex-start">
+<span data-badge style="width: 64px; height: 64px; border-radius: 999px; background: #E3F4E5; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#1B7A2B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path data-check d="M8 16.5l5.5 5.5L24 10.5"/></svg>
+</span>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 17px; line-height: 1.45">
+<sc-for list="{{ nextSteps }}" as="n" hint-placeholder-count="2"><li style="display: flex; gap: 10px"><span style="color: #4E4F59">{{ n.index }}</span>{{ n.text }}</li></sc-for>
+</ul>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+<sc-if value="{{ hasSecondary }}" hint-placeholder-val="{{ true }}">
+<button type="button" data-press data-quiet onClick="{{ secondaryAction }}" style="font: inherit; font-size: 17px; font-weight: 600; color: #0064E0; background: transparent; border: 0; min-height: 48px; padding: 0 14px; margin-left: -14px; border-radius: 999px; cursor: pointer">{{ secondaryLabel }}</button>
+</sc-if>
+<sc-if value="{{ hasPrimary }}" hint-placeholder-val="{{ true }}">
+<button type="button" data-press data-cta onClick="{{ primaryAction }}" style="margin-left: auto; font: inherit; font-size: 17px; font-weight: 600; color: #FFFFFF; background: #0064E0; border: 0; min-height: 48px; padding: 0 28px; border-radius: 999px; cursor: pointer">{{ primaryLabel }}</button>
+</sc-if>
+<sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+<a data-press data-cta href="/website/Landing.dc.html" style="margin-left: auto; font-size: 17px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 48px; padding: 0 28px; border-radius: 999px; display: flex; align-items: center">Go to Yahel</a>
+</sc-if>
+</div>
+
+</div>
+</div>
+</main>
+
+<div style="width: 100%; max-width: 1000px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; color: #4E4F59; padding: 0 8px; box-sizing: border-box">
+<span>English</span>
+<span style="display: flex; gap: 20px"><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Help</a><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Privacy</a><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Terms</a></span>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"start":{"editor":"enum","options":["sign-in","create-account"],"default":"sign-in"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { step: null, phase: 'in', dir: 1, values: { employees: '1' }, errors: {} };
+}
+flows() {
+return {
+personal: ['p-name', 'p-birth', 'p-address', 'p-password', 'p-phone', 'p-review', 'p-done'],
+business: ['b-business', 'b-you', 'b-domain', 'b-admin', 'b-review', 'b-done']
+};
+}
+steps() {
+const v = this.state.values;
+const domain = (v.domain || 'yourcompany.com').replace(/^https?:\/\//, '').replace(/^www\./, '');
+const employees = [{ value: '1', label: 'Just me' }, { value: '9', label: '2 to 9' }, { value: '49', label: '10 to 49' }, { value: '249', label: '50 to 249' }, { value: '250', label: '250 or more' }];
+return {
+'si-email': { title: 'Sign in', sub: 'Use your Yahel account. The same account opens every Yahel app.', fields: [{ id: 'email', label: 'Email', type: 'email', autocomplete: 'username', required: 'Enter your email address' }], primary: 'Next', secondary: 'Create account', secondaryTo: 'choose' },
+'si-password': { title: 'Welcome back', sub: 'Enter your password to continue.', chip: true, fields: [{ id: 'password', label: 'Password', type: 'password', autocomplete: 'current-password', required: 'Enter your password' }], alt: 'Forgot password?', primary: 'Sign in', secondary: 'Back' },
+'si-done': { title: 'You are signed in', sub: 'This account now works on every Yahel app in this browser.', done: ['Open any app from yahel.com without signing in again.', 'Review your devices at account.yahel.com.'] },
+'choose': { title: 'Create a Yahel account', sub: 'Who is this account for? You can add the other kind later with the same sign-in.', choose: true, secondary: 'Sign in instead', secondaryTo: 'si-email' },
+'p-name': { title: 'Create a personal account', sub: 'Enter your name as you want others to see it.', fields: [{ id: 'firstName', label: 'First name', type: 'text', autocomplete: 'given-name', required: 'Enter your first name' }, { id: 'lastName', label: 'Last name', type: 'text', autocomplete: 'family-name', required: 'Enter your last name' }], primary: 'Next', secondary: 'Back' },
+'p-birth': { title: 'Basic information', sub: 'Your date of birth is used to apply the right account settings. It is not shown to others.', fields: [{ id: 'dateOfBirth', label: 'Date of birth', type: 'date', autocomplete: 'bday', required: 'Enter your date of birth' }], primary: 'Next', secondary: 'Back' },
+'p-address': { title: 'Choose your address', sub: 'This is your email address and how you sign in.', fields: [{ id: 'username', label: 'Yahel address', type: 'text', autocomplete: 'username', suffix: '@yahel.com', help: 'Letters, numbers and full stops.', required: 'Choose an address' }], alt: 'Use my current email instead', primary: 'Next', secondary: 'Back' },
+'p-password': { title: 'Create a password', sub: 'Use a password you do not use anywhere else.', fields: [{ id: 'password', label: 'Password', type: 'password', autocomplete: 'new-password', required: 'Enter a password', min: 12 }], rules: true, primary: 'Next', secondary: 'Back' },
+'p-phone': { title: 'Add a recovery phone', sub: 'Optional. It is only used to help you get back into your account.', fields: [{ id: 'phone', label: 'Phone number', type: 'tel', autocomplete: 'tel', help: 'Include your country code, like +234.' }], alt: 'Skip for now', altNext: true, primary: 'Next', secondary: 'Back' },
+'p-review': { title: 'Review your account', sub: 'Check these details before you create your account.', review: [['Name', (v.firstName || '') + ' ' + (v.lastName || '')], ['Address', (v.username || '') + '@yahel.com'], ['Recovery phone', v.phone || 'Not added']], primary: 'Create account', secondary: 'Back' },
+'p-done': { title: 'Your account is ready', sub: (v.username || 'you') + '@yahel.com', done: ['Mail, Calendar, Drive and the other apps are open to you now.', 'Turn on two-step verification from your account settings.'] },
+'b-business': { title: 'Tell us about your business', sub: 'This sets up a workspace your team can join.', fields: [{ id: 'businessName', label: 'Business name', type: 'text', autocomplete: 'organization', required: 'Enter your business name' }, { id: 'employees', label: 'Number of people, including you', type: 'select', options: employees }, { id: 'country', label: 'Country or region', type: 'text', autocomplete: 'country-name', required: 'Enter your country or region' }], primary: 'Next', secondary: 'Back' },
+'b-you': { title: 'Your contact details', sub: 'You will be the first administrator. We send setup messages to your current email.', fields: [{ id: 'firstName', label: 'First name', type: 'text', autocomplete: 'given-name', required: 'Enter your first name' }, { id: 'lastName', label: 'Last name', type: 'text', autocomplete: 'family-name', required: 'Enter your last name' }, { id: 'contactEmail', label: 'Current email address', type: 'email', autocomplete: 'email', required: 'Enter an email address, like name@example.com' }], primary: 'Next', secondary: 'Back' },
+'b-domain': { title: 'Your business domain', sub: 'Everyone’s address will end with this domain. You prove you own it after setup.', fields: [{ id: 'domain', label: 'Domain name', type: 'text', autocomplete: 'off', help: 'For example, northwind.example', required: 'Enter your domain name' }], alt: 'I do not have a domain yet', primary: 'Next', secondary: 'Back' },
+'b-admin': { title: 'How you will sign in', sub: 'Create your administrator address and password.', fields: [{ id: 'username', label: 'Username', type: 'text', autocomplete: 'username', suffix: '@' + domain, required: 'Choose a username' }, { id: 'password', label: 'Password', type: 'password', autocomplete: 'new-password', required: 'Enter a password', min: 12 }], rules: true, primary: 'Next', secondary: 'Back' },
+'b-review': { title: 'Review your workspace', sub: 'Check these details before you create it.', review: [['Business', v.businessName || ''], ['Domain', domain], ['Administrator', (v.username || '') + '@' + domain], ['Setup messages to', v.contactEmail || '']], primary: 'Create workspace', secondary: 'Back' },
+'b-done': { title: 'Your workspace is ready', sub: (v.businessName || 'Your business') + ' · ' + domain, done: ['Verify your domain so mail can be delivered.', 'Invite your team from Admin.', 'Set sign-in rules such as two-step verification.'] }
+};
+}
+current() {
+return this.state.step || ((this.props.start ?? 'sign-in') === 'create-account' ? 'choose' : 'si-email');
+}
+go(next, dir) {
+if (this.timer) clearTimeout(this.timer);
+this.setState({ phase: 'out', dir });
+this.timer = setTimeout(() => {
+this.setState({ step: next, phase: 'pre', errors: {} });
+this.timer = setTimeout(() => this.setState({ phase: 'in' }), 30);
+}, 180);
+}
+neighbours(step) {
+const flows = this.flows();
+const fixed = { 'si-email': [null, 'si-password'], 'si-password': ['si-email', 'si-done'] };
+if (fixed[step]) return fixed[step];
+const names = Object.keys(flows);
+for (let i = 0; i < names.length; i += 1) {
+const flow = flows[names[i]];
+const at = flow.indexOf(step);
+if (at >= 0) return [at === 0 ? 'choose' : flow[at - 1], flow[at + 1] || null];
+}
+return [null, null];
+}
+submit(step, def) {
+const errors = {};
+(def.fields || []).forEach((f) => {
+const value = (this.state.values[f.id] || '').trim();
+if (f.required && !value) errors[f.id] = f.required;
+else if (f.min && value.length < f.min) errors[f.id] = 'Use ' + f.min + ' characters or more';
+});
+if (Object.keys(errors).length) { this.setState({ errors }); return; }
+const next = this.neighbours(step)[1];
+if (next) this.go(next, 1);
+}
+componentWillUnmount() { if (this.timer) clearTimeout(this.timer); }
+renderVals() {
+const step = this.current();
+const def = this.steps()[step];
+const v = this.state.values;
+const flows = this.flows();
+const flow = flows.personal.indexOf(step) >= 0 ? flows.personal : flows.business.indexOf(step) >= 0 ? flows.business : null;
+const progress = flow ? Math.round(((flow.indexOf(step) + 1) / flow.length) * 100) + '%' : step === 'si-password' ? '66%' : step === 'si-done' ? '100%' : step === 'choose' ? '8%' : '33%';
+const back = this.neighbours(step)[0];
+const fields = (def.fields || []).map((f) => {
+const error = this.state.errors[f.id];
+return {
+id: f.id, label: f.label, type: f.type === 'select' ? 'text' : f.type, autocomplete: f.autocomplete || 'off', suffix: f.suffix || '',
+value: v[f.id] || '', options: f.options || [], isInput: f.type !== 'select', isSelect: f.type === 'select',
+invalid: String(Boolean(error)), note: error || f.help || '', noteColor: error ? '#C2181B' : '#4E4F59', noteId: f.id + '-note',
+onChange: (event) => this.setState({ values: { ...this.state.values, [f.id]: event.target.value }, errors: { ...this.state.errors, [f.id]: undefined } }),
+onKeyDown: (event) => { if (event.key === 'Enter') this.submit(step, def); }
+};
+});
+const password = v.password || '';
+const name = ((v.firstName || '') + (v.lastName || '') + (v.username || '')).toLowerCase();
+const rule = (ok, text) => ({ text, color: ok ? '#1B7A2B' : '#4E4F59', mark: ok ? 'M5 8.2l2.1 2.1L11 6.2' : 'M8 8h0' });
+const email = v.email || '';
+return {
+title: def.title, sub: def.sub, phase: this.state.phase, dir: this.state.dir, progress,
+isChoose: Boolean(def.choose), isForm: Boolean(def.fields), isReview: Boolean(def.review), isDone: Boolean(def.done),
+fields,
+showRules: Boolean(def.rules),
+rules: [rule(password.length >= 12, '12 characters or more'), rule(password.length > 0 && (!name || password.toLowerCase().indexOf(name) < 0), 'Does not contain your name or address')],
+showChip: Boolean(def.chip), chipText: email || 'you@yahel.com', chipInitial: (email || 'y').charAt(0).toUpperCase(),
+changeAccount: () => this.go('si-email', -1),
+hasAlt: Boolean(def.alt), altLabel: def.alt || '', altAction: () => { if (def.altNext) { const next = this.neighbours(step)[1]; if (next) this.go(next, 1); } },
+summary: (def.review || []).map((row, index) => ({ label: row[0], value: row[1], border: index === 0 ? '0' : '1px solid rgba(11,11,13,0.14)' })),
+nextSteps: (def.done || []).map((text, index) => ({ index: (index + 1) + '.', text })),
+hasPrimary: Boolean(def.primary), primaryLabel: def.primary || '', primaryAction: () => this.submit(step, def),
+hasSecondary: Boolean(def.secondary), secondaryLabel: def.secondary || '',
+secondaryAction: () => { if (def.secondaryTo) this.go(def.secondaryTo, def.secondaryTo === 'choose' ? 1 : -1); else if (back) this.go(back, -1); },
+choosePersonal: () => this.go('p-name', 1),
+chooseBusiness: () => this.go('b-business', 1)
+};
+}
+}
+</script>
+</body>
+</html>

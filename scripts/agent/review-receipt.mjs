@@ -19,7 +19,7 @@ const FULL = [
   /^packages\/auth\//, /^packages\/api-client\//, /^apps\/[^/]+\/src\/features\/auth\//, /^apps\/[^/]+\/src\/session\.ts$/,
   /^nx\.json$/, /^tsconfig\.base\.json$/, /(^|\/)vite\.config\.ts$/, /(^|\/)vitest\.[a-z.]*ts$/, /^\.env/,
 ];
-const LIGHT = [/^docs\//, /^design-system\/docs\//, /^design-system\/README\.md$/, /^README\.md$/];
+const LIGHT = [/^docs\//, /^design-system\//, /^README\.md$/];
 
 export const REVIEWERS = { full: ['code', 'design', 'security', 'qa'], standard: ['review'], light: [] };
 

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Careers at Yahel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+[data-motion="on"] [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity 420ms cubic-bezier(0.2,0,0,1),transform 620ms cubic-bezier(0.2,0,0,1);transition-delay:calc(var(--i,0)*70ms)}
+[data-motion="on"] [data-reveal][data-in]{opacity:1;transform:none}
+[data-press]{transition:transform 180ms cubic-bezier(0.2,0,0,1),background-color 180ms cubic-bezier(0.2,0,0,1)}
+[data-press]:active{transform:scale(0.97)}
+[data-navlink]{color:#0B0B0D;text-decoration:none}[data-navlink]:hover{color:#0064E0}
+a:focus-visible{outline:3px solid #0064E0;outline-offset:2px;border-radius:8px}
+[data-tab]{transition:background-color 180ms cubic-bezier(0.2,0,0,1),color 180ms cubic-bezier(0.2,0,0,1)}
+[data-tab][aria-pressed="true"]{background-color:#FFFFFF;color:#0B0B0D;box-shadow:0 1px 2px rgba(11,11,13,0.06),0 4px 12px rgba(11,11,13,0.08)}
+[data-role]{transition:background-color 180ms cubic-bezier(0.2,0,0,1)}[data-role]:hover{background-color:#F3F4F8}
+button:focus-visible{outline:3px solid #0064E0;outline-offset:2px}
+@media (max-width:720px){[data-navlinks]{display:none}}
+@media (prefers-reduced-motion:reduce){[data-motion="on"] [data-reveal]{transform:none;transition:opacity 180ms linear;transition-delay:0ms}}
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; overflow-x: clip">
+
+<header style="position: sticky; top: 0; z-index: 20; height: 60px; display: flex; align-items: center; background: rgba(255,255,255,0.82); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); box-shadow: 0 1px 0 rgba(11,11,13,0.10)">
+<div style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 24px">
+<a href="/website/Landing.dc.html" aria-label="Yahel home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0B0B0D; min-height: 44px">
+<span style="width: 32px; height: 32px; border-radius: 9px; background: #0064E0; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#FFFFFF" stroke="none"/></svg></span>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">Yahel</span>
+</a>
+<nav data-navlinks aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px; font-weight: 500">
+<a data-navlink href="/website/Landing.dc.html" style="min-height: 44px; display: flex; align-items: center">Products</a>
+<a data-navlink href="/website/About.dc.html" style="min-height: 44px; display: flex; align-items: center">About</a>
+<a data-navlink aria-current="page" href="/website/Careers.dc.html" style="min-height: 44px; display: flex; align-items: center; color: #0064E0">Careers</a>
+</nav>
+<a data-press href="/accounts/Auth.dc.html" style="font-size: 15px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 44px; padding: 0 18px; border-radius: 999px; display: flex; align-items: center">Create account</a>
+</div>
+</header>
+
+<section style="max-width: 1200px; margin: 0 auto; padding: 96px 24px 88px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px">
+<div data-reveal style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Careers</div>
+<h1 data-reveal style="--i: 1; margin: 0; max-width: 1000px; font-size: clamp(40px, 6.2vw, 88px); line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; text-wrap: balance">Build the tools people open every day.</h1>
+<p data-reveal style="--i: 2; margin: 0; max-width: 680px; font-size: clamp(17px, 1.6vw, 21px); line-height: 1.5; color: #4E4F59">Join the team making mail, files, documents and meetings work as one product.</p>
+<a data-reveal data-press href="#roles" style="--i: 3; align-self: flex-start; font-size: 17px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 52px; padding: 0 28px; border-radius: 999px; display: flex; align-items: center">See open roles</a>
+</section>
+
+<section style="background: #FFFFFF; padding: 104px 0">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px">
+<h2 data-reveal style="margin: 0; max-width: 720px; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em">How we work</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 32px">
+<div data-reveal style="border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px"><h3 style="margin: 0; font-size: 20px; font-weight: 600">[HOW YOU WORK 1]</h3><p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">[One or two sentences: for example where and when people work.]</p></div>
+<div data-reveal style="--i: 1; border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px"><h3 style="margin: 0; font-size: 20px; font-weight: 600">[HOW YOU WORK 2]</h3><p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">[One or two sentences: for example how decisions are made.]</p></div>
+<div data-reveal style="--i: 2; border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px"><h3 style="margin: 0; font-size: 20px; font-weight: 600">[BENEFITS]</h3><p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">[What you offer: pay, leave, equipment, learning.]</p></div>
+</div>
+</div>
+</section>
+
+<section id="roles" style="padding: 104px 0; scroll-margin-top: 60px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 32px">
+<h2 data-reveal style="margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em">Open roles</h2>
+<div data-reveal style="--i: 1; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; border-radius: 20px; background: #ECEDF2; align-self: flex-start">
+<sc-for list="{{ teams }}" as="team" hint-placeholder-count="4">
+<button type="button" data-tab data-press aria-pressed="{{ team.pressed }}" onClick="{{ team.pick }}" style="font: inherit; font-size: 15px; font-weight: 600; color: #4E4F59; background: transparent; border: 0; min-height: 44px; padding: 0 16px; border-radius: 14px; cursor: pointer">{{ team.name }}</button>
+</sc-for>
+</div>
+<div data-reveal style="--i: 2; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); overflow: hidden">
+<sc-for list="{{ roles }}" as="role" hint-placeholder-count="4">
+<a data-role href="#roles" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding: 22px 28px; border-top: {{ role.border }}; text-decoration: none; color: #0B0B0D; min-height: 44px">
+<span style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 19px; font-weight: 600">{{ role.title }}</span><span style="font-size: 15px; color: #4E4F59">{{ role.team }} · [LOCATION]</span></span>
+<span style="font-size: 15px; font-weight: 600; color: #0064E0; display: flex; align-items: center; gap: 6px">View role<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5 9.5 7 5 11.5"/></svg></span>
+</a>
+</sc-for>
+</div>
+<p data-reveal style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">Nothing that fits? Write to [CAREERS EMAIL] and tell us what you do well.</p>
+</div>
+</section>
+
+<footer style="border-top: 1px solid rgba(11,11,13,0.10); padding: 32px 0">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; font-size: 13px; color: #4E4F59">
+<span>© Yahel</span>
+<span style="display: flex; flex-wrap: wrap; gap: 20px"><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Home</a><a href="/website/About.dc.html" style="color: #4E4F59; text-decoration: none">About</a><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Privacy</a><a href="/website/Landing.dc.html" style="color: #4E4F59; text-decoration: none">Terms</a></span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.rootRef = (el) => { this.rootEl = el; };
+this.state = { team: 'All' };
+}
+componentDidMount() {
+const root = this.rootEl;
+if (!root || !('IntersectionObserver' in window)) return;
+this.io = new IntersectionObserver((entries) => {
+entries.forEach((entry) => {
+if (entry.isIntersecting) { entry.target.setAttribute('data-in', ''); this.io.unobserve(entry.target); }
+});
+}, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+root.setAttribute('data-motion', 'on');
+Array.prototype.forEach.call(root.querySelectorAll('[data-reveal]'), (el) => this.io.observe(el));
+}
+componentWillUnmount() { if (this.io) this.io.disconnect(); }
+renderVals() {
+const all = [
+{ title: '[ROLE TITLE]', team: 'Engineering' }, { title: '[ROLE TITLE]', team: 'Engineering' },
+{ title: '[ROLE TITLE]', team: 'Design' }, { title: '[ROLE TITLE]', team: 'Operations' }
+];
+const team = this.state.team;
+return {
+rootRef: this.rootRef,
+teams: ['All', 'Engineering', 'Design', 'Operations'].map((name) => ({ name, pressed: String(name === team), pick: () => this.setState({ team: name }) })),
+roles: all.filter((role) => team === 'All' || role.team === team).map((role, index) => ({ ...role, border: index === 0 ? '0' : '1px solid rgba(11,11,13,0.10)' }))
+};
+}
+}
+</script>
+</body>
+</html>

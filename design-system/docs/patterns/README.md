@@ -6,6 +6,7 @@ Patterns are the rules for common tasks that span components and apps. A compone
 |---|---|---|
 | Navigation | `navigation.md` | Launching, moving between apps and views, windows, full screen |
 | Onboarding and accounts | `onboarding-and-accounts.md` | First run, sign-in, personal and organisation context, account deletion |
+| Website | `website.md` | The public website: display type, layout, scroll motion, page anatomy |
 | Feedback and status | `feedback-and-status.md` | Feedback, loading, empty, errors, offline, notifications, undo, haptics |
 | Search | `search.md` | Suite-wide and in-app search |
 | Sharing and collaboration | `sharing-and-collaboration.md` | Sharing, permissions, presence, comments, external people |

@@ -8,6 +8,23 @@
 - Errors are specific without leaking whether an account exists.
 - Password rules are shown before typing, and checked as the person types.
 
+## Creating an account
+
+Canvas: `canvas/project/accounts/`.
+
+- "Create account" asks one thing first: **For myself** or **For work or my business**. The other kind can be added later under the same sign-in.
+- One question per screen. Back is always available and nothing typed is lost. A progress bar shows position; a review screen comes before anything is created.
+- **For myself:** name, date of birth (one field, with the reason), address (a new Yahel address, or a current email), password, recovery phone (optional, skippable), review, ready.
+- **For work:** business name, size and country; the person's name and current email; the business domain; administrator username on that domain and password; review; ready. Proving ownership of the domain comes after setup, not before.
+- The ready screen lists what to do next and opens the product. No tour.
+- A step moves 32 px in the direction of travel: out 180 ms, in 420 ms. With reduced motion it cross-fades.
+
+## One sign-in for every address
+
+- Each product has its own address (`mail.`, `drive.` and so on). A password is typed in one place only: the accounts address.
+- A product opened without a session sends the person to the accounts address with where to return, and they land back where they started.
+- Once signed in, every other product opens without asking again. Signing out says which account and applies everywhere.
+
 ## First run
 
 - Land in the product with useful defaults; no tour before first use.

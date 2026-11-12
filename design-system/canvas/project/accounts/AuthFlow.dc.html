@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Account flows and shared sign-in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Accounts</div>
+<h1 style="margin: 0; font-size: 44px; line-height: 48px; font-weight: 700; letter-spacing: -0.025em">One question per screen, one account for every address.</h1>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 18px">
+<sc-for list="{{ lanes }}" as="lane" hint-placeholder-count="3">
+<div style="display: flex; align-items: stretch; gap: 20px">
+<div style="width: 168px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">{{ lane.name }}</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">{{ lane.note }}</div>
+</div>
+<div style="flex: 1 1 0; min-width: 0; display: flex; align-items: stretch; gap: 8px">
+<sc-for list="{{ lane.steps }}" as="step" hint-placeholder-count="6">
+<div style="flex: 1 1 0; min-width: 0; box-sizing: border-box; padding: 14px; border-radius: 16px; background: {{ step.bg }}; color: {{ step.fg }}; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 4px 12px rgba(11,11,13,0.06); display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 12px; font-weight: 600; color: {{ step.dim }}">{{ step.index }}</div>
+<div style="font-size: 15px; line-height: 19px; font-weight: 600">{{ step.title }}</div>
+<div style="font-size: 13px; line-height: 17px; color: {{ step.dim }}">{{ step.asks }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="flex: 1 1 0; min-width: 0; box-sizing: border-box; padding: 28px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Signing in once, across every address</div>
+<div style="font-size: 13px; color: #4E4F59">accounts.yahel.com is the only place a password is typed</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{ hops }}" as="hop" hint-placeholder-count="4">
+<div style="padding: 16px; border-radius: 16px; background: #F3F4F8; display: flex; flex-direction: column; gap: 8px">
+<div style="width: 28px; height: 28px; border-radius: 999px; background: #0064E0; color: #FFFFFF; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{ hop.index }}</div>
+<div style="font-size: 13px; font-weight: 600; color: #0064E0; overflow-wrap: anywhere">{{ hop.host }}</div>
+<div style="font-size: 15px; line-height: 20px">{{ hop.text }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-for list="{{ hosts }}" as="host" hint-placeholder-count="9">
+<span style="display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px; background: #F3F4F8; font-size: 13px; font-weight: 500"><span style="width: 14px; height: 14px; border-radius: 4px; background: {{ host.color }}"></span>{{ host.name }}</span>
+</sc-for>
+</div>
+</div>
+
+<div style="width: 420px; flex-shrink: 0; box-sizing: border-box; padding: 28px; border-radius: 28px; background: #0B0B0D; color: #FFFFFF; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Rules for every account screen</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 21px; color: #E4E5EA">
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">1</span>Email first. The next screen names the account or the organisation.</li>
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">2</span>One decision per screen, with Back always available and nothing lost.</li>
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">3</span>Password rules are shown before typing and checked while typing.</li>
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">4</span>Errors never reveal whether an account exists.</li>
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">5</span>Optional steps say so and can be skipped.</li>
+<li style="display: flex; gap: 10px"><span style="color: #4C9AFF; font-weight: 700">6</span>After sign-in, return to the app the person came from.</li>
+</ul>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const lane = (name, note, steps) => ({
+name, note,
+steps: steps.map((s, index) => {
+const last = index === steps.length - 1;
+return { index: 'Step ' + (index + 1), title: s[0], asks: s[1], bg: last ? '#0064E0' : '#FFFFFF', fg: last ? '#FFFFFF' : '#0B0B0D', dim: last ? '#DCE9FD' : '#4E4F59' };
+})
+});
+return {
+lanes: [
+lane('Sign in', 'Email first, then the method for that account', [
+['Email', 'Finds the account without saying whether it exists'],
+['Password', 'Shows the account chip, with Forgot password'],
+['Second step', 'Only if two-step verification is on and the device is not trusted'],
+['Signed in', 'Returns to the app that asked']
+]),
+lane('For myself', 'A free personal account', [
+['Name', 'First and last name'],
+['Date of birth', 'One field, explained'],
+['Address', 'A new Yahel address, or a current email'],
+['Password', 'Rules checked live'],
+['Recovery phone', 'Optional, can skip'],
+['Review', 'Summary and terms'],
+['Ready', 'Straight into the apps']
+]),
+lane('For work', 'A workspace on the company domain', [
+['Business', 'Name, size, country'],
+['Your details', 'Name and current email'],
+['Domain', 'The domain everyone’s address uses'],
+['Administrator', 'Username on that domain, password'],
+['Review', 'Summary and terms'],
+['Ready', 'Next: verify the domain, invite people']
+])
+],
+hops: [
+{ index: 1, host: 'drive.yahel.com', text: 'Someone opens an app without a session.' },
+{ index: 2, host: 'accounts.yahel.com', text: 'The app sends them to the shared sign-in, with a return address.' },
+{ index: 3, host: 'accounts.yahel.com', text: 'They sign in once. The session belongs to the account, not to one app.' },
+{ index: 4, host: 'drive.yahel.com', text: 'They land back where they started. Every other app now opens without asking.' }
+],
+hosts: [
+{ name: 'mail.yahel.com', color: '#2389E2' }, { name: 'calendar.yahel.com', color: '#AC040C' }, { name: 'drive.yahel.com', color: '#0C7B60' },
+{ name: 'docs.yahel.com', color: '#5335CF' }, { name: 'sheets.yahel.com', color: '#38A017' }, { name: 'slides.yahel.com', color: '#EF6505' },
+{ name: 'chat.yahel.com', color: '#D040B9' }, { name: 'meet.yahel.com', color: '#92009C' }, { name: 'admin.yahel.com', color: '#4A4B55' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
