@@ -131,7 +131,7 @@ for (const screen of publicScreens) {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
     await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeVisible();
-    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeInViewport({ ratio: 0.99 }); // WebKit reports 0.99995 for a fully visible element at fractional sizes
   });
 
   test(`layout: ${screen.name} mirrors for right-to-left without overflow`, async ({ page }) => {
