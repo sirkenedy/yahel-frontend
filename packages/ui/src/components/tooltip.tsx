@@ -1,5 +1,6 @@
 import tokens from '@yahel/tokens/tokens.json';
 import { Tooltip as AriaTooltip, TooltipTrigger } from 'react-aria-components';
+import { cloneElement } from 'react';
 import type { ReactElement } from 'react';
 
 const toMs = (duration: string) => Number.parseFloat(duration) * (duration.trim().endsWith('ms') ? 1 : 1000);
@@ -14,15 +15,16 @@ export interface TooltipProps {
 }
 
 /**
- * A name tooltip for an icon-only control. It is the visible form of the control's accessible name,
- * so its text is hidden from assistive technology: the name is announced once, by the control.
+ * A name tooltip for an icon-only control. It is the visible form of the control's accessible name.
+ * The control is told it has no description, so assistive technology announces the name once, from
+ * the control, and not a second time from the tooltip. Do not use this for a description tooltip.
  */
 export function Tooltip({ label, children }: TooltipProps) {
   return (
     <TooltipTrigger delay={hoverDelay}>
-      {children}
+      {cloneElement(children as ReactElement<{ 'aria-describedby'?: string }>, { 'aria-describedby': '' })}
       <AriaTooltip className="ws-tooltip" placement="bottom" offset={offset}>
-        <span aria-hidden="true">{label}</span>
+        {label}
       </AriaTooltip>
     </TooltipTrigger>
   );

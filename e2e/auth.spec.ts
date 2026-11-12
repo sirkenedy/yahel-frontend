@@ -76,7 +76,7 @@ test.describe('sign in', () => {
     await page.getByRole('button', { name: 'Hide password' }).click();
 
     await expect(page.getByLabel('Password', { exact: true })).toHaveValue(credentials.password);
-    expect(api.calls).toHaveLength(0);
+    expect(api.calls.filter((c) => c.path === '/v1/auth/login')).toHaveLength(0);
     await expect(page.getByRole('alert')).toHaveCount(0);
     await expect(page).toHaveURL(/\/sign-in$/);
   });

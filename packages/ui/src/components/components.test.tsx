@@ -101,6 +101,7 @@ describe('PasswordField', () => {
     const toggle = screen.getByRole('button', { name: 'Show password' });
     expect(toggle).toHaveAccessibleName('Show password');
     expect(toggle).toHaveAccessibleDescription('');
+    expect(screen.getByRole('tooltip')).toHaveAccessibleName('Show password');
   });
 
   it('cannot be revealed while the field is disabled', () => {
