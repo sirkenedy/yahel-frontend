@@ -10,6 +10,8 @@ pnpm dev:website            # the public website, http://localhost:5174
 pnpm verify                 # everything CI checks
 ```
 
+The public website reads `VITE_APP_URL` (the address of the app, for its sign-in links) from the same root `.env`. Local development and local previews fall back to `http://localhost:5173`; a deployed build refuses to start unless it is set to an https address.
+
 Requires Node 22 or later and pnpm.
 
 | Read | For |

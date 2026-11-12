@@ -1,5 +1,7 @@
 /* Page layout for the public website. Components and display type come from @yahel/ui/site.css.
    Tokens only: packages/ui/scripts/check-css-tokens.mjs scans this file too. */
+/* Focus and hash targets stop below the sticky bar, not under it. */
+html { scroll-padding-block-start: calc(var(--ws-size-site-bar) + var(--ws-space-8)); }
 body { margin: 0; }
 
 .site { display: flex; flex-direction: column; min-block-size: 100dvh; overflow-wrap: anywhere; }
@@ -19,6 +21,8 @@ body { margin: 0; }
 .site-link { display: inline-flex; align-items: center; min-block-size: var(--ws-target-touch); color: var(--ws-color-accent-default); font-weight: var(--ws-weight-medium); text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 
 .site-band-section { padding-block-end: var(--ws-space-112); }
+/* The accent ring is too close to the inverse surface in three of four themes; on the band the ring is the band's own text colour. */
+.ws-root .site-band :focus-visible { outline-color: var(--ws-color-label-on-inverse); }
 .site-band { display: grid; justify-items: center; gap: var(--ws-space-24); padding: var(--ws-space-72) var(--ws-space-32); border-radius: var(--ws-radius-3xl); background: var(--ws-color-bg-inverse); color: var(--ws-color-label-on-inverse); text-align: center; }
 
 .site-footer { padding-block: var(--ws-space-32); border-block-start: var(--ws-border-hairline) solid var(--ws-color-separator-default); color: var(--ws-color-label-secondary); font-size: var(--ws-type-footnote-size); line-height: var(--ws-type-footnote-line); }
@@ -39,4 +43,5 @@ body { margin: 0; }
   .about-value { border-color: var(--ws-color-separator-opaque); }
   .about-card { border: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
   .site-footer { border-color: var(--ws-color-separator-opaque); }
+  .site-footer__links a { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 }

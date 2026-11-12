@@ -37,6 +37,20 @@ describe('the website', () => {
     expect(within(mainNav()).getByRole('link', { name: 'Careers' })).not.toHaveAttribute('aria-current');
   });
 
+  it.each([
+    ['/', []],
+    ['/#products', ['Products']],
+    ['/about', ['About']],
+  ])('marks at most one link in the bar as the current page at %s', async (path, current) => {
+    await open(path);
+
+    expect(
+      within(screen.getByRole('banner'))
+        .queryAllByRole('link', { current: 'page' })
+        .map((link) => link.textContent),
+    ).toEqual(current);
+  });
+
   it('has one filled account action, pointing at sign-in on the app', async () => {
     await open('/about');
     const banner = screen.getByRole('banner');

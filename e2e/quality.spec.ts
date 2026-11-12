@@ -44,6 +44,7 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   },
   { name: 'website home', open: (page) => openSiteFully(page, '/') },
   { name: 'website about', open: (page) => openSiteFully(page, '/about') },
+  { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
   {
     name: 'website about with the menu open',
     open: async (page) => {
@@ -118,6 +119,7 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
 const publicScreens = [
   { name: 'website home', path: '/' },
   { name: 'website about', path: '/about' },
+  { name: 'website page not found', path: '/no-such-page' },
 ];
 
 for (const screen of publicScreens) {

@@ -19,4 +19,16 @@ describe('HomeHero', () => {
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', 'https://app.yahel.example/sign-in');
     expect(screen.getByRole('link', { name: 'Set up your business' })).toHaveAttribute('href', '#accounts');
   });
+
+  it('brings its four blocks in one after another, starting with the first', () => {
+    render(<HomeHero signInUrl="https://app.yahel.example/sign-in" />);
+
+    const position = (element: HTMLElement) => element.closest<HTMLElement>('[data-reveal]')!.style.getPropertyValue('--reveal-index');
+    expect([
+      position(screen.getByText('Yahel Workspace')),
+      position(screen.getByRole('heading', { level: 1 })),
+      position(screen.getByText(/^Mail, calendar, files/)),
+      position(screen.getByRole('link', { name: 'Create an account' })),
+    ]).toEqual(['0', '1', '2', '3']);
+  });
 });

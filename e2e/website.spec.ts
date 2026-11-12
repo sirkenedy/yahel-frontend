@@ -223,6 +223,62 @@ test.describe('motion', () => {
     expect(delays).toEqual(['0s', '0.07s', '0.14s', '0.21s']);
   });
 
+  test('the home hero starts with its first block, then one every 70 ms', async ({ page }) => {
+    await openSite(page, '/');
+    const blocks = [page.getByText('Yahel Workspace'), page.getByRole('heading', { level: 1 }), page.getByText(/^Mail, calendar, files/), page.getByRole('main').getByRole('link', { name: 'Create an account' })];
+    const delays = [];
+    for (const block of blocks) delays.push((await style(revealed(block), 'transition-delay')).split(',')[0]);
+
+    expect(delays).toEqual(['0s', '0.07s', '0.14s', '0.21s']);
+  });
+
+  test('a printed page shows everything, scrolled to or not', async ({ page }) => {
+    await openSite(page, '/about');
+    const card = revealed(page.getByRole('heading', { name: 'Where we are' }));
+    await expect(card).toHaveCSS('opacity', '0');
+
+    await page.emulateMedia({ media: 'print' });
+
+    await expect(card).toHaveCSS('opacity', '1');
+    await expect(card).toHaveCSS('transform', 'none');
+  });
+
+  for (const motion of ['no-preference', 'reduce'] as const) {
+    test(`moving between pages fades the old page out over the new one (motion: ${motion})`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: motion });
+      await page.addInitScript(() => {
+        const start = document.startViewTransition?.bind(document);
+        if (!start) return;
+        document.startViewTransition = (...args: Parameters<typeof start>) => {
+          const transition = start(...args);
+          void transition.ready.then(() => {
+            const layer = (name: string) => {
+              const running = document.getAnimations().filter((animation) => (animation.effect as KeyframeEffect).pseudoElement === name);
+              return {
+                durations: running.map((animation) => animation.effect!.getTiming().duration),
+                properties: [...new Set(running.flatMap((animation) => (animation.effect as KeyframeEffect).getKeyframes().flatMap((frame) => Object.keys(frame))))].filter((key) => !['offset', 'computedOffset', 'easing', 'composite'].includes(key)),
+                zIndex: getComputedStyle(document.documentElement, name).zIndex,
+              };
+            };
+            document.documentElement.dataset.pageChange = JSON.stringify({ old: layer('::view-transition-old(root)'), next: layer('::view-transition-new(root)') });
+          });
+          return transition;
+        };
+      });
+      await openSite(page, '/about');
+      test.skip(!(await page.evaluate(() => 'startViewTransition' in document)), 'this browser has no view transitions; the new page simply appears');
+      await page.evaluate(() => delete document.documentElement.dataset.pageChange);
+
+      await footerNav(page).getByRole('link', { name: 'Home' }).click();
+      await expect(page).toHaveURL(site('/'));
+      await expect(page.locator('html')).toHaveAttribute('data-page-change', /old/);
+
+      const change = JSON.parse((await page.locator('html').getAttribute('data-page-change'))!);
+      expect(change.old).toEqual({ durations: [180], properties: ['opacity'], zIndex: '1' });
+      expect(change.next).toEqual({ durations: [], properties: [], zIndex: 'auto' });
+    });
+  }
+
   test('reduced motion fades only', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openSite(page, '/about');
@@ -262,6 +318,17 @@ test.describe('navigation', () => {
 
     expect(reached.map((link) => link.name)).toEqual(['Yahel home', 'Products', 'About', 'Careers', 'Create account', 'See open roles', 'Home', 'About', 'Careers', 'Privacy', 'Terms']);
     expect(reached.filter((link) => !link.ring)).toEqual([]);
+  });
+
+  test('the closing action opens the open roles', async ({ page }) => {
+    await openSite(page, '/about');
+    const action = page.getByRole('main').getByRole('link', { name: 'See open roles' });
+    await action.scrollIntoViewIfNeeded();
+    await expect(revealed(action)).toHaveCSS('opacity', '1');
+
+    await action.click();
+
+    await expect(page).toHaveURL(site('/careers'));
   });
 
   test('Enter on the closing action goes to the open roles', async ({ page, isMobile }) => {
@@ -318,5 +385,153 @@ test.describe('navigation', () => {
 
     expect(requested.length).toBeGreaterThan(0);
     expect(requested.filter((url) => !url.startsWith('data:') && new URL(url).origin !== siteOrigin)).toEqual([]);
+  });
+
+  test('headings brought into view stop below the bar', async ({ page }) => {
+    await openSite(page, '/about');
+
+    const gap = await page.getByRole('heading', { name: 'Our story' }).evaluate((heading) => {
+      heading.scrollIntoView();
+      return heading.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom;
+    });
+
+    expect(gap).toBeGreaterThanOrEqual(0);
+  });
+
+  test('the website keeps nothing in web storage but its scroll positions', async ({ page }) => {
+    await openSite(page, '/about');
+    await footerNav(page).getByRole('link', { name: 'Home' }).scrollIntoViewIfNeeded();
+    await footerNav(page).getByRole('link', { name: 'Home' }).click();
+    await expect(page).toHaveURL(site('/'));
+    await page.goBack();
+    await expect(page).toHaveURL(site('/about'));
+    await page.reload();
+    await page.getByRole('heading', { level: 1 }).waitFor();
+
+    const stored = await page.evaluate(() => ({ local: Object.keys(localStorage), session: Object.keys(sessionStorage) }));
+    expect(stored.local).toEqual([]);
+    expect(stored.session).toEqual(['tsr-scroll-restoration-v1_3']);
+    // The only other key the router may write is its marker for a page chunk that failed to load.
+    expect(stored.session.filter((key) => key !== 'tsr-scroll-restoration-v1_3' && !key.startsWith('tanstack_router_reload:'))).toEqual([]);
+  });
+});
+
+test.describe('reader preferences', () => {
+  const luminance = (colour: string) => {
+    const [r, g, b] = colour.match(/[\d.]+/g)!.slice(0, 3).map((value) => {
+      const channel = Number(value) / 255;
+      return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    }) as [number, number, number];
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a: string, b: string) => {
+    const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+    return (high + 0.05) / (low + 0.05);
+  };
+
+  for (const theme of [
+    { name: 'light', colorScheme: 'light', contrast: 'no-preference', minimum: 3 },
+    { name: 'dark', colorScheme: 'dark', contrast: 'no-preference', minimum: 3 },
+    { name: 'light, increased contrast', colorScheme: 'light', contrast: 'more', minimum: 4.5 },
+    { name: 'dark, increased contrast', colorScheme: 'dark', contrast: 'more', minimum: 4.5 },
+  ] as const) {
+    test(`the focus ring on the closing band stands out from the band: ${theme.name}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: theme.colorScheme, contrast: theme.contrast });
+      await openSite(page, '/about');
+      const action = page.getByRole('main').getByRole('link', { name: 'See open roles' });
+      await action.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(action).toBeFocused();
+
+      const colours = await action.evaluate((el) => {
+        const ring = getComputedStyle(el);
+        return { style: ring.outlineStyle, width: Number.parseFloat(ring.outlineWidth), ring: ring.outlineColor, band: getComputedStyle(el.parentElement!).backgroundColor };
+      });
+
+      expect(colours.style).toBe('solid');
+      expect(colours.width).toBeGreaterThanOrEqual(2);
+      expect(contrast(colours.ring, colours.band)).toBeGreaterThanOrEqual(theme.minimum);
+    });
+  }
+
+  test('with increased contrast, links in the bar, the menu and the footer are underlined', async ({ page }) => {
+    await page.emulateMedia({ contrast: 'more' });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSite(page, '/');
+    const underlined = async (links: Locator) => {
+      const lines = await links.evaluateAll((all) => all.map((link) => `${link.textContent}: ${getComputedStyle(link).textDecorationLine}`));
+      expect(lines.length).toBeGreaterThan(0);
+      expect(lines.filter((line) => !line.endsWith(': underline'))).toEqual([]);
+    };
+
+    await underlined(mainNav(page).getByRole('link'));
+    await underlined(banner(page).getByRole('link', { name: 'Yahel home' }));
+    await underlined(banner(page).getByRole('link', { name: 'Sign in' }));
+    await underlined(footerNav(page).getByRole('link'));
+
+    await page.setViewportSize(narrow);
+    await banner(page).getByRole('button', { name: 'Menu' }).click();
+    await expect(page.getByRole('dialog', { name: 'Menu' })).toBeVisible();
+    await underlined(page.getByRole('dialog', { name: 'Menu' }).getByRole('link'));
+  });
+});
+
+test.describe('phone menu', () => {
+  const scrollLocked = (page: Page) => page.evaluate(() => getComputedStyle(document.documentElement).overflowY === 'hidden');
+
+  test('going Back closes the menu and frees the page', async ({ page }) => {
+    await page.setViewportSize(narrow);
+    await openSite(page, '/');
+    await footerNav(page).getByRole('link', { name: 'About' }).click();
+    await expect(page).toHaveURL(site('/about'));
+    const dialog = page.getByRole('dialog', { name: 'Menu' });
+    await banner(page).getByRole('button', { name: 'Menu' }).click();
+    await expect(dialog).toBeVisible();
+    expect(await scrollLocked(page)).toBe(true);
+
+    await page.goBack();
+
+    await expect(page).toHaveURL(site('/'));
+    await expect(dialog).toBeHidden();
+    await expect.poll(() => scrollLocked(page)).toBe(false);
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything your work needs. One account.' })).toBeVisible();
+  });
+
+  test('widening the window until the button folds away closes the menu', async ({ page }) => {
+    await page.setViewportSize(narrow);
+    await openSite(page, '/about');
+    const dialog = page.getByRole('dialog', { name: 'Menu' });
+    await banner(page).getByRole('button', { name: 'Menu' }).click();
+    await expect(dialog).toBeVisible();
+
+    await page.setViewportSize({ width: 860, height: 800 });
+    await expect(dialog).toBeVisible();
+
+    await page.setViewportSize({ width: 900, height: 800 });
+    await expect(dialog).toBeHidden();
+    await expect.poll(() => scrollLocked(page)).toBe(false);
+    await expect(mainNav(page)).toBeVisible();
+  });
+
+  test('a menu that cannot load says so, keeps the page, and opens on the next press', async ({ page }) => {
+    await page.setViewportSize(narrow);
+    await page.route('**/assets/site-menu-sheet-*.js', (route) => route.abort('internetdisconnected'));
+    await openSite(page, '/about');
+    const menu = banner(page).getByRole('button', { name: 'Menu' });
+
+    await menu.click();
+
+    await expect(page.getByRole('alert')).toHaveText("Can't open the menu. Check your connection, then select Menu again.");
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1, name: 'Work tools that stay out of the way.' })).toBeVisible();
+    expect(await page.evaluate(() => Object.keys(sessionStorage).filter((key) => key.startsWith('tanstack_router_reload')))).toEqual([]);
+
+    await page.unroute('**/assets/site-menu-sheet-*.js');
+    await menu.click();
+
+    await expect(page.getByRole('dialog', { name: 'Menu' })).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveCount(0);
   });
 });

@@ -9,6 +9,7 @@ export const chromeMessages = {
   createAccount: 'Create account',
   menu: 'Menu',
   closeMenu: 'Close',
+  menuFailed: "Can't open the menu. Check your connection, then select Menu again.",
   footerLabel: 'Footer',
   copyright: '© Yahel',
   home: 'Home',
