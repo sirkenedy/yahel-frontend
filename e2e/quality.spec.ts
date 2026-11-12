@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { mockApi, signIn } from './support/api';
-import { openSiteFully, settle } from './support/website';
+import { openPageThatDidNotLoad, openSiteFully, settle } from './support/website';
 
 // Every screen is checked in each theme the design system ships.
 const themes = [
@@ -11,6 +11,13 @@ const themes = [
   { name: 'light, increased contrast', colorScheme: 'light', contrast: 'more' },
   { name: 'dark, increased contrast', colorScheme: 'dark', contrast: 'more' },
 ] as const;
+
+async function openCareersFiltered(page: Page) {
+  await openSiteFully(page, '/careers');
+  await page.getByRole('tab', { name: 'Engineering' }).click();
+  await page.getByRole('tabpanel', { name: 'Engineering' }).waitFor();
+  await settle(page);
+}
 
 const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   { name: 'sign-in', open: async (page) => void (await page.goto('/sign-in')) },
@@ -46,12 +53,11 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   { name: 'website about', open: (page) => openSiteFully(page, '/about') },
   { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
   { name: 'website careers', open: (page) => openSiteFully(page, '/careers') },
+  { name: 'website careers filtered', open: openCareersFiltered },
   {
-    name: 'website careers filtered',
+    name: 'website page that did not load',
     open: async (page) => {
-      await openSiteFully(page, '/careers');
-      await page.getByRole('tab', { name: 'Engineering' }).click();
-      await page.getByRole('tabpanel', { name: 'Engineering' }).waitFor();
+      await openPageThatDidNotLoad(page);
       await settle(page);
     },
   },
@@ -126,16 +132,17 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
 });
 
 // The public website has no session and its own bar, so each of its pages gets the text-size and direction checks itself.
-const publicScreens = [
-  { name: 'website home', path: '/' },
-  { name: 'website about', path: '/about' },
-  { name: 'website careers', path: '/careers' },
-  { name: 'website page not found', path: '/no-such-page' },
+const publicScreens: { name: string; open: (page: Page) => Promise<void> }[] = [
+  { name: 'website home', open: (page) => openSiteFully(page, '/') },
+  { name: 'website about', open: (page) => openSiteFully(page, '/about') },
+  { name: 'website careers', open: (page) => openSiteFully(page, '/careers') },
+  { name: 'website careers filtered', open: openCareersFiltered },
+  { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
 ];
 
 for (const screen of publicScreens) {
   test(`layout: ${screen.name} holds at 200% text size`, async ({ page }) => {
-    await openSiteFully(page, screen.path);
+    await screen.open(page);
     await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
     await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
 
@@ -146,7 +153,7 @@ for (const screen of publicScreens) {
   });
 
   test(`layout: ${screen.name} mirrors for right-to-left without overflow`, async ({ page }) => {
-    await openSiteFully(page, screen.path);
+    await screen.open(page);
     await page.evaluate(() => (document.documentElement.dir = 'rtl'));
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

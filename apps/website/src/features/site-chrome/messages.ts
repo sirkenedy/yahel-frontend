@@ -19,4 +19,8 @@ export const chromeMessages = {
   notFoundTitle: 'Page not found',
   notFoundBody: 'Nothing lives at this address. Check the link, or start again from the home page.',
   notFoundAction: 'Go to the home page',
+  loadFailedDocumentTitle: "Page didn't load",
+  loadFailedTitle: "This page didn't load",
+  loadFailedBody: 'Check your connection, then try again.',
+  loadFailedRetry: 'Try again',
 } as const;
