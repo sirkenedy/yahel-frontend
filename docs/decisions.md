@@ -32,3 +32,4 @@ Append only. Each entry says what was decided, why, and what was rejected. Desig
 | O-4 | Content Security Policy and other security headers, set where the apps are hosted. Hosting is undecided. |
 | O-5 | Closed by F-13. |
 | O-6 | Two-step sign-in: the backend supports it; the sign-in form says it cannot complete it yet. First item on the roadmap. |
+| F-18 | 2026-11-12 | The `human-approved` label satisfies the `Review receipt` check as well as `Protected paths`. | One maintainer; rule-change pull requests cannot carry a receipt, and removing and restoring a required check by hand for each one cost more than it protected. | Toggling branch protection per pull request. The cost accepted: the label is the single lock, so anything holding the maintainer's token can bypass review. |

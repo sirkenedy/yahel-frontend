@@ -46,4 +46,4 @@ Never write or edit a verdict file yourself, and never record a receipt for a ve
 
 ## Changing the rules themselves
 
-A change that loosens a check, or alters how review works, will be blocked by the reviewers on purpose: agents do not relax their own rules. Such a change is the maintainer's to make. Open it as a pull request without a receipt, say so in the description, and leave it for the maintainer to label and merge.
+A change that loosens a check, or alters how review works, will be blocked by the reviewers on purpose: agents do not relax their own rules. Such a change is the maintainer's to make. Open it as a pull request without a receipt, say so in the description, and leave it for the maintainer to label `human-approved`; with the label it merges once CI is green.

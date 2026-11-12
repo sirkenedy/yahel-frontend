@@ -88,7 +88,7 @@ Skills in `.claude/skills/` are for people and agents working in a session: `/ne
 | `task:in-review` | Pull request open | Pipeline |
 | `attempt:1` to `attempt:3` | Automatic fix attempts used | Pipeline |
 | `needs-human` | Agents stopped; a person decides | Pipeline or any agent |
-| `human-approved` | A maintainer approved a protected-path change | Maintainer only |
+| `human-approved` | The maintainer approved this pull request. It passes `Protected paths` and stands in for the review receipt, so a labelled pull request merges once CI is green. Agents never apply it | Maintainer only |
 | `agent` | Opened by an agent | Pipeline |
 
 On GitHub only people with triage access or above can apply labels. An issue opened by a stranger does nothing until a maintainer labels it.
