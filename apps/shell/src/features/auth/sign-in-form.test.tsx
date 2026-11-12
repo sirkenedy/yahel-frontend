@@ -71,4 +71,34 @@ describe('SignInForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(m.mfaNotSupported);
     expect(onSignedIn).not.toHaveBeenCalled();
   });
+
+  describe('showing the password', () => {
+    it('toggles visibility, keeps the value and does not submit', async () => {
+      const { signIn, user } = setup();
+      await user.type(screen.getByLabelText(m.passwordLabel), 'secret value');
+
+      await user.click(screen.getByRole('button', { name: m.showPassword }));
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('secret value');
+
+      await user.click(screen.getByRole('button', { name: m.hidePassword }));
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'password');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('secret value');
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it('hides the password again on submit', async () => {
+      const { user } = setup(vi.fn().mockRejectedValue(new Error('boom')));
+      await user.type(screen.getByLabelText(m.emailLabel), 'amara@northwind.example');
+      await user.type(screen.getByLabelText(m.passwordLabel), 'wrong');
+      await user.click(screen.getByRole('button', { name: m.showPassword }));
+
+      await user.click(screen.getByRole('button', { name: m.submit }));
+
+      await screen.findByRole('alert');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'password');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('wrong');
+      expect(screen.getByRole('button', { name: m.showPassword })).toHaveAttribute('aria-pressed', 'false');
+    });
+  });
 });

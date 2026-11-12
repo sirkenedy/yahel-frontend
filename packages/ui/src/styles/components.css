@@ -74,6 +74,8 @@
 .ws-field__help { font-size: var(--ws-type-caption-1-size); line-height: var(--ws-type-caption-1-line); color: var(--ws-color-label-tertiary); }
 .ws-field__error { font-size: var(--ws-type-caption-1-size); line-height: var(--ws-type-caption-1-line); font-weight: var(--ws-weight-medium); color: var(--ws-color-danger-text); }
 .ws-input {
+  width: 100%;
+  min-width: 0;
   min-height: var(--ws-target-touch);
   padding: 0 var(--ws-space-12);
   border: var(--ws-border-hairline) solid var(--ws-color-border-control);
@@ -86,6 +88,10 @@
 .ws-input:focus-visible { outline-offset: 0; border-color: var(--ws-color-accent-default); }
 .ws-input[aria-invalid='true'] { border-color: var(--ws-color-danger-text); }
 .ws-input:disabled { background: var(--ws-color-bg-grouped); border-color: var(--ws-color-separator-opaque); color: var(--ws-color-label-tertiary); }
+.ws-field__control { position: relative; display: flex; flex-direction: column; }
+.ws-input--with-trailing { padding-inline-end: var(--ws-target-touch); }
+.ws-field__trailing { position: absolute; inset-block-start: 0; inset-inline-end: 0; }
+.ws-field__icon { width: var(--ws-icon-md); height: var(--ws-icon-md); }
 .ws-search { display: flex; align-items: center; gap: var(--ws-space-8); min-height: var(--ws-target-touch); padding: 0 var(--ws-space-12); border-radius: var(--ws-radius-md); background: var(--ws-color-fill-secondary); }
 .ws-search input::placeholder { color: var(--ws-color-label-secondary); }
 .ws-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; }
@@ -157,6 +163,8 @@
   .ws-button { min-height: var(--ws-target-pointer); padding: 0 var(--ws-space-16); border-radius: var(--ws-radius-sm); }
   .ws-button--icon { width: var(--ws-target-pointer); }
   .ws-input, .ws-search { min-height: var(--ws-target-pointer); border-radius: var(--ws-radius-sm); }
+  .ws-input--with-trailing { padding-inline-end: var(--ws-target-pointer); }
+  .ws-field__trailing { border-radius: var(--ws-radius-sm); }
   .ws-list__row { min-height: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {

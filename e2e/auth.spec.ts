@@ -24,7 +24,7 @@ test.describe('sign in', () => {
     await mockApi(page);
     await page.goto('/sign-in');
     await page.getByLabel('Email').fill(credentials.email);
-    await page.getByLabel('Password').fill('wrong password');
+    await page.getByLabel('Password', { exact: true }).fill('wrong password');
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     await expect(page.getByRole('alert')).toContainText("don't match");
@@ -32,11 +32,79 @@ test.describe('sign in', () => {
     await expect(page).toHaveURL(/\/sign-in$/);
   });
 
+  test('the password can be revealed and hidden, and the value is kept', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/sign-in');
+    const password = page.getByLabel('Password', { exact: true });
+    await password.fill('a secret to check');
+    await expect(password).toHaveAttribute('type', 'password');
+
+    await page.getByRole('button', { name: 'Show password' }).click();
+    await expect(password).toHaveAttribute('type', 'text');
+    await expect(password).toHaveValue('a secret to check');
+    await expect(page.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/\/sign-in$/);
+
+    await page.getByRole('button', { name: 'Hide password' }).click();
+    await expect(password).toHaveAttribute('type', 'password');
+    await expect(password).toHaveValue('a secret to check');
+  });
+
+  test('the password is hidden again when sign-in is submitted', async ({ page }) => {
+    await mockApi(page);
+    await page.goto('/sign-in');
+    await page.getByLabel('Email').fill(credentials.email);
+    const password = page.getByLabel('Password', { exact: true });
+    await password.fill('wrong password');
+    await page.getByRole('button', { name: 'Show password' }).click();
+    await expect(password).toHaveAttribute('type', 'text');
+
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await expect(page.getByRole('alert')).toContainText("don't match");
+    await expect(password).toHaveAttribute('type', 'password');
+    await expect(password).toHaveValue('wrong password');
+  });
+
+  test('the show control follows the password field in tab order and has a visible focus ring', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    await mockApi(page);
+    await page.goto('/sign-in');
+    await page.getByLabel('Password', { exact: true }).focus();
+    await page.keyboard.press('Tab');
+
+    const toggle = page.getByRole('button', { name: 'Show password' });
+    await expect(toggle).toBeFocused();
+    expect(await toggle.evaluate((el) => getComputedStyle(el).outlineStyle)).not.toBe('none');
+    await page.keyboard.press('Space');
+    await expect(page.getByRole('button', { name: 'Hide password' })).toBeFocused();
+  });
+
+  test('the show control has a touch-sized target and stays inside the screen', async ({ page, isMobile }) => {
+    await mockApi(page);
+    await page.goto('/sign-in');
+    const box = await page.getByRole('button', { name: 'Show password' }).boundingBox();
+    const viewport = page.viewportSize()!;
+
+    expect(box!.height).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
+    expect(box!.width).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+
+    await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = '200%';
+      document.documentElement.dir = 'rtl';
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    await expect(page.getByRole('button', { name: 'Show password' })).toBeVisible();
+  });
+
   test('a lost connection is reported plainly', async ({ page }) => {
     await mockApi(page, { offline: true });
     await page.goto('/sign-in');
     await page.getByLabel('Email').fill(credentials.email);
-    await page.getByLabel('Password').fill(credentials.password);
+    await page.getByLabel('Password', { exact: true }).fill(credentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
 
     await expect(page.getByRole('alert')).toContainText("Can't reach the server");

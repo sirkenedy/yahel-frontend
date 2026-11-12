@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { Avatar, Banner, Button, TextField } from '../index';
+import { Avatar, Banner, Button, PasswordField, TextField } from '../index';
 
 describe('Button', () => {
   it('is a real button that responds to keyboard and pointer', async () => {
@@ -44,6 +44,56 @@ describe('TextField', () => {
     render(<TextField label="Password" help="At least 12 characters" />);
 
     expect(screen.getByLabelText('Password')).toHaveAccessibleDescription('At least 12 characters');
+  });
+});
+
+describe('PasswordField', () => {
+  const setup = () => {
+    render(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" />);
+    return userEvent.setup();
+  };
+
+  it('hides the value and offers a pressed-state control named for what it will do', () => {
+    setup();
+
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+    expect(screen.getByRole('button', { name: 'Show password' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('reveals and hides the value without changing it', async () => {
+    const user = setup();
+    await user.type(screen.getByLabelText('Password'), 'correct horse');
+
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+    expect(screen.getByLabelText('Password')).toHaveValue('correct horse');
+    expect(screen.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(screen.getByRole('button', { name: 'Hide password' }));
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+    expect(screen.getByLabelText('Password')).toHaveValue('correct horse');
+  });
+
+  it('is the next tab stop after the field and works from the keyboard', async () => {
+    const user = setup();
+    await user.click(screen.getByLabelText('Password'));
+    await user.tab();
+
+    expect(screen.getByRole('button', { name: 'Show password' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
+  });
+
+  it('can be controlled by its owner', async () => {
+    const onRevealedChange = vi.fn();
+    const { rerender } = render(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" isRevealed={false} onRevealedChange={onRevealedChange} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(onRevealedChange).toHaveBeenCalledWith(true);
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password');
+
+    rerender(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" isRevealed onRevealedChange={onRevealedChange} />);
+    expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
   });
 });
 
