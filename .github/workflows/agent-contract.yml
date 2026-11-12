@@ -72,4 +72,4 @@ jobs:
             Branch name: agent/api-sync-${{ github.run_id }}. Label the pull request "agent".
           claude_args: |
             --max-turns 120
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*)"
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Agent,Task,Skill,Bash(node scripts/agent/review-receipt.mjs:*),Bash(git push -u origin agent/:*)"

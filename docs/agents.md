@@ -21,7 +21,7 @@ To run unattended without an API key, two options use the subscription instead: 
 
 ## Optional model: agents inside GitHub Actions
 
-Everything from here to "Setup" describes the in-CI workflows. They are switched off unless the variable `AGENTS_ENABLED` is `true`, and they need a credential in the repository.
+Everything from here to "Setup" describes the in-CI workflows. They are switched off unless the variable `AGENTS_ENABLED` is `true`, and they need a credential in the repository. The in-CI implementer follows the same `/pre-pr` procedure as a person does: it has the four reviewers examine its change as separate subagents and records a receipt before it opens the pull request. A second, independent review inside GitHub Actions (`Agent review`) is available by also setting `AGENT_REVIEW_IN_CI` to `true`.
 
 ## The loop
 

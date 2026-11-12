@@ -1,7 +1,8 @@
 name: Agent review
 
-# Four independent reviewers read every pull request. Each writes a verdict file; the job fails
-# unless the verdict is an approval. Pull requests from forks receive no secrets, so they fail closed.
+# Optional second review inside GitHub Actions, off unless the variable AGENT_REVIEW_IN_CI is "true".
+# By default reviews happen before the pull request opens (/pre-pr) and are proven by the Review
+# receipt check, whether the author is a person at their machine or the implementer agent in CI.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled]
@@ -19,7 +20,7 @@ permissions:
 jobs:
   review:
     name: Review (${{ matrix.name }})
-    if: vars.AGENTS_ENABLED == 'true' && !github.event.pull_request.draft && github.event.action != 'labeled'
+    if: vars.AGENT_REVIEW_IN_CI == 'true' && !github.event.pull_request.draft && github.event.action != 'labeled'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -62,7 +63,7 @@ jobs:
       - name: Require all four reviews when in-CI review is switched on
         run: |
           if [ "${{ needs.review.result }}" = "success" ]; then echo "All reviewers approved."; exit 0; fi
-          if [ "${{ vars.AGENTS_ENABLED }}" != "true" ]; then
+          if [ "${{ vars.AGENT_REVIEW_IN_CI }}" != "true" ]; then
             echo "::notice::In-CI agent review is off. Reviews run locally and are proven by the Review receipt check."; exit 0
           fi
           echo "::error::Agent review did not pass (result: ${{ needs.review.result }})"; exit 1

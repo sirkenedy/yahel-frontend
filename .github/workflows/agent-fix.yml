@@ -70,8 +70,10 @@ jobs:
             Pull request #${{ steps.plan.outputs.pr }} on branch ${{ github.event.workflow_run.head_branch }} failed the
             "${{ github.event.workflow_run.name }}" workflow. The tail of the failing log is in .agent/failure.log, and
             reviewer findings are in the pull request comments (gh pr view ${{ steps.plan.outputs.pr }} --comments).
-            Fix the causes, run pnpm verify, commit and push to the same branch, reply on the pull request with what
+            Fix the causes, run pnpm verify and commit. Then run the review steps of the /pre-pr skill again
+            (.claude/skills/pre-pr/SKILL.md, steps 2 to 4.2): the change has a new fingerprint, so it needs fresh
+            approvals and a new receipt before you push to the same branch. Reply on the pull request with what
             you changed for each finding, then stop.
           claude_args: |
             --max-turns 150
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr checks:*),Bash(gh issue view:*)"
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr checks:*),Bash(gh issue view:*),Agent,Task,Skill,Bash(node scripts/agent/review-receipt.mjs:*),Bash(git push -u origin agent/:*)"

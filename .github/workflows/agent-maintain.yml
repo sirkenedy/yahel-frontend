@@ -40,4 +40,4 @@ jobs:
             Branch names start with agent/maintain-. Label any pull request "agent".
           claude_args: |
             --max-turns 150
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh issue list:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Bash(gh run list:*),Bash(gh run view:*)"
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh issue list:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Bash(gh run list:*),Bash(gh run view:*),Agent,Task,Skill,Bash(node scripts/agent/review-receipt.mjs:*),Bash(git push -u origin agent/:*)"
