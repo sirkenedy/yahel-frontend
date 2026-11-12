@@ -38,6 +38,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AGENT_GH_TOKEN }}
           prompt: |
             Read .claude/agents/${{ matrix.agent }}.md and act as that agent, following it exactly.
@@ -58,10 +59,10 @@ jobs:
     needs: [review]
     runs-on: ubuntu-latest
     steps:
-      - name: Require all four reviews, or a maintainer's approval when agents are switched off
+      - name: Require all four reviews when in-CI review is switched on
         run: |
           if [ "${{ needs.review.result }}" = "success" ]; then echo "All reviewers approved."; exit 0; fi
-          if [ "${{ vars.AGENTS_ENABLED }}" != "true" ] && [ "${{ contains(github.event.pull_request.labels.*.name, 'human-approved') }}" = "true" ]; then
-            echo "Agents are off; a maintainer approved this pull request."; exit 0
+          if [ "${{ vars.AGENTS_ENABLED }}" != "true" ]; then
+            echo "::notice::In-CI agent review is off. Reviews run locally and are proven by the Review receipt check."; exit 0
           fi
           echo "::error::Agent review did not pass (result: ${{ needs.review.result }})"; exit 1

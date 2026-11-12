@@ -2,7 +2,26 @@
 
 How agents develop this repository without a person in every loop, what stops them doing damage, and what a maintainer must set up. Changing this file needs a maintainer.
 
-**Status: written, not yet run.** The workflows have been parsed for syntax and the guard scripts tested locally. Nothing here has executed on GitHub, because that needs the secrets below. Expect to fix small things on the first runs.
+**Status.** CI has run on GitHub and passes. The local review flow (`/pre-pr`) and the receipt script were tested locally. The optional in-CI agent workflows have only been parsed for syntax; they have never run.
+
+## Default model: review locally, no API key
+
+Agents run in Claude Code on the author's machine, under a Claude subscription. Nothing in the repository needs an Anthropic key.
+
+1. Work on a branch (by hand, or with `/ship-task <issue>`).
+2. Run **`/pre-pr`**. It runs `pnpm verify`, then has four reviewer agents (code, design, security, QA) examine the change in separate contexts, fixes what they find, and repeats until all four approve, up to three rounds.
+3. Only then does it record a **review receipt**, push, open the pull request and enable auto-merge.
+4. GitHub merges when three required checks are green: **CI passed**, **Review receipt**, **Protected paths**.
+
+The receipt is an empty commit whose message carries a fingerprint of the change's added and removed lines. The `Review receipt` check recomputes the fingerprint; any edit after the review changes it and the check fails until `/pre-pr` runs again.
+
+What the receipt proves, and what it does not: it proves that four approving verdicts were recorded against exactly this change. It cannot prove the reviews were good, and someone determined to skip review could fabricate verdict files. It guards against forgetting and against changes slipped in after review, not against bad faith. CI's deterministic checks do not depend on it.
+
+To run unattended without an API key, two options use the subscription instead: a scheduled task in Claude Code on the web that runs `/ship-task` on this repository, or the in-CI workflows below with a `CLAUDE_CODE_OAUTH_TOKEN` secret (created with `claude setup-token`) in place of an API key. Neither has been tested here.
+
+## Optional model: agents inside GitHub Actions
+
+Everything from here to "Setup" describes the in-CI workflows. They are switched off unless the variable `AGENTS_ENABLED` is `true`, and they need a credential in the repository.
 
 ## The loop
 
@@ -23,7 +42,7 @@ spec issue ──(maintainer labels spec:approved)──▶ planner ──▶ ta
                                                      all green ──────┴──▶ GitHub merges ──▶ main
 ```
 
-A pull request merges when, and only when, three required checks are green: **CI passed**, **Agent review passed**, **Protected paths**. GitHub performs the merge through auto-merge; no agent has a merge permission of its own.
+With in-CI agents on, **Agent review passed** is a fourth gate on top of the three required checks. GitHub performs the merge through auto-merge; no agent has a merge permission of its own.
 
 ## Agents
 
@@ -79,18 +98,15 @@ Be clear-eyed about the limits.
 - **The QA reviewer runs the pull request's code** with the workflow's environment. For pull requests from this repository's own agents that is acceptable; do not extend the pipeline to untrusted contributors without sandboxing that job.
 - **Prompt injection.** Issue text, fetched pages and code comments can contain instructions. The agent definitions tell agents to treat them as data, and the tool lists limit what a hijacked agent could do, but the label gate is the real control: read an outside issue before labelling it.
 - **This repository is public.** Anyone can read the code, design documents and decisions, including pricing notes in `design-system/docs/decisions.md`. Make it private if that is not intended.
-- **Cost.** Every pull request runs four reviewer sessions; failures add fix sessions. Watch usage in the first week and adjust the schedule in `agent-implement.yml`.
+- **Usage.** Each `/pre-pr` round runs four reviewer sessions against your subscription's limits; a change that needs three rounds runs twelve.
 - **Product judgement.** Agents cannot tell whether people like what was built. What to build stays with you, through the roadmap and the `spec:approved` label.
 
 ## Setup, once, by a maintainer
 
-1. Push this repository's first commit to `main`.
-2. Run `scripts/agent/setup-github.sh sirkenedy/yahel-frontend`. It creates the labels, enables auto-merge and squash merging, and protects `main` with the three required checks.
-3. Add secrets: `ANTHROPIC_API_KEY`, and `AGENT_GH_TOKEN` (a fine-grained personal token or a GitHub App token with contents, pull requests and issues write on this repository). The default `GITHUB_TOKEN` is not enough: pull requests it opens do not trigger CI, so the gate would never run.
-4. Add variables: `AGENTS_ENABLED=true`, and `API_SPEC_URL` if the contract watcher should reach a deployed backend.
-5. Trial run: open a small task issue, label it `task:ready`, and watch one full loop before adding more.
+1. Run `scripts/agent/setup-github.sh sirkenedy/yahel-frontend`. It creates the labels, enables auto-merge and squash merging, and protects `main` with the three required checks.
+2. That is all for the default model. Open Claude Code in this repository and use `/pre-pr`.
 
-If the agent's token belongs to a bot account, the Claude action may refuse to run on its pull requests until that bot is listed in the action's `allowed_bots` input. This was not tested.
+Only for the optional in-CI agents: secrets `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`, and `AGENT_GH_TOKEN` (pull requests opened with GitHub's default token do not trigger CI); variable `AGENTS_ENABLED=true`. If the agent's token belongs to a bot account, the Claude action may refuse to run on its pull requests until that bot is listed in its `allowed_bots` input.
 
 ## Staying in step with the backend
 
