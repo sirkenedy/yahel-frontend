@@ -22,6 +22,26 @@ test('removes a known value from base64 at every alignment, including inside a l
   }
 });
 
+test('removes a known value from base64 that the encoder wrapped across lines', () => {
+  const blob = Buffer.from(`HOME=/root\nGH_TOKEN=${token}\nPATH=/usr/local/bin:/usr/bin:/bin\nLANG=C.UTF-8`).toString('base64');
+  for (const width of [76, 64, 20]) {
+    const wrapped = blob.match(new RegExp(`.{1,${width}}`, 'g'));
+    for (const joiner of ['\n', '\\n', '\r\n']) {
+      const out = clean(wrapped.join(joiner));
+      const decoded = Buffer.from(out.replaceAll(MARK, 'AAAA').replace(/\\[nr]|\s/g, ''), 'base64').toString('latin1');
+      assert.ok(out.includes(MARK), `nothing redacted at width ${width} joined by ${JSON.stringify(joiner)}`);
+      assert.ok(!decoded.includes(token.slice(4, -4)), `token recoverable at width ${width} joined by ${JSON.stringify(joiner)}`);
+    }
+  }
+});
+
+test('removes a known value from hex grouped the way dump tools print it', () => {
+  const hex = Buffer.from(token).toString('hex');
+  for (const grouped of [hex.match(/.{2}/g).join(' '), hex.match(/.{4}/g).join(' '), hex.match(/.{1,32}/g).join('\n')]) {
+    assert.equal(clean(`x ${grouped} y`), `x ${MARK} y`);
+  }
+});
+
 test('removes a known value in url-safe base64, hex in either case, and reversed', () => {
   gone(clean(Buffer.from(`??>>${token}`).toString('base64url')));
   for (const text of [Buffer.from(token).toString('hex'), Buffer.from(token).toString('hex').toUpperCase(), [...token].reverse().join('')]) {
@@ -54,6 +74,14 @@ test('removes credentials from headers, URLs and key blocks, keeping the surroun
   assert.equal(redact('https://x-access-token:supersecretvalue@github.com/a/b', []).text, `https://x-access-token:${MARK}@github.com/a/b`);
   assert.equal(redact('-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n-----END RSA PRIVATE KEY-----', []).text, MARK);
   assert.equal(redact('key: -----BEGIN PRIVATE KEY-----\nMIIabc (cut off)', []).text, `key: ${MARK}`);
+});
+
+test('a key block with no END line does not swallow the rest of the transcript', () => {
+  const transcript = JSON.stringify([{ content: 'pem: -----BEGIN PRIVATE KEY-----\nMIIabc' }, { content: 'later output that must survive' }]);
+  const { text } = redact(transcript, []);
+  const parsed = JSON.parse(text);
+  assert.equal(parsed[0].content, `pem: ${MARK}`);
+  assert.equal(parsed[1].content, 'later output that must survive');
 });
 
 test('leaves ordinary transcript content and JSON structure intact', () => {

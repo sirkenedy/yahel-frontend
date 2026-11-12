@@ -85,17 +85,17 @@ This repository is public, so anyone signed in to GitHub can download those arti
 
 Before upload, `scripts/agent/redact-transcript.mjs`, taken from `main`, replaces:
 
-- the agent's GitHub token and the job's token, wherever they appear: plain, URL-encoded, JSON-escaped, reversed, hex in either case, split by whitespace or colour codes, and base64 at any alignment, including inside a larger encoded blob such as an environment dump;
+- the agent's GitHub token and the job's token, wherever they appear: plain, URL-encoded, JSON-escaped, reversed, hex in either case, and base64 at any alignment, including inside a larger encoded blob such as an environment dump. Each form is still matched when output wraps it across lines, groups it with spaces, or colours it;
 - anything shaped like a GitHub, Anthropic, npm, Slack or AWS credential, a JWT, an authorization header, a URL carrying a password, or a private key.
 
 The redaction step is given only the two tokens the agent already had, never the Anthropic credential or the backend token, so it adds no exposure of its own. Its behaviour is covered by tests (`pnpm test:scripts`, run in CI).
 
-What it cannot do: it matches known values in known transformations, and known shapes. A credential encrypted, compressed, or encoded some other way, or a secret of a shape it does not know, would pass. That takes a deliberately steered agent, which could also send a credential out directly, so the tool lists and the label gate remain the real controls. Transcripts also show the agent's reasoning and the output of every command. Treat them as public. If that is not acceptable, make the repository private or remove the two transcript steps.
+What it cannot do: it matches known values in known transformations, and known shapes. A credential encoded twice, compressed, encrypted, split by other separators, or of a shape it does not know, would pass. It has not been verified whether the Claude credential is visible to the agent's shell commands; if it is, only its plain form is caught, by shape. That takes a deliberately steered agent, which could also send a credential out directly, so the tool lists and the label gate remain the real controls. Transcripts also show the agent's reasoning and the output of every command. Treat them as public. If that is not acceptable, make the repository private or remove the two transcript steps.
 
 ## What stops an agent doing damage
 
 1. **Deterministic gates first.** Lint, types, tests, budgets and security scans do not have opinions and cannot be talked round.
-2. **Reviewers are separate from the author.** Four fresh sessions with read-only tools. Each must write an explicit approval; a missing or malformed verdict fails the job.
+2. **Reviewers are separate from the author.** Four sessions of their own, with read-only tools, kept across review rounds so each starts from its earlier findings. Each must write an explicit approval; a missing or malformed verdict fails the job.
 3. **Agents cannot change their own rules.** The protected-paths check runs from `main` with `pull_request_target`, so a pull request cannot edit the check, the workflows, the agent definitions, the lint config or the rulebook without a maintainer's label.
 4. **Verdict checking runs from `main`.** The script that reads a reviewer's verdict is taken from `main`, not from the pull request.
 5. **Branch protection.** No direct push to `main`, no force-push, linear history, required checks enforced for administrators too.

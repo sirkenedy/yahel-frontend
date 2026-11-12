@@ -30,7 +30,7 @@ If any reviewer did not approve:
 
 1. Read every finding. Fix the cause. If you believe a finding is wrong, do not ignore it: give the reviewer your reasoning on the next round and let it decide.
 2. `pnpm verify`, commit, get the new fingerprint.
-3. Before re-running, copy each verdict to `.agent/previous/` so it is not lost. Then run **all four** reviewers again on the new version: a fix for one reviewer can break something another approved. Keep the same reviewers across rounds. If you can continue a reviewer's earlier session, do that; otherwise start a new one and give it its own previous verdict file. Tell each reviewer the new fingerprint and what you changed in response to its findings.
+3. Before re-running, copy each verdict to `.agent/previous/` so it is not lost. Then run **all four** reviewers again on the new version: a fix for one reviewer can break something another approved. Keep the same reviewers across rounds, so each starts from its own earlier findings instead of from nothing. That speeds convergence without lowering the bar: severities do not change between rounds. If you can continue a reviewer's earlier session, do that; otherwise start a new one and give it its own previous verdict file. Tell each reviewer the new fingerprint and what you changed in response to its findings.
 
 Stop after three rounds without full approval. Report what remains unresolved and do not open a pull request.
 

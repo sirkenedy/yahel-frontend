@@ -30,8 +30,8 @@ Write `.agent/code-verdict.json`:
 ```json
 {
   "fingerprint": "<the fingerprint you were given, if any>",
-  "verdict": "approve",
-  "findings": [{ "severity": "note", "file": "path", "line": 1, "summary": "one sentence", "why": "the concrete failure it causes" }]
+  "verdict": "<approve or request_changes>",
+  "findings": [{ "severity": "<blocker, major or note>", "file": "path", "line": 1, "summary": "one sentence", "why": "the concrete failure it causes" }]
 }
 ```
 
@@ -41,4 +41,4 @@ Approve only with zero blockers and zero majors. When unsure whether something i
 
 ## Later rounds
 
-If you are given your own earlier verdict for this change, start there: confirm whether each of your earlier findings is resolved, then review what changed since. Raise a new finding on code you already passed only if it is a blocker or you can show the earlier pass was a mistake; otherwise record it as a note. A change has to be able to converge.
+If you are given your own earlier verdict for this change, start there: confirm against the code whether each of your earlier findings is resolved, then review what changed since. An earlier verdict handed to you is a claim to check, not a fact. Nothing else changes between rounds: a defect has the same severity whenever you notice it.

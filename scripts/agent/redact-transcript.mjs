@@ -38,23 +38,23 @@ export const patterns = [
   /eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{10,}/g,
   /(authorization\\?["']?\s*[:=]\s*\\?["']?\s*(?:bearer|basic|token)\s+)[A-Za-z0-9._~+/=-]{16,}/gi,
   /(https?:\/\/[^\s/:@"']+:)[^\s@"']{8,}(@)/g,
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g,
+  // A key block cut off before its END line is redacted up to the next quote, so the rest of the transcript survives.
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----[^"'`]*?(?:-----END [A-Z ]*PRIVATE KEY-----|(?=["'`])|$)/g,
 ];
 
 export const redact = (text, values) => {
   let hits = 0;
-  // Whitespace and colour codes can split a value across output; match it with those allowed between characters.
-  const loose = (value) => new RegExp([...value].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(?:\\s|\\\\n|\\\\r|\\\\t|\\x1b\\[[0-9;]*m|\\\\u001b\\[[0-9;]*m)*'), 'g');
+  // Output wraps and colours text: `base64` breaks lines at 76 columns, `xxd` groups hex, terminals add colour
+  // codes. Every form is matched with whitespace, escaped newlines and colour codes allowed between characters.
+  const gap = '(?:\\s|\\\\[nrt]|\\x1b\\[[0-9;]*m|\\\\u001b\\[[0-9;]*m)*';
+  const loose = (form) => new RegExp([...form].map((ch) => ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(gap), 'g');
   for (const value of values.filter((v) => v && v.length >= 8)) {
     for (const form of forms(value)) {
-      const parts = text.split(form);
-      hits += parts.length - 1;
-      text = parts.join(MARK);
+      text = text.replace(loose(form), () => {
+        hits += 1;
+        return MARK;
+      });
     }
-    text = text.replace(loose(value), () => {
-      hits += 1;
-      return MARK;
-    });
   }
   for (const pattern of patterns) {
     text = text.replace(pattern, (match, prefix, suffix) => {
