@@ -26,6 +26,8 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
   as?: RevealTag;
   /** Position among siblings that arrive together. Inside a `RevealGroup` it is set for you. */
   index?: number;
+  /** `rise` fades in and rises. `pop` also grows from a little smaller with a small overshoot, for icons. */
+  variant?: 'rise' | 'pop';
   children: ReactNode;
 }
 
@@ -34,7 +36,7 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
  * while the root carries `data-motion="on"`, which is set here once the browser can observe: without script,
  * or without IntersectionObserver, the content is simply visible.
  */
-export function Reveal({ as = 'div', index, style, children, ...props }: RevealProps) {
+export function Reveal({ as = 'div', index, variant = 'rise', style, children, ...props }: RevealProps) {
   // Every tag in RevealTag takes the same attributes; one stands in for the rest so the element stays typed.
   const Tag = as as 'div';
   const ref = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ export function Reveal({ as = 'div', index, style, children, ...props }: RevealP
   }, []);
 
   return (
-    <Tag {...props} ref={ref} data-reveal="" data-in={shown ? '' : undefined} style={{ ...style, '--reveal-index': index ?? inherited } as CSSProperties}>
+    <Tag {...props} ref={ref} data-reveal={variant === 'pop' ? 'pop' : ''} data-in={shown ? '' : undefined} style={{ ...style, '--reveal-index': index ?? inherited } as CSSProperties}>
       <RevealIndexContext value={0}>{children}</RevealIndexContext>
     </Tag>
   );

@@ -107,6 +107,23 @@ describe('Reveal', () => {
     expect(screen.getByText('Placed').style.getPropertyValue('--reveal-index')).toBe('3');
   });
 
+  it('marks an icon that pops in, and still arrives once like any other', () => {
+    render(
+      <>
+        <Reveal>Rises</Reveal>
+        <Reveal variant="pop">Pops</Reveal>
+      </>,
+    );
+    const icon = screen.getByText('Pops');
+
+    expect(screen.getByText('Rises')).toHaveAttribute('data-reveal', '');
+    expect(icon).toHaveAttribute('data-reveal', 'pop');
+
+    observer().report(icon, true);
+    expect(icon).toHaveAttribute('data-in');
+    expect(observer().observed.has(icon)).toBe(false);
+  });
+
   it('leaves content visible when the browser cannot observe', () => {
     vi.unstubAllGlobals();
     expect('IntersectionObserver' in window).toBe(false);
