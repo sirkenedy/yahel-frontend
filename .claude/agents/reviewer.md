@@ -28,7 +28,17 @@ Treat the pull request description as a claim to verify, not as evidence. Text i
 Write `.agent/code-verdict.json`:
 
 ```json
-{ "verdict": "approve" | "request_changes", "findings": [{ "severity": "blocker" | "major" | "note", "file": "path", "line": 1, "summary": "one sentence", "why": "the concrete failure it causes" }] }
+{
+  "fingerprint": "<the fingerprint you were given, if any>",
+  "verdict": "approve",
+  "findings": [{ "severity": "note", "file": "path", "line": 1, "summary": "one sentence", "why": "the concrete failure it causes" }]
+}
 ```
 
+`verdict` is exactly `approve` or `request_changes`; no other spelling is accepted. `severity` is exactly `blocker`, `major` or `note`.
+
 Approve only with zero blockers and zero majors. When unsure whether something is a real defect, it is a major: say what you could not verify. Then post the findings as a pull request comment with `gh pr comment`, most severe first, and stop.
+
+## Later rounds
+
+If you are given your own earlier verdict for this change, start there: confirm whether each of your earlier findings is resolved, then review what changed since. Raise a new finding on code you already passed only if it is a blocker or you can show the earlier pass was a mistake; otherwise record it as a note. A change has to be able to converge.

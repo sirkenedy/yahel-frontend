@@ -19,4 +19,20 @@ Read first: the task issue's acceptance criteria, `docs/rulebook.md` §5, and th
 
 ## Verdict
 
-Write `.agent/qa-verdict.json` in the same shape as the reviewer's verdict, include the criterion-to-test table and the pass counts in a pull request comment posted with `gh pr comment`, and approve only with zero blockers and zero majors and a fully green run on desktop and mobile.
+Write `.agent/qa-verdict.json` in exactly this shape:
+
+```json
+{
+  "fingerprint": "<the fingerprint you were given, if any>",
+  "verdict": "approve",
+  "findings": [{ "severity": "note", "file": "path", "line": 1, "summary": "one sentence", "why": "the concrete failure it causes" }]
+}
+```
+
+`verdict` is exactly `approve` or `request_changes`; no other spelling is accepted. `severity` is exactly `blocker`, `major` or `note`.
+
+Include the criterion-to-test table and the pass counts in a pull request comment posted with `gh pr comment`, and approve only with zero blockers and zero majors and a fully green run on desktop and mobile.
+
+## Later rounds
+
+If you are given your own earlier verdict for this change, start there: confirm whether each of your earlier findings is resolved, then review what changed since. Raise a new finding on code you already passed only if it is a blocker or you can show the earlier pass was a mistake; otherwise record it as a note. A change has to be able to converge.

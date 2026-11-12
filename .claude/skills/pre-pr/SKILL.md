@@ -30,14 +30,14 @@ If any reviewer did not approve:
 
 1. Read every finding. Fix the cause. If you believe a finding is wrong, do not ignore it: give the reviewer your reasoning on the next round and let it decide.
 2. `pnpm verify`, commit, get the new fingerprint.
-3. Run **all four** reviewers again on the new version. A fix for one reviewer can break something another approved.
+3. Before re-running, copy each verdict to `.agent/previous/` so it is not lost. Then run **all four** reviewers again on the new version: a fix for one reviewer can break something another approved. Keep the same reviewers across rounds. If you can continue a reviewer's earlier session, do that; otherwise start a new one and give it its own previous verdict file. Tell each reviewer the new fingerprint and what you changed in response to its findings.
 
 Stop after three rounds without full approval. Report what remains unresolved and do not open a pull request.
 
 ## 4. Receipt, push, pull request
 
-1. `node scripts/agent/review-receipt.mjs write`. It refuses unless all four verdicts approve this exact version, then records an empty commit carrying the fingerprint.
-2. `git push -u origin <branch>`.
+1. `node scripts/agent/review-receipt.mjs write`, **as a command on its own**. It refuses unless all four verdicts approve this exact version, then records an empty commit carrying the fingerprint. Read its output. If it refused, stop: do not push.
+2. Only after the receipt was recorded: `git push -u origin <branch>`. Never join this to step 1 with `;` or `&&` in one command, and never push a branch that has no receipt.
 3. `gh pr create` using the template. In the description, list each reviewer's verdict and any non-blocking notes.
 4. `gh pr merge --auto --squash`. GitHub merges when `CI passed`, `Review receipt` and `Protected paths` are green.
 
