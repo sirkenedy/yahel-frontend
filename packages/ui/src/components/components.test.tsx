@@ -92,6 +92,17 @@ describe('PasswordField', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Show password');
   });
 
+  it('announces the control once: the tooltip repeats its name for sighted people only', async () => {
+    const user = setup();
+    await user.click(screen.getByLabelText('Password'));
+    await user.tab();
+    await screen.findByRole('tooltip');
+
+    const toggle = screen.getByRole('button', { name: 'Show password' });
+    expect(toggle).toHaveAccessibleName('Show password');
+    expect(toggle).toHaveAccessibleDescription('');
+  });
+
   it('cannot be revealed while the field is disabled', () => {
     render(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" isDisabled />);
 

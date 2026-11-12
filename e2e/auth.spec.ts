@@ -66,6 +66,60 @@ test.describe('sign in', () => {
     await expect(password).toHaveValue('wrong password');
   });
 
+  test('showing and hiding the password never submits the form', async ({ page }) => {
+    const api = await mockApi(page);
+    await page.goto('/sign-in');
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByLabel('Password', { exact: true }).fill(credentials.password);
+
+    await page.getByRole('button', { name: 'Show password' }).click();
+    await page.getByRole('button', { name: 'Hide password' }).click();
+
+    await expect(page.getByLabel('Password', { exact: true })).toHaveValue(credentials.password);
+    expect(api.calls).toHaveLength(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page).toHaveURL(/\/sign-in$/);
+  });
+
+  for (const path of ['Enter in the field', 'validation stops it', 'the connection is lost'] as const) {
+    test(`the password is hidden again on submit when ${path}`, async ({ page }) => {
+      await mockApi(page, { offline: path === 'the connection is lost' });
+      await page.goto('/sign-in');
+      if (path !== 'validation stops it') await page.getByLabel('Email').fill(credentials.email);
+      const password = page.getByLabel('Password', { exact: true });
+      await password.fill('a revealed secret');
+      await page.getByRole('button', { name: 'Show password' }).click();
+      await expect(password).toHaveAttribute('type', 'text');
+
+      if (path === 'Enter in the field') await password.press('Enter');
+      else await page.getByRole('button', { name: 'Sign in' }).click();
+
+      await expect(password).toHaveAttribute('type', 'password');
+      await expect(password).toHaveValue('a revealed secret');
+    });
+  }
+
+  for (const width of [320, 360, 768, 1024]) {
+    for (const mode of ['plain', '200% text', 'right to left'] as const) {
+      test(`the password field fits at ${width} wide, ${mode}`, async ({ page, isMobile }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await mockApi(page);
+        await page.goto('/sign-in');
+        await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
+        await page.evaluate((m) => {
+          if (m === '200% text') document.documentElement.style.fontSize = '200%';
+          if (m === 'right to left') document.documentElement.dir = 'rtl';
+        }, mode);
+
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+        const toggle = await page.getByRole('button', { name: 'Show password' }).boundingBox();
+        expect(toggle!.x).toBeGreaterThanOrEqual(0);
+        expect(toggle!.x + toggle!.width).toBeLessThanOrEqual(width + 0.5);
+        expect(Math.min(toggle!.width, toggle!.height)).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
+      });
+    }
+  }
+
   test('the show control follows the password field in tab order and has a visible focus ring', async ({ page, isMobile }) => {
     test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
     await mockApi(page);
@@ -75,7 +129,13 @@ test.describe('sign in', () => {
 
     const toggle = page.getByRole('button', { name: 'Show password' });
     await expect(toggle).toBeFocused();
-    expect(await toggle.evaluate((el) => getComputedStyle(el).outlineStyle)).not.toBe('none');
+    const ring = await toggle.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth), colour: style.outlineColor };
+    });
+    expect(ring.style).toBe('solid');
+    expect(ring.width).toBeGreaterThanOrEqual(2);
+    expect(ring.colour).not.toMatch(/rgba\(.*, 0\)|transparent/);
     await page.keyboard.press('Space');
     await expect(page.getByRole('button', { name: 'Hide password' })).toBeFocused();
   });
