@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 // Budgets are gzip kilobytes per app. Raising one needs a line in docs/decisions.md saying why.
-const budgets = { shell: { entryJs: 120, totalJs: 220, css: 12 } };
+const budgets = { shell: { entryJs: 120, totalJs: 220, css: 12 }, website: { entryJs: 100, totalJs: 160, css: 14 } };
 const errors = [];
 
 for (const [app, budget] of Object.entries(budgets)) {

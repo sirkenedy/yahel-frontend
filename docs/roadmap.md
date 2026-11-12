@@ -28,6 +28,12 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Staging smoke test against the real backend as a required check
 - [ ] Component workshop (Storybook or equivalent) with visual regression
 
+## Public website
+
+- [x] Site scaffold (`apps/website`), motion primitives in `@yahel/ui`, and the About page
+- [ ] Careers page with the team filter, and static prerendering
+- [ ] Home page with every product, scroll motion and the Products menu
+
 ## Then: organisations
 
 - [ ] Business sign-up and upgrade to business

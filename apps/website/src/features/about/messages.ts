@@ -1,0 +1,20 @@
+export const aboutMessages = {
+  documentTitle: 'About Yahel',
+  eyebrow: 'About',
+  title: 'Work tools that stay out of the way.',
+  lead: 'Yahel is one workspace for mail, calendar, files, documents and meetings. It is free for a person and built to run an organisation.',
+  valuesTitle: 'What we hold ourselves to',
+  values: [
+    { title: 'Clear', text: 'Every screen says what it is for, and every control says what it does.' },
+    { title: 'Quiet', text: 'Your mail, files and documents lead. The interface steps back.' },
+    { title: 'One identity', text: 'Personal and work sit side by side under one sign-in, and never mix silently.' },
+    { title: 'Yours', text: 'You can see who has access, take a copy of your data, and leave.' },
+  ],
+  storyTitle: 'Our story',
+  story: '[YOUR STORY: why Yahel was started, by whom, and when. Two or three sentences.]',
+  whereTitle: 'Where we are',
+  where: '[YOUR LOCATION and how the team works: office, remote or both.]',
+  contact: 'Contact: [YOUR EMAIL]',
+  bandTitle: 'Build it with us.',
+  bandAction: 'See open roles',
+} as const;
