@@ -143,6 +143,13 @@ Set while writing the specs and patterns, where no rule existed. Each is a reaso
 
 The owner decided the product name is **Yahel**. This replaces the name kept under D-4. The orbit mark is unchanged. Earlier entries in this log still say "WorkSync Space" because they record what was true when written. A trademark search for "Yahel" is still needed before launch.
 
+### Password field: show control (2026-11-12)
+
+- The secure text field is `PasswordField` in `@yahel/ui`. The show control is an icon-only toggle button inside the trailing edge of the field, with an accessible name that changes between "Show password" and "Hide password" and `aria-pressed` for its state.
+- The owner of the form may control the revealed state, so sign-in hides the password again on every submit.
+- The eye icon is a small inline SVG, because `design-system/assets/icons` is not in the repository yet. Replace it with the vendored icon when the set is added.
+- Rejected: a text button ("Show") beside the field, which wraps and overflows at 200% text on narrow screens; revealing only while pressed, which cannot be used with a keyboard or assistive technology.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |

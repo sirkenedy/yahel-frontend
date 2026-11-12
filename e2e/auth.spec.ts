@@ -98,6 +98,10 @@ test.describe('sign in', () => {
     });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
     await expect(page.getByRole('button', { name: 'Show password' })).toBeVisible();
+    const input = await page.getByLabel('Password', { exact: true }).boundingBox();
+    const toggle = await page.getByRole('button', { name: 'Show password' }).boundingBox();
+    expect(toggle!.x).toBeGreaterThanOrEqual(input!.x);
+    expect(toggle!.x + toggle!.width).toBeLessThanOrEqual(input!.x + input!.width + 0.5);
   });
 
   test('a lost connection is reported plainly', async ({ page }) => {

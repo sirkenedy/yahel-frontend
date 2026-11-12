@@ -33,7 +33,7 @@ export function PasswordField({ label, help, error, placeholder, showLabel, hide
   return (
     <AriaTextField {...props} type={revealed ? 'text' : 'password'} isInvalid={props.isInvalid ?? Boolean(error)} className="ws-field">
       <Label className="ws-field__label">{label}</Label>
-      <div className="ws-field__control">
+      <div className="ws-field__control" dir="ltr">
         <Input className="ws-input ws-input--with-trailing" placeholder={placeholder} />
         <ToggleButton
           className="ws-button ws-button--plain ws-button--icon ws-field__trailing"
