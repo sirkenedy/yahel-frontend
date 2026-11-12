@@ -1,0 +1,15 @@
+{
+  "roles": {
+    "large-title": { "weight": 700, "tracking": "-0.022em", "touch": [34,41], "pointer": [28,34], "emphasized": 700 },
+    "title-1": { "weight": 700, "tracking": "-0.02em", "touch": [28,34], "pointer": [22,28], "emphasized": 700 },
+    "title-2": { "weight": 700, "tracking": "-0.015em", "touch": [22,28], "pointer": [18,24], "emphasized": 700 },
+    "title-3": { "weight": 600, "tracking": "-0.012em", "touch": [20,25], "pointer": [16,22], "emphasized": 700 },
+    "headline": { "weight": 600, "tracking": "-0.005em", "touch": [17,22], "pointer": [14,20], "emphasized": 700 },
+    "body": { "weight": 400, "tracking": "0", "touch": [17,22], "pointer": [14,20], "emphasized": 600 },
+    "callout": { "weight": 400, "tracking": "0", "touch": [16,21], "pointer": [13,18], "emphasized": 600 },
+    "subhead": { "weight": 400, "tracking": "0", "touch": [15,20], "pointer": [13,18], "emphasized": 600 },
+    "footnote": { "weight": 400, "tracking": "0", "touch": [13,18], "pointer": [12,16], "emphasized": 600 },
+    "caption-1": { "weight": 400, "tracking": "0", "touch": [12,16], "pointer": [11,14], "emphasized": 600 },
+    "caption-2": { "weight": 400, "tracking": "0.005em", "touch": [11,13], "pointer": [11,14], "emphasized": 600 }
+  }
+}

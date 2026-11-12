@@ -1,0 +1,73 @@
+name: Agent implement
+
+# Picks one ready task and takes it to a pull request with auto-merge enabled.
+# Only maintainers can apply labels, so an issue becomes work only when a maintainer says so.
+on:
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Task issue number (empty picks the oldest ready task)
+        required: false
+
+concurrency:
+  group: agent-implement
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  implement:
+    if: vars.AGENTS_ENABLED == 'true' && (github.event_name != 'issues' || github.event.label.name == 'task:ready')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0, token: '${{ secrets.AGENT_GH_TOKEN }}' }
+      - name: Choose a task
+        id: task
+        run: |
+          open=$(gh pr list --label agent --state open --json number --jq length)
+          if [ "$open" -ge 3 ]; then echo "Three agent pull requests are already open; not starting another."; exit 0; fi
+          issue="${{ github.event.inputs.issue || github.event.issue.number }}"
+          if [ -z "$issue" ]; then issue=$(gh issue list --label task:ready --state open --json number,createdAt --jq 'sort_by(.createdAt) | .[0].number // empty'); fi
+          if [ -z "$issue" ]; then echo "No ready task."; exit 0; fi
+          gh issue edit "$issue" --remove-label task:ready --add-label task:in-progress
+          echo "issue=$issue" >> "$GITHUB_OUTPUT"
+      - if: steps.task.outputs.issue != ''
+        uses: ./.github/actions/setup
+        with: { browsers: chromium }
+      - if: steps.task.outputs.issue != ''
+        run: |
+          git config user.name "yahel-agent"
+          git config user.email "yahel-agent@users.noreply.github.com"
+      - if: steps.task.outputs.issue != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/implementer.md and act as that agent, following it exactly.
+            Implement task issue #${{ steps.task.outputs.issue }} in ${{ github.repository }}.
+            Label the pull request "agent". When the pull request is open with auto-merge enabled,
+            set the issue's label to task:in-review and stop. If you cannot finish, comment on the
+            issue with the reason, label it needs-human, and stop.
+          claude_args: |
+            --max-turns 200
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*)"
+      - name: Hand back if no pull request was opened
+        if: steps.task.outputs.issue != '' && always()
+        run: |
+          if [ "$(gh pr list --search "Closes #${{ steps.task.outputs.issue }} in:body" --state open --json number --jq length)" = "0" ]; then
+            gh issue edit "${{ steps.task.outputs.issue }}" --remove-label task:in-progress --add-label needs-human || true
+            gh issue comment "${{ steps.task.outputs.issue }}" --body "The implementer finished without opening a pull request. See run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}." || true
+          fi

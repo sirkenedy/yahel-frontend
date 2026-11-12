@@ -1,0 +1,3838 @@
+{
+  "components": {
+    "schemas": {
+      "AcceptInviteDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Client-generated UUID v4 identifying this device install",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Human-readable device label rendered in the sessions list",
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "token": {
+            "example": "a3f8c2d1...",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "AddDomainDto": {
+        "properties": {
+          "autoProvisionMode": {
+            "default": "off",
+            "enum": [
+              "off",
+              "domain_match",
+              "sso_verified"
+            ],
+            "type": "string"
+          },
+          "domain": {
+            "example": "acme.com",
+            "type": "string"
+          },
+          "method": {
+            "default": "TXT",
+            "enum": [
+              "TXT",
+              "CNAME"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "type": "object"
+      },
+      "BulkInviteMembersDto": {
+        "properties": {
+          "invitees": {
+            "items": {
+              "$ref": "#/components/schemas/InviteeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "invitees"
+        ],
+        "type": "object"
+      },
+      "ChangePasswordDto": {
+        "properties": {
+          "currentPassword": {
+            "example": "Current@123",
+            "type": "string"
+          },
+          "newPassword": {
+            "description": "Min 8 chars — must include uppercase, lowercase, number, and special character",
+            "example": "BrandNew@123",
+            "minLength": 8,
+            "type": "string"
+          },
+          "revokeOtherSessions": {
+            "default": true,
+            "description": "Whether every active session should be revoked after the password changes",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "CountryDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "CreateOuDto": {
+        "properties": {
+          "name": {
+            "example": "Engineering",
+            "type": "string"
+          },
+          "parentId": {
+            "description": "Parent OU id — omit for root level",
+            "type": "string"
+          },
+          "policies": {
+            "$ref": "#/components/schemas/OuPoliciesDto"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateTenantDto": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/CountryDto"
+          },
+          "displayName": {
+            "example": "Acme Corporation",
+            "type": "string"
+          },
+          "employeeCount": {
+            "example": 250,
+            "type": "number"
+          },
+          "slug": {
+            "description": "URL-safe unique identifier, 3–50 lowercase chars",
+            "example": "acme-corp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "displayName"
+        ],
+        "type": "object"
+      },
+      "ForgotPasswordDto": {
+        "properties": {
+          "email": {
+            "example": "jane@acme.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "InviteMemberDto": {
+        "properties": {
+          "email": {
+            "example": "alice@acme.com",
+            "type": "string"
+          },
+          "firstName": {
+            "example": "Alice",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "Smith",
+            "type": "string"
+          },
+          "role": {
+            "default": "MEMBER",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "default": "internal",
+            "enum": [
+              "internal",
+              "guest"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "InviteeDto": {
+        "properties": {
+          "email": {
+            "example": "alice@acme.com",
+            "type": "string"
+          },
+          "firstName": {
+            "example": "Alice",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "Smith",
+            "type": "string"
+          },
+          "role": {
+            "default": "MEMBER",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "default": "internal",
+            "enum": [
+              "internal",
+              "guest"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "LoginDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Client-generated UUID v4 identifying this device install",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Human-readable device label rendered in the sessions list. Falls back to a server-parsed UA string.",
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "email": {
+            "example": "jane@acme.com",
+            "type": "string"
+          },
+          "password": {
+            "example": "Secure@123",
+            "type": "string"
+          },
+          "tenantId": {
+            "description": "Explicit tenant to log into when the identity has multiple memberships. Server rejects if the identity has no ACTIVE membership in this tenant.",
+            "example": "507f1f77bcf86cd799439001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "MfaChallengeSubmitDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Challenge token received from the login MFA gate",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "code": {
+            "description": "6-digit TOTP from your authenticator app, or a 10-character hex backup code",
+            "example": "123456",
+            "type": "string"
+          },
+          "deviceId": {
+            "description": "Client-generated UUID v4 identifying this device install",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Human-readable device label rendered in the sessions list",
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "trustDevice": {
+            "description": "When true, this device is marked trusted for 30 days — future logins skip the MFA challenge.",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "code",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "MfaTotpCodeDto": {
+        "properties": {
+          "code": {
+            "description": "6-digit TOTP code from your authenticator app",
+            "example": "123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "OuPoliciesDto": {
+        "properties": {
+          "inheritFromParent": {
+            "type": "boolean"
+          },
+          "mfaRequired": {
+            "type": "boolean"
+          },
+          "sessionMaxHours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "PlatformSendBroadcastDto": {
+        "properties": {
+          "channels": {
+            "description": "Override the definition default channels",
+            "items": {
+              "enum": [
+                "in_app",
+                "email",
+                "sms",
+                "push"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "data": {
+            "description": "Renderer payload passed to the notification definition",
+            "type": "object"
+          },
+          "event": {
+            "description": "The notification event to broadcast",
+            "enum": [
+              "auth.email_verification",
+              "auth.password_reset",
+              "auth.phone_otp",
+              "user.recovery_email_added",
+              "user.recovery_email_added_alert",
+              "auth.new_location_login",
+              "auth.new_device_login",
+              "tenant.setup_expired",
+              "tenant.invite_member",
+              "tenant.domain_verified",
+              "tenant.member_joined",
+              "tenant.announcement_posted"
+            ],
+            "type": "string"
+          },
+          "recipientQuery": {
+            "description": "Recipient query — any supported type; no tenant scope enforced",
+            "type": "object"
+          },
+          "tenantId": {
+            "description": "Tag the broadcast with a tenantId for audit + ownership scoping (optional)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event",
+          "data",
+          "recipientQuery"
+        ],
+        "type": "object"
+      },
+      "ProfilePhotoDto": {
+        "properties": {
+          "fileId": {
+            "example": "file_123",
+            "type": "object"
+          },
+          "height": {
+            "example": 256,
+            "type": "object"
+          },
+          "mimeType": {
+            "example": "image/png",
+            "type": "object"
+          },
+          "url": {
+            "example": "https://cdn.example.com/photo.jpg",
+            "type": "object"
+          },
+          "urls": {
+            "$ref": "#/components/schemas/ProfilePhotoUrlsDto"
+          },
+          "version": {
+            "example": 3,
+            "type": "object"
+          },
+          "width": {
+            "example": 256,
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ProfilePhotoUrlsDto": {
+        "properties": {
+          "medium": {
+            "example": "https://cdn.example.com/photo-medium.jpg",
+            "type": "object"
+          },
+          "original": {
+            "example": "https://cdn.example.com/photo-original.jpg",
+            "type": "object"
+          },
+          "thumbnail": {
+            "example": "https://cdn.example.com/photo-thumb.jpg",
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "PushSubscribeDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Client-generated device fingerprint",
+            "type": "string"
+          },
+          "deviceToken": {
+            "description": "FCM registration token from the client SDK",
+            "type": "string"
+          },
+          "platform": {
+            "description": "Transport platform for this subscription",
+            "enum": [
+              "web",
+              "ios",
+              "android"
+            ],
+            "type": "string"
+          },
+          "product": {
+            "description": "Product identifier: workspace for the unified web app, or a specific product for its dedicated mobile app",
+            "enum": [
+              "platform",
+              "drive",
+              "chat",
+              "calendar",
+              "mail",
+              "meet"
+            ],
+            "type": "string"
+          },
+          "userAgent": {
+            "description": "User-Agent string of the subscribing client (web only, informational)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId",
+          "platform",
+          "deviceToken",
+          "product"
+        ],
+        "type": "object"
+      },
+      "PushUnsubscribeDto": {
+        "properties": {
+          "deviceToken": {
+            "description": "FCM registration token to unregister",
+            "type": "string"
+          },
+          "platform": {
+            "enum": [
+              "web",
+              "ios",
+              "android"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "platform",
+          "deviceToken"
+        ],
+        "type": "object"
+      },
+      "QuietHoursDto": {
+        "properties": {
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "endTime": {
+            "example": "08:00",
+            "type": "string"
+          },
+          "startTime": {
+            "example": "22:00",
+            "type": "string"
+          },
+          "timezone": {
+            "example": "America/New_York",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RefreshTokenDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Client-generated UUID v4 identifying this device install",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "refreshToken": {
+            "description": "Opaque refresh token issued at login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessDto": {
+        "properties": {
+          "businessName": {
+            "example": "Acme Corp",
+            "type": "string"
+          },
+          "country": {
+            "$ref": "#/components/schemas/CountryDto"
+          },
+          "dateOfBirth": {
+            "description": "ISO 8601 date of birth — required for age gating",
+            "example": "1995-08-12T00:00:00.000Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviceId": {
+            "description": "Client-generated UUID v4 identifying this device install",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "domain": {
+            "description": "Business domain — DNS TXT ownership will be verified after signup",
+            "example": "acme.com",
+            "type": "string"
+          },
+          "email": {
+            "example": "founder@acme.com",
+            "type": "string"
+          },
+          "employeeCount": {
+            "example": 10,
+            "type": "number"
+          },
+          "firstName": {
+            "example": "Kehinde",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "Owoputi",
+            "type": "string"
+          },
+          "password": {
+            "example": "Secure@123",
+            "minLength": 8,
+            "type": "string"
+          },
+          "slug": {
+            "description": "URL-safe workspace identifier",
+            "example": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "firstName",
+          "lastName",
+          "businessName",
+          "slug",
+          "country",
+          "dateOfBirth",
+          "employeeCount",
+          "domain",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "RegisterDto": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/CountryDto"
+          },
+          "dateOfBirth": {
+            "description": "ISO 8601 date of birth — required for age gating",
+            "example": "1995-08-12T00:00:00.000Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name shown across the platform — defaults to firstName + lastName if not provided",
+            "example": "Jane Smith",
+            "type": "string"
+          },
+          "email": {
+            "description": "Your personal email — used to sign in",
+            "example": "jane@gmail.com",
+            "type": "string"
+          },
+          "firstName": {
+            "description": "First name",
+            "example": "Jane",
+            "type": "string"
+          },
+          "gender": {
+            "example": "female",
+            "type": "string"
+          },
+          "lastName": {
+            "description": "Last name",
+            "example": "Smith",
+            "type": "string"
+          },
+          "password": {
+            "description": "Min 8 chars — must include uppercase, lowercase, number, and special character",
+            "example": "Secure@123",
+            "minLength": 8,
+            "type": "string"
+          },
+          "phone": {
+            "example": "+2348012345678",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName",
+          "dateOfBirth",
+          "password"
+        ],
+        "type": "object"
+      },
+      "ResendVerificationDto": {
+        "properties": {
+          "email": {
+            "example": "jane@gmail.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "ResetPasswordDto": {
+        "properties": {
+          "email": {
+            "description": "Email address that requested the reset",
+            "example": "jane@gmail.com",
+            "type": "string"
+          },
+          "password": {
+            "description": "Min 8 chars, must include uppercase, lowercase, number, and special character",
+            "example": "Secure@123",
+            "minLength": 8,
+            "type": "string"
+          },
+          "token": {
+            "description": "6-character alphanumeric reset code received via email",
+            "example": "A7kZq2",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "token",
+          "password"
+        ],
+        "type": "object"
+      },
+      "SendBroadcastDto": {
+        "properties": {
+          "channels": {
+            "description": "Override the definition default channels",
+            "items": {
+              "enum": [
+                "in_app",
+                "email",
+                "sms",
+                "push"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "data": {
+            "description": "Renderer payload passed to the notification definition",
+            "type": "object"
+          },
+          "event": {
+            "description": "The notification event to broadcast",
+            "enum": [
+              "auth.email_verification",
+              "auth.password_reset",
+              "auth.phone_otp",
+              "user.recovery_email_added",
+              "user.recovery_email_added_alert",
+              "auth.new_location_login",
+              "auth.new_device_login",
+              "tenant.setup_expired",
+              "tenant.invite_member",
+              "tenant.domain_verified",
+              "tenant.member_joined",
+              "tenant.announcement_posted"
+            ],
+            "type": "string"
+          },
+          "recipientQuery": {
+            "description": "Recipient query — { type: \"tenantMembers\" | \"userIds\" | ... }. Scope is enforced to the caller tenant.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "event",
+          "data",
+          "recipientQuery"
+        ],
+        "type": "object"
+      },
+      "SendPhoneOtpDto": {
+        "properties": {
+          "phone": {
+            "description": "Phone number to verify. E.164 format preferred; bare numbers are normalized against the account country.",
+            "example": "+14155552671",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "type": "object"
+      },
+      "SetPasswordDto": {
+        "properties": {
+          "newPassword": {
+            "description": "Min 8 chars, must include uppercase, lowercase, number, and special character",
+            "example": "Secure@123",
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "UpdateMemberDto": {
+        "properties": {
+          "department": {
+            "example": "Engineering",
+            "type": "string"
+          },
+          "jobTitle": {
+            "example": "Senior Engineer",
+            "type": "string"
+          },
+          "ouPath": {
+            "example": "/engineering/platform",
+            "nullable": true,
+            "type": "object"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateOuDto": {
+        "properties": {
+          "name": {
+            "example": "Platform Engineering",
+            "type": "string"
+          },
+          "policies": {
+            "$ref": "#/components/schemas/OuPoliciesDto"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePhoneDto": {
+        "properties": {
+          "phone": {
+            "description": "Phone number normalized against the user country when present, otherwise validated as an international number",
+            "example": "+2348012345678",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "type": "object"
+      },
+      "UpdatePreferenceDto": {
+        "properties": {
+          "digestMode": {
+            "enum": [
+              "realtime",
+              "hourly",
+              "daily"
+            ],
+            "example": "realtime",
+            "type": "string"
+          },
+          "preferences": {
+            "description": "Per-category channel preferences keyed by category name",
+            "example": {
+              "auth": {
+                "email": true,
+                "inApp": true,
+                "push": true,
+                "sms": false
+              }
+            },
+            "type": "object"
+          },
+          "quietHours": {
+            "$ref": "#/components/schemas/QuietHoursDto"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateProfileDto": {
+        "properties": {
+          "displayName": {
+            "example": "Jane Smith",
+            "type": "string"
+          },
+          "firstName": {
+            "example": "Jane",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "Smith",
+            "type": "string"
+          },
+          "locale": {
+            "example": "en-NG",
+            "type": "string"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePhotoDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "timezone": {
+            "example": "Africa/Lagos",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateRecoveryEmailDto": {
+        "properties": {
+          "recoveryEmail": {
+            "example": "recovery@example.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recoveryEmail"
+        ],
+        "type": "object"
+      },
+      "UpdateTenantDto": {
+        "properties": {
+          "country": {
+            "$ref": "#/components/schemas/CountryDto"
+          },
+          "displayName": {
+            "example": "Acme Corporation",
+            "type": "string"
+          },
+          "employeeCount": {
+            "example": 500,
+            "type": "number"
+          },
+          "logoUrl": {
+            "example": "https://cdn.acme.com/logo.png",
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/UpdateTenantSettingsDto"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTenantSettingsDto": {
+        "properties": {
+          "allowGuestAccess": {
+            "type": "boolean"
+          },
+          "allowedAuthMethods": {
+            "items": {
+              "enum": [
+                "password",
+                "sso",
+                "oauth"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "allowedEmailDomains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "blockPersonalEmails": {
+            "type": "boolean"
+          },
+          "countSuspendedSeats": {
+            "type": "boolean"
+          },
+          "defaultUserRole": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "type": "string"
+          },
+          "enforceSSO": {
+            "type": "boolean"
+          },
+          "mfaRequired": {
+            "type": "boolean"
+          },
+          "sessionTtlHours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "UpgradeToBusinessDto": {
+        "properties": {
+          "businessName": {
+            "example": "Acme Corp",
+            "type": "string"
+          },
+          "country": {
+            "$ref": "#/components/schemas/CountryDto"
+          },
+          "deviceId": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "domain": {
+            "example": "acme.com",
+            "type": "string"
+          },
+          "employeeCount": {
+            "example": 10,
+            "type": "number"
+          },
+          "slug": {
+            "example": "acme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "businessName",
+          "slug",
+          "country",
+          "employeeCount",
+          "domain",
+          "deviceId"
+        ],
+        "type": "object"
+      },
+      "VerifyEmailDto": {
+        "properties": {
+          "email": {
+            "description": "Email address being verified",
+            "example": "jane@gmail.com",
+            "type": "string"
+          },
+          "token": {
+            "description": "6-character alphanumeric verification code received via email",
+            "example": "A7kZq2",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "token"
+        ],
+        "type": "object"
+      },
+      "VerifyPhoneOtpDto": {
+        "properties": {
+          "code": {
+            "description": "6-character alphanumeric OTP received via SMS.",
+            "example": "A7kZq2",
+            "type": "string"
+          },
+          "phone": {
+            "description": "The phone number that was sent the OTP. Must match the number used in send-otp.",
+            "example": "+14155552671",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone",
+          "code"
+        ],
+        "type": "object"
+      },
+      "VerifyRecoveryPhoneDto": {
+        "properties": {
+          "code": {
+            "description": "Six-digit OTP sent to the pending recovery phone number",
+            "example": "123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Postman Collection",
+    "url": "/docs/api-json"
+  },
+  "info": {
+    "contact": {},
+    "description": "WorkSync Space API documentation",
+    "title": "WorkSync Space API",
+    "version": "1.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/auth/accept-invite": {
+      "post": {
+        "operationId": "AuthController_acceptInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Accept a workspace invitation — returns tokens and logs the user in immediately",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/devices": {
+      "get": {
+        "operationId": "AuthController_listDevices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List devices the caller has signed in from (Google-style device page)",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/devices/{deviceId}": {
+      "delete": {
+        "operationId": "AuthController_revokeDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a device — soft-deletes it, kills every active session on it, clears any MFA trust",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/devices/{deviceId}/trust": {
+      "delete": {
+        "operationId": "AuthController_untrustDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear MFA trust on a device without revoking its sessions — next login from that device will require MFA again",
+        "tags": [
+          "Auth"
+        ]
+      },
+      "post": {
+        "operationId": "AuthController_trustDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a device trusted for 30 days — future logins skip the MFA challenge. Requires the calling session to be MFA-verified.",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "AuthController_forgotPassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Request a password reset email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Login with email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Logout current session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout-all": {
+      "post": {
+        "operationId": "AuthController_logoutAll",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Logout all sessions",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/mfa/challenge": {
+      "post": {
+        "operationId": "AuthController_submitMfaChallenge",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaChallengeSubmitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Submit MFA code to complete login — accepts TOTP or backup code",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/phone/send-otp": {
+      "post": {
+        "operationId": "AuthController_sendPhoneOtp",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendPhoneOtpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a 6-digit OTP to the given phone number for verification",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/phone/verify": {
+      "post": {
+        "operationId": "AuthController_verifyPhone",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyPhoneOtpDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify phone OTP and mark phone as verified on the account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Rotate refresh token and get a new access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register a new account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/register-business": {
+      "post": {
+        "operationId": "AuthController_registerBusiness",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterBusinessDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Register a business — creates identity + tenant + owner membership + pending domain atomically",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "operationId": "AuthController_resetPassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Reset password with token from email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sessions": {
+      "get": {
+        "operationId": "AuthController_listSessions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all active sessions for the current user",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sessions/{sessionId}": {
+      "delete": {
+        "operationId": "AuthController_revokeSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a specific session by ID",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/set-password": {
+      "post": {
+        "operationId": "AuthController_setPassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the initial password (one-time, after invite accept) — rejects if password already exists",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/upgrade-to-business": {
+      "post": {
+        "operationId": "AuthController_upgradeToBusiness",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeToBusinessDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upgrade a personal account to a business admin — creates tenant + owner membership + pending domain and issues fresh tokens",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-email": {
+      "post": {
+        "operationId": "AuthController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Verify email address with token from email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/verify-email/resend": {
+      "post": {
+        "operationId": "AuthController_resendVerificationEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Resend email verification link",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "delete": {
+        "operationId": "MeController_deleteMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Schedule account deletion for the current user",
+        "tags": [
+          "Me"
+        ]
+      },
+      "get": {
+        "operationId": "MeController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get the current user profile",
+        "tags": [
+          "Me"
+        ]
+      },
+      "patch": {
+        "operationId": "MeController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update display/profile fields for the current user",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/data-export": {
+      "get": {
+        "operationId": "MeController_requestDataExport",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request a personal data export package",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/backup-codes/regenerate": {
+      "post": {
+        "operationId": "MeController_mfaRegenerateBackupCodes",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaTotpCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Regenerate backup codes — requires valid TOTP. Returns new one-time codes",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/totp": {
+      "delete": {
+        "operationId": "MeController_mfaDisableTotp",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaTotpCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Disable TOTP — requires valid TOTP. Revokes all active sessions",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/totp/confirm": {
+      "post": {
+        "operationId": "MeController_mfaConfirmEnrol",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaTotpCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm TOTP enrolment with first valid code — returns one-time backup codes",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/totp/enrol": {
+      "post": {
+        "operationId": "MeController_mfaEnrol",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Begin TOTP enrolment — returns secret and OTP auth URL",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/password": {
+      "put": {
+        "operationId": "MeController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the current password and optionally revoke other active sessions",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery": {
+      "get": {
+        "operationId": "MeController_getRecovery",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get masked recovery methods for the current user",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery/email": {
+      "patch": {
+        "operationId": "MeController_updateRecoveryEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRecoveryEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the recovery email address for the current user",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery/phone": {
+      "patch": {
+        "operationId": "MeController_updateRecoveryPhone",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePhoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update the recovery phone number and send a verification OTP",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery/phone/verify": {
+      "post": {
+        "operationId": "MeController_verifyRecoveryPhone",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRecoveryPhoneDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify the pending recovery phone number with the OTP sent by SMS",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "example": 1,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "example": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Sort direction (default DESC)",
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by notification category",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "enum": [
+                "auth",
+                "org",
+                "drive",
+                "chat",
+                "calendar",
+                "mail",
+                "billing",
+                "meet"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter to all notifications owned by this product. Ignored when category is also provided.",
+            "in": "query",
+            "name": "product",
+            "required": false,
+            "schema": {
+              "enum": [
+                "platform",
+                "drive",
+                "chat",
+                "calendar",
+                "mail",
+                "meet"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List in-app notifications (unread first)",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/broadcasts": {
+      "post": {
+        "operationId": "NotificationsController_sendBroadcast",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendBroadcastDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Broadcast a notification to recipients within the caller’s tenant",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/broadcasts/{broadcastId}/cancel": {
+      "post": {
+        "operationId": "NotificationsController_cancelBroadcast",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "broadcastId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a broadcast owned by the caller’s tenant",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/preferences": {
+      "get": {
+        "operationId": "NotificationsController_getGlobalPrefs",
+        "parameters": [
+          {
+            "description": "Comma-separated list of category names to trim the response to (e.g. drive,calendar)",
+            "in": "query",
+            "name": "categories",
+            "required": false,
+            "schema": {
+              "example": "drive,calendar",
+              "items": {
+                "enum": [
+                  "auth",
+                  "org",
+                  "drive",
+                  "chat",
+                  "calendar",
+                  "mail",
+                  "billing",
+                  "meet"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get global notification preferences (optionally filtered to specific categories)",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_updateGlobalPrefs",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update global notification preferences",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/preferences/resource/{type}/{id}": {
+      "get": {
+        "operationId": "NotificationsController_getResourcePrefs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "drive_file",
+                "drive_folder",
+                "calendar",
+                "calendar_event",
+                "chat_channel",
+                "form",
+                "notebook"
+              ],
+              "example": "chat_channel",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "example": "66b7f8f2b5b2a144f1c1d902",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get resource-scoped preference overrides",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_updateResourcePrefs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "enum": [
+                "drive_file",
+                "drive_folder",
+                "calendar",
+                "calendar_event",
+                "chat_channel",
+                "form",
+                "notebook"
+              ],
+              "example": "chat_channel",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "example": "66b7f8f2b5b2a144f1c1d902",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update resource-scoped preference overrides",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/preferences/tenant/{tenantId}": {
+      "get": {
+        "operationId": "NotificationsController_getTenantPrefs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "example": "66b7f8f2b5b2a144f1c1d901",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tenant-scoped preference overrides",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_updateTenantPrefs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "example": "66b7f8f2b5b2a144f1c1d901",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferenceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update tenant-scoped preference overrides",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/push/subscribe": {
+      "delete": {
+        "operationId": "NotificationsController_unsubscribePush",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushUnsubscribeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unregister push subscription for this device",
+        "tags": [
+          "Notifications"
+        ]
+      },
+      "post": {
+        "operationId": "NotificationsController_subscribePush",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscribeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register push subscription for this device",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark all notifications as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get unread notification count",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{id}": {
+      "delete": {
+        "operationId": "NotificationsController_dismiss",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Dismiss (delete) a notification",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a single notification as read",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/platform/notifications/broadcasts": {
+      "post": {
+        "operationId": "PlatformNotificationsController_sendBroadcast",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformSendBroadcastDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Broadcast a notification to any recipient set — no tenant restriction",
+        "tags": [
+          "platform-notifications"
+        ]
+      }
+    },
+    "/api/v1/platform/notifications/broadcasts/{broadcastId}/cancel": {
+      "post": {
+        "operationId": "PlatformNotificationsController_cancelBroadcast",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "broadcastId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel any broadcast — no ownership check",
+        "tags": [
+          "platform-notifications"
+        ]
+      }
+    },
+    "/api/v1/platform/notifications/logs": {
+      "get": {
+        "operationId": "PlatformNotificationsController_listLogs",
+        "parameters": [
+          {
+            "description": "Filter by recipient user ID",
+            "in": "query",
+            "name": "userId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by notification event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "enum": [
+                "auth.email_verification",
+                "auth.password_reset",
+                "auth.phone_otp",
+                "user.recovery_email_added",
+                "user.recovery_email_added_alert",
+                "auth.new_location_login",
+                "auth.new_device_login",
+                "tenant.setup_expired",
+                "tenant.invite_member",
+                "tenant.domain_verified",
+                "tenant.member_joined",
+                "tenant.announcement_posted"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by delivery channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "in_app",
+                "email",
+                "sms",
+                "push"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by delivery status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "sent",
+                "failed",
+                "suppressed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "example": 1,
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "example": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List delivery logs — filterable by user, event, channel, status",
+        "tags": [
+          "platform-notifications"
+        ]
+      }
+    },
+    "/api/v1/platform/notifications/logs/{id}": {
+      "get": {
+        "operationId": "PlatformNotificationsController_getLog",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single delivery log entry",
+        "tags": [
+          "platform-notifications"
+        ]
+      }
+    },
+    "/api/v1/platform/tenants": {
+      "get": {
+        "operationId": "PlatformTenantsController_listTenants",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Sort direction (default DESC)",
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Partial match on displayName or slug",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by tenant status",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending_setup",
+                "active",
+                "suspended",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date — ISO 8601, e.g. 2024-01-01",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date — ISO 8601, e.g. 2024-12-31",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all tenants (super-admin)",
+        "tags": [
+          "Platform-tenants"
+        ]
+      }
+    },
+    "/api/v1/platform/tenants/{tenantId}": {
+      "delete": {
+        "operationId": "PlatformTenantsController_deleteTenant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Force-delete any tenant (super-admin)",
+        "tags": [
+          "Platform-tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants": {
+      "post": {
+        "operationId": "TenantsController_createTenant",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTenantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new tenant (any authenticated user)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}": {
+      "delete": {
+        "operationId": "TenantsController_deleteTenant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Soft-delete tenant (org owner or super-admin)",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "get": {
+        "operationId": "TenantsController_getTenant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get tenant details",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "patch": {
+        "operationId": "TenantsController_updateTenant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTenantDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update tenant settings or branding (org admin)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/domains": {
+      "get": {
+        "operationId": "TenantsController_listDomains",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all domains for the tenant",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "post": {
+        "operationId": "TenantsController_addDomain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddDomainDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a domain and initiate verification",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/domains/{domainId}": {
+      "delete": {
+        "operationId": "TenantsController_removeDomain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domainId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a domain (blocked if it is the primary domain)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/domains/{domainId}/set-primary": {
+      "patch": {
+        "operationId": "TenantsController_setPrimaryDomain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domainId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set a verified domain as the primary domain",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/domains/{domainId}/verify": {
+      "post": {
+        "operationId": "TenantsController_verifyDomain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domainId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Trigger a live DNS verification check for a tenant domain",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members": {
+      "get": {
+        "operationId": "TenantsController_listMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Sort direction (default DESC)",
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by member role",
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "enum": [
+                "OWNER",
+                "ADMIN",
+                "MEMBER",
+                "GUEST"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defaults to all except removed",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "invited",
+                "suspended",
+                "removed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by member type",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "internal",
+                "guest"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Start date — ISO 8601, e.g. 2024-01-01",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "End date — ISO 8601, e.g. 2024-12-31",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all members of the tenant (org admin)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/bulk-invite": {
+      "post": {
+        "operationId": "AuthTenantMembersController_bulkInviteMembers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkInviteMembersDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite up to 50 members in a single request (rejects all if seat limit would be exceeded)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/invite": {
+      "post": {
+        "operationId": "AuthTenantMembersController_inviteMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteMemberDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Invite a single member by email",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/{memberId}": {
+      "delete": {
+        "operationId": "TenantsController_removeMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a member from the tenant (soft delete — owner cannot be removed)",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "get": {
+        "operationId": "TenantsController_getMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single member",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "patch": {
+        "operationId": "TenantsController_updateMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemberDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a member role, OU, department, or job title",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/{memberId}/invite": {
+      "delete": {
+        "operationId": "AuthTenantMembersController_cancelInvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a pending invitation",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/{memberId}/reactivate": {
+      "post": {
+        "operationId": "TenantsController_reactivateMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reactivate a suspended member",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/{memberId}/resend-invite": {
+      "post": {
+        "operationId": "AuthTenantMembersController_resendInvite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Re-send the invitation email for a pending member",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/members/{memberId}/suspend": {
+      "post": {
+        "operationId": "TenantsController_suspendMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Suspend an active member",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/ous": {
+      "get": {
+        "operationId": "TenantsController_listOus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all OUs for the tenant",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "post": {
+        "operationId": "TenantsController_createOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOuDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an OU",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/ous/{ouId}": {
+      "delete": {
+        "operationId": "TenantsController_deleteOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ouId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an OU — members moved to parent, blocked if child OUs exist",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "get": {
+        "operationId": "TenantsController_getOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ouId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single OU",
+        "tags": [
+          "Tenants"
+        ]
+      },
+      "patch": {
+        "operationId": "TenantsController_updateOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ouId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOuDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update OU name or policies",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    }
+  },
+  "servers": [],
+  "tags": [
+    {
+      "description": "",
+      "name": "Auth"
+    },
+    {
+      "description": "",
+      "name": "Me"
+    },
+    {
+      "description": "",
+      "name": "Tenants"
+    },
+    {
+      "description": "",
+      "name": "Notifications"
+    },
+    {
+      "description": "",
+      "name": "Platform-tenants"
+    },
+    {
+      "description": "",
+      "name": "platform-notifications"
+    }
+  ]
+}

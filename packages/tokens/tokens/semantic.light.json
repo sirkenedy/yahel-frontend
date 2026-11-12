@@ -1,0 +1,86 @@
+{
+  "color": {
+    "bg": {
+      "base": "{palette.gray.0}",
+      "grouped": "{palette.gray.50}",
+      "elevated": "{palette.gray.0}",
+      "elevated-2": "{palette.gray.0}",
+      "sunken": "{palette.gray.100}",
+      "inverse": "{palette.gray.925}"
+    },
+    "label": {
+      "primary": "{palette.gray.925}",
+      "secondary": "{palette.gray.700}",
+      "tertiary": "{palette.gray.600}",
+      "quaternary": "{palette.gray.400}",
+      "on-accent": "{palette.gray.0}",
+      "on-inverse": "{palette.gray.0}"
+    },
+    "separator": {
+      "default": "rgba(11, 11, 13, 0.10)",
+      "opaque": "{palette.gray.200}"
+    },
+    "border": {
+      "control": "{palette.gray.500}"
+    },
+    "fill": {
+      "primary": "rgba(116, 118, 128, 0.20)",
+      "secondary": "rgba(116, 118, 128, 0.12)",
+      "tertiary": "rgba(116, 118, 128, 0.08)"
+    },
+    "accent": {
+      "default": "{palette.blue.light}",
+      "solid": "{palette.blue.light}",
+      "soft": "{palette.blue.soft-light}"
+    },
+    "success": {
+      "text": "{palette.green.text-light}",
+      "solid": "{palette.green.light}",
+      "soft": "{palette.green.soft-light}"
+    },
+    "warning": {
+      "text": "{palette.orange.text-light}",
+      "solid": "{palette.orange.light}",
+      "soft": "{palette.orange.soft-light}"
+    },
+    "danger": {
+      "text": "{palette.red.text-light}",
+      "solid": "{palette.red.text-light}",
+      "soft": "{palette.red.soft-light}"
+    },
+    "hue": {
+      "blue": "{palette.blue.light}",
+      "indigo": "{palette.indigo.light}",
+      "purple": "{palette.purple.light}",
+      "pink": "{palette.pink.light}",
+      "red": "{palette.red.light}",
+      "orange": "{palette.orange.light}",
+      "yellow": "{palette.yellow.light}",
+      "green": "{palette.green.light}",
+      "teal": "{palette.teal.light}",
+      "mint": "{palette.mint.light}",
+      "cyan": "{palette.cyan.light}",
+      "brown": "{palette.brown.light}",
+      "graphite": "{palette.gray.600}"
+    },
+    "state": {
+      "hover": "rgba(11, 11, 13, 0.08)",
+      "pressed": "rgba(11, 11, 13, 0.16)"
+    },
+    "scrim": "rgba(11, 11, 13, 0.32)"
+  },
+  "elevation": {
+    "1": "0 1px 2px rgba(11, 11, 13, 0.06), 0 1px 1px rgba(11, 11, 13, 0.04)",
+    "2": "0 2px 4px rgba(11, 11, 13, 0.06), 0 8px 20px rgba(11, 11, 13, 0.08)",
+    "3": "0 4px 8px rgba(11, 11, 13, 0.06), 0 16px 40px rgba(11, 11, 13, 0.12)",
+    "4": "0 8px 16px rgba(11, 11, 13, 0.08), 0 32px 72px rgba(11, 11, 13, 0.18)"
+  },
+  "material": {
+    "clear": "rgba(255, 255, 255, 0.24)",
+    "thin": "rgba(255, 255, 255, 0.64)",
+    "regular": "rgba(255, 255, 255, 0.78)",
+    "thick": "rgba(255, 255, 255, 0.90)",
+    "edge": "rgba(255, 255, 255, 0.60)",
+    "dim": "rgba(0, 0, 0, 0.35)"
+  }
+}

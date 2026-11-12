@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Drive on a phone, light</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; overflow: hidden; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; font-size: 17px; line-height: 22px">
+
+<div style="box-sizing: border-box; padding: 60px 16px 0; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<button type="button" aria-label="Account: Amara Okafor, personal" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px 0 6px; border: 0; border-radius: 999px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); font-size: 15px; font-weight: 600; color: #0B0B0D"><span style="width: 32px; height: 32px; border-radius: 999px; background: #0064E0; color: #FFFFFF; font-size: 12px; display: flex; align-items: center; justify-content: center">AO</span>Personal<svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="#6A6C77" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 4 4 4-4"/></svg></button>
+<button type="button" aria-label="New file or folder" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: #0064E0; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><path d="M9 3v12M3 9h12"/></svg></button>
+</div>
+
+<h1 style="margin: 0; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.022em">Files</h1>
+
+<div style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 12px; border-radius: 12px; background: rgba(116,118,128,0.12)">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6A6C77" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg>
+<input type="search" aria-label="Search files" placeholder="Search files" style="flex: 1 1 0; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 17px; color: #0B0B0D">
+</div>
+
+<div style="box-sizing: border-box; padding: 16px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 17px; font-weight: 600">Storage</div>
+<div style="font-size: 13px; color: #4E4F59">Free plan</div>
+</div>
+<div role="img" aria-label="Storage use by app" style="display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: #ECEDF2">
+<div style="width: 40%; background: #0C7B60"></div><div style="width: 16%; background: #2389E2"></div><div style="width: 8%; background: #5335CF"></div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">9.6 GB of 15 GB used</div>
+<button type="button" style="height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: #E6F0FE; color: #0064E0; font-size: 15px; font-weight: 600; flex-shrink: 0">Get more</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 20px; line-height: 25px; font-weight: 600; letter-spacing: -0.012em; padding: 4px 4px 0">Recent</div>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); padding: 0 16px; display: flex; flex-direction: column">
+<sc-for list="{{files}}" as="f" hint-placeholder-count="5">
+<a href="#file" style="display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: 1px solid {{f.rule}}; color: #0B0B0D; text-decoration: none">
+<span style="width: 40px; height: 40px; border-radius: 10px; background: {{f.color}}; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{f.d}}"/></svg></span>
+<span style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column">
+<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{f.name}}</span>
+<span style="font-size: 13px; line-height: 18px; color: #4E4F59">{{f.meta}}</span>
+</span>
+<svg aria-hidden="true" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#AEB0BA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 6 6-6 6"/></svg>
+</a>
+</sc-for>
+</div>
+</div>
+
+</div>
+
+<nav aria-label="Drive sections" style="position: absolute; left: 0; right: 0; bottom: 28px; display: flex; justify-content: center">
+<div style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.64); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 2px 4px rgba(11,11,13,0.06), 0 8px 20px rgba(11,11,13,0.10)">
+<a href="#home" aria-current="page" style="width: 80px; height: 52px; border-radius: 999px; background: #E6F0FE; color: #0064E0; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; line-height: 13px; font-weight: 600"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0064E0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.500A2.500 2.500 0 0 1 5.500 5h3.600l2 2.500h7.400A2.500 2.500 0 0 1 21 10v6.500a2.500 2.500 0 0 1-2.500 2.500h-13A2.500 2.500 0 0 1 3 16.500z"/></svg>Files</a>
+<a href="#shared" style="width: 80px; height: 52px; border-radius: 999px; color: #4E4F59; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; line-height: 13px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3.500"/><path d="M2.500 19c.6-3 3.200-5 6.500-5s5.900 2 6.500 5M16 5.800a3.500 3.500 0 0 1 0 6.400M18.500 14.600c1.600.8 2.700 2.300 3 4.400"/></svg>Shared</a>
+<a href="#starred" style="width: 80px; height: 52px; border-radius: 999px; color: #4E4F59; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; line-height: 13px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l2.400 5 5.400.700-4 3.800 1 5.400-4.800-2.600-4.800 2.600 1-5.400-4-3.800 5.400-.700z"/></svg>Starred</a>
+<a href="#search" style="width: 80px; height: 52px; border-radius: 999px; color: #4E4F59; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; line-height: 13px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/></svg>Search</a>
+</div>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const folder = 'M3 7.500A2.500 2.500 0 0 1 5.500 5h3.600l2 2.500h7.400A2.500 2.500 0 0 1 21 10v6.500a2.500 2.500 0 0 1-2.500 2.500h-13A2.500 2.500 0 0 1 3 16.500z';
+const doc = 'M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 12h6M9 16h6';
+const sheet = 'M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zM4 10h16M4 15h16M10 4v16';
+const slides = 'M5.500 5h13A2.500 2.500 0 0 1 21 7.500v7a2.500 2.500 0 0 1-2.500 2.500h-13A2.500 2.500 0 0 1 3 14.500v-7A2.500 2.500 0 0 1 5.500 5zM12 17v3M8.500 20h7';
+const rows = [
+['Brand refresh, final', 'Shared by Lena Moreau', '#0C7B60', folder],
+['Lagos offsite agenda', 'Edited today', '#5335CF', doc],
+['Household budget', 'Edited yesterday', '#38A017', sheet],
+['Launch deck', 'Opened Monday', '#EF6505', slides],
+['Contract draft v3', 'Shared by Priya Nair', '#5335CF', doc]
+];
+return { files: rows.map((r, i) => ({ name: r[0], meta: r[1], color: r[2], d: r[3], rule: i === rows.length - 1 ? 'transparent' : 'rgba(11,11,13,0.08)' })) };
+}
+}
+</script>
+</body>
+</html>

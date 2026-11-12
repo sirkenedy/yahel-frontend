@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Core components</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">04 Components</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">The first set, built only from tokens</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 520px">Shown at touch size in light. Every part has a pointer size, a dark value and focus, pressed and disabled states defined in the component specs.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Buttons</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #0064E0; color: #FFFFFF; font-size: 17px; font-weight: 600">Continue</button>
+<button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #E6F0FE; color: #0064E0; font-size: 17px; font-weight: 600">Share</button>
+<button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: rgba(116,118,128,0.12); color: #0B0B0D; font-size: 17px; font-weight: 600">Cancel</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button type="button" style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: #FDE8E6; color: #C2251D; font-size: 17px; font-weight: 600">Delete</button>
+<button type="button" style="height: 44px; padding: 0 12px; border: 0; background: transparent; color: #0064E0; font-size: 17px; font-weight: 500">Learn more</button>
+<button type="button" disabled style="height: 44px; padding: 0 20px; border: 0; border-radius: 12px; background: rgba(116,118,128,0.08); color: #AEB0BA; font-size: 17px; font-weight: 600">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<button type="button" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: #0064E0; color: #FFFFFF; font-size: 14px; font-weight: 600">New</button>
+<button type="button" style="height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(116,118,128,0.12); color: #0B0B0D; font-size: 14px; font-weight: 600">Filter</button>
+<button type="button" aria-label="Add" style="width: 44px; height: 44px; border: 0; border-radius: 999px; background: rgba(116,118,128,0.12); display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#0064E0" stroke-width="2" stroke-linecap="round"><path d="M9 3v12M3 9h12"/></svg></button>
+<div style="font-size: 12px; color: #6A6C77">Pointer size, 32 tall</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Fields</div>
+<div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 12px; background: rgba(116,118,128,0.12)">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#6A6C77" stroke-width="1.8" stroke-linecap="round"><circle cx="7" cy="7" r="5"/><path d="m11 11 3.5 3.5"/></svg>
+<input id="c-search" type="search" aria-label="Search" placeholder="Search" style="flex: 1 1 0; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 17px; color: #0B0B0D">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="c-email" style="font-size: 13px; font-weight: 600; color: #4E4F59">Work email</label>
+<input id="c-email" type="email" value="amara@northwind.example" style="height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 2px solid #0064E0; outline: 0; background: #FFFFFF; font-size: 17px; color: #0B0B0D">
+<div style="font-size: 12px; color: #6A6C77">Focused. A 2 px accent ring, never colour alone on the label.</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="c-pass" style="font-size: 13px; font-weight: 600; color: #4E4F59">Password</label>
+<input id="c-pass" type="password" value="short" aria-describedby="c-pass-err" style="height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; border: 1px solid #C2251D; outline: 0; background: #FFFFFF; font-size: 17px; color: #0B0B0D">
+<div id="c-pass-err" style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #C2251D"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#C2251D" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="6"/><path d="M7 4v3.5M7 10v.2"/></svg>Use at least 12 characters</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px; flex-grow: 1">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Segmented control and tags</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 2px; border-radius: 10px; background: rgba(116,118,128,0.12)">
+<button type="button" aria-pressed="true" style="height: 32px; border: 0; border-radius: 8px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(11,11,13,0.12); font-size: 14px; font-weight: 600; color: #0B0B0D">Day</button>
+<button type="button" aria-pressed="false" style="height: 32px; border: 0; border-radius: 8px; background: transparent; font-size: 14px; font-weight: 500; color: #0B0B0D">Week</button>
+<button type="button" aria-pressed="false" style="height: 32px; border: 0; border-radius: 8px; background: transparent; font-size: 14px; font-weight: 500; color: #0B0B0D">Month</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="padding: 4px 10px; border-radius: 6px; background: #E6F0FE; color: #0064E0; font-size: 12px; font-weight: 600">Personal</span>
+<span style="padding: 4px 10px; border-radius: 6px; background: #ECEDF2; color: #4E4F59; font-size: 12px; font-weight: 600">Organisation</span>
+<span style="padding: 4px 10px; border-radius: 6px; background: #E3F5E9; color: #157A37; font-size: 12px; font-weight: 600">Verified</span>
+<span style="padding: 4px 10px; border-radius: 6px; background: #FFF1DC; color: #9A5200; font-size: 12px; font-weight: 600">Pending</span>
+<span style="padding: 4px 10px; border-radius: 6px; background: #FDE8E6; color: #C2251D; font-size: 12px; font-weight: 600">Suspended</span>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59; padding: 0 16px">Grouped list</div>
+<div style="border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; padding: 0 16px">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid rgba(11,11,13,0.08)">
+<div style="width: 30px; height: 30px; border-radius: 8px; background: #0064E0; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8z"/></svg></div>
+<div style="flex: 1 1 0; font-size: 17px">Sign-in and security</div>
+<svg aria-hidden="true" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#AEB0BA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 6 6-6 6"/></svg>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid rgba(11,11,13,0.08)">
+<div style="width: 30px; height: 30px; border-radius: 8px; background: #0A7F8A; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.5h7.4A2.5 2.5 0 0 1 21 10v6.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"/></svg></div>
+<div style="flex: 1 1 0; font-size: 17px">Storage</div>
+<div style="font-size: 17px; color: #6A6C77">Free plan</div>
+<svg aria-hidden="true" width="8" height="14" viewBox="0 0 8 14" fill="none" stroke="#AEB0BA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1 1 6 6-6 6"/></svg>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-bottom: 1px solid rgba(11,11,13,0.08)">
+<div style="width: 30px; height: 30px; border-radius: 8px; background: #D42C23; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9zM10 19a2 2 0 0 0 4 0"/></svg></div>
+<div style="flex: 1 1 0; font-size: 17px">Notifications</div>
+<div role="switch" aria-checked="true" aria-label="Notifications" style="width: 51px; height: 31px; border-radius: 999px; background: #0064E0; padding: 2px; box-sizing: border-box; display: flex; justify-content: flex-end"><div style="width: 27px; height: 27px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 2px 4px rgba(11,11,13,0.2)"></div></div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 52px">
+<div style="width: 30px; height: 30px; border-radius: 8px; background: #5146DE; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.500 10.500z"/></svg></div>
+<div style="flex: 1 1 0; font-size: 17px">Dark appearance</div>
+<div role="switch" aria-checked="false" aria-label="Dark appearance" style="width: 51px; height: 31px; border-radius: 999px; background: rgba(116,118,128,0.20); padding: 2px; box-sizing: border-box; display: flex"><div style="width: 27px; height: 27px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 2px 4px rgba(11,11,13,0.2)"></div></div>
+</div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #6A6C77; padding: 0 16px">Rows are at least 44 tall. Separators inset to the text edge.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Selection</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 28px">
+<div role="checkbox" aria-checked="true" aria-label="Notify people" style="width: 22px; height: 22px; border-radius: 6px; background: #0064E0; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2.500 7.500 3 3 6-7"/></svg></div>
+<div style="font-size: 17px">Notify people</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; min-height: 28px">
+<div role="checkbox" aria-checked="false" aria-label="Allow download" style="width: 22px; height: 22px; box-sizing: border-box; border-radius: 6px; border: 1.5px solid #8B8D98; background: #FFFFFF"></div>
+<div style="font-size: 17px">Allow download</div>
+</div>
+<div style="display: flex; gap: 28px">
+<div style="display: flex; align-items: center; gap: 10px"><div role="radio" aria-checked="true" aria-label="Can view" style="width: 22px; height: 22px; box-sizing: border-box; border-radius: 999px; border: 7px solid #0064E0; background: #FFFFFF"></div><div style="font-size: 17px">Can view</div></div>
+<div style="display: flex; align-items: center; gap: 10px"><div role="radio" aria-checked="false" aria-label="Can edit" style="width: 22px; height: 22px; box-sizing: border-box; border-radius: 999px; border: 1.5px solid #8B8D98; background: #FFFFFF"></div><div style="font-size: 17px">Can edit</div></div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Storage meter, personal plan</div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 17px; font-weight: 600">10.2 GB of 15 GB</div><div style="font-size: 13px; color: #6A6C77">Free</div></div>
+<div role="img" aria-label="Storage use by app" style="display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: #ECEDF2">
+<div style="width: 34%; background: #0C7B60"></div><div style="width: 22%; background: #2389E2"></div><div style="width: 12%; background: #5335CF"></div>
+</div>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #4E4F59">
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #0C7B60"></span>Drive</div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #2389E2"></span>Mail</div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #5335CF"></span>Docs</div>
+</div>
+<button type="button" style="height: 44px; border: 0; border-radius: 12px; background: #E6F0FE; color: #0064E0; font-size: 17px; font-weight: 600; margin-top: auto">Get more storage</button>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Account switcher</div>
+<div style="border-radius: 18px; background: rgba(255,255,255,0.90); border: 1px solid rgba(11,11,13,0.08); box-shadow: 0 2px 4px rgba(11,11,13,0.06), 0 8px 20px rgba(11,11,13,0.08); padding: 6px; display: flex; flex-direction: column; gap: 2px">
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; background: #E6F0FE">
+<div style="width: 36px; height: 36px; border-radius: 999px; background: #0064E0; color: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0">AO</div>
+<div style="flex: 1 1 0; min-width: 0"><div style="font-size: 15px; font-weight: 600">Amara Okafor</div><div style="font-size: 13px; color: #4E4F59">Personal</div></div>
+<svg role="img" aria-label="Current account" width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="#0064E0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m2.500 7.500 3 3 6-7"/></svg>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px">
+<div style="width: 36px; height: 36px; border-radius: 10px; background: #4A4B55; color: #FFFFFF; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0">N</div>
+<div style="flex: 1 1 0; min-width: 0"><div style="font-size: 15px; font-weight: 600">Northwind Studio</div><div style="font-size: 13px; color: #4E4F59">Organisation, managed</div></div>
+</div>
+<div style="height: 1px; background: rgba(11,11,13,0.08); margin: 4px 10px"></div>
+<button type="button" style="height: 40px; padding: 0 10px; border: 0; border-radius: 12px; background: transparent; text-align: left; font-size: 15px; font-weight: 500; color: #0064E0">Add another account</button>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #6A6C77">People are circles, organisations are rounded squares. The shape tells you which context you are in before you read.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Dialog</div>
+<div style="align-self: center; width: 300px; box-sizing: border-box; padding: 22px 20px 16px; border-radius: 28px; background: #FFFFFF; border: 1px solid rgba(11,11,13,0.06); box-shadow: 0 4px 8px rgba(11,11,13,0.06), 0 16px 40px rgba(11,11,13,0.12); display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 17px; font-weight: 600">Remove from shared drive?</div>
+<div style="font-size: 14px; line-height: 20px; color: #4E4F59">People in Northwind Studio will lose access. You can restore it from Trash for 30 days.</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px">
+<button type="button" style="height: 44px; border: 0; border-radius: 999px; background: rgba(116,118,128,0.12); color: #0B0B0D; font-size: 16px; font-weight: 600">Cancel</button>
+<button type="button" style="height: 44px; border: 0; border-radius: 999px; background: #FDE8E6; color: #C2251D; font-size: 16px; font-weight: 600">Remove</button>
+</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Tab bar, glass</div>
+<div style="align-self: center; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(243,244,248,0.64); border: 1px solid rgba(11,11,13,0.06); box-shadow: 0 2px 4px rgba(11,11,13,0.06), 0 8px 20px rgba(11,11,13,0.08)">
+<div style="width: 76px; height: 52px; border-radius: 999px; background: #E6F0FE; color: #0064E0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 600"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0064E0" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>Home</div>
+<div style="width: 76px; height: 52px; border-radius: 999px; color: #4E4F59; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.500A2.500 2.500 0 0 1 5.500 5h3.600l2 2.500h7.400A2.500 2.500 0 0 1 21 10v6.500a2.500 2.500 0 0 1-2.500 2.500h-13A2.500 2.500 0 0 1 3 16.500z"/></svg>Files</div>
+<div style="width: 76px; height: 52px; border-radius: 999px; color: #4E4F59; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3.500"/><path d="M2.500 19c.6-3 3.200-5 6.500-5s5.900 2 6.500 5M16 5.800a3.500 3.500 0 0 1 0 6.400M18.500 14.600c1.600.8 2.700 2.300 3 4.400"/></svg>Shared</div>
+<div style="width: 76px; height: 52px; border-radius: 999px; color: #4E4F59; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; font-weight: 500"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4E4F59" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/></svg>Search</div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #6A6C77">Floats above content on the thin material. The selected tab pairs tint with a filled capsule, so it never relies on colour alone.</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

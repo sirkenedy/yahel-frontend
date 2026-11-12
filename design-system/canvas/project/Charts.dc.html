@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Data visualisation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">12 Data visualisation</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">Charts that read without relying on colour</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 520px">Eight series colours in a fixed order, validated in light and dark for colour-blind separation. Text always uses label colours; marks carry identity. Figures below are sample data.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Series colours, in order</div><div style="font-size: 13px; color: #6A6C77">Never reordered; a ninth folds into Other</div></div>
+<sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+<div style="padding: 14px 16px; border-radius: 16px; background: {{m.surface}}; border: 1px solid {{m.rule}}; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; color: {{m.text}}">{{m.name}}</div>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{m.slots}}" as="s" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; gap: 5px"><div style="height: 36px; border-radius: 8px; background: {{s.hex}}"></div><div style="font-size: 11px; font-weight: 600; color: {{m.text}}">{{s.n}} {{s.name}}</div></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Bars, lines and stacks may use all eight. Scatter plots and maps, where any two colours can touch, are capped at three: blue, amber and red.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Rules</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; font-size: 14px; line-height: 20px">
+<div><span style="font-weight: 600">Form first.</span> <span style="color: #4E4F59">One number is a figure, not a chart. Never two y-axes.</span></div>
+<div><span style="font-weight: 600">Colour follows the entity.</span> <span style="color: #4E4F59">Filtering never repaints what remains.</span></div>
+<div><span style="font-weight: 600">Legend plus direct labels.</span> <span style="color: #4E4F59">Always a legend for two or more series; label up to four directly.</span></div>
+<div><span style="font-weight: 600">Recessive scaffolding.</span> <span style="color: #4E4F59">Few grid lines, quiet axes, bars from zero.</span></div>
+<div><span style="font-weight: 600">A table behind every chart.</span> <span style="color: #4E4F59">Same data, real table, plus a text summary.</span></div>
+<div><span style="font-weight: 600">Status colours are reserved.</span> <span style="color: #4E4F59">Red, orange and green states are never "series 4".</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Sequential, one hue, for amounts</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px"><div style="height: 20px; border-radius: 4px 0 0 4px; background: #8AB4F0"></div><div style="height: 20px; background: #4F93EC"></div><div style="height: 20px; background: #0064E0"></div><div style="height: 20px; background: #004AA8"></div><div style="height: 20px; border-radius: 0 4px 4px 0; background: #002F6E"></div></div>
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Diverging, two poles and a grey midpoint</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px"><div style="height: 20px; border-radius: 4px 0 0 4px; background: #D42C23"></div><div style="height: 20px; background: #AEB0BA"></div><div style="height: 20px; border-radius: 0 4px 4px 0; background: #0064E0"></div></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 12px; flex-grow: 1">
+<div><div style="font-size: 17px; font-weight: 600">Messages sent per week, by team</div><div style="font-size: 13px; color: #4E4F59">Last six weeks. Sample data.</div></div>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #4E4F59">
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 3px; border-radius: 2px; background: #0064E0"></span>Design</div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 3px; border-radius: 2px; background: #B88600"></span>Sales</div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="width: 12px; height: 3px; border-radius: 2px; background: #9A45D6"></span>Support</div>
+</div>
+<svg role="img" aria-label="Line chart of messages sent per week for three teams over six weeks. Design rises from 120 to 310, Sales stays near 200, Support falls from 260 to 150." viewBox="0 0 600 250" style="width: 100%; flex-grow: 1; min-height: 0">
+<g stroke="#E0E1E8" stroke-width="1"><path d="M40 30H520M40 90H520M40 150H520"/></g>
+<path d="M40 210H520" stroke="#8E909B" stroke-width="1"/>
+<g font-size="11" fill="#6A6C77" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif"><text x="32" y="214" text-anchor="end">0</text><text x="32" y="154" text-anchor="end">100</text><text x="32" y="94" text-anchor="end">200</text><text x="32" y="34" text-anchor="end">300</text>
+<text x="40" y="230" text-anchor="middle">W1</text><text x="136" y="230" text-anchor="middle">W2</text><text x="232" y="230" text-anchor="middle">W3</text><text x="328" y="230" text-anchor="middle">W4</text><text x="424" y="230" text-anchor="middle">W5</text><text x="520" y="230" text-anchor="middle">W6</text></g>
+<g fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+<path d="M40 138L136 120L232 96L328 78L424 48L520 24" stroke="#0064E0"/>
+<path d="M40 93L136 87L232 96L328 84L424 90L520 87" stroke="#B88600"/>
+<path d="M40 54L136 66L232 84L328 102L424 114L520 120" stroke="#9A45D6"/>
+</g>
+<g stroke="#FFFFFF" stroke-width="2"><circle cx="520" cy="24" r="4" fill="#0064E0"/><circle cx="520" cy="87" r="4" fill="#B88600"/><circle cx="520" cy="120" r="4" fill="#9A45D6"/></g>
+<g font-size="12" font-weight="600" fill="#0B0B0D" font-family="-apple-system, BlinkMacSystemFont, Inter, sans-serif"><text x="530" y="28">Design 310</text><text x="530" y="91">Sales 205</text><text x="530" y="124">Support 150</text></g>
+</svg>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div><div style="font-size: 17px; font-weight: 600">Storage by app</div><div style="font-size: 13px; color: #4E4F59">10.2 GB of 15 GB used. Sample data. App charts use the app colours.</div></div>
+<div role="img" aria-label="Storage by app: Drive 5.1 gigabytes, Mail 3.3, Docs 1.8, free 4.8" style="display: flex; gap: 2px; height: 28px">
+<div style="width: 34%; background: #0C7B60; border-radius: 4px 0 0 4px"></div><div style="width: 22%; background: #2389E2"></div><div style="width: 12%; background: #5335CF"></div><div style="flex: 1 1 0; background: #ECEDF2; border-radius: 0 4px 4px 0"></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; font-size: 13px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #0C7B60"></span><span>Drive <span style="font-weight: 600">5.1 GB</span></span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #2389E2"></span><span>Mail <span style="font-weight: 600">3.3 GB</span></span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #5335CF"></span><span>Docs <span style="font-weight: 600">1.8 GB</span></span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #ECEDF2; border: 1px solid #8E909B"></span><span>Free <span style="font-weight: 600">4.8 GB</span></span></div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const names = ['Blue', 'Amber', 'Purple', 'Green', 'Indigo', 'Orange', 'Cyan', 'Red'];
+const mk = (hexes) => hexes.map((hex, i) => ({ hex, n: String(i + 1), name: names[i] }));
+return {
+modes: [
+{ name: 'Light', surface: '#FFFFFF', rule: 'rgba(11,11,13,0.10)', text: '#4E4F59', slots: mk(['#0064E0', '#B88600', '#9A45D6', '#1FA24A', '#5146DE', '#E8730A', '#0A8FC4', '#D42C23']) },
+{ name: 'Dark', surface: '#1A1B1F', rule: 'rgba(255,255,255,0.12)', text: '#B4B5BF', slots: mk(['#3D89EE', '#B98700', '#B26BEA', '#27A552', '#7C74F2', '#DB6C08', '#2B98C6', '#F0554A']) }
+]
+};
+}
+}
+</script>
+</body>
+</html>

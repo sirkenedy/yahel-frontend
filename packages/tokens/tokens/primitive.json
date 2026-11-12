@@ -1,0 +1,97 @@
+{
+  "palette": {
+    "gray": {
+      "0": "#FFFFFF",
+      "25": "#F5F5F7",
+      "50": "#F3F4F8",
+      "100": "#ECEDF2",
+      "200": "#E0E1E8",
+      "300": "#CBCCD4",
+      "350": "#B4B5BF",
+      "400": "#AEB0BA",
+      "500": "#8E909B",
+      "600": "#6A6C77",
+      "650": "#5C5D68",
+      "700": "#4E4F59",
+      "750": "#4A4B55",
+      "775": "#33343B",
+      "800": "#25262B",
+      "850": "#1A1B1F",
+      "900": "#0E0E11",
+      "925": "#0B0B0D",
+      "950": "#050506"
+    },
+    "blue": {
+      "light": "#0064E0",
+      "dark": "#4C9AFF",
+      "solid-dark": "#1668E3",
+      "soft-light": "#E6F0FE",
+      "soft-dark": "#0E2747",
+      "hc-light": "#0047A8",
+      "hc-dark": "#8FC0FF",
+      "hc-solid-dark": "#0F52BD"
+    },
+    "indigo": {
+      "light": "#5146DE",
+      "dark": "#8A82FF"
+    },
+    "purple": {
+      "light": "#9A45D6",
+      "dark": "#C078F5"
+    },
+    "pink": {
+      "light": "#D62A66",
+      "dark": "#FF5C8D"
+    },
+    "red": {
+      "light": "#D42C23",
+      "dark": "#FF5A4F",
+      "text-light": "#C2251D",
+      "text-dark": "#FF6B61",
+      "soft-light": "#FDE8E6",
+      "soft-dark": "#3D1512",
+      "hc-light": "#8F1711",
+      "hc-dark": "#FF9A93"
+    },
+    "orange": {
+      "light": "#E8730A",
+      "dark": "#FF9A2E",
+      "text-light": "#9A5200",
+      "text-dark": "#FFB14A",
+      "soft-light": "#FFF1DC",
+      "soft-dark": "#3A2708",
+      "hc-light": "#7A4000",
+      "hc-dark": "#FFC98A"
+    },
+    "yellow": {
+      "light": "#F2B600",
+      "dark": "#FFD43A"
+    },
+    "green": {
+      "light": "#1FA24A",
+      "dark": "#34D168",
+      "text-light": "#157A37",
+      "text-dark": "#4ADE80",
+      "soft-light": "#E3F5E9",
+      "soft-dark": "#12301D",
+      "hc-light": "#0B5424",
+      "hc-dark": "#7BEBA2"
+    },
+    "teal": {
+      "light": "#0A7F8A",
+      "dark": "#3CC8D4"
+    },
+    "mint": {
+      "light": "#0A9B86",
+      "dark": "#4FE0CB"
+    },
+    "cyan": {
+      "light": "#0A8FC4",
+      "dark": "#5CCBF5"
+    },
+    "brown": {
+      "light": "#946B4E",
+      "dark": "#C79A78"
+    }
+  }
+}

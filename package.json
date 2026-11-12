@@ -1,0 +1,52 @@
+{
+  "name": "yahel-frontend",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @yahel/shell dev",
+    "build": "nx run-many -t build",
+    "typecheck": "nx run-many -t typecheck",
+    "lint": "eslint .",
+    "test": "nx run-many -t test",
+    "e2e": "playwright test",
+    "e2e:desktop": "playwright test --project=desktop",
+    "e2e:mobile": "playwright test --project=mobile",
+    "tokens": "pnpm --filter @yahel/tokens build",
+    "api:sync": "node scripts/api-sync.mjs",
+    "api:check": "node scripts/api-sync.mjs --check",
+    "check:tokens": "pnpm --filter @yahel/tokens build && node packages/ui/scripts/check-css-tokens.mjs",
+    "check:budget": "node scripts/check-bundle-budget.mjs",
+    "check:security": "pnpm audit --audit-level=high --prod",
+    "verify": "pnpm check:boundaries && pnpm check:tokens && pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:budget && pnpm e2e",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:attribution": "node scripts/check-attribution.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.0",
+    "@tanstack/router-plugin": "^1.169.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.9",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "eslint": "^10.14.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "jsdom": "^31.0.0",
+    "nx": "^24.0.6",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
+  }
+}

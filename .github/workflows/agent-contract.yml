@@ -1,0 +1,55 @@
+name: Agent contract
+
+# Keeps the API client in step with the backend. The backend repository can trigger this with a
+# repository_dispatch event of type "backend-api-changed" after it deploys.
+on:
+  repository_dispatch:
+    types: [backend-api-changed]
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: agent-contract
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  sync:
+    if: vars.AGENTS_ENABLED == 'true' && vars.API_SPEC_URL != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+      API_SPEC_URL: ${{ vars.API_SPEC_URL }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0, token: '${{ secrets.AGENT_GH_TOKEN }}' }
+      - uses: ./.github/actions/setup
+        with: { browsers: chromium }
+      - name: Stop early if the description is unchanged
+        id: diff
+        run: |
+          pnpm api:sync
+          if git diff --quiet -- packages/api-client; then echo "Unchanged."; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "yahel-agent"
+          git config user.email "yahel-agent@users.noreply.github.com"
+      - if: steps.diff.outputs.changed == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/contract-watcher.md and act as that agent, following it exactly, for ${{ github.repository }}.
+            pnpm api:sync has already run and the working tree holds the new description and generated types.
+            Branch name: agent/api-sync-${{ github.run_id }}. Label the pull request "agent".
+          claude_args: |
+            --max-turns 120
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*)"

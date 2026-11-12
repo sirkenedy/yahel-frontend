@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Space, shape, depth and motion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #FFFFFF; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">03 Space, shape, depth, motion</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">The quiet rules behind every screen</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 520px">A 4-point grid, concentric corners, four levels of elevation, glass materials tuned for legibility and a short list of motion curves. Small sets, so choices stay consistent.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Spacing</div>
+<div style="font-size: 13px; color: #6A6C77">4-point base, named by pixel value</div>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-grow: 1">
+<sc-for list="{{spaces}}" as="s" hint-placeholder-count="11">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+<div style="width: {{s.px}}; height: {{s.px}}; background: #0064E0; border-radius: 3px"></div>
+<div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">{{s.n}}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Inside a control: 8 to 12. Between related items: 12 to 16. Between groups: 24 to 32. Screen margins: 16 compact, 24 regular, 32 wide.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Corner radius</div>
+<div style="font-size: 13px; color: #6A6C77">Continuous curve where the platform has one</div>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-grow: 1">
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 6px"></div><div style="font-size: 13px; font-weight: 600">xs 6</div><div style="font-size: 12px; color: #6A6C77">Tags, checks</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 8px"></div><div style="font-size: 13px; font-weight: 600">sm 8</div><div style="font-size: 12px; color: #6A6C77">Small controls</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 12px"></div><div style="font-size: 13px; font-weight: 600">md 12</div><div style="font-size: 12px; color: #6A6C77">Buttons, fields</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 16px"></div><div style="font-size: 13px; font-weight: 600">lg 16</div><div style="font-size: 12px; color: #6A6C77">Menus, tiles</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 20px"></div><div style="font-size: 13px; font-weight: 600">xl 20</div><div style="font-size: 12px; color: #6A6C77">Cards</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 28px"></div><div style="font-size: 13px; font-weight: 600">2xl 28</div><div style="font-size: 12px; color: #6A6C77">Sheets</div></div>
+<div style="display: flex; flex-direction: column; gap: 8px"><div style="width: 64px; height: 64px; background: #FFFFFF; border: 1.5px solid #0064E0; border-radius: 999px"></div><div style="font-size: 13px; font-weight: 600">full</div><div style="font-size: 12px; color: #6A6C77">Pills, avatars</div></div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Nested corners stay concentric: inner radius equals outer radius minus the padding between them.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Elevation</div>
+<div style="font-size: 13px; color: #6A6C77">Soft two-layer shadows in light, lighter surfaces in dark</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; flex-grow: 1; align-items: center">
+<div style="height: 108px; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Level 1</div><div style="font-size: 12px; color: #6A6C77">Cards, list groups</div></div>
+<div style="height: 108px; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; box-shadow: 0 2px 4px rgba(11,11,13,0.06), 0 8px 20px rgba(11,11,13,0.08); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Level 2</div><div style="font-size: 12px; color: #6A6C77">Menus, popovers</div></div>
+<div style="height: 108px; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; box-shadow: 0 4px 8px rgba(11,11,13,0.06), 0 16px 40px rgba(11,11,13,0.12); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Level 3</div><div style="font-size: 12px; color: #6A6C77">Sheets, dialogs</div></div>
+<div style="height: 108px; box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; box-shadow: 0 8px 16px rgba(11,11,13,0.08), 0 32px 72px rgba(11,11,13,0.18); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Level 4</div><div style="font-size: 12px; color: #6A6C77">Dragged items</div></div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Materials</div>
+<div style="font-size: 13px; color: #6A6C77">For controls and navigation that float over content, never content itself</div>
+</div>
+<div style="position: relative; flex-grow: 1; border-radius: 16px; overflow: hidden; background: #FFFFFF">
+<div style="position: absolute; left: 24px; top: -30px; width: 150px; height: 150px; border-radius: 999px; background: #0064E0"></div>
+<div style="position: absolute; left: 190px; top: 56px; width: 130px; height: 130px; border-radius: 999px; background: #D62A66"></div>
+<div style="position: absolute; left: 350px; top: -20px; width: 140px; height: 140px; border-radius: 999px; background: #E8730A"></div>
+<div style="position: absolute; left: 470px; top: 60px; width: 150px; height: 150px; border-radius: 999px; background: #1FA24A"></div>
+<div style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 22px; align-items: stretch">
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,0.64); backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 20px rgba(11,11,13,0.08); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Thin</div><div style="font-size: 12px; color: #0B0B0D">Tab bars, floating controls</div></div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,0.78); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 20px rgba(11,11,13,0.08); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Regular</div><div style="font-size: 12px; color: #0B0B0D">Toolbars, sidebars</div></div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,0.90); backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 20px rgba(11,11,13,0.08); display: flex; flex-direction: column; justify-content: space-between"><div style="font-size: 15px; font-weight: 600">Thick</div><div style="font-size: 12px; color: #0B0B0D">Menus, sheets with text</div></div>
+</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Motion</div>
+<div style="font-size: 13px; color: #6A6C77">Honours Reduce Motion with a cross-fade</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex-grow: 1">
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; gap: 14px; align-items: center">
+<svg role="img" aria-label="Standard easing curve" width="60" height="72" viewBox="0 0 60 72" fill="none" stroke-linecap="round"><path d="M4 64H56M4 64V12" stroke="#CBCCD4" stroke-width="1"/><path d="M4 64C14.4 64 4 12 56 12" stroke="#0064E0" stroke-width="2.5"/></svg>
+<div style="display: flex; flex-direction: column; gap: 3px"><div style="font-size: 15px; font-weight: 600">Standard</div><div style="font-size: 12px; color: #6A6C77">Moves on screen</div><div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">280 ms</div></div>
+</div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; gap: 14px; align-items: center">
+<svg role="img" aria-label="Exit easing curve" width="60" height="72" viewBox="0 0 60 72" fill="none" stroke-linecap="round"><path d="M4 64H56M4 64V12" stroke="#CBCCD4" stroke-width="1"/><path d="M4 64C24.8 64 56 12 56 12" stroke="#0064E0" stroke-width="2.5"/></svg>
+<div style="display: flex; flex-direction: column; gap: 3px"><div style="font-size: 15px; font-weight: 600">Exit</div><div style="font-size: 12px; color: #6A6C77">Leaves the screen</div><div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">180 ms</div></div>
+</div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; gap: 14px; align-items: center">
+<svg role="img" aria-label="Spring curve with slight overshoot" width="60" height="72" viewBox="0 0 60 72" fill="none" stroke-linecap="round"><path d="M4 64H56M4 64V12" stroke="#CBCCD4" stroke-width="1"/><path d="M4 64C19.6 -3.6 24.8 12 56 12" stroke="#0064E0" stroke-width="2.5"/></svg>
+<div style="display: flex; flex-direction: column; gap: 3px"><div style="font-size: 15px; font-weight: 600">Spring</div><div style="font-size: 12px; color: #6A6C77">Sheets, drags, toggles</div><div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">420 ms</div></div>
+</div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Feedback such as hover and press is 100 ms. Motion follows the gesture and can be interrupted at any point.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 24px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Layout and targets</div>
+<div style="font-size: 13px; color: #6A6C77">Three size classes, one component set</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex-grow: 1">
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between; gap: 6px"><div style="font-size: 15px; font-weight: 600">Compact</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">Under 600 px. 4 columns, 16 margin. Tab bar, full-screen sheets.</div></div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between; gap: 6px"><div style="font-size: 15px; font-weight: 600">Regular</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">600 to 1023 px. 8 columns, 24 margin. Collapsible sidebar.</div></div>
+<div style="box-sizing: border-box; padding: 14px 16px; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between; gap: 6px"><div style="font-size: 15px; font-weight: 600">Wide</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">1024 px and up. 12 columns, 32 margin. Sidebar, list and detail.</div></div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Touch targets are at least 44 by 44. Pointer targets are at least 28 tall with 32 preferred. Content respects safe areas.</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+return { spaces: [2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64].map((n) => ({ n: String(n), px: n + 'px' })) };
+}
+}
+</script>
+</body>
+</html>

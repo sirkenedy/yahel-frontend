@@ -1,0 +1,35 @@
+{
+  "color": {
+    "label": {
+      "secondary": "{palette.gray.775}",
+      "tertiary": "{palette.gray.700}",
+      "quaternary": "{palette.gray.600}"
+    },
+    "separator": {
+      "default": "rgba(11, 11, 13, 0.32)",
+      "opaque": "{palette.gray.500}"
+    },
+    "border": {
+      "control": "{palette.gray.700}"
+    },
+    "fill": {
+      "primary": "rgba(116, 118, 128, 0.28)",
+      "secondary": "rgba(116, 118, 128, 0.20)",
+      "tertiary": "rgba(116, 118, 128, 0.14)"
+    },
+    "accent": {
+      "default": "{palette.blue.hc-light}",
+      "solid": "{palette.blue.hc-light}"
+    },
+    "success": {
+      "text": "{palette.green.hc-light}"
+    },
+    "warning": {
+      "text": "{palette.orange.hc-light}"
+    },
+    "danger": {
+      "text": "{palette.red.hc-light}",
+      "solid": "{palette.red.hc-light}"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@yahel/tokens",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./dist/tokens.css",
+    "./tokens.json": "./dist/tokens.json"
+  },
+  "scripts": {
+    "build": "node scripts/build-tokens.mjs",
+    "decision-tests": "node scripts/decision-tests.mjs"
+  },
+  "nx": { "tags": ["type:tokens"] }
+}

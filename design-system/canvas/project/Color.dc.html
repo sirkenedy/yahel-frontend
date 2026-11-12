@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Color foundations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #FFFFFF; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">01 Color</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">Semantic, paired, accessible</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 560px">Every colour is a role with a light and a dark value. Product code names the role, never the hex. Text roles pass 4.5:1 on their surfaces, and 7:1 in the increased-contrast versions of both themes. The build checks all four.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; flex-grow: 1">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="2">
+<div style="box-sizing: border-box; padding: 28px 32px; border-radius: 28px; background: {{t.grouped}}; border: 1px solid {{t.separator}}; color: {{t.primary}}; display: flex; flex-direction: column; gap: 24px">
+
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 22px; font-weight: 700; letter-spacing: -0.015em">{{t.name}}</div>
+<div style="font-size: 13px; color: {{t.tertiary}}">{{t.note}}</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 13px; font-weight: 600; color: {{t.secondary}}">Surfaces</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{t.surfaces}}" as="s" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="height: 68px; border-radius: 14px; background: {{s.hex}}; border: 1px solid {{t.separator}}"></div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 13px; font-weight: 600">{{s.name}}</div>
+<div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: {{t.tertiary}}">{{s.hex}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 13px; font-weight: 600; color: {{t.secondary}}">Labels</div>
+<div style="border-radius: 16px; background: {{t.base}}; border: 1px solid {{t.separator}}; padding: 4px 18px; display: flex; flex-direction: column">
+<sc-for list="{{t.labels}}" as="l" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 11px 0; border-bottom: 1px solid {{l.rule}}">
+<div style="font-size: 17px; font-weight: 500; color: {{l.hex}}">{{l.sample}}</div>
+<div style="display: flex; gap: 14px; align-items: baseline; flex-shrink: 0">
+<div style="font-size: 12px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: {{t.tertiary}}">{{l.hex}}</div>
+<div style="font-size: 12px; font-weight: 600; color: {{t.secondary}}; width: 52px; text-align: right">{{l.ratio}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 13px; font-weight: 600; color: {{t.secondary}}">Accent and system hues</div>
+<div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 14px 8px">
+<sc-for list="{{t.hues}}" as="h" hint-placeholder-count="13">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="width: 32px; height: 32px; border-radius: 999px; background: {{h.hex}}; flex-shrink: 0"></div>
+<div style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+<div style="font-size: 12px; font-weight: 600">{{h.name}}</div>
+<div style="font-size: 11px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: {{t.tertiary}}">{{h.hex}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="font-size: 13px; font-weight: 600; color: {{t.secondary}}">Status, always paired with an icon or word</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap">
+<sc-for list="{{t.status}}" as="st" hint-placeholder-count="4">
+<div style="padding: 7px 14px; border-radius: 999px; background: {{st.soft}}; color: {{st.text}}; font-size: 13px; font-weight: 600">{{st.name}}</div>
+</sc-for>
+</div>
+</div>
+
+</div>
+</sc-for>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const light = {
+name: 'Light', note: 'Default on every platform',
+base: '#FFFFFF', grouped: '#F3F4F8', separator: 'rgba(11,11,13,0.10)',
+primary: '#0B0B0D', secondary: '#4E4F59', tertiary: '#6A6C77',
+surfaces: [
+{ name: 'Base', hex: '#FFFFFF' }, { name: 'Grouped', hex: '#F3F4F8' },
+{ name: 'Elevated', hex: '#FFFFFF' }, { name: 'Sunken', hex: '#ECEDF2' }
+],
+labels: [
+{ sample: 'Primary: titles and body', hex: '#0B0B0D', ratio: '19.7:1' },
+{ sample: 'Secondary: supporting text', hex: '#4E4F59', ratio: '8.1:1' },
+{ sample: 'Tertiary: captions, placeholders', hex: '#6A6C77', ratio: '5.2:1' },
+{ sample: 'Quaternary: disabled, decorative', hex: '#AEB0BA', ratio: 'no text' }
+],
+hues: [
+{ name: 'Blue', hex: '#0064E0' }, { name: 'Indigo', hex: '#5146DE' }, { name: 'Purple', hex: '#9A45D6' }, { name: 'Pink', hex: '#D62A66' }, { name: 'Red', hex: '#D42C23' },
+{ name: 'Orange', hex: '#E8730A' }, { name: 'Yellow', hex: '#F2B600' }, { name: 'Green', hex: '#1FA24A' }, { name: 'Mint', hex: '#0A9B86' }, { name: 'Teal', hex: '#0A7F8A' }, { name: 'Cyan', hex: '#0A8FC4' }, { name: 'Brown', hex: '#946B4E' }, { name: 'Graphite', hex: '#6A6C77' }
+],
+status: [
+{ name: 'Success', soft: '#E3F5E9', text: '#157A37' }, { name: 'Warning', soft: '#FFF1DC', text: '#9A5200' },
+{ name: 'Danger', soft: '#FDE8E6', text: '#C2251D' }, { name: 'Info', soft: '#E6F0FE', text: '#0064E0' }
+]
+};
+const dark = {
+name: 'Dark', note: 'Raised surfaces get lighter, never shadowed',
+base: '#0E0E11', grouped: '#050506', separator: 'rgba(255,255,255,0.12)',
+primary: '#F5F5F7', secondary: '#B4B5BF', tertiary: '#8E909B',
+surfaces: [
+{ name: 'Base', hex: '#0E0E11' }, { name: 'Grouped', hex: '#050506' },
+{ name: 'Elevated', hex: '#1A1B1F' }, { name: 'Elevated 2', hex: '#25262B' }
+],
+labels: [
+{ sample: 'Primary: titles and body', hex: '#F5F5F7', ratio: '17.7:1' },
+{ sample: 'Secondary: supporting text', hex: '#B4B5BF', ratio: '9.5:1' },
+{ sample: 'Tertiary: captions, placeholders', hex: '#8E909B', ratio: '6.1:1' },
+{ sample: 'Quaternary: disabled, decorative', hex: '#5C5D68', ratio: 'no text' }
+],
+hues: [
+{ name: 'Blue', hex: '#4C9AFF' }, { name: 'Indigo', hex: '#8A82FF' }, { name: 'Purple', hex: '#C078F5' }, { name: 'Pink', hex: '#FF5C8D' }, { name: 'Red', hex: '#FF5A4F' },
+{ name: 'Orange', hex: '#FF9A2E' }, { name: 'Yellow', hex: '#FFD43A' }, { name: 'Green', hex: '#34D168' }, { name: 'Mint', hex: '#4FE0CB' }, { name: 'Teal', hex: '#3CC8D4' }, { name: 'Cyan', hex: '#5CCBF5' }, { name: 'Brown', hex: '#C79A78' }, { name: 'Graphite', hex: '#8E909B' }
+],
+status: [
+{ name: 'Success', soft: '#12301D', text: '#4ADE80' }, { name: 'Warning', soft: '#3A2708', text: '#FFB14A' },
+{ name: 'Danger', soft: '#3D1512', text: '#FF6B61' }, { name: 'Info', soft: '#0E2747', text: '#4C9AFF' }
+]
+};
+const withRules = (t) => ({ ...t, labels: t.labels.map((l, i) => ({ ...l, rule: i === t.labels.length - 1 ? 'transparent' : t.separator })) });
+return { themes: [withRules(light), withRules(dark)] };
+}
+}
+</script>
+</body>
+</html>

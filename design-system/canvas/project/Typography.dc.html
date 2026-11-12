@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typography foundations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #FFFFFF; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">02 Typography</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">Eleven roles, two size classes</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 560px">Roles follow the iOS text styles so native and web share one vocabulary. Touch sizes match iOS at the default Dynamic Type setting. Pointer sizes are denser for desktop work.</p>
+</div>
+
+<div style="display: flex; gap: 32px; flex-grow: 1; min-height: 0">
+
+<div style="width: 400px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px">
+<div style="box-sizing: border-box; padding: 28px 32px; border-radius: 28px; background: #F3F4F8; display: flex; flex-direction: column; gap: 16px">
+<div style="font-size: 152px; line-height: 150px; font-weight: 700; letter-spacing: -0.04em">Aa</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">System first</div>
+<div style="font-size: 15px; line-height: 21px; color: #4E4F59">San Francisco on Apple platforms, where the OS supplies it. Inter everywhere else, chosen for near-identical proportions. No licensed font files ship with the product.</div>
+</div>
+<div style="font-size: 12px; line-height: 18px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59; padding: 12px 14px; border-radius: 12px; background: #FFFFFF">-apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 32px; border-radius: 28px; background: #F3F4F8; display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Weights</div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 24px; font-weight: 400">Regular</div><div style="font-size: 13px; color: #6A6C77">400, body</div></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 24px; font-weight: 500">Medium</div><div style="font-size: 13px; color: #6A6C77">500, labels</div></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 24px; font-weight: 600">Semibold</div><div style="font-size: 13px; color: #6A6C77">600, emphasis</div></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 24px; font-weight: 700">Bold</div><div style="font-size: 13px; color: #6A6C77">700, titles</div></div>
+<div style="font-size: 13px; line-height: 18px; color: #6A6C77; margin-top: auto">Monospace for code, IDs and tabular data: SF Mono, then the platform's default.</div>
+</div>
+</div>
+
+<div style="flex: 1 1 0; min-width: 0; box-sizing: border-box; border-radius: 28px; border: 1px solid rgba(11,11,13,0.10); padding: 12px 32px; display: flex; flex-direction: column">
+<div style="display: flex; align-items: center; gap: 24px; padding: 12px 0; border-bottom: 1px solid rgba(11,11,13,0.10); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #6A6C77">
+<div style="flex: 1 1 0">Role, shown at touch size</div>
+<div style="width: 96px; text-align: right">Touch</div>
+<div style="width: 96px; text-align: right">Pointer</div>
+<div style="width: 88px; text-align: right">Weight</div>
+</div>
+<sc-for list="{{roles}}" as="r" hint-placeholder-count="11">
+<div style="display: flex; align-items: center; gap: 24px; flex: 1 1 0; border-bottom: 1px solid {{r.rule}}">
+<div style="flex: 1 1 0; min-width: 0; font-size: {{r.size}}; line-height: {{r.line}}; font-weight: {{r.weight}}; letter-spacing: {{r.track}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</div>
+<div style="width: 96px; text-align: right; font-size: 13px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">{{r.touch}}</div>
+<div style="width: 96px; text-align: right; font-size: 13px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #4E4F59">{{r.pointer}}</div>
+<div style="width: 88px; text-align: right; font-size: 13px; color: #6A6C77">{{r.weightName}}</div>
+</div>
+</sc-for>
+</div>
+
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+<div style="border-top: 1px solid rgba(11,11,13,0.14); padding-top: 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 17px; font-weight: 600">Scales with the reader</div>
+<div style="font-size: 15px; line-height: 21px; color: #4E4F59">Sizes are tokens in rem. Dynamic Type on iOS and browser zoom on web resize every role together, and layouts reflow.</div>
+</div>
+<div style="border-top: 1px solid rgba(11,11,13,0.14); padding-top: 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 17px; font-weight: 600">Tracking tightens as size grows</div>
+<div style="font-size: 15px; line-height: 21px; color: #4E4F59">Titles from 20 px up tighten slightly. Body stays at zero. All-caps labels open up. Each role carries its own value.</div>
+</div>
+<div style="border-top: 1px solid rgba(11,11,13,0.14); padding-top: 16px; display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 17px; font-weight: 600">Hierarchy by weight, then size</div>
+<div style="font-size: 15px; line-height: 21px; color: #4E4F59">Headline and Body share a size and differ by weight. Colour is the last tool for emphasis, never the first.</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const rows = [
+['Large Title', 34, 41, 700, 'Bold', '28 / 34', '-0.022em'],
+['Title 1', 28, 34, 700, 'Bold', '22 / 28', '-0.02em'],
+['Title 2', 22, 28, 700, 'Bold', '18 / 24', '-0.015em'],
+['Title 3', 20, 25, 600, 'Semibold', '16 / 22', '-0.012em'],
+['Headline', 17, 22, 600, 'Semibold', '14 / 20', '-0.005em'],
+['Body', 17, 22, 400, 'Regular', '14 / 20', '0'],
+['Callout', 16, 21, 400, 'Regular', '13 / 18', '0'],
+['Subhead', 15, 20, 400, 'Regular', '13 / 18', '0'],
+['Footnote', 13, 18, 400, 'Regular', '12 / 16', '0'],
+['Caption 1', 12, 16, 400, 'Regular', '11 / 14', '0'],
+['Caption 2', 11, 13, 500, 'Medium', '11 / 14', '0.005em']
+];
+return {
+roles: rows.map((r, i) => ({
+name: r[0], size: r[1] + 'px', line: r[2] + 'px', weight: r[3], weightName: r[4],
+touch: r[1] + ' / ' + r[2], pointer: r[5], track: r[6],
+rule: i === rows.length - 1 ? 'transparent' : 'rgba(11,11,13,0.08)'
+}))
+};
+}
+}
+</script>
+</body>
+</html>

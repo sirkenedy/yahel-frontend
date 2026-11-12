@@ -1,0 +1,17 @@
+export const authMessages = {
+  title: 'Sign in',
+  subtitle: 'Use your Yahel account',
+  emailLabel: 'Email',
+  emailPlaceholder: 'name@example.com',
+  passwordLabel: 'Password',
+  submit: 'Sign in',
+  submitting: 'Signing in',
+  emailRequired: 'Enter your email address',
+  emailInvalid: 'Enter an email address, like name@example.com',
+  passwordRequired: 'Enter your password',
+  wrongCredentials: "That email and password don't match. Check both and try again.",
+  mfaNotSupported: 'This account uses two-step sign-in, which this version cannot complete yet.',
+  tooManyAttempts: 'Too many attempts. Wait a few minutes, then try again.',
+  network: "Can't reach the server. Check your connection and try again.",
+  unexpected: 'Sign-in failed. Try again in a moment.',
+} as const;

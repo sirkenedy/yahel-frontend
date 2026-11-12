@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Decisions, tested</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">10 Decisions</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">Options tried, and what won</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 520px">Colour results are measured and can be re-run from the repository. The mark was chosen by construction rules. None of these has been tested with people yet.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">App colours</div><div style="font-size: 13px; color: #6A6C77">Closest pair, higher is better. Target 15 and 8.</div></div>
+<sc-for list="{{sets}}" as="s" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px; border: {{s.border}}; background: {{s.bg}}">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 15px; font-weight: 600">{{s.name}}</span><span style="padding: 2px 8px; border-radius: 6px; background: {{s.tagBg}}; color: {{s.tagText}}; font-size: 11px; font-weight: 600">{{s.tag}}</span></div>
+<div style="font-size: 13px; color: #4E4F59">Normal vision <span style="font-weight: 600; color: #0B0B0D">{{s.normal}}</span> · Colour-blind <span style="font-weight: 600; color: #0B0B0D">{{s.cvd}}</span></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{s.apps}}" as="a" hint-placeholder-count="9">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 44px; height: 44px; border-radius: 11px; background: {{a.color}}"></div><div style="font-size: 11px; color: #4E4F59">{{a.name}}</div></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59; margin-top: auto">Moving Mail alone did not help: Docs and Meet, and Calendar and Chat, were the real collisions. The whole set was searched together; each app keeps its familiar family.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Dark base</div><div style="font-size: 13px; color: #6A6C77">Smallest text on the top layer must reach 4.5</div></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-grow: 1">
+<sc-for list="{{darks}}" as="d" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="flex-grow: 1; box-sizing: border-box; padding: 12px; border-radius: 16px; background: {{d.grouped}}; outline: {{d.outline}}; display: flex; flex-direction: column; gap: 8px">
+<div style="padding: 10px 12px; border-radius: 12px; background: {{d.base}}; color: #F5F5F7; font-size: 13px; font-weight: 600">Content pane</div>
+<div style="padding: 10px 12px; border-radius: 12px; background: {{d.card}}; display: flex; flex-direction: column; gap: 6px">
+<div style="color: #F5F5F7; font-size: 13px; font-weight: 600">Card</div>
+<div style="padding: 8px 10px; border-radius: 8px; background: {{d.top}}; color: #8E909B; font-size: 12px">Caption on top layer</div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 14px; font-weight: 600">{{d.name}}</span><span style="padding: 2px 8px; border-radius: 6px; background: {{d.tagBg}}; color: {{d.tagText}}; font-size: 11px; font-weight: 600">{{d.tag}}</span></div>
+<div style="font-size: 12px; line-height: 17px; color: #4E4F59">{{d.note}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">The mark</div><div style="font-size: 13px; color: #6A6C77">Shown at 64 and 16</div></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; flex-grow: 1">
+<div style="box-sizing: border-box; padding: 16px; border-radius: 16px; border: 2px solid #0064E0; background: #E6F0FE; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: flex-end; gap: 14px">
+<svg role="img" aria-label="Orbit mark" width="64" height="64" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+</div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 14px; font-weight: 600">A, orbit</span><span style="padding: 2px 8px; border-radius: 6px; background: #0064E0; color: #FFFFFF; font-size: 11px; font-weight: 600">Chosen</span></div>
+<div style="font-size: 12px; line-height: 17px; color: #4E4F59">Two shapes, holds at 16, works in one colour. Reads as an orbit and as a person in a space.</div>
+</div>
+<div style="box-sizing: border-box; padding: 17px; border-radius: 16px; border: 1px solid rgba(11,11,13,0.10); display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: flex-end; gap: 14px">
+<svg role="img" aria-label="Sync arcs mark" width="64" height="64" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><path d="M34 20a11 11 0 0 0-19-4M14 28a11 11 0 0 0 19 4" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/><path d="M34 13v7h-7M14 35v-7h7" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><path d="M34 20a11 11 0 0 0-19-4M14 28a11 11 0 0 0 19 4" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/><path d="M34 13v7h-7M14 35v-7h7" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+<div style="font-size: 14px; font-weight: 600">B, sync arcs</div>
+<div style="font-size: 12px; line-height: 17px; color: #4E4F59">Rejected. It is the refresh control used throughout the product, so it would read as a button.</div>
+</div>
+<div style="box-sizing: border-box; padding: 17px; border-radius: 16px; border: 1px solid rgba(11,11,13,0.10); display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: flex-end; gap: 14px">
+<svg role="img" aria-label="Tile grid mark" width="64" height="64" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><rect x="12" y="12" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="26" y="12" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="12" y="26" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="26" y="26" width="10" height="10" rx="5" fill="#FFFFFF"/></svg>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><rect x="12" y="12" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="26" y="12" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="12" y="26" width="10" height="10" rx="3" fill="#FFFFFF"/><rect x="26" y="26" width="10" height="10" rx="5" fill="#FFFFFF"/></svg>
+</div>
+<div style="font-size: 14px; font-weight: 600">C, tile grid</div>
+<div style="font-size: 12px; line-height: 17px; color: #4E4F59">Rejected. Too close to another company's four-square mark, and to our own app launcher icon.</div>
+</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Free storage, GB</div><div style="font-size: 13px; color: #6A6C77">Published free tiers, November 2026, from comparison articles</div></div>
+<div role="img" aria-label="Free storage by provider in gigabytes: Dropbox 2, iCloud 5, OneDrive 5, Proton 5, Yahel 15, Google 15, MEGA 20" style="display: flex; flex-direction: column; gap: 7px">
+<sc-for list="{{tiers}}" as="t" hint-placeholder-count="7">
+<div style="display: flex; align-items: center; gap: 12px">
+<div style="width: 120px; flex-shrink: 0; font-size: 13px; font-weight: {{t.weight}}; text-align: right">{{t.name}}</div>
+<div style="flex: 1 1 0; display: flex; align-items: center; gap: 8px"><div style="width: {{t.width}}; height: 16px; border-radius: 0 4px 4px 0; background: {{t.color}}"></div><div style="font-size: 13px; font-weight: {{t.weight}}">{{t.gb}}</div></div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: auto">
+<div style="padding: 12px 14px; border-radius: 12px; background: #F3F4F8"><div style="font-size: 15px; font-weight: 600">Free, 15 GB</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">Warns at 3 GB left, again at 750 MB</div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: #F3F4F8"><div style="font-size: 15px; font-weight: 600">Plus, 100 GB</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">1.99 USD a month. Warns at 20 GB, 5 GB</div></div>
+<div style="padding: 12px 14px; border-radius: 12px; background: #F3F4F8"><div style="font-size: 15px; font-weight: 600">Max, 2 TB</div><div style="font-size: 12px; line-height: 17px; color: #4E4F59">9.99 USD a month. Warns at 20 GB, 5 GB</div></div>
+</div>
+<div style="font-size: 12px; line-height: 17px; color: #9A5200">Prices match the market and are not yet checked against real storage cost.</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const names = ['Mail', 'Calendar', 'Drive', 'Docs', 'Sheets', 'Slides', 'Chat', 'Meet', 'Admin'];
+const mk = (cols) => cols.map((color, i) => ({ color, name: names[i] }));
+return {
+sets: [
+{ name: 'Before', tag: 'Replaced', tagBg: '#ECEDF2', tagText: '#4E4F59', normal: '7.9', cvd: '2.2', border: '1px solid rgba(11,11,13,0.10)', bg: '#FFFFFF', apps: mk(['#0064E0', '#D42C23', '#0A7F8A', '#5146DE', '#1FA24A', '#E8730A', '#D62A66', '#9A45D6', '#4A4B55']) },
+{ name: 'After', tag: 'Chosen', tagBg: '#0064E0', tagText: '#FFFFFF', normal: '14.9', cvd: '6.9', border: '2px solid #0064E0', bg: '#E6F0FE', apps: mk(['#2389E2', '#AC040C', '#0C7B60', '#5335CF', '#38A017', '#EF6505', '#D040B9', '#92009C', '#4A4B55']) }
+],
+darks: [
+{ name: 'True black', tag: 'Passes', tagBg: '#ECEDF2', tagText: '#4E4F59', base: '#000000', grouped: '#000000', card: '#1A1B1F', top: '#25262B', outline: 'none', note: 'Caption 4.8. Pane and background become one colour, and text smears on OLED when scrolling.' },
+{ name: 'Near-black', tag: 'Chosen', tagBg: '#0064E0', tagText: '#FFFFFF', base: '#0E0E11', grouped: '#050506', card: '#1A1B1F', top: '#25262B', outline: '2px solid #0064E0', note: 'Caption 4.8. Keeps pane and background distinct; background is almost black for OLED.' },
+{ name: 'Dark grey', tag: 'Fails', tagBg: '#FDE8E6', tagText: '#C2251D', base: '#1C1C1E', grouped: '#121214', card: '#28282B', top: '#343438', outline: 'none', note: 'Caption 3.9 on the top layer, under the 4.5 minimum.' }
+],
+tiers: [['Dropbox', 2], ['iCloud', 5], ['OneDrive', 5], ['Proton', 5], ['Yahel', 15], ['Google', 15], ['MEGA', 20]].map(([name, gb]) => ({ name, gb: String(gb), width: (gb * 4.5) + '%', color: name === 'Yahel' ? '#0064E0' : '#AEB0BA', weight: name === 'Yahel' ? 600 : 400 }))
+};
+}
+}
+</script>
+</body>
+</html>

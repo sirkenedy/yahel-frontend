@@ -1,0 +1,42 @@
+name: Agent maintain
+
+on:
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: agent-maintain
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  maintain:
+    if: vars.AGENTS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0, token: '${{ secrets.AGENT_GH_TOKEN }}' }
+      - uses: ./.github/actions/setup
+        with: { browsers: chromium }
+      - run: |
+          git config user.name "yahel-agent"
+          git config user.email "yahel-agent@users.noreply.github.com"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/maintainer.md and act as that agent, following it exactly, for ${{ github.repository }}.
+            Branch names start with agent/maintain-. Label any pull request "agent".
+          claude_args: |
+            --max-turns 150
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue create:*),Bash(gh issue list:*),Bash(gh pr create:*),Bash(gh pr list:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Bash(gh run list:*),Bash(gh run view:*)"

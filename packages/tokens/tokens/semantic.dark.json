@@ -1,0 +1,86 @@
+{
+  "color": {
+    "bg": {
+      "base": "{palette.gray.900}",
+      "grouped": "{palette.gray.950}",
+      "elevated": "{palette.gray.850}",
+      "elevated-2": "{palette.gray.800}",
+      "sunken": "{palette.gray.950}",
+      "inverse": "{palette.gray.25}"
+    },
+    "label": {
+      "primary": "{palette.gray.25}",
+      "secondary": "{palette.gray.350}",
+      "tertiary": "{palette.gray.500}",
+      "quaternary": "{palette.gray.650}",
+      "on-accent": "{palette.gray.0}",
+      "on-inverse": "{palette.gray.925}"
+    },
+    "separator": {
+      "default": "rgba(255, 255, 255, 0.12)",
+      "opaque": "{palette.gray.800}"
+    },
+    "border": {
+      "control": "{palette.gray.500}"
+    },
+    "fill": {
+      "primary": "rgba(120, 122, 134, 0.36)",
+      "secondary": "rgba(120, 122, 134, 0.28)",
+      "tertiary": "rgba(120, 122, 134, 0.20)"
+    },
+    "accent": {
+      "default": "{palette.blue.dark}",
+      "solid": "{palette.blue.solid-dark}",
+      "soft": "{palette.blue.soft-dark}"
+    },
+    "success": {
+      "text": "{palette.green.text-dark}",
+      "solid": "{palette.green.dark}",
+      "soft": "{palette.green.soft-dark}"
+    },
+    "warning": {
+      "text": "{palette.orange.text-dark}",
+      "solid": "{palette.orange.dark}",
+      "soft": "{palette.orange.soft-dark}"
+    },
+    "danger": {
+      "text": "{palette.red.text-dark}",
+      "solid": "{palette.red.light}",
+      "soft": "{palette.red.soft-dark}"
+    },
+    "hue": {
+      "blue": "{palette.blue.dark}",
+      "indigo": "{palette.indigo.dark}",
+      "purple": "{palette.purple.dark}",
+      "pink": "{palette.pink.dark}",
+      "red": "{palette.red.dark}",
+      "orange": "{palette.orange.dark}",
+      "yellow": "{palette.yellow.dark}",
+      "green": "{palette.green.dark}",
+      "teal": "{palette.teal.dark}",
+      "mint": "{palette.mint.dark}",
+      "cyan": "{palette.cyan.dark}",
+      "brown": "{palette.brown.dark}",
+      "graphite": "{palette.gray.500}"
+    },
+    "state": {
+      "hover": "rgba(255, 255, 255, 0.10)",
+      "pressed": "rgba(255, 255, 255, 0.18)"
+    },
+    "scrim": "rgba(0, 0, 0, 0.56)"
+  },
+  "elevation": {
+    "1": "none",
+    "2": "0 8px 24px rgba(0, 0, 0, 0.40)",
+    "3": "0 16px 40px rgba(0, 0, 0, 0.50)",
+    "4": "0 32px 72px rgba(0, 0, 0, 0.60)"
+  },
+  "material": {
+    "clear": "rgba(37, 38, 43, 0.24)",
+    "thin": "rgba(37, 38, 43, 0.64)",
+    "regular": "rgba(37, 38, 43, 0.78)",
+    "thick": "rgba(37, 38, 43, 0.90)",
+    "edge": "rgba(255, 255, 255, 0.12)",
+    "dim": "rgba(0, 0, 0, 0.35)"
+  }
+}

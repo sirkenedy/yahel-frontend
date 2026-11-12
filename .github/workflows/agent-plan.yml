@@ -1,0 +1,28 @@
+name: Agent plan
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+jobs:
+  plan:
+    if: vars.AGENTS_ENABLED == 'true' && github.event.label.name == 'spec:approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/planner.md and act as that agent, following it exactly.
+            Plan spec issue #${{ github.event.issue.number }} in ${{ github.repository }}.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Read,Grep,Glob,Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue comment:*),Bash(gh issue edit:*)"

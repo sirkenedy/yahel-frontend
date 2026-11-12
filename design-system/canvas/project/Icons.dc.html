@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Icons, app icons and mark</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 56px 72px; background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">11 Icons</div>
+<h1 style="margin: 0; font-size: 48px; line-height: 52px; font-weight: 700; letter-spacing: -0.025em">One icon family, nine app icons, one mark</h1>
+</div>
+<p style="margin: 0; font-size: 17px; line-height: 24px; color: #4E4F59; max-width: 520px">Interface icons are Phosphor, under the MIT licence, stored under our own names so the family can be swapped. App icons and the mark are drawn by us.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; flex-grow: 1; min-height: 0">
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Interface icons</div><div style="font-size: 13px; color: #6A6C77">12 of the 83 in the first set</div></div>
+<div style="display: grid; grid-template-columns: 72px repeat(12, minmax(0, 1fr)); gap: 14px 6px; align-items: center">
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Regular</div>
+<sc-for list="{{regular}}" as="i" hint-placeholder-count="12"><img src="{{i.src}}" alt="{{i.name}}" style="width: 28px; height: 28px; justify-self: center"></sc-for>
+<div style="font-size: 13px; font-weight: 600; color: #4E4F59">Filled</div>
+<sc-for list="{{fill}}" as="i" hint-placeholder-count="12"><img src="{{i.src}}" alt="{{i.name}}, filled" style="width: 28px; height: 28px; justify-self: center"></sc-for>
+<div></div>
+<sc-for list="{{regular}}" as="i" hint-placeholder-count="12"><div style="font-size: 11px; color: #6A6C77; text-align: center">{{i.name}}</div></sc-for>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59">Regular sits beside Regular and Medium text, Bold beside Semibold and Bold. Filled marks the selected tab and toggled-on controls, so selection never depends on colour alone.</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">App icons</div><div style="font-size: 13px; color: #6A6C77">Final colours; white glyph at least 3:1 on each</div></div>
+<div style="display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{apps}}" as="app" hint-placeholder-count="9">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+<div style="width: 64px; height: 64px; border-radius: 16px; background: {{app.color}}; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 10px rgba(11,11,13,0.12)"><svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{app.d}}"/></svg></div>
+<div style="font-size: 13px; font-weight: 500">{{app.name}}</div>
+<div style="font-size: 11px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #6A6C77">{{app.color}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Icon families compared</div>
+<div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 2fr 0.7fr; gap: 10px 16px; font-size: 14px; align-items: baseline">
+<div style="font-size: 12px; font-weight: 600; color: #6A6C77">Family</div><div style="font-size: 12px; font-weight: 600; color: #6A6C77">Needed icons</div><div style="font-size: 12px; font-weight: 600; color: #6A6C77">Filled tab icons</div><div style="font-size: 12px; font-weight: 600; color: #6A6C77">Weights</div><div style="font-size: 12px; font-weight: 600; color: #6A6C77">Licence</div>
+<div style="font-weight: 600">Phosphor <span style="padding: 2px 8px; border-radius: 6px; background: #0064E0; color: #FFFFFF; font-size: 11px">Chosen</span></div><div>80 of 80</div><div>12 of 12</div><div>Thin, light, regular, bold, fill, duotone</div><div>MIT</div>
+<div style="font-weight: 600">Tabler</div><div>80 of 80</div><div>11 of 12</div><div>Outline, filled</div><div>MIT</div>
+<div style="font-weight: 600">Lucide</div><div>80 of 80</div><div>0 of 12</div><div>One outline</div><div>ISC</div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59; margin-top: auto">Counted from the published packages. Phosphor is the only one with a complete filled set and drawn weights, the two behaviours of Apple's symbols this system depends on.</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 18px">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">The mark</div>
+<div style="display: flex; align-items: center; gap: 20px">
+<svg role="img" aria-label="Yahel mark" width="96" height="96" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em">Yahel</div><div style="font-size: 14px; color: #4E4F59">Tile for the launcher and sign-in</div></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="padding: 16px; border-radius: 14px; background: #F3F4F8; display: flex; align-items: center; gap: 12px; color: #0B0B0D"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="none" stroke="#0B0B0D" stroke-width="4.5"/><circle cx="24" cy="24" r="5.5" fill="#0B0B0D"/></svg><span style="font-size: 17px; font-weight: 600">Yahel</span></div>
+<div style="padding: 16px; border-radius: 14px; background: #0E0E11; display: flex; align-items: center; gap: 12px; color: #F5F5F7"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="none" stroke="#F5F5F7" stroke-width="4.5"/><circle cx="24" cy="24" r="5.5" fill="#F5F5F7"/></svg><span style="font-size: 17px; font-weight: 600">Yahel</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 16px">
+<svg aria-hidden="true" width="32" height="32" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+<svg aria-hidden="true" width="24" height="24" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0064E0"/><circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/><circle cx="24" cy="24" r="4" fill="#FFFFFF"/></svg>
+<div style="font-size: 13px; color: #4E4F59">32, 24 and 16. A name search for trademarks is still needed before launch.</div>
+</div>
+</div>
+
+<div style="box-sizing: border-box; padding: 24px 28px; border-radius: 20px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.06), 0 1px 1px rgba(11,11,13,0.04); display: flex; flex-direction: column; gap: 14px; flex-grow: 1">
+<div style="font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Typeface delivery</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid rgba(11,11,13,0.08)"><div><div style="font-size: 15px; font-weight: 600">System fonts only</div><div style="font-size: 13px; color: #4E4F59">Three different-looking products</div></div><div style="font-size: 15px; font-weight: 600; white-space: nowrap">0 KB</div></div>
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid rgba(11,11,13,0.08)"><div><div style="font-size: 15px; font-weight: 600">Inter everywhere</div><div style="font-size: 13px; color: #4E4F59">Apple users download a font to replace a better one</div></div><div style="font-size: 15px; font-weight: 600; white-space: nowrap">48 KB all</div></div>
+<div style="display: flex; justify-content: space-between; gap: 16px; padding: 12px; margin: 8px -12px 0; border-radius: 12px; background: #E6F0FE"><div><div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 15px; font-weight: 600">System first, Inter behind</span><span style="padding: 2px 8px; border-radius: 6px; background: #0064E0; color: #FFFFFF; font-size: 11px; font-weight: 600">Chosen</span></div><div style="font-size: 13px; color: #4E4F59">San Francisco on Apple devices, one consistent face elsewhere</div></div><div style="font-size: 15px; font-weight: 600; white-space: nowrap; text-align: right">0 KB Apple<br>48 KB others</div></div>
+</div>
+<div style="font-size: 13px; line-height: 18px; color: #4E4F59; margin-top: auto">Sizes measured from the Inter Variable package, Latin subset. Latin Extended adds 85 KB only when those characters appear.</div>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+const names = ['Home', 'Folder', 'People', 'Search', 'Mail', 'Calendar', 'Chat', 'Star', 'Bell', 'Settings', 'Share', 'Trash'];
+const reg = ['d45eea99bcdb7d28cbc7ca35306acf73', 'f40360e7907713607f82e28b17135861', 'f61399fd879a4c55b96b3c3bc9e16c8e', '060ac5d072fffa2454358c6bc37b0992', '5c6757c1761f472b7c448e14a949860a', '18a8e4decffd1b0a8e7103eab3f82efb', 'b12bb0f743567473438ee54478e3e247', '00e4c38193ec1a1d8bada6167bb33b76', '4071de526ed796784753cadc38ab97f0', '5d1e4ba056ee32c33babff4b9eaff556', '9c83fd7b8db96a3742e6386bf3a42e7f', 'edf8572f3894970ecfdad9bbf673b76c'];
+const fil = ['b1f8e064c4bc770337dd1553241cba64', '090cbb82994a682a80d0d3b5308f461f', 'a7ee859325ee514638b77146d3b6522a', '283d34e4d33bc1710fc4520e9815d5cd', 'b015e4f0d4c4224fa0f4416936d3fa3f', '23f3c0e4c31f9588996ad13f8302cefe', '7ca105007c73c8911eb26f96638e5ba6', 'ea5b86f557cd928cd62eaac83a3ba7ae', 'caedd86475d5527f2e193d6715afafa3', 'd57b74bb214dce68a39af7865746c70a', '4c00cc4dfc9a4818202b2e9aceee4278', '95e2304974ffd2ed9cba98fdef1cc7b2'];
+return {
+regular: names.map((name, i) => ({ name, src: '/_blob/' + reg[i] })),
+fill: names.map((name, i) => ({ name, src: '/_blob/' + fil[i] })),
+apps: [
+{ name: 'Mail', color: '#2389E2', d: 'M6 5h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM4 8l8 6 8-6' },
+{ name: 'Calendar', color: '#AC040C', d: 'M6 4.5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-10a3 3 0 0 1 3-3zM3 9.5h18M8 3v3M16 3v3' },
+{ name: 'Drive', color: '#0C7B60', d: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.5h7.4A2.5 2.5 0 0 1 21 10v6.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z' },
+{ name: 'Docs', color: '#5335CF', d: 'M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 12h6M9 16h6' },
+{ name: 'Sheets', color: '#38A017', d: 'M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zM4 10h16M4 15h16M10 4v16' },
+{ name: 'Slides', color: '#EF6505', d: 'M5.5 5h13A2.5 2.5 0 0 1 21 7.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 14.5v-7A2.5 2.5 0 0 1 5.5 5zM12 17v3M8.5 20h7' },
+{ name: 'Chat', color: '#D040B9', d: 'M12 4c4.7 0 8.5 3.2 8.5 7.2s-3.8 7.2-8.5 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.5C4.4 15.2 3.5 13.3 3.5 11.2 3.5 7.2 7.3 4 12 4z' },
+{ name: 'Meet', color: '#92009C', d: 'M6 6.5h6a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3zM15 10.5l5.5-3v9l-5.5-3' },
+{ name: 'Admin', color: '#4A4B55', d: 'M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8zM9.2 12l2 2 3.6-3.8' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

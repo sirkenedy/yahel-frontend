@@ -1,0 +1,12 @@
+node_modules
+dist
+.nx
+coverage
+playwright-report
+test-results
+*.local
+.env
+.env.*
+!.env.example
+.agent
+.DS_Store

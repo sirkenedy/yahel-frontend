@@ -1,0 +1,67 @@
+name: Agent review
+
+# Four independent reviewers read every pull request. Each writes a verdict file; the job fails
+# unless the verdict is an approval. Pull requests from forks receive no secrets, so they fail closed.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+
+concurrency:
+  group: agent-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  id-token: write
+
+jobs:
+  review:
+    name: Review (${{ matrix.name }})
+    if: vars.AGENTS_ENABLED == 'true' && !github.event.pull_request.draft && github.event.action != 'labeled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: code, agent: reviewer, browsers: '' }
+          - { name: design, agent: design-guardian, browsers: '' }
+          - { name: security, agent: security-reviewer, browsers: '' }
+          - { name: qa, agent: qa, browsers: 'chromium webkit' }
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+      - uses: ./.github/actions/setup
+        with: { browsers: '${{ matrix.browsers }}' }
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/${{ matrix.agent }}.md and act as that agent, following it exactly.
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}. The base is origin/main.
+            Write your verdict to .agent/${{ matrix.name }}-verdict.json in the shape that file specifies,
+            post your findings as one pull request comment, then stop. You may not modify any other file.
+          claude_args: |
+            --max-turns 80
+            --allowedTools "Read,Grep,Glob,Write(.agent/**),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh issue view:*),Bash(gh pr comment:*),Bash(pnpm build:*),Bash(pnpm test:*),Bash(pnpm e2e:*),Bash(pnpm check:*),Bash(pnpm lint:*),Bash(pnpm typecheck:*),Bash(pnpm exec playwright:*)"
+      - name: Require an approval verdict
+        run: |
+          git show origin/main:scripts/agent/check-verdict.mjs > "$RUNNER_TEMP/check-verdict.mjs"
+          node "$RUNNER_TEMP/check-verdict.mjs" ${{ matrix.name }}
+
+  gate:
+    name: Agent review passed
+    if: always()
+    needs: [review]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all four reviews, or a maintainer's approval when agents are switched off
+        run: |
+          if [ "${{ needs.review.result }}" = "success" ]; then echo "All reviewers approved."; exit 0; fi
+          if [ "${{ vars.AGENTS_ENABLED }}" != "true" ] && [ "${{ contains(github.event.pull_request.labels.*.name, 'human-approved') }}" = "true" ]; then
+            echo "Agents are off; a maintainer approved this pull request."; exit 0
+          fi
+          echo "::error::Agent review did not pass (result: ${{ needs.review.result }})"; exit 1

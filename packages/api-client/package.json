@@ -1,0 +1,22 @@
+{
+  "name": "@yahel/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "openapi-typescript spec/openapi.json -o src/schema.d.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "nx": {
+    "tags": [
+      "type:data"
+    ]
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  }
+}

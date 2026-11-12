@@ -1,0 +1,23 @@
+{
+  "app": {
+    "mail": "#2389E2",
+    "calendar": "#AC040C",
+    "drive": "#0C7B60",
+    "docs": "#5335CF",
+    "sheets": "#38A017",
+    "slides": "#EF6505",
+    "chat": "#D040B9",
+    "meet": "#92009C",
+    "admin": "{palette.gray.750}"
+  },
+  "avatar": {
+    "blue": "{palette.blue.light}",
+    "indigo": "{palette.indigo.light}",
+    "purple": "{palette.purple.light}",
+    "pink": "{palette.pink.light}",
+    "red": "{palette.red.light}",
+    "teal": "{palette.teal.light}",
+    "brown": "{palette.brown.light}",
+    "graphite": "{palette.gray.600}"
+  }
+}

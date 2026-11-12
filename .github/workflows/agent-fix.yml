@@ -1,0 +1,76 @@
+name: Agent fix
+
+# When CI or the agent review fails on an agent's pull request, the implementer gets up to
+# three attempts to fix it. After that the pull request is handed to a person.
+# workflow_run always uses this file from the default branch.
+on:
+  workflow_run:
+    workflows: [CI, Agent review]
+    types: [completed]
+
+concurrency:
+  group: agent-fix-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  id-token: write
+
+jobs:
+  fix:
+    if: vars.AGENTS_ENABLED == 'true' && github.event.workflow_run.conclusion == 'failure' && startsWith(github.event.workflow_run.head_branch, 'agent/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - uses: actions/checkout@v6
+        with: { ref: '${{ github.event.workflow_run.head_branch }}', fetch-depth: 0, token: '${{ secrets.AGENT_GH_TOKEN }}' }
+      - name: Decide whether to try again
+        id: plan
+        run: |
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -z "$pr" ]; then echo "No open pull request for $BRANCH."; exit 0; fi
+          if [ "$(git rev-parse HEAD)" != "${{ github.event.workflow_run.head_sha }}" ]; then echo "The branch moved on since this run; skipping."; exit 0; fi
+          labels=$(gh pr view "$pr" --json labels --jq '[.labels[].name] | join(",")')
+          case "$labels" in
+            *needs-human*) echo "Already handed to a person."; exit 0 ;;
+            *attempt:3*)
+              gh pr merge "$pr" --disable-auto || true
+              gh pr edit "$pr" --add-label needs-human
+              gh pr comment "$pr" --body "Three automatic fix attempts failed. Auto-merge is off; a person needs to look at this."
+              exit 0 ;;
+            *attempt:2*) next=attempt:3 ;;
+            *attempt:1*) next=attempt:2 ;;
+            *) next=attempt:1 ;;
+          esac
+          gh pr edit "$pr" --add-label "$next"
+          mkdir -p .agent
+          gh run view "${{ github.event.workflow_run.id }}" --log-failed 2>/dev/null | tail -n 400 > .agent/failure.log || true
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+      - if: steps.plan.outputs.pr != ''
+        uses: ./.github/actions/setup
+        with: { browsers: chromium }
+      - if: steps.plan.outputs.pr != ''
+        run: |
+          git config user.name "yahel-agent"
+          git config user.email "yahel-agent@users.noreply.github.com"
+      - if: steps.plan.outputs.pr != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN }}
+          prompt: |
+            Read .claude/agents/implementer.md and act as that agent, in the "fixing a rejected pull request" mode.
+            Pull request #${{ steps.plan.outputs.pr }} on branch ${{ github.event.workflow_run.head_branch }} failed the
+            "${{ github.event.workflow_run.name }}" workflow. The tail of the failing log is in .agent/failure.log, and
+            reviewer findings are in the pull request comments (gh pr view ${{ steps.plan.outputs.pr }} --comments).
+            Fix the causes, run pnpm verify, commit and push to the same branch, reply on the pull request with what
+            you changed for each finding, then stop.
+          claude_args: |
+            --max-turns 150
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh pr checks:*),Bash(gh issue view:*)"

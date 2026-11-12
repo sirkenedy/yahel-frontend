@@ -1,0 +1,26 @@
+name: Protected paths
+
+# pull_request_target runs this file and the script from the base branch, so a pull request
+# cannot weaken the check by editing either. No code from the pull request is checked out or run.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  protected:
+    name: Protected paths
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: { ref: '${{ github.event.pull_request.base.sha }}' }
+      - name: List files changed by the pull request
+        run: gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --paginate --jq '.[].filename' > "$RUNNER_TEMP/changed.txt"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node scripts/agent/check-protected-paths.mjs "$RUNNER_TEMP/changed.txt"
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
