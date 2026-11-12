@@ -1,42 +1,229 @@
 {
   "v": 3,
-  "createdOnFiles": { "v": 1, "at": "2026-11-11T12:00:00Z" },
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-11T12:00:00Z"
+  },
   "title": "Yahel Design System",
-  "launch": { "view": "canvas" },
-  "pages": [{ "id": "system", "name": "Design system" }, { "id": "decisions", "name": "Decisions and additions" }],
+  "launch": {
+    "view": "canvas",
+    "page": "overview"
+  },
+  "pages": [
+    {
+      "id": "overview",
+      "name": "0 Overview"
+    },
+    {
+      "id": "foundations",
+      "name": "1 Foundations"
+    },
+    {
+      "id": "components",
+      "name": "2 Components and patterns"
+    },
+    {
+      "id": "products",
+      "name": "3 Products"
+    },
+    {
+      "id": "website",
+      "name": "4 Website"
+    },
+    {
+      "id": "accounts",
+      "name": "5 Accounts and sign-in"
+    },
+    {
+      "id": "decisions",
+      "name": "6 Decisions"
+    }
+  ],
   "boards": {
-    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "00 Overview" },
-    "Color.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1100, "title": "01 Color" },
-    "Typography.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 1100, "title": "02 Typography" },
-    "ShapeDepth.dc.html": { "x": 4560, "y": 0, "w": 1440, "h": 1100, "title": "03 Space, shape, depth, motion" },
-    "Components.dc.html": { "x": 0, "y": 1520, "w": 1440, "h": 1100, "title": "04 Components" },
-    "MailWeb.dc.html": { "x": 1520, "y": 1520, "w": 1440, "h": 900, "title": "05 Mail, web", "expand": "fill" },
-    "DrivePhone.dc.html": { "x": 3040, "y": 1520, "w": 390, "h": 844, "title": "06 Drive, phone, light" },
-    "HomePhoneDark.dc.html": { "x": 3510, "y": 1520, "w": 390, "h": 844, "title": "07 Home, phone, dark" },
-    "States.dc.html": { "x": 3980, "y": 1520, "w": 1440, "h": 1100, "title": "08 States and feedback" },
-    "Patterns.dc.html": { "x": 5500, "y": 1520, "w": 1440, "h": 1100, "title": "09 Experience patterns" },
-    "Decisions.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1100, "title": "10 Decisions, tested", "page": "decisions" },
-    "Icons.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 1100, "title": "11 Icons, app icons and mark", "page": "decisions" },
-    "Charts.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 1100, "title": "12 Data visualisation", "page": "decisions" }
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Overview / Overview",
+      "page": "overview"
+    },
+    "foundations/Color.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Foundations / Color",
+      "page": "foundations"
+    },
+    "foundations/Typography.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Foundations / Typography",
+      "page": "foundations"
+    },
+    "foundations/ShapeDepth.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Foundations / Space, shape, depth and motion",
+      "page": "foundations"
+    },
+    "foundations/Icons.dc.html": {
+      "x": 4560,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Foundations / Icons, app icons and mark",
+      "page": "foundations"
+    },
+    "foundations/Charts.dc.html": {
+      "x": 6080,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Foundations / Data visualisation",
+      "page": "foundations"
+    },
+    "components/Components.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Components and patterns / Components",
+      "page": "components"
+    },
+    "components/States.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Components and patterns / States and feedback",
+      "page": "components"
+    },
+    "components/Patterns.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Components and patterns / Experience patterns",
+      "page": "components"
+    },
+    "website/Landing.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 5000,
+      "title": "Website / Home page, web",
+      "page": "website",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "accounts/Auth.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Accounts and sign-in / Sign in and create account, working prototype",
+      "page": "accounts",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "accounts/AuthFlow.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Accounts and sign-in / Account flows and shared sign-in",
+      "page": "accounts"
+    },
+    "decisions/Decisions.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Decisions / Decisions, tested",
+      "page": "decisions"
+    },
+    "website/WebsiteSystem.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Website / Type, layout and scroll motion",
+      "page": "website",
+      "is_interactive": true
+    },
+    "website/About.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 2300,
+      "title": "Website / About",
+      "page": "website",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "website/Careers.dc.html": {
+      "x": 4560,
+      "y": 0,
+      "w": 1440,
+      "h": 2200,
+      "title": "Website / Careers",
+      "page": "website",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "products/mail/MailWeb.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Products / Mail / Web",
+      "expand": "fill",
+      "page": "products"
+    },
+    "products/drive/DrivePhone.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Products / Drive / Phone, light",
+      "page": "products"
+    },
+    "products/home/HomePhoneDark.dc.html": {
+      "x": 1990,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "Products / Home / Phone, dark",
+      "page": "products"
+    }
   },
   "order": [
     "Main.dc.html",
-    "Color.dc.html",
-    "Typography.dc.html",
-    "ShapeDepth.dc.html",
-    "Components.dc.html",
-    "MailWeb.dc.html",
-    "DrivePhone.dc.html",
-    "HomePhoneDark.dc.html",
-    "States.dc.html",
-    "Patterns.dc.html",
-    "Decisions.dc.html",
-    "Icons.dc.html",
-    "Charts.dc.html"
+    "foundations/Color.dc.html",
+    "foundations/Typography.dc.html",
+    "foundations/ShapeDepth.dc.html",
+    "foundations/Icons.dc.html",
+    "foundations/Charts.dc.html",
+    "components/Components.dc.html",
+    "components/States.dc.html",
+    "components/Patterns.dc.html",
+    "products/mail/MailWeb.dc.html",
+    "products/drive/DrivePhone.dc.html",
+    "products/home/HomePhoneDark.dc.html",
+    "website/Landing.dc.html",
+    "accounts/Auth.dc.html",
+    "accounts/AuthFlow.dc.html",
+    "decisions/Decisions.dc.html",
+    "website/WebsiteSystem.dc.html",
+    "website/About.dc.html",
+    "website/Careers.dc.html"
   ],
-  "notes": {
-    "row-foundations": { "x": 0, "y": -300, "text": "Foundations", "kind": "title1", "maxW": 6000 },
-    "row-applied": { "x": 0, "y": 1220, "text": "Components and product screens", "kind": "title1", "maxW": 6940 }
-  },
+  "notes": {},
   "designSystems": []
 }

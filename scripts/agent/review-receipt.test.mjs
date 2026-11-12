@@ -13,7 +13,7 @@ test('anything touching sign-in, the API client, dependencies, tooling or the ru
 });
 
 test('documentation alone needs no reviewers; any code beside it does', () => {
-  assert.equal(classify(['docs/roadmap.md', 'design-system/docs/components/button.md', 'README.md']), 'light');
+  assert.equal(classify(['docs/roadmap.md', 'design-system/docs/components/button.md', 'design-system/canvas/project/website/Landing.dc.html', 'README.md']), 'light');
   assert.equal(classify(['docs/roadmap.md', 'apps/shell/src/features/account/account.tsx']), 'standard');
   assert.equal(classify(['docs/agents.md']), 'full');
   assert.equal(classify([]), 'light');

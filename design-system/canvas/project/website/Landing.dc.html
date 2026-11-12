@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Yahel home page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+a{color:#0064E0}a:hover{color:#004FB3}
+html{scroll-behavior:smooth}
+[data-motion="on"] [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity 420ms cubic-bezier(0.2,0,0,1),transform 620ms cubic-bezier(0.2,0,0,1);transition-delay:calc(var(--i,0)*70ms)}
+[data-motion="on"] [data-reveal="pop"]{transform:translateY(18px) scale(0.86);transition-timing-function:cubic-bezier(0.2,0,0,1),cubic-bezier(0.3,1.3,0.4,1)}
+[data-motion="on"] [data-reveal][data-in]{opacity:1;transform:none}
+[data-nav]{transition:background-color 280ms cubic-bezier(0.2,0,0,1),box-shadow 280ms cubic-bezier(0.2,0,0,1),height 280ms cubic-bezier(0.2,0,0,1)}
+[data-scrolled] [data-nav]{background-color:rgba(255,255,255,0.82);box-shadow:0 1px 0 rgba(11,11,13,0.10);height:56px}
+[data-lift]{transition:transform 280ms cubic-bezier(0.3,1.3,0.4,1),box-shadow 280ms cubic-bezier(0.2,0,0,1)}
+[data-lift]:hover{transform:translateY(-4px)}
+[data-press]{transition:transform 180ms cubic-bezier(0.2,0,0,1),background-color 180ms cubic-bezier(0.2,0,0,1)}
+[data-press]:active{transform:scale(0.97)}
+[data-cta]:hover{background-color:#004FB3}
+[data-tab]{transition:background-color 180ms cubic-bezier(0.2,0,0,1),color 180ms cubic-bezier(0.2,0,0,1),box-shadow 180ms cubic-bezier(0.2,0,0,1)}
+[data-tab][aria-pressed="true"]{background-color:#FFFFFF;color:#0B0B0D;box-shadow:0 1px 2px rgba(11,11,13,0.06),0 4px 12px rgba(11,11,13,0.08)}
+[data-panel]{opacity:0;transform:translateY(16px) scale(0.985);pointer-events:none;transition:opacity 280ms cubic-bezier(0.4,0,1,1),transform 420ms cubic-bezier(0.2,0,0,1)}
+[data-panel][data-active="true"]{opacity:1;transform:none;pointer-events:auto;transition:opacity 420ms cubic-bezier(0.2,0,0,1) 90ms,transform 620ms cubic-bezier(0.2,0,0,1) 90ms}
+[data-hero-window]{transform:perspective(1600px) rotateX(calc(var(--tilt,0)*1deg)) translateY(calc(var(--sy,0)*-0.06px)) scale(var(--grow,1));transform-origin:50% 0;transition:transform 180ms linear}
+[data-menu]{opacity:0;transform:translateY(-8px) scale(0.98);pointer-events:none;transition:opacity 180ms cubic-bezier(0.4,0,1,1),transform 280ms cubic-bezier(0.2,0,0,1)}
+[data-menu][data-open="true"]{opacity:1;transform:none;pointer-events:auto}
+[data-foot] a{color:#4E4F59;text-decoration:none}[data-foot] a:hover{color:#0B0B0D}
+[data-navlink]{color:#0B0B0D;text-decoration:none}[data-navlink]:hover{color:#0064E0}
+:focus-visible{outline:3px solid #0064E0;outline-offset:2px;border-radius:8px}
+@media (max-width:860px){[data-navlinks]{display:none}}
+@media (prefers-reduced-motion:reduce){
+html{scroll-behavior:auto}
+[data-motion="on"] [data-reveal]{transform:none;transition:opacity 180ms linear;transition-delay:0ms}
+[data-panel]{transform:none;transition:opacity 180ms linear}
+[data-hero-window]{transform:none}
+[data-lift]:hover{transform:none}
+}
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="background: #F3F4F8; color: #0B0B0D; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif; overflow-x: clip">
+
+<header data-nav style="position: sticky; top: 0; z-index: 20; height: 68px; display: flex; align-items: center; backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px)">
+<div style="width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 24px">
+<a href="#top" aria-label="Yahel home" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0B0B0D; min-height: 44px">
+<span style="width: 32px; height: 32px; border-radius: 9px; background: #0064E0; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2" fill="#FFFFFF" stroke="none"/></svg>
+</span>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">Yahel</span>
+</a>
+<nav data-navlinks aria-label="Main" style="display: flex; align-items: center; gap: 28px; font-size: 15px; font-weight: 500; position: relative">
+<button type="button" data-press onClick="{{ toggleMenu }}" aria-expanded="{{ menuOpen }}" style="font: inherit; color: #0B0B0D; background: none; border: 0; padding: 0; min-height: 44px; cursor: pointer; display: flex; align-items: center; gap: 6px">Products
+<svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.5 6 8l3.5-3.5"/></svg>
+</button>
+<a data-navlink href="#accounts" style="min-height: 44px; display: flex; align-items: center">For business</a>
+<a data-navlink href="#security" style="min-height: 44px; display: flex; align-items: center">Security</a>
+<a data-navlink href="#plans" style="min-height: 44px; display: flex; align-items: center">Plans</a>
+<a data-navlink href="/website/About.dc.html" style="min-height: 44px; display: flex; align-items: center">About</a>
+<a data-navlink href="/website/Careers.dc.html" style="min-height: 44px; display: flex; align-items: center">Careers</a>
+<div data-menu data-open="{{ menuOpen }}" style="position: absolute; top: 52px; left: -24px; width: 560px; box-sizing: border-box; padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.94); backdrop-filter: saturate(180%) blur(24px); -webkit-backdrop-filter: saturate(180%) blur(24px); border: 1px solid rgba(11,11,13,0.08); box-shadow: 0 2px 6px rgba(11,11,13,0.06), 0 24px 56px rgba(11,11,13,0.16); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px">
+<sc-for list="{{ apps }}" as="app" hint-placeholder-count="9">
+<a href="#products" onClick="{{ app.pickFromMenu }}" style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; text-decoration: none; color: #0B0B0D; min-height: 44px">
+<span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: {{ app.color }}; display: flex; align-items: center; justify-content: center">
+<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ app.d }}"/></svg>
+</span>
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+<span style="font-size: 15px; font-weight: 600">{{ app.name }}</span>
+<span style="font-size: 13px; font-weight: 400; color: #4E4F59">{{ app.host }}</span>
+</span>
+</a>
+</sc-for>
+</div>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px">
+<a data-navlink href="/accounts/Auth.dc.html" style="font-size: 15px; font-weight: 500; min-height: 44px; padding: 0 12px; display: flex; align-items: center">Sign in</a>
+<a data-press data-cta href="/accounts/Auth.dc.html" style="font-size: 15px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 44px; padding: 0 18px; border-radius: 999px; display: flex; align-items: center">Create account</a>
+</div>
+</div>
+</header>
+
+<section id="top" style="max-width: 1200px; margin: 0 auto; padding: 72px 24px 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center">
+<div data-reveal style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Yahel Workspace</div>
+<h1 data-reveal style="--i: 1; margin: 0; max-width: 980px; font-size: clamp(40px, 6.2vw, 88px); line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; text-wrap: balance">Everything your work needs. One account.</h1>
+<p data-reveal style="--i: 2; margin: 0; max-width: 640px; font-size: clamp(17px, 1.6vw, 21px); line-height: 1.45; color: #4E4F59; text-wrap: pretty">Mail, calendar, files, documents and meetings that work together. Free for you, and built to run a whole organisation.</p>
+<div data-reveal style="--i: 3; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px 20px">
+<a data-press data-cta href="/accounts/Auth.dc.html" style="font-size: 17px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 52px; padding: 0 28px; border-radius: 999px; display: flex; align-items: center">Create an account</a>
+<a href="#accounts" style="font-size: 17px; font-weight: 500; text-decoration: none; min-height: 44px; display: flex; align-items: center; gap: 6px">Set up your business
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5 9.5 7 5 11.5"/></svg>
+</a>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; padding: 14px 18px; margin-top: 12px; border-radius: 28px; background: rgba(255,255,255,0.72); border: 1px solid rgba(11,11,13,0.06); box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08)">
+<sc-for list="{{ apps }}" as="app" hint-placeholder-count="9">
+<a data-reveal="pop" data-lift href="#products" onClick="{{ app.pickFromMenu }}" aria-label="{{ app.name }}" style="--i: {{ app.delay }}; width: 60px; height: 60px; border-radius: 16px; background: {{ app.color }}; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 10px rgba(11,11,13,0.12)">
+<svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ app.d }}"/></svg>
+</a>
+</sc-for>
+</div>
+
+<div data-hero-window data-reveal style="--i: 4; width: 100%; max-width: 1080px; margin-top: 20px; border-radius: 28px 28px 0 0; background: #FFFFFF; border: 1px solid rgba(11,11,13,0.08); border-bottom: 0; box-shadow: 0 2px 6px rgba(11,11,13,0.06), 0 32px 80px rgba(11,11,13,0.14); overflow: hidden; text-align: left">
+<div style="height: 48px; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid rgba(11,11,13,0.08)">
+<span style="display: flex; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #D5D6DD"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #D5D6DD"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #D5D6DD"></span></span>
+<span style="flex: 1 1 0; text-align: center; font-size: 13px; color: #4E4F59">yahel.com</span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500"><span style="width: 24px; height: 24px; border-radius: 999px; background: #E6F0FE; color: #0064E0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">AO</span>Personal</span>
+</div>
+<div style="padding: 28px; display: flex; flex-direction: column; gap: 20px; background: #F3F4F8">
+<div style="font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Good morning, Amara</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px">
+<div style="padding: 18px; border-radius: 20px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #4E4F59"><span style="width: 8px; height: 8px; border-radius: 999px; background: #AC040C"></span>Today</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="font-weight: 500">Design review</span><span style="color: #4E4F59">10:00</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="font-weight: 500">Lunch with Tobi</span><span style="color: #4E4F59">13:00</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="font-weight: 500">Budget check-in</span><span style="color: #4E4F59">15:30</span></div>
+</div>
+</div>
+<div style="padding: 18px; border-radius: 20px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #4E4F59"><span style="width: 8px; height: 8px; border-radius: 999px; background: #2389E2"></span>Unread mail</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Ngozi Eze</span><span style="color: #4E4F59">Contract draft for your review</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">Northwind Studio</span><span style="color: #4E4F59">Your invitation to join</span></div>
+</div>
+</div>
+<div style="padding: 18px; border-radius: 20px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #4E4F59"><span style="width: 8px; height: 8px; border-radius: 999px; background: #0C7B60"></span>Recent files</div>
+<div style="display: flex; flex-direction: column; gap: 10px; font-size: 15px">
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 22px; height: 22px; border-radius: 6px; background: #5335CF"></span><span style="font-weight: 500">Launch plan</span></div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 22px; height: 22px; border-radius: 6px; background: #38A017"></span><span style="font-weight: 500">Q3 budget</span></div>
+<div style="display: flex; align-items: center; gap: 10px"><span style="width: 22px; height: 22px; border-radius: 6px; background: #EF6505"></span><span style="font-weight: 500">Board update</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="products" style="background: #FFFFFF; padding: 112px 0; scroll-margin-top: 56px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px">
+<div data-reveal style="display: flex; flex-direction: column; gap: 16px; max-width: 720px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Products</div>
+<h2 style="margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance">Nine apps. One way of working.</h2>
+<p style="margin: 0; font-size: 19px; line-height: 1.5; color: #4E4F59">Each app has its own address and opens with the same account. Sign in once and move between them.</p>
+</div>
+<div data-reveal style="--i: 1; display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; border-radius: 20px; background: #ECEDF2; align-self: flex-start">
+<sc-for list="{{ apps }}" as="app" hint-placeholder-count="9">
+<button type="button" data-tab data-press aria-pressed="{{ app.pressed }}" onClick="{{ app.pick }}" style="font: inherit; font-size: 15px; font-weight: 600; color: #4E4F59; background: transparent; border: 0; min-height: 44px; padding: 0 16px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px">
+<span style="width: 10px; height: 10px; border-radius: 999px; background: {{ app.color }}"></span>{{ app.name }}
+</button>
+</sc-for>
+</div>
+<div data-reveal style="--i: 2; display: grid">
+<sc-for list="{{ apps }}" as="app" hint-placeholder-count="1">
+<div data-panel data-active="{{ app.active }}" aria-hidden="{{ app.hidden }}" style="grid-area: 1 / 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: 40px; align-items: center; padding: 40px; border-radius: 28px; background: #F3F4F8">
+<div style="display: flex; flex-direction: column; gap: 20px; align-items: flex-start">
+<span style="width: 72px; height: 72px; border-radius: 18px; background: {{ app.color }}; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 4px 10px rgba(11,11,13,0.12)">
+<svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="{{ app.d }}"/></svg>
+</span>
+<h3 style="margin: 0; font-size: 34px; line-height: 1.12; font-weight: 700; letter-spacing: -0.02em">{{ app.name }}</h3>
+<p style="margin: 0; font-size: 19px; line-height: 1.5; color: #4E4F59; max-width: 440px">{{ app.line }}</p>
+<a href="https://yahel.com" tabindex="{{ app.tabindex }}" style="font-size: 17px; font-weight: 500; text-decoration: none; min-height: 44px; display: flex; align-items: center; gap: 6px">Open {{ app.host }}
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2.5 9.5 7 5 11.5"/></svg>
+</a>
+</div>
+<div style="border-radius: 20px; background: #FFFFFF; border: 1px solid rgba(11,11,13,0.08); box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); overflow: hidden">
+<div style="height: 40px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #4E4F59; border-bottom: 1px solid rgba(11,11,13,0.08)">{{ app.host }}</div>
+<div style="display: flex; min-height: 280px">
+<div style="width: 30%; padding: 16px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid rgba(11,11,13,0.08)">
+<span style="height: 32px; border-radius: 10px; background: {{ app.color }}"></span>
+<span style="height: 10px; width: 80%; border-radius: 999px; background: #D5D6DD"></span>
+<span style="height: 10px; width: 60%; border-radius: 999px; background: #ECEDF2"></span>
+<span style="height: 10px; width: 70%; border-radius: 999px; background: #ECEDF2"></span>
+</div>
+<div style="flex: 1 1 0; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<span style="height: 14px; width: 45%; border-radius: 999px; background: #0B0B0D"></span>
+<span style="height: 10px; width: 92%; border-radius: 999px; background: #ECEDF2"></span>
+<span style="height: 10px; width: 84%; border-radius: 999px; background: #ECEDF2"></span>
+<span style="height: 10px; width: 66%; border-radius: 999px; background: #ECEDF2"></span>
+<span style="height: 96px; border-radius: 14px; background: {{ app.tint }}"></span>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section id="accounts" style="padding: 112px 0; scroll-margin-top: 56px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px">
+<div data-reveal style="display: flex; flex-direction: column; gap: 16px; max-width: 760px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Accounts</div>
+<h2 style="margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance">For you. For your whole organisation.</h2>
+<p style="margin: 0; font-size: 19px; line-height: 1.5; color: #4E4F59">One identity holds your personal account and your work. Switch between them without signing out.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 24px">
+<div data-reveal data-lift style="padding: 36px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); display: flex; flex-direction: column; gap: 20px; align-items: flex-start">
+<span style="width: 56px; height: 56px; border-radius: 999px; background: #E6F0FE; color: #0064E0; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700">AO</span>
+<h3 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">For yourself</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">A free personal account with mail, calendar, storage and documents. It is yours, whatever job you hold.</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 17px">
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #0064E0; font-weight: 700">✓</span>Your own address</li>
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #0064E0; font-weight: 700">✓</span>See and sign out your devices</li>
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #0064E0; font-weight: 700">✓</span>Export or delete your data yourself</li>
+</ul>
+<a data-press data-cta href="/accounts/Auth.dc.html" style="margin-top: 4px; font-size: 17px; font-weight: 600; color: #FFFFFF; background: #0064E0; text-decoration: none; min-height: 48px; padding: 0 24px; border-radius: 999px; display: flex; align-items: center">Create a personal account</a>
+</div>
+<div data-reveal data-lift style="--i: 1; padding: 36px; border-radius: 28px; background: #0B0B0D; color: #FFFFFF; display: flex; flex-direction: column; gap: 20px; align-items: flex-start">
+<span style="width: 56px; height: 56px; border-radius: 16px; background: #1668E3; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700">NS</span>
+<h3 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">For work or your business</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #C9CAD3">Bring your own domain. Give everyone an address, and manage people, devices and security from one place.</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 17px">
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #4C9AFF; font-weight: 700">✓</span>Mail on your company domain</li>
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #4C9AFF; font-weight: 700">✓</span>Invite people and organise teams</li>
+<li style="display: flex; gap: 10px"><span aria-hidden="true" style="color: #4C9AFF; font-weight: 700">✓</span>Require two-step verification</li>
+</ul>
+<a data-press href="/accounts/Auth.dc.html" style="margin-top: 4px; font-size: 17px; font-weight: 600; color: #0B0B0D; background: #FFFFFF; text-decoration: none; min-height: 48px; padding: 0 24px; border-radius: 999px; display: flex; align-items: center">Set up your business</a>
+</div>
+</div>
+</div>
+</section>
+
+<section id="security" style="background: #FFFFFF; padding: 112px 0; scroll-margin-top: 56px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px">
+<div data-reveal style="display: flex; flex-direction: column; gap: 16px; max-width: 720px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Security and control</div>
+<h2 style="margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance">You can always see who has access.</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 32px">
+<div data-reveal style="border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 600">Two-step verification</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">Add an authenticator app and backup codes. Trust a device so it asks less often.</p>
+</div>
+<div data-reveal style="--i: 1; border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 600">Devices and sessions</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">See every device signed in to your account, and sign any of them out from wherever you are.</p>
+</div>
+<div data-reveal style="--i: 2; border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 600">Your data is yours</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">Request a copy of your data or delete your account from your settings, without asking anyone.</p>
+</div>
+<div data-reveal style="--i: 3; border-top: 1px solid rgba(11,11,13,0.14); padding-top: 20px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 600">Clear when managed</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">A work account always says which organisation manages it and what that organisation can see.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section id="plans" style="padding: 112px 0; scroll-margin-top: 56px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px">
+<div data-reveal style="display: flex; flex-direction: column; gap: 16px; max-width: 720px">
+<div style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #0064E0">Plans</div>
+<h2 style="margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.06; font-weight: 700; letter-spacing: -0.03em">Start free.</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 24px">
+<div data-reveal style="padding: 32px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 17px; font-weight: 600">Personal</div>
+<div style="font-size: 44px; font-weight: 700; letter-spacing: -0.03em">Free</div>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">Every app, with [STORAGE] of storage.</p>
+</div>
+<div data-reveal style="--i: 1; padding: 32px; border-radius: 28px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(11,11,13,0.04), 0 12px 32px rgba(11,11,13,0.08); display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 17px; font-weight: 600">Business</div>
+<div style="font-size: 44px; font-weight: 700; letter-spacing: -0.03em">[YOUR PRICE]</div>
+<p style="margin: 0; font-size: 17px; line-height: 1.5; color: #4E4F59">Per person, each month. Your domain, admin controls and [STORAGE] each.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section style="padding: 0 24px 112px">
+<div data-reveal style="max-width: 1200px; margin: 0 auto; box-sizing: border-box; padding: 88px 32px; border-radius: 32px; background: #0B0B0D; color: #FFFFFF; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center">
+<h2 style="margin: 0; max-width: 760px; font-size: clamp(32px, 4.6vw, 64px); line-height: 1.04; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance">One account for all of it.</h2>
+<a data-press href="/accounts/Auth.dc.html" style="font-size: 17px; font-weight: 600; color: #0B0B0D; background: #FFFFFF; text-decoration: none; min-height: 52px; padding: 0 28px; border-radius: 999px; display: flex; align-items: center">Create an account</a>
+</div>
+</section>
+
+<footer data-foot style="border-top: 1px solid rgba(11,11,13,0.10); padding: 56px 0 40px">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 40px">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 32px; font-size: 15px">
+<div style="display: flex; flex-direction: column; gap: 12px"><div style="font-weight: 600">Products</div><a href="#products">Mail</a><a href="#products">Calendar</a><a href="#products">Drive</a><a href="#products">Docs</a><a href="#products">Sheets</a></div>
+<div style="display: flex; flex-direction: column; gap: 12px"><div style="font-weight: 600">More products</div><a href="#products">Slides</a><a href="#products">Chat</a><a href="#products">Meet</a><a href="#products">Admin</a></div>
+<div style="display: flex; flex-direction: column; gap: 12px"><div style="font-weight: 600">Company</div><a href="/website/About.dc.html">About</a><a href="/website/Careers.dc.html">Careers</a><a href="#plans">Plans</a></div>
+<div style="display: flex; flex-direction: column; gap: 12px"><div style="font-weight: 600">Trust</div><a href="#security">Security</a><a href="#top">Privacy</a><a href="#top">Terms</a><a href="#top">Help</a></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 13px; color: #4E4F59"><span>© Yahel</span><span>English</span></div>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5000}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { active: 'mail', menuOpen: false };
+this.rootRef = (el) => { this.rootEl = el; };
+}
+componentDidMount() {
+const root = this.rootEl;
+if (!root) return;
+try {
+const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const items = Array.prototype.slice.call(root.querySelectorAll('[data-reveal]'));
+if ('IntersectionObserver' in window) {
+this.io = new IntersectionObserver((entries) => {
+entries.forEach((entry) => {
+if (entry.isIntersecting) { entry.target.setAttribute('data-in', ''); this.io.unobserve(entry.target); }
+});
+}, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+root.setAttribute('data-motion', 'on');
+items.forEach((el) => this.io.observe(el));
+}
+const heroWindow = root.querySelector('[data-hero-window]');
+this.onScroll = (event) => {
+const target = event && event.target && event.target.scrollTop !== undefined ? event.target : document.scrollingElement;
+const y = (target && target.scrollTop) || window.scrollY || 0;
+if (y > 8) root.setAttribute('data-scrolled', ''); else root.removeAttribute('data-scrolled');
+if (heroWindow && !reduce) {
+const progress = Math.min(1, y / 520);
+heroWindow.style.setProperty('--sy', String(Math.min(y, 900)));
+heroWindow.style.setProperty('--tilt', String(6 - progress * 6));
+heroWindow.style.setProperty('--grow', String(0.94 + progress * 0.06));
+}
+};
+window.addEventListener('scroll', this.onScroll, true);
+this.onScroll();
+} catch (error) {
+root.removeAttribute('data-motion');
+}
+}
+componentWillUnmount() {
+if (this.io) this.io.disconnect();
+if (this.onScroll) window.removeEventListener('scroll', this.onScroll, true);
+}
+renderVals() {
+const active = this.state.active;
+const list = [
+{ id: 'mail', name: 'Mail', color: '#2389E2', tint: '#E3F0FB', line: 'Email on your personal address or your organisation’s domain.', d: 'M6 5h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM4 8l8 6 8-6' },
+{ id: 'calendar', name: 'Calendar', color: '#AC040C', tint: '#FBE4E5', line: 'Plan your day and find time with other people.', d: 'M6 4.5h12a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-10a3 3 0 0 1 3-3zM3 9.5h18M8 3v3M16 3v3' },
+{ id: 'drive', name: 'Drive', color: '#0C7B60', tint: '#DDF3EC', line: 'Keep your files in one place, find them from anywhere and share them safely.', d: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6l2 2.5h7.4A2.5 2.5 0 0 1 21 10v6.5a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z' },
+{ id: 'docs', name: 'Docs', color: '#5335CF', tint: '#E9E4FA', line: 'Write documents together, at the same time.', d: 'M7 3h7l4 4v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 12h6M9 16h6' },
+{ id: 'sheets', name: 'Sheets', color: '#38A017', tint: '#E4F4DE', line: 'Spreadsheets for plans, budgets and data.', d: 'M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3zM4 10h16M4 15h16M10 4v16' },
+{ id: 'slides', name: 'Slides', color: '#EF6505', tint: '#FDE9DA', line: 'Build presentations and present them from any device.', d: 'M5.5 5h13A2.5 2.5 0 0 1 21 7.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 14.5v-7A2.5 2.5 0 0 1 5.5 5zM12 17v3M8.5 20h7' },
+{ id: 'chat', name: 'Chat', color: '#D040B9', tint: '#F9E3F5', line: 'Direct messages and group conversations for your team.', d: 'M12 4c4.7 0 8.5 3.2 8.5 7.2s-3.8 7.2-8.5 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.5C4.4 15.2 3.5 13.3 3.5 11.2 3.5 7.2 7.3 4 12 4z' },
+{ id: 'meet', name: 'Meet', color: '#92009C', tint: '#F3DDF5', line: 'Video meetings that start from a link.', d: 'M6 6.5h6a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-5a3 3 0 0 1 3-3zM15 10.5l5.5-3v9l-5.5-3' },
+{ id: 'admin', name: 'Admin', color: '#4A4B55', tint: '#E6E7EC', line: 'Manage people, domains and security for your organisation.', d: 'M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8zM9.2 12l2 2 3.6-3.8' }
+];
+const apps = list.map((app, index) => ({
+...app,
+host: app.id + '.yahel.com',
+delay: index + 4,
+active: String(app.id === active),
+pressed: String(app.id === active),
+hidden: String(app.id !== active),
+tabindex: app.id === active ? 0 : -1,
+pick: () => this.setState({ active: app.id }),
+pickFromMenu: () => this.setState({ active: app.id, menuOpen: false })
+}));
+return {
+apps,
+rootRef: this.rootRef,
+menuOpen: String(this.state.menuOpen),
+toggleMenu: () => this.setState({ menuOpen: !this.state.menuOpen })
+};
+}
+}
+</script>
+</body>
+</html>
