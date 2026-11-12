@@ -153,6 +153,19 @@ The owner decided the product name is **Yahel**. This replaces the name kept und
 - The icon stroke uses `border.control` until an icon stroke token exists.
 - Rejected: a text button ("Show") beside the field, which wraps and overflows at 200% text on narrow screens; revealing only while pressed, which cannot be used with a keyboard or assistive technology.
 
+### Public website: tokens, top bar, phone menu and page change (2026-11-12)
+
+Built in `apps/website` with its components in `@yahel/ui` (`Reveal`, `SiteBar`, `SiteMenu`, `LinkButton`) and their styles in `@yahel/ui/site.css`. `patterns/website.md` is updated to match. The canvas (`canvas/project/website/`) is not yet: it still draws the bar changing height, no phone menu and no page change, and is to be brought in line.
+
+- **Tokens added** to `tokens/scale.json`, because the pattern's numbers had no token and a raw value in product CSS is never the fix: `duration.reveal-move` (620 ms), `duration.stagger` (70 ms), `size.reveal-rise` (28), `space.72`, `space.88`, `space.112`, `radius.3xl` (32), `size.site-content` (1200), `size.site-bar` (68), `size.site-bar-compact` (56), `size.site-cta` (52), `breakpoint.site-nav` (860), and a `display` type group: `xl`, `l`, `title`, `lead`, `eyebrow` from the pattern's table, plus `heading` (20/600), `body` (17) and `label` (15/500), which the canvas uses but the table did not name. Display styles do not shrink on pointer devices, unlike the app type roles; that is why the website could not reuse them. The line heights of `label` (1.34) and `eyebrow` (1.4) were chosen here; the canvas gives none.
+- **The top bar compacts by transform, not height.** The pattern said both "height 68 to 56" and "only opacity and transform are animated". The bar's layout height stays 68; the glass layer draws up to 56 and the content rises 6. Rejected: animating height, which moves the page under a sticky element.
+- **Phone menu.** Under 860 the canvas hid the links and offered nothing in their place. A "Menu" button now opens a bottom sheet per `components/sheet.md`, listing the same links and Sign in. It closes on Escape, Close, a scrim press, choosing a link, Back, or widening past 860. It is a bottom sheet at every width below 860; the centred-panel form `sheet.md` asks for from 600 up is not built yet.
+- **Page change.** The motion table had no row for moving between pages. The old page fades out over 180 ms and the new page arrives by its own reveal, using view transitions where the browser has them. With reduced motion the fade stays, since it is not movement.
+- **Bar per page.** The home bar shows Sign in beside "Create account"; other pages show only "Create account", as their canvases do. The About canvas draws a 60 high, always-glass bar; the build follows the pattern (68, clear at the top, glass once scrolled) so every page has one bar.
+- **Card headings** on About use `display.title` (34) as the pattern's table says, where the canvas draws 28.
+- **Accessibility additions** not on the canvas: the current page in the bar is semibold as well as accent-coloured; the focus ring on an inverse band is `color.label.on-inverse`, because the accent ring measures under 3:1 there in three of four themes; links in the bar, menu and footer are underlined with increased contrast; scroll padding keeps focus and in-page targets clear of the bar; the footer gains an About link so About stays reachable on a phone without the menu.
+- **Dark and increased contrast** are derived from the semantic tokens; the canvas is light only and these looks have not had a design review.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |

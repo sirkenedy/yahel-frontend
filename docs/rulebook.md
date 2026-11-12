@@ -35,7 +35,7 @@ Mandatory. If a shortcut conflicts with a rule, the rule wins. Most rules are en
 
 ## 4. Security
 
-4.1 The access token is held in memory only. Nothing sensitive goes in web storage, URLs, logs, error reports or analytics. Only `@yahel/auth` touches `localStorage` or `sessionStorage`.
+4.1 The access token is held in memory only. Nothing sensitive goes in web storage, URLs, logs, error reports or analytics. Only `@yahel/auth` touches `localStorage` or `sessionStorage`. One exception: on the public website (`apps/website`) the router may keep, in `sessionStorage` only, the scroll position of pages already visited and its own marker that a page was reloaded after a failed load. Nothing else, and nothing from any other code.
 4.2 Never render untrusted HTML. `dangerouslySetInnerHTML`, `innerHTML`, `eval` and `new Function` are forbidden. Rich content (mail bodies, documents) goes through one sanctioned sanitiser, added with a security review, and is displayed in a sandbox.
 4.3 Validate the scheme of any URL that comes from data before using it in `href`, `src` or navigation. Only `https:`, `http:`, `mailto:` and `tel:` are allowed.
 4.4 Never trust the interface to enforce permission. If the interface hides an action, the API must still refuse it; flag any place where that is unverified.
