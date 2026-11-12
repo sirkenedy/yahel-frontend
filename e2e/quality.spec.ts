@@ -58,7 +58,8 @@ for (const screen of screens) {
       const interactive = [...document.querySelectorAll<HTMLElement>('a[href], button, input:not([type=hidden])')];
       return interactive
         .map((el) => ({ label: el.getAttribute('aria-label') ?? el.textContent?.trim() ?? el.getAttribute('name') ?? el.tagName, box: el.getBoundingClientRect() }))
-        .filter(({ box }) => box.width > 0 && box.height > 0 && box.height < min)
+        // Half a pixel of tolerance: browsers report fractional heights such as 43.99 for a 44 px control.
+        .filter(({ box }) => box.width > 0 && box.height > 0 && box.height < min - 0.5)
         .map(({ label, box }) => `${label}: ${Math.round(box.height)}px tall`);
     }, minimum);
     expect(small).toEqual([]);
@@ -68,6 +69,8 @@ for (const screen of screens) {
 test('layout holds at 200% text size', async ({ page }) => {
   await mockApi(page);
   await signIn(page);
+  // Wider letter spacing stands in for platforms whose fonts run wider than the development machine's.
+  await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
   await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
