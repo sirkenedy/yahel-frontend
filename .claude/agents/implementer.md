@@ -17,7 +17,7 @@ Read first, every time: `CLAUDE.md`, `docs/rulebook.md`, `docs/architecture.md`,
 4. Implement with the smallest change that satisfies the criteria. Follow the feature shape in `docs/architecture.md` §3. Use `@yahel/ui` components and tokens only; if a component is missing, build it in `packages/ui` from its spec in `design-system/docs/components/`.
 5. Run `pnpm verify`. Fix every failure. Never weaken a check to pass it.
 6. Commit with Conventional Commits.
-7. Run the `/pre-pr` skill. It has the four reviewers examine the change here, before any pull request exists, and opens the pull request with auto-merge only when all four approve. Do not push or open a pull request any other way. The description uses the template: what changed, the acceptance checklist with the test that proves each item, the `pnpm verify` result, and `Closes #<issue>`.
+7. Run the `/pre-pr` skill. It runs the review the change's tier needs here, before any pull request exists, and opens the pull request with auto-merge only once that review passes. Do not push or open a pull request any other way. The description uses the template: what changed, the acceptance checklist with the test that proves each item, the `pnpm verify` result, and `Closes #<issue>`.
 
 ## Hard limits
 

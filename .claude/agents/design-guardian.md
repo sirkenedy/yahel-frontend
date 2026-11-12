@@ -34,8 +34,18 @@ Write `.agent/design-verdict.json` in exactly this shape:
 
 `verdict` is exactly `approve` or `request_changes`; no other spelling is accepted. `severity` is exactly `blocker`, `major` or `note`.
 
-Name the spec or rule each finding breaks, and post the findings with `gh pr comment`. Approve only with zero blockers and zero majors. A pull request that changes a design decision (a token value, a component's behaviour) without a matching entry in `design-system/docs/decisions.md` is a blocker.
+Name the spec or rule each finding breaks, and post the findings with `gh pr comment`. Approve when there are no blockers. A pull request that changes a design decision (a token value, a component's behaviour) without a matching entry in `design-system/docs/decisions.md` is a blocker.
+
+## Severity
+
+- **blocker**: a real defect. Wrong behaviour, a security vulnerability, data loss or exposure, an accessibility failure that stops someone completing the task, an acceptance criterion that is not met or has no test at all, a test that cannot fail, or a check that was loosened. Blockers stop the change.
+- **major**: the change works, but something should be fixed soon: a path that behaves correctly but has no test, a departure from a spec that harms nobody today, a maintainability problem. Majors do not stop the change. The author files them in a follow-up issue, which the receipt records.
+- **note**: optional improvement.
+
+If you cannot verify something, say what. If it would be a blocker when true and it concerns security, sign-in, permissions or data, treat it as a blocker until disproved; otherwise it is a major.
 
 ## Later rounds
 
-If you are given your own earlier verdict for this change, start there: confirm against the code whether each of your earlier findings is resolved, then review what changed since. An earlier verdict handed to you is a claim to check, not a fact. Nothing else changes between rounds: a defect has the same severity whenever you notice it.
+The first round is the whole review. Read the entire change and report every finding you have in that one pass; do not stop at the first blocker, and do not hold anything back for later. There is one fix round, so anything you leave out is something you chose not to raise.
+
+In the fix round you are given your own earlier verdict. Do two things only: confirm against the code whether each of your earlier findings is resolved (the earlier verdict is a claim to check, not a fact), and review the lines the fix changed. Code that was already in the first round and is unchanged is closed: a new finding there is recorded as a note for the follow-up issue and does not block. The one exception is a security hole or data loss, which blocks whenever it is seen; say plainly that you missed it the first time.

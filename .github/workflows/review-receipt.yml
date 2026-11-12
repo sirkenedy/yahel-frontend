@@ -3,9 +3,11 @@ name: Review receipt
 # Reviews run on the author's machine before the pull request opens (/pre-pr). This check proves
 # that all four reviewers approved exactly the change being merged; any later edit invalidates it.
 # The script is taken from main so a pull request cannot weaken it.
+# A pull request the maintainer has labelled `human-approved` passes without a receipt: the
+# maintainer's approval stands in for the reviewers'.
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 permissions:
   contents: read
@@ -15,8 +17,11 @@ jobs:
     name: Review receipt
     runs-on: ubuntu-latest
     steps:
+      - if: ${{ contains(github.event.pull_request.labels.*.name, 'human-approved') }}
+        run: echo "Approved by the maintainer (human-approved label); no receipt needed."
       - uses: actions/checkout@v6
         with: { ref: '${{ github.event.pull_request.head.sha }}', fetch-depth: 0 }
-      - run: |
+      - if: ${{ !contains(github.event.pull_request.labels.*.name, 'human-approved') }}
+        run: |
           git show origin/main:scripts/agent/review-receipt.mjs > "$RUNNER_TEMP/review-receipt.mjs" 2>/dev/null || cp scripts/agent/review-receipt.mjs "$RUNNER_TEMP/review-receipt.mjs"
           node "$RUNNER_TEMP/review-receipt.mjs" check
