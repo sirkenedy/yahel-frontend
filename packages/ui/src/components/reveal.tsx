@@ -28,6 +28,8 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
   index?: number;
   /** `rise` fades in and rises. `pop` also grows from a little smaller with a small overshoot, for icons. */
   variant?: 'rise' | 'pop';
+  /** Arrives as soon as the page is drawn, without waiting to scroll into view. For tall content that opens a page. */
+  eager?: boolean;
   children: ReactNode;
 }
 
@@ -36,7 +38,7 @@ export interface RevealProps extends HTMLAttributes<HTMLDivElement> {
  * while the root carries `data-motion="on"`, which is set here once the browser can observe: without script,
  * or without IntersectionObserver, the content is simply visible.
  */
-export function Reveal({ as = 'div', index, variant = 'rise', style, children, ...props }: RevealProps) {
+export function Reveal({ as = 'div', index, variant = 'rise', eager = false, style, children, ...props }: RevealProps) {
   // Every tag in RevealTag takes the same attributes; one stands in for the rest so the element stays typed.
   const Tag = as as 'div';
   const ref = useRef<HTMLDivElement>(null);
@@ -47,6 +49,10 @@ export function Reveal({ as = 'div', index, variant = 'rise', style, children, .
     const element = ref.current;
     if (!element || !('IntersectionObserver' in window)) return;
     document.documentElement.setAttribute('data-motion', 'on');
+    if (eager) {
+      const frame = window.requestAnimationFrame(() => setShown(true));
+      return () => window.cancelAnimationFrame(frame);
+    }
     const io = sharedObserver();
     callbacks.set(element, () => setShown(true));
     io.observe(element);
@@ -54,10 +60,10 @@ export function Reveal({ as = 'div', index, variant = 'rise', style, children, .
       io.unobserve(element);
       callbacks.delete(element);
     };
-  }, []);
+  }, [eager]);
 
   return (
-    <Tag {...props} ref={ref} data-reveal={variant === 'pop' ? 'pop' : ''} data-in={shown ? '' : undefined} style={{ ...style, '--reveal-index': index ?? inherited } as CSSProperties}>
+    <Tag {...props} ref={ref} data-reveal-eager={eager ? '' : undefined} data-reveal={variant === 'pop' ? 'pop' : ''} data-in={shown ? '' : undefined} style={{ ...style, '--reveal-index': index ?? inherited } as CSSProperties}>
       <RevealIndexContext value={0}>{children}</RevealIndexContext>
     </Tag>
   );

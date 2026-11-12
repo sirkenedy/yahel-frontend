@@ -124,6 +124,18 @@ describe('Reveal', () => {
     expect(observer().observed.has(icon)).toBe(false);
   });
 
+  it('arrives on the next frame without being seen when it is eager', async () => {
+    render(<Reveal eager>Opens the page</Reveal>);
+    const block = screen.getByText('Opens the page');
+
+    expect(block).toHaveAttribute('data-reveal-eager', '');
+    expect(block).not.toHaveAttribute('data-in');
+
+    await act(() => new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve())));
+
+    expect(block).toHaveAttribute('data-in');
+  });
+
   it('leaves content visible when the browser cannot observe', () => {
     vi.unstubAllGlobals();
     expect('IntersectionObserver' in window).toBe(false);

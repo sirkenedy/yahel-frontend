@@ -62,6 +62,7 @@
       { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
     );
     root.querySelectorAll('[data-reveal]').forEach(function (element) {
+      if (element.hasAttribute('data-reveal-eager')) return reveal(element);
       observer.observe(element);
     });
   });

@@ -54,7 +54,7 @@ export function HomeHero({ signInUrl, products, onPickProduct, productsLink, acc
           </Reveal>
         ))}
       </ul>
-      <Reveal className="home-window-frame" index={blocksBeforeIcons}>
+      <Reveal eager className="home-window-frame" index={blocksBeforeIcons}>
         <HeroWindow />
       </Reveal>
     </RevealGroup>
