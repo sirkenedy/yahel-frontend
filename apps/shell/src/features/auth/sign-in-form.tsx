@@ -1,6 +1,6 @@
 import { isApiError } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { Banner, Button, TextField } from '@yahel/ui';
+import { Banner, Button, PasswordField, TextField } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { authMessages as m } from './messages';
@@ -34,10 +34,12 @@ export function SignInForm({ session, onSignedIn }: SignInFormProps) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (pending) return;
+    setRevealed(false);
     const errors = validate(email, password);
     setFieldErrors(errors);
     setFailure(null);
@@ -73,10 +75,13 @@ export function SignInForm({ session, onSignedIn }: SignInFormProps) {
         isRequired
         validationBehavior="aria"
       />
-      <TextField
+      <PasswordField
         label={m.passwordLabel}
+        showLabel={m.showPassword}
+        hideLabel={m.hidePassword}
+        isRevealed={revealed}
+        onRevealedChange={setRevealed}
         name="password"
-        type="password"
         autoComplete="current-password"
         value={password}
         onChange={setPassword}
