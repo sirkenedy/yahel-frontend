@@ -66,7 +66,7 @@ export async function mockApi(page: Page, options: { offline?: boolean } = {}): 
 export async function signIn(page: Page) {
   await page.goto('/sign-in');
   await page.getByLabel('Email').fill(credentials.email);
-  await page.getByLabel('Password').fill(credentials.password);
+  await page.getByLabel('Password', { exact: true }).fill(credentials.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('heading', { name: 'Home' }).waitFor();
 }

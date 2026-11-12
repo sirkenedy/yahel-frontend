@@ -10,6 +10,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [x] `@yahel/api-client`: typed client generated from the backend description; error and envelope handling; token refresh
 - [x] `@yahel/auth`: sign-in, session restore, sign-out
 - [x] Shell app: sign-in, home, account (read-only), sign-out
+- [x] Show and hide password on the sign-in form (`PasswordField` in `@yahel/ui`)
 - [x] Browser tests on desktop and mobile with accessibility scans in four themes
 - [x] CI, security scanning, protected paths, agent definitions, skills and workflows
 

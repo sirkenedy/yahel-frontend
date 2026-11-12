@@ -21,6 +21,17 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await page.getByText('Enter your password').waitFor();
     },
   },
+  {
+    name: 'sign-in with the password revealed and the tooltip open',
+    open: async (page) => {
+      await page.goto('/sign-in');
+      await page.getByLabel('Password', { exact: true }).fill('a revealed secret');
+      await page.getByRole('button', { name: 'Show password' }).click();
+      await page.getByLabel('Password', { exact: true }).focus();
+      await page.keyboard.press('Tab');
+      await page.getByRole('tooltip').waitFor();
+    },
+  },
   { name: 'home', open: signIn },
   {
     name: 'account',

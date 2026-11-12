@@ -4,6 +4,8 @@ export const authMessages = {
   emailLabel: 'Email',
   emailPlaceholder: 'name@example.com',
   passwordLabel: 'Password',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
   submit: 'Sign in',
   submitting: 'Signing in',
   emailRequired: 'Enter your email address',
