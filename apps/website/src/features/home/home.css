@@ -1,4 +1,4 @@
-/* The home page's own layout. Loaded with the page, not with the site. Tokens only, as in ../../site.css.
+/* The home page's own layout. Loaded with the site's stylesheet, so the written page is whole before any script runs. Tokens only, as in ../../site.css.
    Spec: design-system/docs/patterns/website.md. Movement is opacity and transform only. */
 
 /* Each product's colour, for the parts of the page drawn in it. */
@@ -31,13 +31,15 @@
   background: var(--ws-color-bg-elevated);
   box-shadow: var(--ws-elevation-4);
   text-align: start;
-  /* Without script, or before it runs, --scroll-progress is unset and the window rests flat at full size. */
+  /* Without script, --scroll-progress is unset and the window rests flat at full size. */
   transform-origin: 50% 0;
   transform: perspective(var(--ws-size-hero-perspective)) rotateX(calc((1 - var(--scroll-progress, 1)) * var(--ws-motion-hero-tilt))) translateY(calc(var(--scroll-progress, 1) * -1 * var(--ws-space-32)))
     scale(calc(var(--ws-motion-hero-scale) + var(--scroll-progress, 1) * (1 - var(--ws-motion-hero-scale))));
   transition: transform var(--ws-duration-quick) var(--ws-easing-linear);
   will-change: transform;
 }
+/* Where scripts run the window starts tilted, as it will be at the top of the page, so it does not move when the page's script takes over. */
+[data-scripts='on'] .home-window { --scroll-progress: 0; }
 .home-window__bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--ws-space-12); min-block-size: var(--ws-space-48); padding-inline: var(--ws-space-16); border-block-end: var(--ws-border-hairline) solid var(--ws-color-separator-default); font-size: var(--ws-display-eyebrow-size); line-height: var(--ws-display-eyebrow-line); }
 .home-window__lights { display: flex; gap: var(--ws-space-4); }
 .home-window__lights span { inline-size: var(--ws-space-8); block-size: var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-fill-primary); }

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "pnpm --filter @yahel/shell dev",
     "dev:website": "pnpm --filter @yahel/website dev",
-    "build": "nx run-many -t build",
+    "build": "WEBSITE_LOCAL_BUILD=1 nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",
     "lint": "eslint .",
     "test": "nx run-many -t test",

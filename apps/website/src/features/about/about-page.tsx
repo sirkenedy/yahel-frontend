@@ -1,7 +1,11 @@
 import { LinkButton, Reveal, RevealGroup } from '@yahel/ui';
+import type { AnchorHTMLAttributes } from 'react';
 import { aboutMessages as m } from './messages';
 
-export function AboutPage() {
+const careersPath = '/careers';
+
+/** `rolesLink` is the route's link to the Careers page, so following it changes page without loading the document again. */
+export function AboutPage({ rolesLink }: { rolesLink?: AnchorHTMLAttributes<HTMLAnchorElement> }) {
   return (
     <>
       <title>{m.documentTitle}</title>
@@ -50,7 +54,7 @@ export function AboutPage() {
       <section className="site-container site-band-section">
         <Reveal className="site-band">
           <h2 className="ws-display-l site-heading">{m.bandTitle}</h2>
-          <LinkButton href="/careers" variant="inverse" size="large">
+          <LinkButton {...rolesLink} href={rolesLink?.href ?? careersPath} variant="inverse" size="large">
             {m.bandAction}
           </LinkButton>
         </Reveal>

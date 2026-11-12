@@ -79,6 +79,7 @@ export function HomeProducts({ products, selectedId, picks, onSelect, productsLi
             selectedId={selectedId}
             onSelectionChange={onSelect}
             selectedTabRef={selectedTab}
+            crossFade
           >
             {(id) => <ProductPanel product={products.find((product) => product.id === id)!} productsLink={productsLink} />}
           </SegmentedTabs>

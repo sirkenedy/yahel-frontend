@@ -34,4 +34,16 @@ export function resolveAppUrl(value: string | undefined, { production, siteHost 
   return url.origin;
 }
 
+/** The name of the environment flag that marks a build as one that stays on this machine: a local preview, or the browser tests. */
+export const localBuildFlag = 'WEBSITE_LOCAL_BUILD';
+
+/**
+ * Pages written at build time carry the app's address in their links, for every reader and before any script runs.
+ * So the build itself refuses an address a deployment cannot use, unless it was explicitly marked as a local build.
+ */
+export function assertWritable(appUrl: string, localBuild: string | undefined): void {
+  if (appUrl.startsWith('https://') || localBuild === '1') return;
+  throw new Error(`The pages would link account actions to ${appUrl}. Set VITE_APP_URL to the https address of the app, or set ${localBuildFlag}=1 for a build that is not deployed.`);
+}
+
 export const signInUrlFor = (appUrl: string) => `${appUrl}/sign-in`;

@@ -5,17 +5,15 @@ import type { ProductLinksProps } from './chrome-types';
 import { chromeMessages as m } from './messages';
 import { SectionLink } from './section-link';
 
-const careersPath = '/careers';
-
 function PageLinks({ onChoose }: { onChoose?: () => void }) {
   return (
     <>
       <Link to="/about" onClick={onChoose}>
         {m.about}
       </Link>
-      <a href={careersPath} onClick={onChoose}>
+      <Link to="/careers" onClick={onChoose}>
         {m.careers}
-      </a>
+      </Link>
     </>
   );
 }
@@ -51,7 +49,7 @@ function HomeSectionLinks({ onChoose }: { onChoose?: () => void }) {
 
 function ProductsMenu({ products, onPickProduct }: ProductLinksProps) {
   return (
-    <NavMenu label={m.products}>
+    <NavMenu label={m.products} fallback={<SectionLink hash="products">{m.products}</SectionLink>}>
       {(close) =>
         products.map((product) => (
           <SectionLink

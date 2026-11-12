@@ -4,7 +4,6 @@ import { HomeAccounts, HomeClosing, HomePlans, HomeSecurity } from './home-secti
 import type { HomeHeroProps } from './home-hero';
 import type { HomeProductsProps } from './home-products';
 import { homeMessages as m } from './messages';
-import './home.css';
 
 export type HomePageProps = HomeHeroProps & Pick<HomeProductsProps, 'selectedId' | 'picks' | 'onSelect'>;
 

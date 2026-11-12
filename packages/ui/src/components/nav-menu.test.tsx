@@ -111,6 +111,17 @@ describe('NavMenu', () => {
     expect(button()).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('carries a plain link to stand in for the button where no script runs', () => {
+    render(
+      <NavMenu label="Products" fallback={<a href="#products">Products</a>}>
+        {() => <a href="#products">Mail</a>}
+      </NavMenu>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Products' })).toHaveAttribute('href', '#products');
+    expect(button()).toBeInTheDocument();
+  });
+
   it('stops listening to the page once it is closed', async () => {
     const remove = vi.spyOn(document, 'removeEventListener');
     const user = renderMenu();

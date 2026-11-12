@@ -43,6 +43,8 @@ describe('HomeProducts', () => {
     expect(panel.getByText('Keep your files in one place, find them from anywhere and share them safely.')).toBeInTheDocument();
     expect(panel.getByRole('link', { name: 'Open drive.yahel.com' })).toHaveAttribute('href', '/#products');
     expect(reachable(screen.getAllByRole('heading', { level: 3 })).map((heading) => heading.textContent)).toEqual(['Drive']);
+    // The others stay in the page, inert, so one panel can fade under the next.
+    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual(['Mail', 'Calendar', 'Drive']);
   });
 
   it('reports the tab that is pressed', async () => {

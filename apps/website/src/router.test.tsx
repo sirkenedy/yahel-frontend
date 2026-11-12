@@ -50,6 +50,7 @@ describe('the website', () => {
     ['/#products', []],
     ['/#accounts', []],
     ['/about', ['About']],
+    ['/careers', ['Careers']],
   ])('marks at most one link in the bar as the current page at %s', async (path, current) => {
     await open(path);
 
@@ -101,6 +102,8 @@ describe('the website', () => {
         .filter((link) => link.closest('[inert]') === null)
         .map((link) => [link.textContent, link.getAttribute('href')]),
     ).toEqual([
+      // Where no script runs, this link stands in for the menu button.
+      ['Products', '/#products'],
       ['For business', '/#accounts'],
       ['Security', '/#security'],
       ['Plans', '/#plans'],
@@ -272,8 +275,26 @@ describe('the website', () => {
     vi.unstubAllGlobals();
   });
 
+  it('opens the open roles from the closing action of About, without leaving the app', async () => {
+    const user = await open('/about');
+
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'See open roles' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Build the tools people open every day.' })).toBeInTheDocument();
+    expect(within(mainNav()).getByRole('link', { name: 'Careers' })).toHaveAttribute('aria-current', 'page');
+    await waitFor(() => expect(document.title).toBe('Careers at Yahel'));
+  });
+
+  it.each(['banner', 'contentinfo'] as const)('opens Careers from the %s without leaving the app', async (landmark) => {
+    const user = await open('/');
+
+    await user.click(within(screen.getByRole(landmark)).getByRole('link', { name: 'Careers' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Build the tools people open every day.' })).toBeInTheDocument();
+  });
+
   it('says so when nothing lives at an address, and offers the way home', async () => {
-    await open('/careers');
+    await open('/no-such-page');
 
     expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
     expect(within(screen.getByRole('main')).getByRole('link', { name: 'Go to the home page' })).toHaveAttribute('href', '/');

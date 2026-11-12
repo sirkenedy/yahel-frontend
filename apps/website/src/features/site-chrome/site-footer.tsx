@@ -40,7 +40,7 @@ function FullFooter({ products, onPickProduct }: ProductLinksProps) {
           <Column title={m.footerCompany}>
             {[
               <Link to="/about">{m.about}</Link>,
-              <a href="/careers">{m.careers}</a>,
+              <Link to="/careers">{m.careers}</Link>,
               <SectionLink hash="plans">{m.plans}</SectionLink>,
             ]}
           </Column>
@@ -75,7 +75,7 @@ export function SiteFooter({ products, onPickProduct }: ProductLinksProps) {
             {m.home}
           </Link>
           <Link to="/about">{m.about}</Link>
-          <a href="/careers">{m.careers}</a>
+          <Link to="/careers">{m.careers}</Link>
           <a href="#top">{m.privacy}</a>
           <a href="#top">{m.terms}</a>
         </nav>

@@ -1,43 +1,240 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { I18nProvider } from 'react-aria-components';
 import { useRef, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SegmentedTabs } from '../index';
 
-const tabs = [
-  { id: 'mail', label: 'Mail' },
-  { id: 'calendar', label: 'Calendar' },
-  { id: 'drive', label: 'Drive' },
+const teams = [
+  { id: 'all', label: 'All' },
+  { id: 'engineering', label: 'Engineering' },
+  { id: 'design', label: 'Design' },
+  { id: 'operations', label: 'Operations' },
 ] as const;
-type Id = (typeof tabs)[number]['id'];
 
-const panel = (id: Id) => (
-  <>
-    <h3>{id} panel</h3>
-    <a href="#top">Open {id}</a>
-  </>
-);
+const renderTabs = () => {
+  render(
+    <>
+      <a href="#before">Before</a>
+      <SegmentedTabs label="Team" tabs={teams}>
+        {(team) => <a href="#roles">{`Roles in ${team}`}</a>}
+      </SegmentedTabs>
+    </>,
+  );
+  return userEvent.setup();
+};
 
 const tab = (name: string) => screen.getByRole('tab', { name });
-/** The panels that can be reached: every panel stays in the page, and all but the selected one are inert. */
-const reachablePanels = () => screen.getAllByRole('tabpanel', { hidden: true }).filter((element) => !element.hasAttribute('inert'));
+const selected = () => screen.getAllByRole('tab', { selected: true }).map((item) => item.textContent);
 
 describe('SegmentedTabs', () => {
-  it('is a named tab list with the first tab selected, and shows only that tab’s panel', () => {
-    render(
-      <SegmentedTabs label="Products" tabs={tabs}>
-        {panel}
-      </SegmentedTabs>,
-    );
+  it('is a tab list named for what it switches, with the first tab selected', () => {
+    renderTabs();
 
-    const list = screen.getByRole('tablist', { name: 'Products' });
-    expect(within(list).getAllByRole('tab').map((element) => [element.textContent, element.getAttribute('aria-selected')])).toEqual([
-      ['Mail', 'true'],
-      ['Calendar', 'false'],
-      ['Drive', 'false'],
-    ]);
-    expect(reachablePanels()).toHaveLength(1);
-    expect(within(reachablePanels()[0]!).getByRole('heading', { name: 'mail panel' })).toBeInTheDocument();
+    const list = screen.getByRole('tablist', { name: 'Team' });
+    expect(within(list).getAllByRole('tab').map((item) => item.textContent)).toEqual(['All', 'Engineering', 'Design', 'Operations']);
+    expect(selected()).toEqual(['All']);
+    expect(tab('Engineering')).toHaveAttribute('aria-selected', 'false');
+  });
+
+  it('shows the panel of the tab that is pressed', async () => {
+    const user = renderTabs();
+
+    await user.click(tab('Design'));
+
+    expect(selected()).toEqual(['Design']);
+    expect(screen.getByRole('link', { name: 'Roles in design' })).toBeInTheDocument();
+  });
+
+  it('labels the panel by its tab', async () => {
+    const user = renderTabs();
+    expect(screen.getByRole('tabpanel', { name: 'All' })).toContainElement(screen.getByRole('link', { name: 'Roles in all' }));
+
+    await user.click(tab('Operations'));
+
+    expect(screen.getByRole('tabpanel', { name: 'Operations' })).toContainElement(screen.getByRole('link', { name: 'Roles in operations' }));
+  });
+
+  it('keeps the panels of the other tabs out of the page', async () => {
+    const user = renderTabs();
+
+    await user.click(tab('Engineering'));
+
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(['Before', 'Roles in engineering']);
+  });
+
+  it('is one tab stop: Tab enters at the selected tab and leaves for the panel', async () => {
+    const user = renderTabs();
+    await user.click(tab('Design'));
+    screen.getByRole('link', { name: 'Before' }).focus();
+
+    await user.tab();
+    expect(tab('Design')).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('link', { name: 'Roles in design' })).toHaveFocus();
+  });
+
+  it('moves and selects with the arrow keys, and wraps at the ends', async () => {
+    const user = renderTabs();
+    tab('All').focus();
+
+    await user.keyboard('{ArrowRight}');
+    expect(selected()).toEqual(['Engineering']);
+    expect(tab('Engineering')).toHaveFocus();
+
+    await user.keyboard('{ArrowLeft}{ArrowLeft}');
+    expect(selected()).toEqual(['Operations']);
+    expect(tab('Operations')).toHaveFocus();
+  });
+
+  it('jumps to the ends with Home and End', async () => {
+    const user = renderTabs();
+    tab('All').focus();
+
+    await user.keyboard('{End}');
+    expect(selected()).toEqual(['Operations']);
+
+    await user.keyboard('{Home}');
+    expect(selected()).toEqual(['All']);
+  });
+
+  describe('direction', () => {
+    afterEach(() => document.documentElement.removeAttribute('dir'));
+
+    it('follows the page, not the language of the browser: on a left-to-right page Right goes to the next tab', async () => {
+      const user = userEvent.setup();
+      render(
+        <I18nProvider locale="ar">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </I18nProvider>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowRight}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('mirrors on a right-to-left page, whatever the language of the browser', async () => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const user = userEvent.setup();
+      render(
+        <I18nProvider locale="en-US">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </I18nProvider>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowLeft}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('takes up a direction the page is given after it was drawn', async () => {
+      const user = renderTabs();
+      document.documentElement.setAttribute('dir', 'rtl');
+      act(() => tab('All').focus());
+
+      await user.keyboard('{ArrowLeft}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('reads a page whose language tag is malformed as having no language, and still follows its direction', async () => {
+      const user = userEvent.setup();
+      render(
+        <div lang="not a language" dir="rtl">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </div>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowLeft}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('follows the nearest direction set around it', async () => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const user = userEvent.setup();
+      render(
+        <div dir="ltr">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </div>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowRight}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+  });
+
+  it('marks a panel as arriving only once the selection has moved', async () => {
+    const user = renderTabs();
+    expect(screen.getByRole('tabpanel')).not.toHaveAttribute('data-switched');
+
+    await user.click(tab('Engineering'));
+
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('data-switched');
+  });
+});
+
+describe('SegmentedTabs with the selection held outside', () => {
+  type Team = (typeof teams)[number]['id'];
+
+  it('follows the selection it is given, reports a pressed tab, and hands over the selected tab so focus can be moved to it', async () => {
+    const onChange = vi.fn();
+    function Held() {
+      const [team, setTeam] = useState<Team>('all');
+      const selectedTab = useRef<HTMLDivElement>(null);
+      return (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setTeam('operations');
+              requestAnimationFrame(() => selectedTab.current?.focus());
+            }}
+          >
+            Show operations
+          </button>
+          <SegmentedTabs
+            label="Team"
+            tabs={teams}
+            selectedId={team}
+            onSelectionChange={(next) => {
+              onChange(next);
+              setTeam(next);
+            }}
+            selectedTabRef={selectedTab}
+          >
+            {(id) => id}
+          </SegmentedTabs>
+        </>
+      );
+    }
+    const user = userEvent.setup();
+    render(<Held />);
+
+    await user.click(screen.getByRole('button', { name: 'Show operations' }));
+    expect(selected()).toEqual(['Operations']);
+    await vi.waitFor(() => expect(tab('Operations')).toHaveFocus());
+    expect(onChange).not.toHaveBeenCalled();
+
+    await user.click(tab('Design'));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('design');
+    expect(selected()).toEqual(['Design']);
   });
 
   it('draws a marker before a label without changing the tab’s name', () => {
@@ -50,98 +247,50 @@ describe('SegmentedTabs', () => {
     expect(tab('Mail')).toContainElement(screen.getByTestId('dot'));
     expect(tab('Mail')).toHaveTextContent(/^Mail$/);
   });
+});
 
-  it('selects a pressed tab, reports it, and swaps the panel that can be reached', async () => {
-    const onSelectionChange = vi.fn();
-    const user = userEvent.setup();
+describe('SegmentedTabs that cross-fade', () => {
+  const renderKept = () => {
     render(
-      <SegmentedTabs label="Products" tabs={tabs} onSelectionChange={onSelectionChange}>
-        {panel}
+      <SegmentedTabs label="Team" tabs={teams} crossFade>
+        {(team) => <a href="#roles">{`Roles in ${team}`}</a>}
       </SegmentedTabs>,
     );
+    return userEvent.setup();
+  };
+  /** Every panel's link is in the page; only the one outside an inert panel can be reached. */
+  const reachable = () =>
+    screen
+      .getAllByRole('link')
+      .filter((link) => link.closest('[inert]') === null)
+      .map((link) => link.textContent);
 
-    await user.click(tab('Calendar'));
+  it('keeps every panel in the page, with all but the selected one inert', () => {
+    renderKept();
 
-    expect(onSelectionChange).toHaveBeenCalledWith('calendar');
-    expect(tab('Calendar')).toHaveAttribute('aria-selected', 'true');
-    expect(tab('Mail')).toHaveAttribute('aria-selected', 'false');
-    expect(reachablePanels()).toHaveLength(1);
-    expect(within(reachablePanels()[0]!).getByRole('link', { name: 'Open calendar' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(4);
+    expect(reachable()).toEqual(['Roles in all']);
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
+    expect(screen.getByRole('tabpanel', { name: 'All' })).toContainElement(screen.getByRole('link', { name: 'Roles in all' }));
   });
 
-  it('labels each panel by its tab', async () => {
-    const user = userEvent.setup();
-    render(
-      <SegmentedTabs label="Products" tabs={tabs}>
-        {panel}
-      </SegmentedTabs>,
-    );
+  it('swaps which panel can be reached when a tab is pressed, and never marks one as arriving', async () => {
+    const user = renderKept();
 
-    await user.click(tab('Drive'));
+    await user.click(tab('Design'));
 
-    expect(reachablePanels()[0]).toHaveAttribute('aria-labelledby', tab('Drive').id);
-    expect(tab('Drive')).toHaveAttribute('aria-controls', reachablePanels()[0]!.id);
+    expect(selected()).toEqual(['Design']);
+    expect(reachable()).toEqual(['Roles in design']);
+    expect(screen.getByRole('tabpanel', { name: 'Design' })).not.toHaveAttribute('data-switched');
   });
 
-  it('is one tab stop: arrow keys move and select, Home and End jump to the ends, and Tab leaves the list', async () => {
-    const user = userEvent.setup();
-    render(
-      <SegmentedTabs label="Products" tabs={tabs}>
-        {panel}
-      </SegmentedTabs>,
-    );
+  it('moves and selects with the arrow keys as the other kind does', async () => {
+    const user = renderKept();
+    tab('All').focus();
 
-    await user.tab();
-    expect(tab('Mail')).toHaveFocus();
+    await user.keyboard('{ArrowRight}{End}');
 
-    await user.keyboard('{ArrowRight}');
-    expect(tab('Calendar')).toHaveFocus();
-    expect(tab('Calendar')).toHaveAttribute('aria-selected', 'true');
-
-    await user.keyboard('{End}');
-    expect(tab('Drive')).toHaveAttribute('aria-selected', 'true');
-
-    await user.keyboard('{Home}');
-    expect(tab('Mail')).toHaveAttribute('aria-selected', 'true');
-
-    await user.keyboard('{ArrowLeft}');
-    expect(tab('Drive')).toHaveAttribute('aria-selected', 'true');
-
-    // Which panel Tab lands in is the browser's doing (inert); the browser tests cover it.
-    await user.tab();
-    expect(screen.getAllByRole('tab').some((element) => element === document.activeElement)).toBe(false);
-  });
-
-  it('follows a selection held by the caller, and hands over the selected tab so focus can be moved to it', async () => {
-    function Held() {
-      const [selected, setSelected] = useState<Id>('mail');
-      const selectedTab = useRef<HTMLDivElement>(null);
-      return (
-        <>
-          <button
-            type="button"
-            onClick={() => {
-              setSelected('drive');
-              requestAnimationFrame(() => selectedTab.current?.focus());
-            }}
-          >
-            Show Drive
-          </button>
-          <SegmentedTabs label="Products" tabs={tabs} selectedId={selected} onSelectionChange={setSelected} selectedTabRef={selectedTab}>
-            {panel}
-          </SegmentedTabs>
-        </>
-      );
-    }
-    const user = userEvent.setup();
-    render(<Held />);
-
-    await user.click(screen.getByRole('button', { name: 'Show Drive' }));
-
-    expect(tab('Drive')).toHaveAttribute('aria-selected', 'true');
-    await vi.waitFor(() => expect(tab('Drive')).toHaveFocus());
-
-    await user.click(tab('Calendar'));
-    expect(tab('Calendar')).toHaveAttribute('aria-selected', 'true');
+    expect(selected()).toEqual(['Operations']);
+    expect(reachable()).toEqual(['Roles in operations']);
   });
 });
