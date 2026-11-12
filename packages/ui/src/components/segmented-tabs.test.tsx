@@ -1,7 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from 'react-aria-components';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { SegmentedTabs } from '../index';
 
 const teams = [
@@ -99,20 +99,68 @@ describe('SegmentedTabs', () => {
     expect(selected()).toEqual(['All']);
   });
 
-  it('follows the visual order in a right-to-left language', async () => {
-    const user = userEvent.setup();
-    render(
-      <I18nProvider locale="ar">
-        <SegmentedTabs label="Team" tabs={teams}>
-          {(team) => team}
-        </SegmentedTabs>
-      </I18nProvider>,
-    );
-    tab('All').focus();
+  describe('direction', () => {
+    afterEach(() => document.documentElement.removeAttribute('dir'));
 
-    await user.keyboard('{ArrowLeft}');
+    it('follows the page, not the language of the browser: on a left-to-right page Right goes to the next tab', async () => {
+      const user = userEvent.setup();
+      render(
+        <I18nProvider locale="ar">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </I18nProvider>,
+      );
+      tab('All').focus();
 
-    expect(selected()).toEqual(['Engineering']);
+      await user.keyboard('{ArrowRight}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('mirrors on a right-to-left page, whatever the language of the browser', async () => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const user = userEvent.setup();
+      render(
+        <I18nProvider locale="en-US">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </I18nProvider>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowLeft}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('takes up a direction the page is given after it was drawn', async () => {
+      const user = renderTabs();
+      document.documentElement.setAttribute('dir', 'rtl');
+      act(() => tab('All').focus());
+
+      await user.keyboard('{ArrowLeft}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
+
+    it('follows the nearest direction set around it', async () => {
+      document.documentElement.setAttribute('dir', 'rtl');
+      const user = userEvent.setup();
+      render(
+        <div dir="ltr">
+          <SegmentedTabs label="Team" tabs={teams}>
+            {(team) => team}
+          </SegmentedTabs>
+        </div>,
+      );
+      tab('All').focus();
+
+      await user.keyboard('{ArrowRight}');
+
+      expect(selected()).toEqual(['Engineering']);
+    });
   });
 
   it('marks a panel as arriving only once the selection has moved', async () => {

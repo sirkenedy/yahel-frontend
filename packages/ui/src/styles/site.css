@@ -87,8 +87,8 @@
 .ws-site-bar__brand { display: flex; }
 .ws-site-bar__brand a { display: inline-flex; align-items: center; gap: var(--ws-space-8); min-block-size: var(--ws-target-touch); color: var(--ws-color-label-primary); font-size: var(--ws-display-body-size); font-weight: var(--ws-weight-semibold); text-decoration: none; }
 .ws-site-bar__brand img { inline-size: var(--ws-space-32); block-size: var(--ws-space-32); }
-.ws-site-bar__nav, .ws-site-bar__wide { display: none; }
-.ws-site-bar__nav { align-items: center; gap: var(--ws-space-24); }
+.ws-site-bar__wide { display: none; }
+.ws-site-bar__nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--ws-space-24); }
 .ws-site-bar__nav a, .ws-site-bar__wide a { display: inline-flex; align-items: center; min-block-size: var(--ws-target-touch); color: var(--ws-color-label-primary); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); font-weight: var(--ws-display-label-weight); text-decoration: none; transition: color var(--ws-duration-quick) var(--ws-easing-standard); }
 .ws-site-bar__wide a { padding-inline: var(--ws-space-12); }
 .ws-site-bar__nav a:hover, .ws-site-bar__wide a:hover { color: var(--ws-color-accent-default); }
@@ -167,8 +167,14 @@
 ::view-transition-old(ws-site-bar) { display: none; }
 ::view-transition-new(ws-site-bar) { animation: none; }
 
+/* Without scripts the Menu button can open nothing: it stays away, and below the site-nav breakpoint the links
+   take a row of their own in the bar instead of folding into the menu. */
+html:not([data-scripts='on']) .ws-button.ws-site-menu__trigger { display: none; }
+@media (width <= 860px) {
+  .ws-site-bar__nav { order: 1; flex-basis: 100%; }
+  [data-scripts='on'] .ws-site-bar__nav { display: none; }
+}
 @media (width > 860px) {
-  .ws-site-bar__nav { display: flex; }
   .ws-site-bar__wide { display: block; }
   .ws-button.ws-site-menu__trigger, .ws-site-menu__error { display: none; }
 }
