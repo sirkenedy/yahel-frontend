@@ -1,5 +1,5 @@
 import { ApiError } from '@yahel/api-client';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { authMessages as m } from './messages';
@@ -70,5 +70,53 @@ describe('SignInForm', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(m.mfaNotSupported);
     expect(onSignedIn).not.toHaveBeenCalled();
+  });
+
+  describe('showing the password', () => {
+    it('toggles visibility, keeps the value and does not submit', async () => {
+      const { signIn, user } = setup();
+      // A valid email, so a submission would reach signIn: the assertion below can fail.
+      await user.type(screen.getByLabelText(m.emailLabel), 'amara@northwind.example');
+      await user.type(screen.getByLabelText(m.passwordLabel), 'secret value');
+
+      await user.click(screen.getByRole('button', { name: m.showPassword }));
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'text');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('secret value');
+
+      await user.click(screen.getByRole('button', { name: m.hidePassword }));
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'password');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('secret value');
+      expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a submit stopped by validation', '', async (user: ReturnType<typeof userEvent.setup>) => user.click(screen.getByRole('button', { name: m.submit }))],
+      ['Enter in the revealed field', 'amara@northwind.example', async (user: ReturnType<typeof userEvent.setup>) => user.keyboard('{Enter}')],
+    ])('hides the password again on %s', async (_name, email, act) => {
+      const { user } = setup(vi.fn().mockRejectedValue(new Error('boom')));
+      if (email) await user.type(screen.getByLabelText(m.emailLabel), email);
+      await user.type(screen.getByLabelText(m.passwordLabel), 'wrong');
+      await user.click(screen.getByRole('button', { name: m.showPassword }));
+      await user.click(screen.getByLabelText(m.passwordLabel));
+
+      await act(user);
+
+      await waitFor(() => expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'password'));
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('wrong');
+    });
+
+    it('hides the password again on submit', async () => {
+      const { user } = setup(vi.fn().mockRejectedValue(new Error('boom')));
+      await user.type(screen.getByLabelText(m.emailLabel), 'amara@northwind.example');
+      await user.type(screen.getByLabelText(m.passwordLabel), 'wrong');
+      await user.click(screen.getByRole('button', { name: m.showPassword }));
+
+      await user.click(screen.getByRole('button', { name: m.submit }));
+
+      await screen.findByRole('alert');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('type', 'password');
+      expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('wrong');
+      expect(screen.getByRole('button', { name: m.showPassword })).toHaveAttribute('aria-pressed', 'false');
+    });
   });
 });

@@ -21,7 +21,7 @@ A text field takes a short piece of typed input: a name, an address, a title. A 
 | Variant | Notes |
 |---|---|
 | Single line | Height `target.touch` on touch, `target.pointer` on pointer |
-| Secure | Hides the value; has a show or hide control; paste and password managers always work |
+| Secure | Hides the value; has a show or hide control; paste and password managers always work. Built as `PasswordField` in `@yahel/ui`: an icon-only toggle button inside the trailing edge, named "Show password" or "Hide password" by the app, exposing `aria-pressed`; the owner can control the state to hide the value on submit |
 | Text area | Starts at three lines, grows with content to a set maximum, then scrolls |
 | In a list row | Label at the leading side, value at the trailing side; touch only |
 
