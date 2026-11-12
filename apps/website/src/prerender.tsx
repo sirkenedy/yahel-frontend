@@ -1,14 +1,12 @@
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { renderToString } from 'react-dom/server';
+import { assertWritable } from './app-url';
 import { signInUrl } from './config';
 import { createSiteRouter } from './router';
 
 /** The pages written to disk as HTML when the site is built. */
 export const pages = ['/', '/about', '/careers'];
-
-/** Where the written pages send account actions. The build says so when it is not an address a deployment can use. */
-export const accountLinksTo = signInUrl;
 
 const emptyRoot = '<div id="root"></div>';
 const title = /^<title>[^<]*<\/title>/;
@@ -30,4 +28,16 @@ export async function renderDocument(template: string, path: string) {
   const pageTitle = title.exec(markup)?.[0];
   if (!pageTitle) throw new Error(`The page at ${path} has no title`);
   return template.replace('</head>', () => `${pageTitle}\n  </head>`).replace(emptyRoot, () => `<div id="root" data-page="${path}">${markup.slice(pageTitle.length)}</div>`);
+}
+
+/** `/about` is written as `about.html`: the form a static host, and `vite preview`, serves at an address with no trailing slash. */
+const fileFor = (path: string) => (path === '/' ? 'index.html' : `${path.slice(1)}.html`);
+
+/**
+ * Every page as a file name and its document. Nothing is drawn, so nothing can be written, when the pages would
+ * send account actions somewhere a deployment cannot use and the build is not marked as a local one.
+ */
+export async function renderSite(template: string, { localBuild }: { localBuild: string | undefined }) {
+  assertWritable(signInUrl, localBuild);
+  return Promise.all(pages.map(async (path) => ({ file: fileFor(path), html: await renderDocument(template, path) })));
 }

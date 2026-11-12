@@ -1,6 +1,6 @@
 // @vitest-environment node
-import { describe, expect, it } from 'vitest';
-import { pages, renderDocument } from './prerender';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { pages, renderDocument, renderSite } from './prerender';
 
 const template = '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="utf-8" />\n  </head>\n  <body class="ws-root">\n    <div id="root"></div>\n  </body>\n</html>\n';
 const head = (html: string) => html.slice(0, html.indexOf('</head>'));
@@ -70,5 +70,53 @@ describe('renderDocument', () => {
 
   it('refuses a document with no empty root to draw into', async () => {
     await expect(renderDocument('<html><head></head><body><div id="app"></div></body></html>', '/')).rejects.toThrow('no empty root element');
+  });
+});
+
+describe('renderSite', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  const siteBuiltWith = async (appUrl: string | undefined) => {
+    vi.stubEnv('VITE_APP_URL', appUrl);
+    vi.resetModules();
+    return (await import('./prerender')).renderSite;
+  };
+
+  it.each([undefined, 'http://localhost:5173', 'http://app.yahel.example'])('writes nothing when the app address is %j and the build is not marked as local', async (appUrl) => {
+    const render = await siteBuiltWith(appUrl);
+
+    await expect(render(template, { localBuild: undefined })).rejects.toThrow('Set VITE_APP_URL to the https address of the app');
+  });
+
+  it('writes the pages with the local app address for a build marked as local', async () => {
+    const documents = await renderSite(template, { localBuild: '1' });
+
+    expect(documents.map(({ file }) => file)).toEqual(['index.html', 'about.html', 'careers.html']);
+    for (const { html } of documents) expect(html).toContain('href="http://localhost:5173/sign-in"');
+  });
+
+  it('writes the pages with an https app address, with no mark needed', async () => {
+    const render = await siteBuiltWith('https://app.yahel.example');
+
+    const documents = await render(template, { localBuild: undefined });
+
+    expect(documents).toHaveLength(3);
+    for (const { html } of documents) {
+      expect(html).toContain('href="https://app.yahel.example/sign-in"');
+      expect(html).not.toContain('localhost');
+    }
+  });
+
+  it('draws each page into its own file', async () => {
+    const documents = await renderSite(template, { localBuild: '1' });
+
+    expect(documents.map(({ file, html }) => [file, /<title>([^<]*)<\/title>/.exec(html)?.[1]])).toEqual([
+      ['index.html', 'Yahel'],
+      ['about.html', 'About Yahel'],
+      ['careers.html', 'Careers at Yahel'],
+    ]);
   });
 });

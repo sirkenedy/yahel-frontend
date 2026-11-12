@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveAppUrl, signInUrlFor } from './app-url';
+import { assertWritable, resolveAppUrl, signInUrlFor } from './app-url';
 
 const development = { production: false, siteHost: 'localhost' };
 const localPreview = { production: true, siteHost: 'localhost' };
@@ -55,5 +55,23 @@ describe('app address', () => {
 
   it('sends account actions to sign-in on that origin', () => {
     expect(signInUrlFor('https://app.yahel.example')).toBe('https://app.yahel.example/sign-in');
+  });
+
+  describe('when pages are written at build time', () => {
+    it('accepts an https address', () => {
+      expect(() => assertWritable('https://app.yahel.example', undefined)).not.toThrow();
+    });
+
+    it.each(['http://localhost:5173', 'http://app.yahel.example'])('refuses %s, which a deployment cannot use', (appUrl) => {
+      expect(() => assertWritable(appUrl, undefined)).toThrow(`The pages would link account actions to ${appUrl}. Set VITE_APP_URL to the https address of the app, or set WEBSITE_LOCAL_BUILD=1 for a build that is not deployed.`);
+    });
+
+    it('accepts the local app only for a build explicitly marked as local', () => {
+      expect(() => assertWritable('http://localhost:5173', '1')).not.toThrow();
+    });
+
+    it.each(['', '0', 'true', 'yes'])('does not take %j for the mark of a local build', (flag) => {
+      expect(() => assertWritable('http://localhost:5173', flag)).toThrow('WEBSITE_LOCAL_BUILD=1');
+    });
   });
 });
