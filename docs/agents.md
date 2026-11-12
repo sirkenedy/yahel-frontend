@@ -77,6 +77,21 @@ Skills in `.claude/skills/` are for people and agents working in a session: `/ne
 
 On GitHub only people with triage access or above can apply labels. An issue opened by a stranger does nothing until a maintainer labels it.
 
+## Seeing what an agent did
+
+The Claude action hides an agent's transcript from the job log. Every agent workflow saves a **redacted** copy as an artifact named `agent-transcript-…` on the run's summary page, kept for 7 days.
+
+This repository is public, so anyone signed in to GitHub can download those artifacts, and GitHub does not mask secrets inside artifacts the way it does in logs. The agent's shell does hold a credential: its GitHub token (`GH_TOKEN` in the implement, fix, maintain and contract workflows, and a token supplied by the action in all of them).
+
+Before upload, `scripts/agent/redact-transcript.mjs`, taken from `main`, replaces:
+
+- the agent's GitHub token and the job's token, wherever they appear: plain, URL-encoded, JSON-escaped, reversed, hex in either case, split by whitespace or colour codes, and base64 at any alignment, including inside a larger encoded blob such as an environment dump;
+- anything shaped like a GitHub, Anthropic, npm, Slack or AWS credential, a JWT, an authorization header, a URL carrying a password, or a private key.
+
+The redaction step is given only the two tokens the agent already had, never the Anthropic credential or the backend token, so it adds no exposure of its own. Its behaviour is covered by tests (`pnpm test:scripts`, run in CI).
+
+What it cannot do: it matches known values in known transformations, and known shapes. A credential encrypted, compressed, or encoded some other way, or a secret of a shape it does not know, would pass. That takes a deliberately steered agent, which could also send a credential out directly, so the tool lists and the label gate remain the real controls. Transcripts also show the agent's reasoning and the output of every command. Treat them as public. If that is not acceptable, make the repository private or remove the two transcript steps.
+
 ## What stops an agent doing damage
 
 1. **Deterministic gates first.** Lint, types, tests, budgets and security scans do not have opinions and cannot be talked round.
