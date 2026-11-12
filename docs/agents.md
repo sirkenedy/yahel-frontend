@@ -92,6 +92,14 @@ Be clear-eyed about the limits.
 
 If the agent's token belongs to a bot account, the Claude action may refuse to run on its pull requests until that bot is listed in the action's `allowed_bots` input. This was not tested.
 
+## Staying in step with the backend
+
+The backend repository commits its API description (`directory/api/openapi.json`). When that file changes on the backend's `main`, its `API contract` workflow sends this repository a `backend-api-changed` event with the commit and a summary of endpoints added, changed and removed, and opens an issue here labelled `needs-human` when the change can break callers. The `Agent contract` workflow then fetches the description at that commit, regenerates the client, and has the contract watcher fix what the change breaks.
+
+Needs the secret `BACKEND_READ_TOKEN` (read access to the private backend repository). The event is accepted only when it names the repository in the `BACKEND_REPO` variable (default `sirkenedy/Nestjs-starter-app-federated`).
+
+The design system flows the other way: it lives here, and the backend reads it with `npm run design:fetch`. The backend's `directory/design.md` lists what the design requires of the API and whether the API meets it yet.
+
 ## Handing work to the agents
 
 Write a spec issue: the user problem, what done looks like, what is out of scope, and which design-system patterns apply. Label it `spec:approved`. Read the planner's task list before the implementer starts on it; that is the cheapest point to correct course.

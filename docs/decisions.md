@@ -18,6 +18,7 @@ Append only. Each entry says what was decided, why, and what was rejected. Desig
 | F-12 | 2026-11-12 | Translation is not set up yet; strings are collected in per-feature `messages.ts` files. | Keeps every string in one place per feature so a translation library can be added without touching components. | Adding a translation library before there is a second language. |
 | F-13 | 2026-11-12 | The product name is **Yahel**. | Decided by the owner. The interface, docs and design system in this repository now say Yahel. The backend's API title still says "WorkSync Space", so the committed API snapshot does too; design tokens keep the `--ws-` prefix, which is an internal name and not shown to anyone. | Keeping "WorkSync Space". |
 | F-14 | 2026-11-12 | No AI attribution anywhere: no `Co-Authored-By` trailer and no "Generated with" line in commits or pull requests, from people or agents. | Decided by the owner. `scripts/check-attribution.mjs` fails CI if one appears. | Default tool attribution. |
+| F-15 | 2026-11-12 | The backend announces API changes to this repository (event plus summary, and an issue when breaking); the design system is read by the backend from here. | Each side has one source of truth it owns and a push notice to the other, instead of copies that drift. | Copying the design system into the backend; polling a deployed backend only. |
 
 ## Open
 
