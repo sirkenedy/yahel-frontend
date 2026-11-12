@@ -19,6 +19,7 @@ pnpm dev             # run the shell app at http://localhost:5173 (backend at :3
 pnpm verify          # everything CI runs, in order. Must pass before any pull request.
 pnpm e2e             # browser tests, desktop and mobile
 pnpm api:sync        # refresh the API client from the running backend
+/pre-pr              # in Claude Code: local review by four agents, then open the pull request
 pnpm tokens          # rebuild design tokens after changing packages/tokens/tokens/*.json
 ```
 

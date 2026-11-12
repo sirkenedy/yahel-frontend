@@ -1,6 +1,6 @@
 # Design system
 
-The written design system for Yahel. This copy is canonical (decision F-8 in `../docs/decisions.md`).
+The written design system for Yahel. This copy is canonical (decision F-8 in `../docs/decisions.md`), and it is what both the frontend and the backend build toward. The backend repository reads it from here (`npm run design:fetch` there) and keeps a list of what it requires of the API in its `directory/design.md`. A change here that alters what the API must do should be raised with the backend in the same pull request.
 
 | Where | What |
 |---|---|

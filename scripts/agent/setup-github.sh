@@ -20,7 +20,7 @@ gh repo edit "$repo" --enable-auto-merge --delete-branch-on-merge --enable-squas
 
 gh api --method PUT "repos/$repo/branches/main/protection" --input - <<'JSON'
 {
-  "required_status_checks": { "strict": true, "contexts": ["CI passed", "Agent review passed", "Protected paths"] },
+  "required_status_checks": { "strict": true, "contexts": ["CI passed", "Review receipt", "Protected paths"] },
   "enforce_admins": true,
   "required_pull_request_reviews": null,
   "restrictions": null,
@@ -31,9 +31,8 @@ gh api --method PUT "repos/$repo/branches/main/protection" --input - <<'JSON'
 }
 JSON
 
-echo "Done. Still needed, by hand:"
-echo "  1. Secret ANTHROPIC_API_KEY (or CLAUDE_CODE_OAUTH_TOKEN)."
-echo "  2. Secret AGENT_GH_TOKEN: a fine-grained token or GitHub App token with contents, pull requests and issues write."
-echo "     Pull requests opened with the default GITHUB_TOKEN do not trigger CI, so the gate would never run."
-echo "  3. Variable AGENTS_ENABLED=true to switch the agents on. Set it to false to stop them all."
-echo "  4. Variable API_SPEC_URL, if the contract watcher should reach a deployed backend."
+echo "Done. Nothing else is needed for the default, local-review model: run /pre-pr in Claude Code before opening a pull request."
+echo "Optional, only to run agents unattended inside GitHub Actions:"
+echo "  1. Secret CLAUDE_CODE_OAUTH_TOKEN (from a Claude subscription) or ANTHROPIC_API_KEY."
+echo "  2. Secret AGENT_GH_TOKEN: a fine-grained token with contents, pull requests and issues write."
+echo "  3. Variable AGENTS_ENABLED=true."

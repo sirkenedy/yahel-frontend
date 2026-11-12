@@ -1,0 +1,22 @@
+name: Review receipt
+
+# Reviews run on the author's machine before the pull request opens (/pre-pr). This check proves
+# that all four reviewers approved exactly the change being merged; any later edit invalidates it.
+# The script is taken from main so a pull request cannot weaken it.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  receipt:
+    name: Review receipt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: { ref: '${{ github.event.pull_request.head.sha }}', fetch-depth: 0 }
+      - run: |
+          git show origin/main:scripts/agent/review-receipt.mjs > "$RUNNER_TEMP/review-receipt.mjs" 2>/dev/null || cp scripts/agent/review-receipt.mjs "$RUNNER_TEMP/review-receipt.mjs"
+          node "$RUNNER_TEMP/review-receipt.mjs" check

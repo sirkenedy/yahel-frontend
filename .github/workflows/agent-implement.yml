@@ -54,6 +54,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.AGENT_GH_TOKEN }}
           prompt: |
             Read .claude/agents/implementer.md and act as that agent, following it exactly.
@@ -63,7 +64,7 @@ jobs:
             issue with the reason, label it needs-human, and stop.
           claude_args: |
             --max-turns 200
-            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*)"
+            --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Agent,Task,Skill,Bash(node scripts/agent/review-receipt.mjs:*),Bash(git push -u origin agent/:*)"
       - name: Hand back if no pull request was opened
         if: steps.task.outputs.issue != '' && always()
         run: |
