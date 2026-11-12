@@ -1,46 +1,49 @@
 ---
 name: pre-pr
-description: Review the current branch locally with all four reviewer agents, fix what they find, and open the pull request only when every reviewer approves. Use before opening any pull request. Needs no API key; it runs in this session.
+description: Review the current branch locally at the level its changes need, fix real defects, and open the pull request only once the review passes. Use before opening any pull request. Needs no API key; it runs in this session.
 ---
 
-Reviews happen here, before a pull request exists. A pull request is opened only for a change that has already passed.
+Reviews happen here, before a pull request exists. How much review a change gets depends on what it touches, and only real defects stop it.
 
 ## 1. Deterministic checks
 
 Run `pnpm verify`. Fix every failure before going further. Commit your work; the tree must be clean.
 
-## 2. Review, in parallel
+## 2. Find the tier
 
-Get the change's fingerprint: `node scripts/agent/review-receipt.mjs fingerprint`.
+`node scripts/agent/review-receipt.mjs tier`. The script decides from the changed paths; you do not choose.
 
-Launch these four subagents at the same time, each in its own context. Give each only: the branch name, the base (`origin/main`), the task issue number if there is one, and the fingerprint. Do not tell them what you think of the change.
+| Tier | What triggers it | Review |
+|---|---|---|
+| **full** | Sign-in, session, the API client, dependencies, build or test tooling, workflows, agent definitions, the rulebook, anything under `scripts/` | Four reviewers in parallel: `reviewer` (`code`), `design-guardian` (`design`), `security-reviewer` (`security`), `qa` (`qa`) |
+| **standard** | Ordinary feature and fix work | One combined review: the `reviewer` subagent, told this is a standard review, writing `.agent/review-verdict.json` |
+| **light** | Documentation only | None. CI is the check. Go to step 5 |
 
-| Subagent | Verdict file |
-|---|---|
-| `reviewer` | `.agent/code-verdict.json` |
-| `design-guardian` | `.agent/design-verdict.json` |
-| `security-reviewer` | `.agent/security-verdict.json` |
-| `qa` | `.agent/qa-verdict.json` |
+## 3. Review
 
-Tell each: "No pull request exists yet. Do not post comments. Write your verdict file as your definition specifies, adding a top-level `"fingerprint"` field with the value you were given, and return your findings."
+Get the fingerprint: `node scripts/agent/review-receipt.mjs fingerprint`.
 
-## 3. Fix and repeat
+Launch the reviewer or reviewers for the tier, each in its own context. Give each only: the branch name, the base (`origin/main`), the task issue number if there is one, the tier, and the fingerprint. Do not tell them what you think of the change. Tell each: "No pull request exists yet. Do not post comments. Write your verdict file as your definition specifies, with the fingerprint you were given, and return your findings."
 
-If any reviewer did not approve:
+## 4. Act on the findings
 
-1. Read every finding. Fix the cause. If you believe a finding is wrong, do not ignore it: give the reviewer your reasoning on the next round and let it decide.
-2. `pnpm verify`, commit, get the new fingerprint.
-3. Before re-running, copy each verdict to `.agent/previous/` so it is not lost. Then run **all four** reviewers again on the new version: a fix for one reviewer can break something another approved. Keep the same reviewers across rounds, so each starts from its own earlier findings instead of from nothing. That speeds convergence without lowering the bar: severities do not change between rounds. If you can continue a reviewer's earlier session, do that; otherwise start a new one and give it its own previous verdict file. Tell each reviewer the new fingerprint and what you changed in response to its findings.
+- **Blockers** stop the change. Fix the cause, `pnpm verify`, commit, and send the new fingerprint back to the **same** reviewers, telling each this is the fix round (continue their sessions if you can; otherwise start new ones and give each its previous verdict file from `.agent/previous/`). That is the one fix round. If a blocker remains after it, stop: comment on the issue with what is unresolved, label it `needs-human`, and do not open a pull request.
+- **Majors** do not stop the change. Fix the cheap ones now if you like (that changes the fingerprint, so the reviewers look again). File what remains as one follow-up issue: `gh issue create --label follow-up` listing each major with its file and the reviewer's reason. Keep its number.
+- **Notes** go in the pull request description.
 
-Stop after three rounds without full approval. Report what remains unresolved and do not open a pull request.
+If you believe a finding is wrong, say why to the reviewer and let it decide. Never drop a finding silently.
 
-## 4. Receipt, push, pull request
+## 5. Receipt, push, pull request
 
-1. `node scripts/agent/review-receipt.mjs write`, **as a command on its own**. It refuses unless all four verdicts approve this exact version, then records an empty commit carrying the fingerprint. Read its output. If it refused, stop: do not push.
-2. Only after the receipt was recorded: `git push -u origin <branch>`. Never join this to step 1 with `;` or `&&` in one command, and never push a branch that has no receipt.
-3. `gh pr create` using the template. In the description, list each reviewer's verdict and any non-blocking notes.
+1. `node scripts/agent/review-receipt.mjs write`, adding `--follow-up <issue number>` if majors remain. Run it **as a command on its own** and read its output. If it refused, stop: do not push.
+2. Only after the receipt was recorded: `git push -u origin <branch>`. Never join this to step 1 in one command, and never push a branch that has no receipt.
+3. `gh pr create` using the template. State the tier, each reviewer's verdict, the follow-up issue, and the notes.
 4. `gh pr merge --auto --squash`. GitHub merges when `CI passed`, `Review receipt` and `Protected paths` are green.
 
 Any commit after the receipt changes the fingerprint and fails the `Review receipt` check: run this skill again.
 
-Never write a verdict file yourself, never edit one, and never record a receipt for a version a reviewer did not see. No AI attribution in commits or the pull request.
+Never write or edit a verdict file yourself, and never record a receipt for a version a reviewer did not see. No AI attribution in commits or the pull request.
+
+## Changing the rules themselves
+
+A change that loosens a check, or alters how review works, will be blocked by the reviewers on purpose: agents do not relax their own rules. Such a change is the maintainer's to make. Open it as a pull request without a receipt, say so in the description, and leave it for the maintainer to label and merge.

@@ -25,4 +25,6 @@ for (const f of findings) console.log(`${f.severity ?? 'note'}: ${f.file ?? ''}$
 
 if (verdict.verdict !== 'approve') fail(`verdict is "${verdict.verdict}" with ${findings.length} finding(s)`);
 if (findings.some((f) => f.severity === 'blocker')) fail('approved with a blocker finding, which is contradictory');
+const majors = findings.filter((f) => f.severity === 'major').length;
+if (majors) console.log(`::notice::${name}: ${majors} major finding(s) to file as a follow-up issue.`);
 console.log(`${name}: approved (${findings.length} non-blocking note(s)).`);

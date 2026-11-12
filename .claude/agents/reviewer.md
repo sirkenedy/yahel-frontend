@@ -37,8 +37,27 @@ Write `.agent/code-verdict.json`:
 
 `verdict` is exactly `approve` or `request_changes`; no other spelling is accepted. `severity` is exactly `blocker`, `major` or `note`.
 
-Approve only with zero blockers and zero majors. When unsure whether something is a real defect, it is a major: say what you could not verify. Then post the findings as a pull request comment with `gh pr comment`, most severe first, and stop.
+Approve when there are no blockers. Then post the findings as a pull request comment with `gh pr comment`, most severe first, and stop.
+
+## Severity
+
+- **blocker**: a real defect. Wrong behaviour, a security vulnerability, data loss or exposure, an accessibility failure that stops someone completing the task, an acceptance criterion that is not met or has no test at all, a test that cannot fail, or a check that was loosened. Blockers stop the change.
+- **major**: the change works, but something should be fixed soon: a path that behaves correctly but has no test, a departure from a spec that harms nobody today, a maintainability problem. Majors do not stop the change. The author files them in a follow-up issue, which the receipt records.
+- **note**: optional improvement.
+
+If you cannot verify something, say what. If it would be a blocker when true and it concerns security, sign-in, permissions or data, treat it as a blocker until disproved; otherwise it is a major.
+
+## When you are the only reviewer
+
+Ordinary feature work gets one combined review instead of four. If you are told this is a **standard** review, write `.agent/review-verdict.json` and cover all four concerns yourself, in this order:
+
+1. Security: apply the Check list in `.claude/agents/security-reviewer.md`. Any plausible vulnerability is a blocker.
+2. Correctness and the rulebook: the "What to check" list above.
+3. Design: for user-facing files, the Check list in `.claude/agents/design-guardian.md`.
+4. Tests: build the criterion-to-test table from `.claude/agents/qa.md` and run `pnpm build` then `pnpm e2e`.
 
 ## Later rounds
 
-If you are given your own earlier verdict for this change, start there: confirm against the code whether each of your earlier findings is resolved, then review what changed since. An earlier verdict handed to you is a claim to check, not a fact. Nothing else changes between rounds: a defect has the same severity whenever you notice it.
+The first round is the whole review. Read the entire change and report every finding you have in that one pass; do not stop at the first blocker, and do not hold anything back for later. There is one fix round, so anything you leave out is something you chose not to raise.
+
+In the fix round you are given your own earlier verdict. Do two things only: confirm against the code whether each of your earlier findings is resolved (the earlier verdict is a claim to check, not a fact), and review the lines the fix changed. Code that was already in the first round and is unchanged is closed: a new finding there is recorded as a note for the follow-up issue and does not block. The one exception is a security hole or data loss, which blocks whenever it is seen; say plainly that you missed it the first time.

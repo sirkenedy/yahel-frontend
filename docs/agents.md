@@ -9,13 +9,29 @@ How agents develop this repository without a person in every loop, what stops th
 Agents run in Claude Code on the author's machine, under a Claude subscription. Nothing in the repository needs an Anthropic key.
 
 1. Work on a branch (by hand, or with `/ship-task <issue>`).
-2. Run **`/pre-pr`**. It runs `pnpm verify`, then has four reviewer agents (code, design, security, QA) examine the change in separate contexts, fixes what they find, and repeats until all four approve, up to three rounds.
+2. Run **`/pre-pr`**. It runs `pnpm verify`, works out which tier of review the change needs, runs that review, and fixes real defects.
 3. Only then does it record a **review receipt**, push, open the pull request and enable auto-merge.
 4. GitHub merges when three required checks are green: **CI passed**, **Review receipt**, **Protected paths**.
 
-The receipt is an empty commit whose message carries a fingerprint of the change's added and removed lines. The `Review receipt` check recomputes the fingerprint; any edit after the review changes it and the check fails until `/pre-pr` runs again.
+### Review is proportionate
 
-What the receipt proves, and what it does not: it proves that four approving verdicts were recorded against exactly this change. It cannot prove the reviews were good, and someone determined to skip review could fabricate verdict files. It guards against forgetting and against changes slipped in after review, not against bad faith. CI's deterministic checks do not depend on it.
+How much review a change gets is decided by `scripts/agent/review-receipt.mjs` from the paths it touches, not by its author.
+
+| Tier | Triggered by | Review |
+|---|---|---|
+| Full | Sign-in, session, the API client, dependencies, build and test tooling, workflows, agent definitions, the rulebook, `scripts/` | Four reviewers: code, design, security, QA |
+| Standard | Ordinary feature and fix work | One combined review that covers security, correctness, design and tests |
+| Light | Documentation only | None; CI is the check |
+
+Only **blockers** stop a change: wrong behaviour, a vulnerability, data loss, a criterion not met or untested, a test that cannot fail, a loosened check. **Majors** (it works, but something should be fixed soon) do not block: the author files them as a follow-up issue and the receipt records its number. A security finding is always a blocker.
+
+There is one fix round. If a blocker survives it, the change stops and comes to a person with the open items listed. The first round is the whole review: each reviewer reports everything it has in one pass. In the fix round the same reviewers check only that their findings are resolved and review the lines the fix changed; a new finding in unchanged code becomes a note on the follow-up issue and does not block, unless it is a security hole or data loss.
+
+Why: the first end-to-end test took a small feature through four rounds, because any of four reviewers could veto on anything above a note, a missing test for working behaviour blocked like a defect, and fresh reviewers each round found different things. The cost of this lighter process is that some imperfect changes merge with follow-up issues open. Watch the `follow-up` label: if it only grows, tighten the tiers.
+
+The receipt is an empty commit whose message carries a fingerprint of the change's added and removed lines, the tier, and any follow-up issue. The check also recomputes the tier, so a receipt for a lighter review than the change needs is refused. The `Review receipt` check recomputes the fingerprint; any edit after the review changes it and the check fails until `/pre-pr` runs again.
+
+What the receipt proves, and what it does not: it proves that the approving verdicts its tier requires were recorded against exactly this change. It cannot prove the reviews were good, and someone determined to skip review could fabricate verdict files. It guards against forgetting and against changes slipped in after review, not against bad faith. CI's deterministic checks do not depend on it.
 
 To run unattended without an API key, two options use the subscription instead: a scheduled task in Claude Code on the web that runs `/ship-task` on this repository, or the in-CI workflows below with a `CLAUDE_CODE_OAUTH_TOKEN` secret (created with `claude setup-token`) in place of an API key. Neither has been tested here.
 

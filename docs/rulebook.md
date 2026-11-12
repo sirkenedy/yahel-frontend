@@ -64,3 +64,5 @@ Mandatory. If a shortcut conflicts with a rule, the rule wins. Most rules are en
 6.5 Decisions that are not obvious from the code are recorded in `decisions.md` with what was rejected and why.
 6.6 Protected paths change only with a maintainer's `human-approved` label: `.github/`, `.claude/`, `scripts/agent/`, `CLAUDE.md`, this file, `docs/agents.md`, `eslint.config.mjs`, `scripts/check-*`, `playwright.config.ts`, `pnpm-workspace.yaml`.
 6.7 Conventional Commits. No force-push. No push to `main`.
+6.8 Review is proportionate and decided by the changed paths (`node scripts/agent/review-receipt.mjs tier`): full, standard or light. Only blockers stop a change; majors are filed as a follow-up issue recorded in the receipt; a security finding is always a blocker. Reviewers report everything in the first round; the one fix round checks only the fixes and the lines they changed. Then a person decides. See `agents.md`.
+6.9 A change that loosens a check or alters how review works is the maintainer's to make. Agents open it without a receipt and do not merge it.
