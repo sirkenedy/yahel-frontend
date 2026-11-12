@@ -84,6 +84,20 @@ describe('PasswordField', () => {
     expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
   });
 
+  it('names the control in a tooltip on keyboard focus', async () => {
+    const user = setup();
+    await user.click(screen.getByLabelText('Password'));
+    await user.tab();
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Show password');
+  });
+
+  it('cannot be revealed while the field is disabled', () => {
+    render(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" isDisabled />);
+
+    expect(screen.getByRole('button', { name: 'Show password' })).toBeDisabled();
+  });
+
   it('can be controlled by its owner', async () => {
     const onRevealedChange = vi.fn();
     const { rerender } = render(<PasswordField label="Password" showLabel="Show password" hideLabel="Hide password" isRevealed={false} onRevealedChange={onRevealedChange} />);
