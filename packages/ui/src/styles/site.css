@@ -84,6 +84,7 @@
   transition: transform var(--ws-duration-standard) var(--ws-easing-standard);
 }
 .ws-site-bar[data-scrolled] .ws-site-bar__inner { transform: translateY(calc((var(--ws-size-site-bar-compact) - var(--ws-size-site-bar)) / 2)); }
+.ws-site-bar__brand { display: flex; }
 .ws-site-bar__brand a { display: inline-flex; align-items: center; gap: var(--ws-space-8); min-block-size: var(--ws-target-touch); color: var(--ws-color-label-primary); font-size: var(--ws-display-body-size); font-weight: var(--ws-weight-semibold); text-decoration: none; }
 .ws-site-bar__brand img { inline-size: var(--ws-space-32); block-size: var(--ws-space-32); }
 .ws-site-bar__nav, .ws-site-bar__wide { display: none; }
@@ -96,6 +97,8 @@
 
 /* Site menu: the bar's links in a sheet, below the site-nav breakpoint. Spec: components/sheet.md. */
 .ws-button.ws-site-menu__trigger, .ws-button.ws-site-menu__close { min-block-size: var(--ws-target-touch); border-radius: var(--ws-radius-full); color: var(--ws-color-label-primary); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); }
+.ws-button.ws-site-menu__trigger[aria-busy='true'] { opacity: var(--ws-opacity-pressed); }
+.ws-site-menu__error { position: absolute; inset-block-start: 100%; inset-inline: var(--ws-margin-regular); margin: 0; box-shadow: var(--ws-elevation-2); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); pointer-events: auto; }
 .ws-site-menu__scrim { position: fixed; inset: 0; z-index: var(--ws-z-sheet); display: flex; align-items: flex-end; overflow: hidden; background: var(--ws-color-scrim); }
 .ws-site-menu__scrim[data-entering] { animation: ws-site-fade var(--ws-duration-quick) var(--ws-easing-standard); }
 .ws-site-menu__scrim[data-exiting] { animation: ws-site-fade var(--ws-duration-quick) var(--ws-easing-exit) reverse; }
@@ -130,16 +133,17 @@
 @keyframes ws-site-fade-out { to { opacity: 0; } }
 @keyframes ws-site-rise { from { transform: translateY(100%); } }
 
-/* Moving between pages: the old page fades out, then the new page arrives by its own reveal. The bar holds still. */
-::view-transition-old(root) { animation: ws-site-fade-out var(--ws-duration-quick) var(--ws-easing-exit) both; }
-::view-transition-new(root) { animation: none; }
+/* Moving between pages: the old page fades out over the new one, which then arrives by its own reveal. The bar
+   holds still. The old page is lifted above the new, or the new one would cover the fade from its first frame. */
+::view-transition-old(root) { z-index: 1; mix-blend-mode: normal; animation: ws-site-fade-out var(--ws-duration-quick) var(--ws-easing-exit) both; }
+::view-transition-new(root) { mix-blend-mode: normal; animation: none; }
 ::view-transition-old(ws-site-bar) { display: none; }
 ::view-transition-new(ws-site-bar) { animation: none; }
 
 @media (width > 860px) {
   .ws-site-bar__nav { display: flex; }
   .ws-site-bar__wide { display: block; }
-  .ws-button.ws-site-menu__trigger { display: none; }
+  .ws-button.ws-site-menu__trigger, .ws-site-menu__error { display: none; }
 }
 
 /* Reader preferences */
@@ -156,5 +160,9 @@
 @media (prefers-contrast: more) {
   .ws-site-bar::before { opacity: 1; border-color: var(--ws-color-separator-opaque); background: var(--ws-color-bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .ws-site-menu { border-color: var(--ws-color-separator-opaque); }
+  .ws-site-bar__brand a, .ws-site-bar__nav a, .ws-site-bar__wide a, .ws-site-menu__links a { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
   .ws-button.ws-link-button--plain { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
+}
+@media print {
+  [data-motion='on'] [data-reveal] { opacity: 1; transform: none; transition: none; }
 }
