@@ -32,7 +32,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 
 - [x] Site scaffold (`apps/website`), motion primitives in `@yahel/ui`, and the About page
 - [ ] Careers page with the team filter, and static prerendering
-- [ ] Home page with every product, scroll motion and the Products menu
+- [x] Home page with every product, scroll motion and the Products menu
 
 ## Then: organisations
 

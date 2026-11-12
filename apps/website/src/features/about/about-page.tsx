@@ -22,9 +22,9 @@ export function AboutPage() {
           <Reveal as="h2" className="ws-display-l site-heading">
             {m.valuesTitle}
           </Reveal>
-          <RevealGroup className="about-values">
+          <RevealGroup className="site-points">
             {m.values.map((value) => (
-              <Reveal key={value.title} className="about-value">
+              <Reveal key={value.title} className="site-point">
                 <h3 className="ws-display-heading">{value.title}</h3>
                 <p className="ws-secondary">{value.text}</p>
               </Reveal>

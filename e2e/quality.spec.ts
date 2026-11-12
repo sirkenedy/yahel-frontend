@@ -43,6 +43,26 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
     },
   },
   { name: 'website home', open: (page) => openSiteFully(page, '/') },
+  {
+    name: 'website home with the products menu open',
+    open: async (page) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await openSiteFully(page, '/');
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.getByRole('banner').getByRole('button', { name: 'Products' }).click();
+      await page.getByRole('link', { name: 'Admin admin.yahel.com' }).waitFor();
+      await settle(page);
+    },
+  },
+  {
+    name: 'website home with another product selected',
+    open: async (page) => {
+      await openSiteFully(page, '/');
+      await page.getByRole('tab', { name: 'Calendar' }).click();
+      await page.getByRole('tabpanel', { name: 'Calendar' }).waitFor();
+      await settle(page);
+    },
+  },
   { name: 'website about', open: (page) => openSiteFully(page, '/about') },
   { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
   {

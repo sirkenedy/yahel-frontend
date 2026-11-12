@@ -151,7 +151,7 @@ test.describe('site bar', () => {
     await openSite(page, '/');
     await expect(banner(page).getByRole('link', { name: 'Create account' })).toHaveAttribute('href', appSignIn);
     await expect(banner(page).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', appSignIn);
-    await expect(page.getByRole('main').getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', appSignIn);
+    await expect(page.getByRole('main').getByRole('link', { name: 'Create an account' }).first()).toHaveAttribute('href', appSignIn);
   });
 
   test('bar gains glass after scrolling', async ({ page }) => {
@@ -225,7 +225,7 @@ test.describe('motion', () => {
 
   test('the home hero starts with its first block, then one every 70 ms', async ({ page }) => {
     await openSite(page, '/');
-    const blocks = [page.getByText('Yahel Workspace'), page.getByRole('heading', { level: 1 }), page.getByText(/^Mail, calendar, files/), page.getByRole('main').getByRole('link', { name: 'Create an account' })];
+    const blocks = [page.getByText('Yahel Workspace'), page.getByRole('heading', { level: 1 }), page.getByText(/^Mail, calendar, files/), page.getByRole('main').getByRole('link', { name: 'Create an account' }).first()];
     const delays = [];
     for (const block of blocks) delays.push((await style(revealed(block), 'transition-delay')).split(',')[0]);
 
@@ -534,4 +534,510 @@ test.describe('phone menu', () => {
     await expect(page.getByRole('dialog', { name: 'Menu' })).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
+});
+
+test.describe('home page', () => {
+  const productNames = ['Mail', 'Calendar', 'Drive', 'Docs', 'Sheets', 'Slides', 'Chat', 'Meet', 'Admin'];
+  const wide = { width: 1280, height: 800 };
+  const main = (page: Page) => page.getByRole('main');
+  const dock = (page: Page) => main(page).getByRole('list', { name: 'Products' });
+  const tabs = (page: Page) => page.getByRole('tablist', { name: 'Products' });
+  const tab = (page: Page, name: string) => tabs(page).getByRole('tab', { name, exact: true });
+  const productsButton = (page: Page) => mainNav(page).getByRole('button', { name: 'Products' });
+  const heroWindow = (page: Page) => main(page).getByRole('img', { name: /^The Yahel home screen/ });
+  /** The window's transform, as numbers: how far it is scaled and moved, and whether it is tilted out of the plane. */
+  const pose = (page: Page) =>
+    heroWindow(page).evaluate((el) => {
+      const value = getComputedStyle(el).transform;
+      if (value === 'none') return { none: true, scale: 1, rise: 0, tilted: false };
+      const matrix = new DOMMatrix(value);
+      return { none: false, scale: Math.round(matrix.m11 * 1000) / 1000, rise: Math.round(matrix.m42 * 10) / 10, tilted: Math.abs(matrix.m23) > 0.0001 };
+    });
+  /** A product's panel, shown or not: only the shown one is a tab panel to a reader; the rest wait, inert. */
+  const panelOf = (page: Page, name: string) => page.locator('h3', { hasText: new RegExp(`^${name}$`) }).locator('xpath=ancestor::*[@role="tabpanel" or @inert][1]');
+  /** Every scroll position the page passes through over the next frames, starting now: two for a jump, many for a glide. */
+  const scrollPositions = (page: Page) =>
+    page.evaluate(
+      () =>
+        new Promise<number[]>((resolve) => {
+          const seen = new Set([window.scrollY]);
+          let frame = 0;
+          const tick = () => {
+            seen.add(window.scrollY);
+            if ((frame += 1) < 90) requestAnimationFrame(tick);
+            else resolve([...seen]);
+          };
+          requestAnimationFrame(tick);
+        }),
+    );
+  const topBelowBar = (page: Page, id: string) =>
+    page.evaluate((target) => Math.round(document.getElementById(target)!.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom), id);
+
+  test('home shows every section in order', async ({ page }) => {
+    await openSite(page, '/');
+
+    await expect(main(page).getByRole('heading', { level: 1 })).toHaveText('Everything your work needs. One account.');
+    await expect(main(page).getByRole('heading', { level: 2 })).toHaveText([
+      'Nine apps. One way of working.',
+      'For you. For your whole organisation.',
+      'You can always see who has access.',
+      'Start free.',
+      'One account for all of it.',
+    ]);
+    expect(await main(page).locator('.ws-eyebrow').allTextContents()).toEqual(['Yahel Workspace', 'Products', 'Accounts', 'Security and control', 'Plans']);
+    const order = await page.evaluate(() => {
+      const top = (el: Element | null) => el!.getBoundingClientRect().top + window.scrollY;
+      return [top(document.querySelector('h1')), top(document.querySelector('main [role="img"]')), ...['products', 'accounts', 'security', 'plans'].map((id) => top(document.getElementById(id))), top(document.querySelector('footer'))];
+    });
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    await expect(heroWindow(page)).toBeVisible();
+  });
+
+  test('the hero has one filled action; the second is a plain link', async ({ page }) => {
+    await openSite(page, '/');
+    const create = main(page).getByRole('link', { name: 'Create an account' }).first();
+    const business = main(page).getByRole('link', { name: 'Set up your business' }).first();
+
+    await expect(create).toHaveAttribute('href', appSignIn);
+    await expect(business).toHaveAttribute('href', '/#accounts');
+    expect(await style(create, 'background-color')).not.toBe('rgba(0, 0, 0, 0)');
+    expect(await style(business, 'background-color')).toBe('rgba(0, 0, 0, 0)');
+  });
+
+  test('home lists every product', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+
+    await expect(dock(page).getByRole('link')).toHaveCount(9);
+    expect(await dock(page).getByRole('link').evaluateAll((links) => links.map((link) => link.getAttribute('aria-label')))).toEqual(productNames);
+    await expect(tabs(page).getByRole('tab')).toHaveText(productNames);
+    await expect(page.getByRole('contentinfo').getByRole('list', { name: 'Products', exact: true }).getByRole('link')).toHaveText(productNames.slice(0, 5));
+    await expect(page.getByRole('contentinfo').getByRole('list', { name: 'More products' }).getByRole('link')).toHaveText(productNames.slice(5));
+
+    await productsButton(page).click();
+    const menuLinks = mainNav(page).getByRole('link', { name: /yahel\.com$/ });
+    await expect(menuLinks).toHaveCount(9);
+    expect(await menuLinks.evaluateAll((links) => links.map((link) => [...link.children].map((part) => part.textContent).filter(Boolean).join(' ')))).toEqual(productNames.map((name) => `${name} ${name.toLowerCase()}.yahel.com`));
+  });
+
+  test('switch product by pointer', async ({ page }) => {
+    await openSite(page, '/');
+    await tabs(page).scrollIntoViewIfNeeded();
+    await expect(tab(page, 'Mail')).toHaveAttribute('aria-selected', 'true');
+    const panel = page.getByRole('tabpanel');
+    await expect(panel).toHaveCount(1);
+    await expect(panel.getByRole('heading', { level: 3 })).toHaveText('Mail');
+    await expect(panel.getByText('Email on your personal address or your organisation’s domain.')).toBeVisible();
+    await expect(panel.getByRole('link', { name: 'Open mail.yahel.com' })).toHaveAttribute('href', '/#products');
+
+    await tab(page, 'Sheets').click();
+
+    await expect(tab(page, 'Sheets')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'Mail')).toHaveAttribute('aria-selected', 'false');
+    await expect(panel).toHaveCount(1);
+    await expect(panel).toHaveAccessibleName('Sheets');
+    await expect(panel.getByRole('heading', { level: 3 })).toHaveText('Sheets');
+    await expect(panel.getByText('Spreadsheets for plans, budgets and data.')).toBeVisible();
+    await expect(panel.getByRole('link', { name: 'Open sheets.yahel.com' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Open mail.yahel.com' })).toHaveCount(0);
+  });
+
+  test('switch product by keyboard', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    await openSite(page, '/');
+    await tab(page, 'Mail').focus();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(tab(page, 'Calendar')).toBeFocused();
+    await expect(tab(page, 'Calendar')).toHaveAttribute('aria-selected', 'true');
+
+    await page.keyboard.press('End');
+    await expect(tab(page, 'Admin')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Home');
+    await expect(tab(page, 'Mail')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowLeft');
+    await expect(tab(page, 'Admin')).toHaveAttribute('aria-selected', 'true');
+
+    // The list is one stop: Tab goes on to the one panel that can be reached, never into the other eight.
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('link', { name: 'Open admin.yahel.com' })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(main(page).getByRole('link', { name: 'Create a personal account' })).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(tab(page, 'Admin')).toBeFocused();
+  });
+
+  test('for a reader of a right-to-left language the arrow keys follow the direction the tabs are drawn in', async ({ browser, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    const context = await browser.newContext({ locale: 'ar' });
+    const page = await context.newPage();
+    await openSite(page, '/');
+    await tab(page, 'Mail').focus();
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(tab(page, 'Calendar')).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowRight');
+    await expect(tab(page, 'Mail')).toHaveAttribute('aria-selected', 'true');
+    await context.close();
+  });
+
+  test('choose a product from the menu', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+    await expect(productsButton(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(mainNav(page).getByRole('link', { name: /yahel\.com$/ })).toHaveCount(0);
+
+    await productsButton(page).click();
+    await expect(productsButton(page)).toHaveAttribute('aria-expanded', 'true');
+    await mainNav(page).getByRole('link', { name: 'Slides slides.yahel.com' }).click();
+
+    await expect(productsButton(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(tab(page, 'Slides')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'Slides')).toBeFocused();
+    await expect(page).toHaveURL(site('/#products'));
+    await expect.poll(() => topBelowBar(page, 'products')).toBe(8);
+    await expect(page.getByRole('tabpanel').getByRole('heading', { level: 3 })).toHaveText('Slides');
+  });
+
+  test('the Products menu closes on Escape, returning focus, and on a press outside it', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+    const firstLink = mainNav(page).getByRole('link', { name: 'Mail mail.yahel.com' });
+
+    await productsButton(page).click();
+    await expect(firstLink).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(firstLink).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(productsButton(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(productsButton(page)).toBeFocused();
+    await expect(firstLink).toBeHidden();
+
+    await productsButton(page).click();
+    await expect(firstLink).toBeVisible();
+    await main(page).getByRole('heading', { level: 1 }).click({ position: { x: 4, y: 4 }, force: true });
+    await expect(productsButton(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(firstLink).toBeHidden();
+  });
+
+  test('below 860 wide the Products menu button is not shown', async ({ page }) => {
+    await page.setViewportSize({ width: 860, height: 800 });
+    await openSite(page, '/');
+
+    await expect(page.getByRole('button', { name: 'Products' })).toBeHidden();
+    await expect(banner(page).getByRole('button', { name: 'Menu' })).toBeVisible();
+  });
+
+  test('choose a product from a hero icon, and from the footer', async ({ page }) => {
+    await openSite(page, '/');
+
+    await dock(page).getByRole('link', { name: 'Meet' }).click();
+    await expect(tab(page, 'Meet')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'Meet')).toBeFocused();
+    await expect.poll(() => topBelowBar(page, 'products')).toBe(8);
+
+    const footerLink = page.getByRole('contentinfo').getByRole('link', { name: 'Drive' });
+    await footerLink.scrollIntoViewIfNeeded();
+    await footerLink.click();
+    await expect(tab(page, 'Drive')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'Drive')).toBeFocused();
+    await expect.poll(() => topBelowBar(page, 'products')).toBe(8);
+  });
+
+  test('hero window follows the scroll', async ({ page }) => {
+    await openSite(page, '/');
+    // On a phone the window starts below the fold: let it arrive, then go back to the top.
+    await heroWindow(page).scrollIntoViewIfNeeded();
+    await expect(revealed(heroWindow(page))).toHaveCSS('opacity', '1');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await settle(page);
+    const still = () =>
+      heroWindow(page).evaluate((el) => {
+        const box = getComputedStyle(el);
+        return { width: el.offsetWidth, height: el.offsetHeight, page: document.documentElement.scrollHeight, opacity: box.opacity };
+      });
+    const atTop = await still();
+
+    await expect.poll(() => pose(page)).toEqual({ none: false, scale: 0.94, rise: 0, tilted: true });
+    expect(await style(heroWindow(page), 'transition-property')).toBe('transform');
+
+    await page.evaluate(() => window.scrollTo(0, 260));
+    await expect.poll(() => pose(page)).toEqual({ none: false, scale: 0.97, rise: -16, tilted: true });
+    expect(await still()).toEqual(atTop);
+
+    await page.evaluate(() => window.scrollTo(0, 520));
+    await expect.poll(() => pose(page)).toEqual({ none: false, scale: 1, rise: -32, tilted: false });
+
+    await page.evaluate(() => window.scrollTo(0, 900));
+    await frames(page);
+    await expect.poll(() => pose(page)).toEqual({ none: false, scale: 1, rise: -32, tilted: false });
+    expect(await still()).toEqual(atTop);
+
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => pose(page)).toEqual({ none: false, scale: 0.94, rise: 0, tilted: true });
+  });
+
+  test('scrolling the hero re-renders nothing: the window is moved by a style property alone', async ({ page }) => {
+    await openSite(page, '/');
+    // Everything in the hero has arrived, so what is seen below is the scroll's doing alone.
+    await heroWindow(page).scrollIntoViewIfNeeded();
+    await expect(revealed(heroWindow(page))).toHaveCSS('opacity', '1');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await settle(page);
+    await page.evaluate(() => {
+      const seen: string[] = [];
+      new MutationObserver((records) => {
+        for (const record of records) seen.push(`${record.type} ${record.attributeName ?? ''} ${(record.target as Element).tagName}.${(record.target as Element).className}`);
+      }).observe(document.querySelector('main section')!, { subtree: true, childList: true, attributes: true, characterData: true });
+      (window as unknown as { seen: string[] }).seen = seen;
+    });
+
+    for (const y of [60, 180, 300, 420]) {
+      await page.evaluate((to) => window.scrollTo(0, to), y);
+      await frames(page);
+    }
+
+    const seen = await page.evaluate(() => (window as unknown as { seen: string[] }).seen);
+    expect(seen.length).toBeGreaterThan(0);
+    expect([...new Set(seen)]).toEqual(['attributes style DIV.home-window']);
+  });
+
+  test('the icons pop in once, in order, 70 ms apart', async ({ page }) => {
+    await openSite(page, '/');
+    const icons = await dock(page).getByRole('listitem').all();
+    expect(icons).toHaveLength(9);
+
+    const delays = [];
+    for (const icon of icons) delays.push(Math.round(Number.parseFloat((await style(icon, 'transition-delay')).split(',')[0]!) * 1000));
+    expect(delays).toEqual([280, 350, 420, 490, 560, 630, 700, 770, 840]);
+    expect(await style(icons[0]!, 'transition-duration')).toBe('0.42s, 0.62s');
+    expect(await style(icons[0]!, 'transition-timing-function')).toBe('cubic-bezier(0.2, 0, 0, 1), cubic-bezier(0.3, 1.3, 0.4, 1)');
+
+    for (const icon of icons) {
+      await expect(icon).toHaveCSS('opacity', '1');
+      await expect(icon).toHaveCSS('transform', 'none');
+    }
+    await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await frames(page);
+    for (const icon of icons) expect(await style(icon, 'opacity')).toBe('1');
+  });
+
+  test('an icon waiting to pop in is small and low', async ({ page }) => {
+    await page.addInitScript(() => {
+      // Hold the observer back, so the waiting state can be read before anything arrives.
+      window.IntersectionObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+        takeRecords() {
+          return [];
+        }
+      } as unknown as typeof IntersectionObserver;
+    });
+    await openSite(page, '/');
+    const icon = dock(page).getByRole('listitem').first();
+
+    await expect(icon).toHaveCSS('opacity', '0');
+    expect(await style(icon, 'transform')).toBe('matrix(0.86, 0, 0, 0.86, 0, 18)');
+  });
+
+  test('switching product fades the old panel out and brings the new one in, rising', async ({ page }) => {
+    await openSite(page, '/');
+    await tabs(page).scrollIntoViewIfNeeded();
+    await expect(revealed(tabs(page))).toHaveCSS('opacity', '1');
+    await settle(page);
+
+    expect(await style(panelOf(page, 'Docs'), 'opacity')).toBe('0');
+    expect(await style(panelOf(page, 'Docs'), 'transform')).toBe('matrix(0.985, 0, 0, 0.985, 0, 16)');
+    const before = await panelOf(page, 'Mail').boundingBox();
+    const waiting = await panelOf(page, 'Docs').evaluate((el) => ({ left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth }));
+    expect(waiting).toEqual(await panelOf(page, 'Mail').evaluate((el) => ({ left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth })));
+
+    await tab(page, 'Docs').click();
+
+    expect(await style(panelOf(page, 'Mail'), 'transition-property')).toBe('opacity, transform, visibility');
+    expect(await style(panelOf(page, 'Mail'), 'transition-duration')).toBe('0.28s, 0.42s, 0s');
+    expect(await style(panelOf(page, 'Docs'), 'transition-duration')).toBe('0.42s, 0.62s, 0s');
+    await expect(panelOf(page, 'Docs')).toHaveCSS('opacity', '1');
+    await expect(panelOf(page, 'Docs')).toHaveCSS('transform', 'none');
+    await expect(panelOf(page, 'Mail')).toHaveCSS('opacity', '0');
+    await expect(panelOf(page, 'Mail')).toHaveCSS('visibility', 'hidden');
+    expect((await panelOf(page, 'Docs').boundingBox())!.y).toBe(before!.y);
+  });
+
+  test('cards lift under a pointer and settle when it leaves', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hover belongs to a pointer');
+    await openSite(page, '/');
+    const card = main(page).getByRole('heading', { name: 'For yourself' }).locator('xpath=..');
+    await card.scrollIntoViewIfNeeded();
+    await expect(revealed(card)).toHaveCSS('opacity', '1');
+    await settle(page);
+
+    await card.hover({ position: { x: 20, y: 20 } });
+    await expect(card).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -4)');
+    expect(await style(card, 'transition-duration')).toBe('0.28s');
+
+    await page.mouse.move(0, 0);
+    await expect(card).toHaveCSS('transform', 'none');
+  });
+
+  test('reduced motion removes movement', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+
+    for (const y of [0, 260, 520]) {
+      await page.evaluate((to) => window.scrollTo(0, to), y);
+      await frames(page);
+      expect(await pose(page)).toEqual({ none: true, scale: 1, rise: 0, tilted: false });
+    }
+    expect(await heroWindow(page).evaluate((el) => (el as HTMLElement).style.getPropertyValue('--scroll-progress'))).toBe('');
+
+    const icon = dock(page).getByRole('listitem').last();
+    expect(await style(icon, 'transition-property')).toBe('opacity');
+    expect(await style(icon, 'transition-duration')).toBe('0.18s');
+    expect(await style(icon, 'transition-delay')).toBe('0s');
+    expect(await style(icon, 'transform')).toBe('none');
+
+    expect(await style(panelOf(page, 'Chat'), 'transform')).toBe('none');
+    await tab(page, 'Chat').click();
+    expect(await style(panelOf(page, 'Chat'), 'transform')).toBe('none');
+    expect(await style(panelOf(page, 'Mail'), 'transform')).toBe('none');
+    expect((await style(panelOf(page, 'Chat'), 'transition-duration')).split(',')[0]).toBe('0.18s');
+    await expect(panelOf(page, 'Chat')).toHaveCSS('opacity', '1');
+
+    const card = main(page).getByRole('heading', { name: 'For yourself' }).locator('xpath=..');
+    await card.scrollIntoViewIfNeeded();
+    await card.hover({ position: { x: 20, y: 20 }, force: true });
+    await frames(page);
+    expect(await style(card, 'transform')).toBe('none');
+
+    // A link to a section takes the reader there at once.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const jump = scrollPositions(page);
+    await mainNav(page).getByRole('link', { name: 'Plans' }).click();
+    expect(await jump).toHaveLength(2);
+    expect(await topBelowBar(page, 'plans')).toBe(8);
+    await productsButton(page).click();
+    expect(await style(mainNav(page).getByRole('link', { name: 'Mail mail.yahel.com' }).locator('xpath=..'), 'transform')).toBe('none');
+  });
+
+  test('section links land below the bar', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+
+    for (const [name, id, heading] of [
+      ['For business', 'accounts', 'For you. For your whole organisation.'],
+      ['Security', 'security', 'You can always see who has access.'],
+      ['Plans', 'plans', 'Start free.'],
+    ] as const) {
+      await mainNav(page).getByRole('link', { name, exact: true }).click();
+
+      await expect(page).toHaveURL(site(`/#${id}`));
+      await expect.poll(() => topBelowBar(page, id)).toBe(8);
+      await expect(main(page).getByRole('heading', { level: 2, name: heading })).toBeInViewport({ ratio: 1 });
+      const gap = await main(page).getByRole('heading', { level: 2, name: heading }).evaluate((el) => el.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom);
+      expect(gap).toBeGreaterThan(0);
+    }
+
+    await main(page).getByRole('link', { name: 'Set up your business' }).first().evaluate((link: HTMLElement) => link.click());
+    await expect(page).toHaveURL(site('/#accounts'));
+    await expect.poll(() => topBelowBar(page, 'accounts')).toBe(8);
+  });
+
+  test('a section link glides to its section rather than jumping', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+
+    const watching = scrollPositions(page);
+    await mainNav(page).getByRole('link', { name: 'Plans', exact: true }).click();
+    const positions = await watching;
+
+    expect(positions.length).toBeGreaterThan(5);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    await expect.poll(() => topBelowBar(page, 'plans')).toBe(8);
+  });
+
+  test('the phone menu leads to the home page’s sections', async ({ page }) => {
+    await page.setViewportSize(narrow);
+    await openSite(page, '/');
+    const dialog = page.getByRole('dialog', { name: 'Menu' });
+
+    await banner(page).getByRole('button', { name: 'Menu' }).click();
+    await expect(dialog.getByRole('link')).toHaveText(['Products', 'For business', 'Security', 'Plans', 'About', 'Careers', 'Sign in']);
+    await dialog.getByRole('link', { name: 'Plans' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page).toHaveURL(site('/#plans'));
+    await expect.poll(() => topBelowBar(page, 'plans')).toBe(8);
+  });
+
+  test('plans show placeholders', async ({ page }) => {
+    await openSite(page, '/');
+    const plans = page.locator('#plans');
+
+    expect(await plans.locator('h3, h3 ~ p').allTextContents()).toEqual(['Personal', 'Free', 'Every app, with [STORAGE] of storage.', 'Business', '[YOUR PRICE]', 'Per person, each month. Your domain, admin controls and [STORAGE] each.']);
+    // Nothing undecided is stated: outside the picture of the product, the page carries no figure at all.
+    const text = await main(page).evaluate((el) => {
+      const copy = el.cloneNode(true) as HTMLElement;
+      copy.querySelector('[role="img"]')!.remove();
+      return copy.textContent ?? '';
+    });
+    expect(text).not.toMatch(/\d|£|\$|€|₦|\bGB\b|\bTB\b/);
+  });
+
+  test('every account action on the home page ends at sign-in on the app', async ({ page }) => {
+    await page.setViewportSize(wide);
+    await openSite(page, '/');
+
+    const actions = page.getByRole('link', { name: /^(Sign in|Create account|Create an account|Create a personal account)$/ });
+    await expect(actions).toHaveCount(5);
+    expect(new Set(await actions.evaluateAll((links) => links.map((link) => link.getAttribute('href'))))).toEqual(new Set([appSignIn]));
+    await expect(page.locator('#accounts').getByRole('link', { name: 'Set up your business' })).toHaveAttribute('href', appSignIn);
+  });
+
+  test('the home page keeps to its own origin with every product shown', async ({ page }) => {
+    const requested: string[] = [];
+    page.on('request', (request) => requested.push(request.url()));
+    await openSite(page, '/');
+
+    for (const name of productNames) await tab(page, name).click();
+    await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+    await page.waitForLoadState('networkidle');
+
+    expect(requested.filter((url) => !url.startsWith('data:') && new URL(url).origin !== siteOrigin)).toEqual([]);
+  });
+
+  for (const theme of [
+    { name: 'light', colorScheme: 'light', contrast: 'no-preference', minimum: 3 },
+    { name: 'dark', colorScheme: 'dark', contrast: 'no-preference', minimum: 3 },
+    { name: 'light, increased contrast', colorScheme: 'light', contrast: 'more', minimum: 4.5 },
+    { name: 'dark, increased contrast', colorScheme: 'dark', contrast: 'more', minimum: 4.5 },
+  ] as const) {
+    test(`the focus ring on the inverse account card stands out from the card: ${theme.name}`, async ({ page, isMobile }) => {
+      test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+      await page.emulateMedia({ colorScheme: theme.colorScheme, contrast: theme.contrast });
+      await openSite(page, '/');
+      const action = page.locator('#accounts').getByRole('link', { name: 'Set up your business' });
+      await action.focus();
+      await page.keyboard.press('Shift+Tab');
+      await page.keyboard.press('Tab');
+      await expect(action).toBeFocused();
+
+      const colours = await action.evaluate((el) => ({ ring: getComputedStyle(el).outlineColor, style: getComputedStyle(el).outlineStyle, card: getComputedStyle(el.parentElement!).backgroundColor }));
+      const luminance = (colour: string) => {
+        const [r, g, b] = colour.match(/[\d.]+/g)!.slice(0, 3).map((value) => {
+          const channel = Number(value) / 255;
+          return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+        }) as [number, number, number];
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const [high, low] = [luminance(colours.ring), luminance(colours.card)].sort((x, y) => y - x) as [number, number];
+
+      expect(colours.style).toBe('solid');
+      expect((high + 0.05) / (low + 0.05)).toBeGreaterThanOrEqual(theme.minimum);
+    });
+  }
 });

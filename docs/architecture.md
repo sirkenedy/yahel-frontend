@@ -9,7 +9,7 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 ```
 apps/
   shell/            sign-in, home, account. Later: app launcher, account switcher
-  website/          the public site: home, about. No session and no backend calls; links out to the shell for sign-in
+  website/          the public site: home (every product, accounts, security, plans), about. No session and no backend calls; links out to the shell for sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
