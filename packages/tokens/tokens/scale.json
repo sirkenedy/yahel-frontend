@@ -10,7 +10,10 @@
     "32": "32px",
     "40": "40px",
     "48": "48px",
-    "64": "64px"
+    "64": "64px",
+    "72": "72px",
+    "88": "88px",
+    "112": "112px"
   },
   "radius": {
     "xs": "6px",
@@ -19,6 +22,7 @@
     "lg": "16px",
     "xl": "20px",
     "2xl": "28px",
+    "3xl": "32px",
     "full": "999px"
   },
   "target": {
@@ -28,7 +32,8 @@
   },
   "breakpoint": {
     "regular": "600px",
-    "wide": "1024px"
+    "wide": "1024px",
+    "site-nav": "860px"
   },
   "margin": {
     "compact": "16px",
@@ -45,6 +50,8 @@
     "quick": "180ms",
     "standard": "280ms",
     "emphasized": "420ms",
+    "reveal-move": "620ms",
+    "stagger": "70ms",
     "hover-delay": "500ms",
     "loop": "1400ms",
     "toast": "5000ms"
@@ -102,6 +109,61 @@
     "switch-width": "51px",
     "switch-height": "31px",
     "switch-width-pointer": "40px",
-    "switch-height-pointer": "24px"
+    "switch-height-pointer": "24px",
+    "site-content": "1200px",
+    "site-bar": "68px",
+    "site-bar-compact": "56px",
+    "site-cta": "52px",
+    "reveal-rise": "28px"
+  },
+  "display": {
+    "xl": {
+      "size": "clamp(2.5rem, 6.2vw, 5.5rem)",
+      "line": "1.02",
+      "weight": "700",
+      "tracking": "-0.035em"
+    },
+    "l": {
+      "size": "clamp(2rem, 4.2vw, 3.5rem)",
+      "line": "1.06",
+      "weight": "700",
+      "tracking": "-0.03em"
+    },
+    "title": {
+      "size": "2.125rem",
+      "line": "1.12",
+      "weight": "700",
+      "tracking": "-0.02em"
+    },
+    "heading": {
+      "size": "1.25rem",
+      "line": "1.25",
+      "weight": "600",
+      "tracking": "-0.012em"
+    },
+    "lead": {
+      "size": "clamp(1.1875rem, 1.6vw, 1.3125rem)",
+      "line": "1.5",
+      "weight": "400",
+      "tracking": "0"
+    },
+    "body": {
+      "size": "1.0625rem",
+      "line": "1.5",
+      "weight": "400",
+      "tracking": "0"
+    },
+    "label": {
+      "size": "0.9375rem",
+      "line": "1.34",
+      "weight": "500",
+      "tracking": "0"
+    },
+    "eyebrow": {
+      "size": "0.8125rem",
+      "line": "1.4",
+      "weight": "600",
+      "tracking": "0.06em"
+    }
   }
 }
