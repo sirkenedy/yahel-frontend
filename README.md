@@ -5,7 +5,8 @@ Web frontend for Yahel: a suite of apps for personal accounts and organisations.
 ```bash
 pnpm install
 cp .env.example .env        # point VITE_API_URL at the backend (default http://localhost:3200/api)
-pnpm dev                    # http://localhost:5173
+pnpm dev                    # the app, http://localhost:5173
+pnpm dev:website            # the public website, http://localhost:5174
 pnpm verify                 # everything CI checks
 ```
 

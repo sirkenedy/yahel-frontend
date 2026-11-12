@@ -5,6 +5,7 @@ import { join, relative, resolve, sep } from 'node:path';
 // Which kinds of package may depend on which. See docs/architecture.md §2.
 const allowed = {
   'type:app': ['type:ui', 'type:data', 'type:tokens'],
+  'type:site': ['type:ui', 'type:tokens'],
   'type:ui': ['type:tokens'],
   'type:data': ['type:data'],
   'type:tokens': [],
@@ -29,7 +30,7 @@ const sourceFiles = (dir) =>
 
 for (const project of projects) {
   if (!allowed[project.tag]) {
-    errors.push(`${project.name}: package.json needs "nx": { "tags": ["type:app" | "type:ui" | "type:data" | "type:tokens"] }`);
+    errors.push(`${project.name}: package.json needs "nx": { "tags": ["type:app" | "type:site" | "type:ui" | "type:data" | "type:tokens"] }`);
     continue;
   }
   for (const dep of project.deps.filter((d) => byName.has(d))) {

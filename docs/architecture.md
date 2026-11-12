@@ -4,11 +4,12 @@ How the frontend is organised, and why. The rules that follow from it are in `ru
 
 ## 1. Shape
 
-A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React applications built with Vite; each app builds and deploys on its own.
+A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React applications built with Vite; each app builds and deploys on its own. The public website is the one exception planned: it will be prerendered to static HTML (decisions F-19).
 
 ```
 apps/
   shell/            sign-in, home, account. Later: app launcher, account switcher
+  website/          the public site: home, about. No session and no backend calls; links out to the shell for sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
@@ -31,12 +32,13 @@ Each package declares one kind in `package.json` (`nx.tags`). `scripts/check-bou
 
 | Kind | Packages | May depend on |
 |---|---|---|
-| `type:app` | `apps/*` | `type:ui`, `type:data`, `type:tokens` |
+| `type:app` | `apps/*` except the website | `type:ui`, `type:data`, `type:tokens` |
+| `type:site` | `apps/website` | `type:ui`, `type:tokens` |
 | `type:ui` | `ui` | `type:tokens` |
 | `type:data` | `api-client`, `auth` | `type:data` |
 | `type:tokens` | `tokens` | nothing |
 
-The check also rejects imports that reach into another package's `src/`, relative imports that leave a package, and imports of a workspace package that is not declared as a dependency. UI never depends on data: components take data and callbacks as props, so they can be tested and reused without a backend.
+The check also rejects imports that reach into another package's `src/`, relative imports that leave a package, and imports of a workspace package that is not declared as a dependency. UI never depends on data: components take data and callbacks as props, so they can be tested and reused without a backend. The public website is `type:site`, not `type:app`, so that adding the API client or the session to it fails the check.
 
 A further kind is planned as products arrive: `type:feature`, for logic shared by several apps (for example a file picker with its data), allowed to depend on ui and data.
 
@@ -75,6 +77,7 @@ A feature exposes what routes need and nothing else. Features do not import othe
 - Styles are plain CSS on `--ws-*` tokens. There is no CSS-in-JS and no utility framework: the token layer is the abstraction.
 - Behaviour and accessibility come from React Aria Components, wrapped so apps never import it directly.
 - Light, dark and increased-contrast versions of both come from the token CSS and follow system settings.
+- The public website adds one more stylesheet, `@yahel/ui/site.css` (display type, the site bar, link buttons, scroll reveal). Product apps do not import it. App CSS is held to the same token check as component CSS.
 
 ## 6. Quality gates
 
@@ -83,7 +86,7 @@ Every pull request must pass all of these. They are what makes unattended mergin
 | Gate | What it proves | Where |
 |---|---|---|
 | Boundaries | Packages depend only on what they may | `scripts/check-boundaries.mjs` |
-| Tokens | Contrast holds in four themes; component CSS uses only real tokens | `packages/tokens`, `packages/ui/scripts` |
+| Tokens | Contrast holds in four themes; component and app CSS use only real tokens | `packages/tokens`, `packages/ui/scripts` |
 | Contract | Generated API types match the committed description | `scripts/api-sync.mjs --check` |
 | Lint | Accessibility rules, no `fetch`, storage or raw React Aria in apps, no `any` | `eslint.config.mjs` |
 | Types | Strict TypeScript across every package | `tsc` |

@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { mockApi, signIn } from './support/api';
+import { openSiteFully, settle } from './support/website';
 
 // Every screen is checked in each theme the design system ships.
 const themes = [
@@ -39,6 +40,18 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await signIn(page);
       await page.getByRole('link', { name: 'Manage account' }).click();
       await page.getByRole('heading', { name: 'Account' }).waitFor();
+    },
+  },
+  { name: 'website home', open: (page) => openSiteFully(page, '/') },
+  { name: 'website about', open: (page) => openSiteFully(page, '/about') },
+  {
+    name: 'website about with the menu open',
+    open: async (page) => {
+      await page.setViewportSize({ width: 390, height: 800 });
+      await openSiteFully(page, '/about');
+      await page.getByRole('button', { name: 'Menu' }).click();
+      await page.getByRole('dialog', { name: 'Menu' }).waitFor();
+      await settle(page);
     },
   },
 ];
@@ -100,3 +113,33 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
   const viewport = page.viewportSize()!;
   expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
 });
+
+// The public website has no session and its own bar, so each of its pages gets the text-size and direction checks itself.
+const publicScreens = [
+  { name: 'website home', path: '/' },
+  { name: 'website about', path: '/about' },
+];
+
+for (const screen of publicScreens) {
+  test(`layout: ${screen.name} holds at 200% text size`, async ({ page }) => {
+    await openSiteFully(page, screen.path);
+    await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
+    await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeVisible();
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeInViewport({ ratio: 1 });
+  });
+
+  test(`layout: ${screen.name} mirrors for right-to-left without overflow`, async ({ page }) => {
+    await openSiteFully(page, screen.path);
+    await page.evaluate(() => (document.documentElement.dir = 'rtl'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const brand = await page.getByRole('link', { name: 'Yahel home' }).boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
+  });
+}
