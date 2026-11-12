@@ -35,12 +35,21 @@ jobs:
         with: { fetch-depth: 0, token: '${{ secrets.AGENT_GH_TOKEN }}' }
       - name: Choose a task
         id: task
+        env:
+          REQUESTED: ${{ github.event.inputs.issue || github.event.issue.number }}
         run: |
           open=$(gh pr list --label agent --state open --json number --jq length)
           if [ "$open" -ge 3 ]; then echo "Three agent pull requests are already open; not starting another."; exit 0; fi
-          issue="${{ github.event.inputs.issue || github.event.issue.number }}"
+          issue="$REQUESTED"
+          case "$issue" in *[!0-9]*) echo "::error::Issue must be a number"; exit 1 ;; esac
           if [ -z "$issue" ]; then issue=$(gh issue list --label task:ready --state open --json number,createdAt --jq 'sort_by(.createdAt) | .[0].number // empty'); fi
           if [ -z "$issue" ]; then echo "No ready task."; exit 0; fi
+          # Labelling an issue can fire more than one run; only the first finds the task still ready.
+          # A run started by hand for a named issue is a maintainer's decision and skips this check.
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            ready=$(gh issue view "$issue" --json labels --jq 'any(.labels[]; .name == "task:ready")') || { echo "::error::Could not read issue #$issue"; exit 1; }
+            if [ "$ready" != "true" ]; then echo "Issue #$issue is no longer labelled task:ready; another run has it."; exit 0; fi
+          fi
           gh issue edit "$issue" --remove-label task:ready --add-label task:in-progress
           echo "issue=$issue" >> "$GITHUB_OUTPUT"
       - if: steps.task.outputs.issue != ''
@@ -65,6 +74,30 @@ jobs:
           claude_args: |
             --max-turns 200
             --allowedTools "Read,Edit,Write,Grep,Glob,Bash(pnpm:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(git switch:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push origin agent/:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh issue edit:*),Bash(gh pr create:*),Bash(gh pr view:*),Bash(gh pr edit:*),Bash(gh pr merge --auto --squash:*),Agent,Task,Skill,Bash(node scripts/agent/review-receipt.mjs:*),Bash(git push -u origin agent/:*)"
+      # The redaction step is given only credentials the agent's own shell already held, so it adds
+      # no exposure. It runs the script from main with a fixed PATH; if main has no script, nothing
+      # is saved.
+      - name: Redact the agent transcript
+        if: always()
+        env:
+          REDACT_AGENT_GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+          REDACT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          rm -f "$RUNNER_TEMP/agent-transcript.json"
+          if git show origin/main:scripts/agent/redact-transcript.mjs > "$RUNNER_TEMP/redact-transcript.mjs" 2>/dev/null; then
+            node "$RUNNER_TEMP/redact-transcript.mjs" "$RUNNER_TEMP/claude-execution-output.json" "$RUNNER_TEMP/agent-transcript.json" || rm -f "$RUNNER_TEMP/agent-transcript.json"
+          else
+            echo "::notice::No redaction script on main; transcript not saved."
+          fi
+      - name: Save the redacted transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-transcript-implement-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent-transcript.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Hand back if no pull request was opened
         if: steps.task.outputs.issue != '' && always()
         run: |

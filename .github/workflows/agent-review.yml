@@ -49,6 +49,30 @@ jobs:
           claude_args: |
             --max-turns 80
             --allowedTools "Read,Grep,Glob,Write(.agent/**),Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr checks:*),Bash(gh issue view:*),Bash(gh pr comment:*),Bash(pnpm build:*),Bash(pnpm test:*),Bash(pnpm e2e:*),Bash(pnpm check:*),Bash(pnpm lint:*),Bash(pnpm typecheck:*),Bash(pnpm exec playwright:*)"
+      # The redaction step is given only credentials the agent's own shell already held, so it adds
+      # no exposure. It runs the script from main with a fixed PATH; if main has no script, nothing
+      # is saved.
+      - name: Redact the agent transcript
+        if: always()
+        env:
+          REDACT_AGENT_GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN }}
+          REDACT_GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+          rm -f "$RUNNER_TEMP/agent-transcript.json"
+          if git show origin/main:scripts/agent/redact-transcript.mjs > "$RUNNER_TEMP/redact-transcript.mjs" 2>/dev/null; then
+            node "$RUNNER_TEMP/redact-transcript.mjs" "$RUNNER_TEMP/claude-execution-output.json" "$RUNNER_TEMP/agent-transcript.json" || rm -f "$RUNNER_TEMP/agent-transcript.json"
+          else
+            echo "::notice::No redaction script on main; transcript not saved."
+          fi
+      - name: Save the redacted transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-transcript-review-${{ matrix.name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agent-transcript.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Require an approval verdict
         run: |
           git show origin/main:scripts/agent/check-verdict.mjs > "$RUNNER_TEMP/check-verdict.mjs"

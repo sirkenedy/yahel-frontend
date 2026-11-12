@@ -23,7 +23,7 @@ pnpm api:sync        # refresh the API client from the running backend
 pnpm tokens          # rebuild design tokens after changing packages/tokens/tokens/*.json
 ```
 
-`pnpm verify` runs: package boundaries, token checks, API contract check, lint, type check, unit tests, build, bundle budget, browser tests.
+`pnpm verify` runs: script tests, package boundaries, token checks, API contract check, lint, type check, unit tests, build, bundle budget, browser tests.
 
 ## The rules you will be tempted to break
 
