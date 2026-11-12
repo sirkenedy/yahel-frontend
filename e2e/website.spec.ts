@@ -62,7 +62,7 @@ test.describe('about page', () => {
   });
 
   test('an address with nothing behind it says so and links home', async ({ page }) => {
-    await openSite(page, '/careers');
+    await openSite(page, '/no-such-page');
 
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
     await page.getByRole('main').getByRole('link', { name: 'Go to the home page' }).click();
@@ -326,9 +326,25 @@ test.describe('navigation', () => {
     await action.scrollIntoViewIfNeeded();
     await expect(revealed(action)).toHaveCSS('opacity', '1');
 
+    await page.evaluate(() => document.documentElement.setAttribute('data-same-document', ''));
+
     await action.click();
 
     await expect(page).toHaveURL(site('/careers'));
+    await expect(page.getByRole('heading', { level: 1, name: 'Build the tools people open every day.' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-same-document', '');
+  });
+
+  test('Careers opens from the footer without loading the document again', async ({ page }) => {
+    await openSite(page, '/');
+    await page.evaluate(() => document.documentElement.setAttribute('data-same-document', ''));
+
+    await footerNav(page).getByRole('link', { name: 'Careers' }).click();
+
+    await expect(page).toHaveURL(site('/careers'));
+    await expect(page).toHaveTitle('Careers at Yahel');
+    await expect(page.locator('html')).toHaveAttribute('data-same-document', '');
+    await expect.poll(() => scrollY(page)).toBe(0);
   });
 
   test('Enter on the closing action goes to the open roles', async ({ page, isMobile }) => {
@@ -533,5 +549,298 @@ test.describe('phone menu', () => {
 
     await expect(page.getByRole('dialog', { name: 'Menu' })).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
+  });
+});
+
+test.describe('careers page', () => {
+  const teamTabs = (page: Page) => page.getByRole('tablist', { name: 'Team' });
+  const tab = (page: Page, name: string) => teamTabs(page).getByRole('tab', { name });
+  const roles = (page: Page) => page.getByRole('tabpanel').getByRole('link');
+  const selected = (page: Page) => teamTabs(page).getByRole('tab', { selected: true });
+  const openRoles = async (page: Page) => {
+    await openSite(page, '/careers');
+    await teamTabs(page).scrollIntoViewIfNeeded();
+    await expect(revealed(teamTabs(page))).toHaveCSS('opacity', '1');
+    await settle(page);
+  };
+  /** What moves on the list that has just come in: the properties its running animations change, and for how long. */
+  const arrival = (page: Page) =>
+    page.getByRole('tabpanel').evaluate((panel) => {
+      const running = panel.getAnimations();
+      return {
+        properties: [...new Set(running.flatMap((animation) => (animation.effect as KeyframeEffect).getKeyframes().flatMap((frame) => Object.keys(frame))))].filter((key) => !['offset', 'computedOffset', 'easing', 'composite'].includes(key)).sort(),
+        durations: running.map((animation) => animation.effect!.getTiming().duration).sort(),
+      };
+    });
+
+  test('careers content', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await openSite(page, '/careers');
+
+    await expect(page).toHaveTitle('Careers at Yahel');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
+    expect(await page.getByRole('main').locator('h1, h2, h3, p').allTextContents()).toEqual([
+      'Careers',
+      'Build the tools people open every day.',
+      'Join the team making mail, files, documents and meetings work as one product.',
+      'How we work',
+      '[HOW YOU WORK 1]',
+      '[One or two sentences: for example where and when people work.]',
+      '[HOW YOU WORK 2]',
+      '[One or two sentences: for example how decisions are made.]',
+      '[BENEFITS]',
+      '[What you offer: pay, leave, equipment, learning.]',
+      'Open roles',
+      'Nothing that fits? Write to [CAREERS EMAIL] and tell us what you do well.',
+    ]);
+    await expect(page.getByRole('main').getByRole('link', { name: 'See open roles' })).toHaveAttribute('href', '#roles');
+    await expect(mainNav(page).getByRole('link', { name: 'Careers' })).toHaveAttribute('aria-current', 'page');
+    await expect(mainNav(page).locator('[aria-current]')).toHaveCount(1);
+    await expect(page.getByRole('contentinfo')).toContainText('© Yahel');
+  });
+
+  test('See open roles brings the roles into view, clear of the bar', async ({ page }) => {
+    await openSite(page, '/careers');
+    const heading = page.getByRole('heading', { level: 2, name: 'Open roles' });
+    await expect(heading).not.toBeInViewport();
+
+    await page.getByRole('main').getByRole('link', { name: 'See open roles' }).click();
+
+    await expect(page).toHaveURL(site('/careers#roles'));
+    await expect(heading).toBeInViewport({ ratio: 1 });
+    const gap = await heading.evaluate((el) => el.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom);
+    expect(gap).toBeGreaterThanOrEqual(0);
+  });
+
+  test('after See open roles, the keyboard carries on from the roles', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    await openSite(page, '/careers');
+    await page.getByRole('link', { name: 'See open roles' }).focus();
+
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(site('/careers#roles'));
+    await page.keyboard.press('Tab');
+
+    await expect(tab(page, 'All')).toBeFocused();
+  });
+
+  test('filter roles by team with pointer', async ({ page }) => {
+    await openRoles(page);
+    const row = (team: string) => `[ROLE TITLE] ${team} · [LOCATION] View role`;
+
+    await expect(teamTabs(page).getByRole('tab')).toHaveText(['All', 'Engineering', 'Design', 'Operations']);
+    await expect(selected(page)).toHaveText(['All']);
+    await expect(roles(page)).toHaveText([row('Engineering'), row('Engineering'), row('Design'), row('Operations')]);
+
+    await tab(page, 'Engineering').click();
+    await expect(selected(page)).toHaveText(['Engineering']);
+    await expect(roles(page)).toHaveText([row('Engineering'), row('Engineering')]);
+
+    await tab(page, 'Design').click();
+    await expect(roles(page)).toHaveText([row('Design')]);
+
+    await tab(page, 'Operations').click();
+    await expect(roles(page)).toHaveText([row('Operations')]);
+    await expect(page.getByRole('tabpanel')).toHaveCount(1);
+    await expect(page.getByRole('tabpanel', { name: 'Operations' })).toBeVisible();
+
+    await tab(page, 'All').click();
+    await expect(roles(page)).toHaveCount(4);
+  });
+
+  test('filter roles by keyboard', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    await openRoles(page);
+    await page.getByRole('link', { name: 'See open roles' }).focus();
+
+    await page.keyboard.press('Tab');
+    await expect(tab(page, 'All')).toBeFocused();
+    await expect(tab(page, 'All')).toHaveAttribute('aria-selected', 'true');
+    await expect(tab(page, 'Engineering')).toHaveAttribute('aria-selected', 'false');
+
+    await page.keyboard.press('ArrowRight');
+    await expect(tab(page, 'Engineering')).toBeFocused();
+    await expect(selected(page)).toHaveText(['Engineering']);
+    await expect(roles(page)).toHaveCount(2);
+
+    await page.keyboard.press('End');
+    await expect(selected(page)).toHaveText(['Operations']);
+    await expect(roles(page)).toHaveCount(1);
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(selected(page)).toHaveText(['Design']);
+
+    await page.keyboard.press('Home');
+    await expect(selected(page)).toHaveText(['All']);
+    await expect(roles(page)).toHaveCount(4);
+
+    // The whole list was one stop: the next one is the first role.
+    await page.keyboard.press('Tab');
+    await expect(roles(page).first()).toBeFocused();
+  });
+
+  test('in a right-to-left language the arrow keys follow what is seen', async ({ browser, isMobile }) => {
+    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
+    const context = await browser.newContext({ locale: 'ar' });
+    const page = await context.newPage();
+    await openRoles(page);
+    await page.evaluate(() => (document.documentElement.dir = 'rtl'));
+    const [all, engineering] = [await tab(page, 'All').boundingBox(), await tab(page, 'Engineering').boundingBox()];
+    expect(engineering!.x).toBeLessThan(all!.x);
+
+    await tab(page, 'All').focus();
+    await page.keyboard.press('ArrowLeft');
+
+    await expect(selected(page)).toHaveText(['Engineering']);
+    await context.close();
+  });
+
+  test('the selected tab is raised and heavier, not only a different colour', async ({ page }) => {
+    await openRoles(page);
+    const look = (name: string) => tab(page, name).evaluate((el) => ({ weight: getComputedStyle(el).fontWeight, raised: getComputedStyle(el).boxShadow !== 'none' }));
+
+    expect(await look('All')).toEqual({ weight: '600', raised: true });
+    expect(await look('Design')).toEqual({ weight: '500', raised: false });
+
+    const widthBefore = (await teamTabs(page).boundingBox())!.width;
+    await tab(page, 'Design').click();
+    await settle(page);
+
+    expect(await look('Design')).toEqual({ weight: '600', raised: true });
+    expect(await look('All')).toEqual({ weight: '500', raised: false });
+    expect((await teamTabs(page).boundingBox())!.width).toBe(widthBefore);
+  });
+
+  test('at 200% text the tabs wrap and none is clipped', async ({ page }) => {
+    await page.setViewportSize(narrow);
+    await openRoles(page);
+    await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+
+    const boxes = await teamTabs(page).getByRole('tab').evaluateAll((tabs) => tabs.map((el) => ({ name: el.textContent, top: Math.round(el.getBoundingClientRect().top), left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right, cut: el.scrollWidth > el.clientWidth })));
+    const track = (await teamTabs(page).boundingBox())!;
+
+    expect(new Set(boxes.map((box) => box.top)).size).toBeGreaterThan(1);
+    expect(boxes.filter((box) => box.cut || box.left < track.x || box.right > track.x + track.width || box.right > narrow.width)).toEqual([]);
+    for (const name of ['All', 'Engineering', 'Design', 'Operations']) await expect(tab(page, name)).toBeVisible();
+  });
+
+  test('the list that comes in after a switch fades in and rises', async ({ page }) => {
+    await openRoles(page);
+
+    await tab(page, 'Engineering').click();
+
+    expect(await arrival(page)).toEqual({ properties: ['opacity', 'transform'], durations: [420, 620] });
+    await expect(page.getByRole('tabpanel')).toHaveCount(1);
+    await settle(page);
+    await expect(page.getByRole('tabpanel')).toHaveCSS('opacity', '1');
+    await expect(page.getByRole('tabpanel')).toHaveCSS('transform', 'none');
+  });
+
+  test('with reduced motion, switching teams only fades', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openRoles(page);
+
+    await tab(page, 'Engineering').click();
+
+    expect(await arrival(page)).toEqual({ properties: ['opacity'], durations: [180] });
+    expect(await style(page.getByRole('tabpanel'), 'transform')).toBe('none');
+    await expect(roles(page)).toHaveCount(2);
+  });
+});
+
+test.describe('prerendered pages', () => {
+  const written = [
+    { path: '/', title: 'Yahel', heading: 'Everything your work needs. One account.', copy: 'Mail, calendar, files, documents and meetings that work together. Free for you, and built to run a whole organisation.' },
+    { path: '/about', title: 'About Yahel', heading: 'Work tools that stay out of the way.', copy: '[YOUR STORY: why Yahel was started, by whom, and when. Two or three sentences.]' },
+    { path: '/careers', title: 'Careers at Yahel', heading: 'Build the tools people open every day.', copy: 'Nothing that fits? Write to [CAREERS EMAIL] and tell us what you do well.' },
+  ];
+
+  test('pages render without JavaScript', async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+
+    for (const { path, title, heading, copy } of written) {
+      await page.goto(site(path));
+
+      await expect(page).toHaveTitle(title);
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+      await expect(page.getByText(copy)).toBeVisible();
+      const hidden = await page.locator('[data-reveal]').evaluateAll((all) => all.filter((el) => getComputedStyle(el).opacity !== '1' || getComputedStyle(el).transform !== 'none').length);
+      expect(hidden).toBe(0);
+      expect(await page.locator('[data-reveal]').count()).toBeGreaterThan(3);
+    }
+    await context.close();
+  });
+
+  test('without JavaScript, links are ordinary links between the pages', async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto(site('/'));
+
+    await page.getByRole('contentinfo').getByRole('link', { name: 'About' }).click();
+    await expect(page).toHaveURL(site('/about'));
+    await expect(page.getByRole('heading', { level: 1, name: 'Work tools that stay out of the way.' })).toBeVisible();
+
+    await page.getByRole('main').getByRole('link', { name: 'See open roles' }).click();
+    await expect(page).toHaveURL(site('/careers'));
+    await expect(page.getByRole('tabpanel').getByRole('link')).toHaveCount(4);
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toHaveAttribute('href', appSignIn);
+    await context.close();
+  });
+
+  for (const { path, heading } of written) {
+    test(`hydration is clean at ${path}`, async ({ page }) => {
+      const said: string[] = [];
+      page.on('console', (message) => {
+        if (message.type() === 'error' || message.type() === 'warning') said.push(`${message.type()}: ${message.text()}`);
+      });
+      page.on('pageerror', (error) => said.push(`error: ${error.message}`));
+      // Before any script of the page runs: remember the heading the HTML arrived with, and watch how visible it is.
+      await page.addInitScript(() => {
+        const seen: number[] = [];
+        Object.assign(window, { headingOpacities: seen });
+        const watch = () => {
+          const h1 = document.querySelector('h1');
+          if (h1) {
+            if (!('writtenHeading' in window)) Object.assign(window, { writtenHeading: h1 });
+            seen.push(Number(getComputedStyle(h1).opacity));
+          }
+          requestAnimationFrame(watch);
+        };
+        requestAnimationFrame(watch);
+      });
+
+      await openSite(page, path);
+      await expect(page.getByRole('heading', { level: 1, name: heading })).toHaveCSS('opacity', '1');
+      await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+      await page.waitForLoadState('networkidle');
+
+      expect(said).toEqual([]);
+      // React took over the heading that was written; it did not draw another.
+      expect(await page.evaluate(() => (window as unknown as { writtenHeading: Element }).writtenHeading === document.querySelector('h1'))).toBe(true);
+      // It was never seen and then hidden: from the first frame its opacity only rises.
+      const opacities = await page.evaluate(() => (window as unknown as { headingOpacities: number[] }).headingOpacities);
+      expect(opacities[0]).toBe(0);
+      expect(opacities.filter((value, index) => index > 0 && value < opacities[index - 1]!)).toEqual([]);
+    });
+  }
+
+  test('a hydrated page still works: the bar answers scrolling and the filter answers a press', async ({ page }) => {
+    await openSite(page, '/careers');
+
+    await page.getByRole('tablist', { name: 'Team' }).scrollIntoViewIfNeeded();
+    await expect.poll(() => banner(page).evaluate((el) => getComputedStyle(el, '::before').opacity)).toBe('1');
+    await page.getByRole('tab', { name: 'Design' }).click();
+
+    await expect(page.getByRole('tabpanel').getByRole('link')).toHaveCount(1);
+  });
+
+  test('content is shown when the page script cannot be fetched', async ({ page }) => {
+    await page.route('**/assets/index-*.js', (route) => route.abort('internetdisconnected'));
+
+    await page.goto(site('/about'));
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Work tools that stay out of the way.' })).toHaveCSS('opacity', '1');
+    await expect(revealed(page.getByRole('heading', { name: 'Our story' }))).toHaveCSS('opacity', '1');
   });
 });

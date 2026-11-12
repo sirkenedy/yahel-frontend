@@ -45,6 +45,16 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   { name: 'website home', open: (page) => openSiteFully(page, '/') },
   { name: 'website about', open: (page) => openSiteFully(page, '/about') },
   { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
+  { name: 'website careers', open: (page) => openSiteFully(page, '/careers') },
+  {
+    name: 'website careers filtered',
+    open: async (page) => {
+      await openSiteFully(page, '/careers');
+      await page.getByRole('tab', { name: 'Engineering' }).click();
+      await page.getByRole('tabpanel', { name: 'Engineering' }).waitFor();
+      await settle(page);
+    },
+  },
   {
     name: 'website about with the menu open',
     open: async (page) => {
@@ -119,6 +129,7 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
 const publicScreens = [
   { name: 'website home', path: '/' },
   { name: 'website about', path: '/about' },
+  { name: 'website careers', path: '/careers' },
   { name: 'website page not found', path: '/no-such-page' },
 ];
 

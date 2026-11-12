@@ -3,8 +3,6 @@ import markUrl from '@yahel/ui/assets/logo/mark.svg';
 import { LinkButton, SiteBar, SiteMenu } from '@yahel/ui';
 import { chromeMessages as m } from './messages';
 
-const careersPath = '/careers';
-
 function Links({ onChoose }: { onChoose?: () => void }) {
   return (
     <>
@@ -14,9 +12,9 @@ function Links({ onChoose }: { onChoose?: () => void }) {
       <Link to="/about" onClick={onChoose}>
         {m.about}
       </Link>
-      <a href={careersPath} onClick={onChoose}>
+      <Link to="/careers" onClick={onChoose}>
         {m.careers}
-      </a>
+      </Link>
     </>
   );
 }

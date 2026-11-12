@@ -20,6 +20,10 @@ body { margin: 0; }
 .site-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--ws-space-12) var(--ws-space-20); }
 .site-link { display: inline-flex; align-items: center; min-block-size: var(--ws-target-touch); color: var(--ws-color-accent-default); font-weight: var(--ws-weight-medium); text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 
+/* Short points under a section heading: what we hold ourselves to, how we work. */
+.site-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(calc(var(--ws-size-pane-min) - var(--ws-space-24)), 100%), 1fr)); gap: var(--ws-space-32); }
+.site-point { display: grid; align-content: start; gap: var(--ws-space-8); padding-block-start: var(--ws-space-20); border-block-start: var(--ws-border-hairline) solid var(--ws-color-separator-default); }
+
 .site-band-section { padding-block-end: var(--ws-space-112); }
 /* The accent ring is too close to the inverse surface in three of four themes; on the band the ring is the band's own text colour. */
 .ws-root .site-band :focus-visible { outline-color: var(--ws-color-label-on-inverse); }
@@ -31,17 +35,29 @@ body { margin: 0; }
 .site-footer__links a { display: inline-flex; align-items: center; min-block-size: var(--ws-target-touch); color: inherit; text-decoration: none; transition: color var(--ws-duration-quick) var(--ws-easing-standard); }
 .site-footer__links a:hover { color: var(--ws-color-label-primary); }
 
-.about-values { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(calc(var(--ws-size-pane-min) - var(--ws-space-24)), 100%), 1fr)); gap: var(--ws-space-32); }
-.about-value { display: grid; align-content: start; gap: var(--ws-space-8); padding-block-start: var(--ws-space-20); border-block-start: var(--ws-border-hairline) solid var(--ws-color-separator-default); }
 .about-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--ws-size-layer-sm), 100%), 1fr)); gap: var(--ws-space-24); }
 .about-card { display: grid; align-content: start; gap: var(--ws-space-12); padding: var(--ws-space-32); border-radius: var(--ws-radius-2xl); background: var(--ws-color-bg-elevated); box-shadow: var(--ws-elevation-2); }
+
+.careers-open { display: grid; gap: var(--ws-space-32); }
+.careers-roles { margin: 0; padding: 0; border-radius: var(--ws-radius-2xl); background: var(--ws-color-bg-elevated); box-shadow: var(--ws-elevation-2); list-style: none; }
+.careers-roles li + li { border-block-start: var(--ws-border-hairline) solid var(--ws-color-separator-default); }
+/* The ring is drawn inside the row, so it is not cut by the card's edge or laid over the row beside it. */
+.careers-role { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ws-space-8) var(--ws-space-24); min-block-size: var(--ws-target-touch); padding: var(--ws-space-20) var(--ws-space-24); outline-offset: calc(-1 * var(--ws-border-focus)); color: var(--ws-color-label-primary); text-decoration: none; transition: background-color var(--ws-duration-quick) var(--ws-easing-standard); }
+.careers-roles li:first-child .careers-role { border-start-start-radius: var(--ws-radius-2xl); border-start-end-radius: var(--ws-radius-2xl); }
+.careers-roles li:last-child .careers-role { border-end-start-radius: var(--ws-radius-2xl); border-end-end-radius: var(--ws-radius-2xl); }
+.careers-role:hover { background: var(--ws-color-fill-tertiary); }
+.careers-role__text { display: grid; gap: var(--ws-space-4); }
+.careers-role__title { font-size: var(--ws-display-lead-size); font-weight: var(--ws-weight-semibold); }
+.careers-role__detail { color: var(--ws-color-label-secondary); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); }
+.careers-role__action { display: inline-flex; align-items: center; gap: var(--ws-space-4); color: var(--ws-color-accent-default); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); font-weight: var(--ws-weight-semibold); }
 
 @media (hover: hover) and (pointer: fine) {
   .site-footer__links a { min-block-size: var(--ws-target-pointer-min); }
 }
 @media (prefers-contrast: more) {
-  .about-value { border-color: var(--ws-color-separator-opaque); }
-  .about-card { border: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
+  .site-point, .careers-roles li + li { border-color: var(--ws-color-separator-opaque); }
+  .about-card, .careers-roles { border: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
+  .careers-role__action { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
   .site-footer { border-color: var(--ws-color-separator-opaque); }
   .site-footer__links a { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 }
