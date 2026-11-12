@@ -107,6 +107,35 @@ describe('Reveal', () => {
     expect(screen.getByText('Placed').style.getPropertyValue('--reveal-index')).toBe('3');
   });
 
+  it('marks an icon that pops in, and still arrives once like any other', () => {
+    render(
+      <>
+        <Reveal>Rises</Reveal>
+        <Reveal variant="pop">Pops</Reveal>
+      </>,
+    );
+    const icon = screen.getByText('Pops');
+
+    expect(screen.getByText('Rises')).toHaveAttribute('data-reveal', '');
+    expect(icon).toHaveAttribute('data-reveal', 'pop');
+
+    observer().report(icon, true);
+    expect(icon).toHaveAttribute('data-in');
+    expect(observer().observed.has(icon)).toBe(false);
+  });
+
+  it('arrives on the next frame without being seen when it is eager', async () => {
+    render(<Reveal eager>Opens the page</Reveal>);
+    const block = screen.getByText('Opens the page');
+
+    expect(block).toHaveAttribute('data-reveal-eager', '');
+    expect(block).not.toHaveAttribute('data-in');
+
+    await act(() => new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve())));
+
+    expect(block).toHaveAttribute('data-in');
+  });
+
   it('leaves content visible when the browser cannot observe', () => {
     vi.unstubAllGlobals();
     expect('IntersectionObserver' in window).toBe(false);

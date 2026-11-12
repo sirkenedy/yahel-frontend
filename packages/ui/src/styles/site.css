@@ -1,4 +1,4 @@
-/* Public website layer: display type, the site bar, link buttons and scroll reveal.
+/* Public website layer: display type, the site bar, link buttons, segmented tabs and scroll reveal.
    Loaded by the website only (@yahel/ui/site.css), after styles.css, so product apps do not pay for it.
    Spec: design-system/docs/patterns/website.md. Only opacity and transform move. */
 
@@ -22,7 +22,21 @@
   transition: opacity var(--ws-duration-emphasized) var(--ws-easing-standard), transform var(--ws-duration-reveal-move) var(--ws-easing-standard);
   transition-delay: calc(var(--reveal-index, 0) * var(--ws-duration-stagger));
 }
+/* Pop, for icons: a shorter rise, and growth from a little smaller that overshoots before it settles. */
+[data-motion='on'] [data-reveal='pop'] { transform: translateY(var(--ws-size-reveal-pop-rise)) scale(var(--ws-motion-pop-scale)); transition-timing-function: var(--ws-easing-standard), var(--ws-easing-spring); }
 [data-motion='on'] [data-reveal][data-in] { opacity: 1; transform: none; }
+
+/* App icon: a product's tile from assets/app-icons, sized by its container. */
+.ws-app-icon { display: block; inline-size: 100%; aspect-ratio: 1; border-radius: 26%; background: center / cover no-repeat; box-shadow: inset 0 var(--ws-border-hairline) 0 var(--ws-material-clear), var(--ws-elevation-1); }
+.ws-app-icon[data-app='mail'] { background-image: url('../../assets/app-icons/mail.svg'); }
+.ws-app-icon[data-app='calendar'] { background-image: url('../../assets/app-icons/calendar.svg'); }
+.ws-app-icon[data-app='drive'] { background-image: url('../../assets/app-icons/drive.svg'); }
+.ws-app-icon[data-app='docs'] { background-image: url('../../assets/app-icons/docs.svg'); }
+.ws-app-icon[data-app='sheets'] { background-image: url('../../assets/app-icons/sheets.svg'); }
+.ws-app-icon[data-app='slides'] { background-image: url('../../assets/app-icons/slides.svg'); }
+.ws-app-icon[data-app='chat'] { background-image: url('../../assets/app-icons/chat.svg'); }
+.ws-app-icon[data-app='meet'] { background-image: url('../../assets/app-icons/meet.svg'); }
+.ws-app-icon[data-app='admin'] { background-image: url('../../assets/app-icons/admin.svg'); }
 
 /* Link button: a link with the weight of a button. Builds on .ws-button. */
 .ws-button.ws-link-button {
@@ -41,8 +55,8 @@
 .ws-button.ws-link-button--inverse:hover { background: linear-gradient(var(--ws-color-state-hover), var(--ws-color-state-hover)), var(--ws-color-label-on-inverse); }
 .ws-button.ws-link-button--plain { gap: var(--ws-space-4); padding-inline: 0; background: transparent; color: var(--ws-color-accent-default); font-weight: var(--ws-weight-medium); }
 .ws-button.ws-link-button--plain:hover { background: transparent; text-decoration: underline; text-underline-offset: var(--ws-space-4); }
-.ws-link-button__chevron { inline-size: var(--ws-icon-sm); block-size: var(--ws-icon-sm); flex-shrink: 0; stroke-width: var(--ws-border-control); }
-[dir='rtl'] .ws-link-button__chevron { transform: scaleX(-1); }
+.ws-chevron { inline-size: var(--ws-icon-sm); block-size: var(--ws-icon-sm); flex-shrink: 0; stroke-width: var(--ws-border-control); }
+[dir='rtl'] .ws-chevron { transform: scaleX(-1); }
 
 /* Site bar. The header keeps one layout height; the glass is a layer behind it that fades in and
    compacts by transform, so nothing below the bar reflows when it changes. */
@@ -87,13 +101,53 @@
 .ws-site-bar__brand { display: flex; }
 .ws-site-bar__brand a { display: inline-flex; align-items: center; gap: var(--ws-space-8); min-block-size: var(--ws-target-touch); color: var(--ws-color-label-primary); font-size: var(--ws-display-body-size); font-weight: var(--ws-weight-semibold); text-decoration: none; }
 .ws-site-bar__brand img { inline-size: var(--ws-space-32); block-size: var(--ws-space-32); }
-.ws-site-bar__nav, .ws-site-bar__wide { display: none; }
-.ws-site-bar__nav { align-items: center; gap: var(--ws-space-24); }
+.ws-site-bar__wide { display: none; }
+.ws-site-bar__nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--ws-space-24); }
 .ws-site-bar__nav a, .ws-site-bar__wide a { display: inline-flex; align-items: center; min-block-size: var(--ws-target-touch); color: var(--ws-color-label-primary); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); font-weight: var(--ws-display-label-weight); text-decoration: none; transition: color var(--ws-duration-quick) var(--ws-easing-standard); }
 .ws-site-bar__wide a { padding-inline: var(--ws-space-12); }
 .ws-site-bar__nav a:hover, .ws-site-bar__wide a:hover { color: var(--ws-color-accent-default); }
 .ws-site-bar__nav a[aria-current='page'] { color: var(--ws-color-accent-default); font-weight: var(--ws-weight-semibold); }
 .ws-site-bar__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--ws-space-4) var(--ws-space-8); }
+
+/* A short list of points, each led by a tick in the accent colour, or in the text colour with --ticks-colour set. */
+.ws-ticks { display: grid; gap: var(--ws-space-8); margin: 0; padding: 0; list-style: none; }
+.ws-ticks li { display: flex; gap: var(--ws-space-8); }
+.ws-ticks li::before { content: ''; flex: none; inline-size: var(--ws-icon-md); block-size: 1lh; background: var(--ticks-colour, var(--ws-color-accent-default)); -webkit-mask: url('../../assets/icons/bold/check.svg') center / contain no-repeat; mask: url('../../assets/icons/bold/check.svg') center / contain no-repeat; }
+
+/* Nav menu: a button in the bar that discloses a panel of links. The panel stays in the page, inert while
+   closed, so it can leave the way it came. */
+.ws-nav-menu { position: relative; display: flex; }
+.ws-nav-menu__trigger { display: inline-flex; align-items: center; gap: var(--ws-space-4); min-block-size: var(--ws-target-touch); padding: 0; border: 0; background: none; color: var(--ws-color-label-primary); font: inherit; font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); font-weight: var(--ws-display-label-weight); cursor: pointer; transition: color var(--ws-duration-quick) var(--ws-easing-standard), transform var(--ws-duration-quick) var(--ws-easing-standard); }
+.ws-nav-menu__trigger:hover, .ws-nav-menu__trigger[aria-expanded='true'] { color: var(--ws-color-accent-default); }
+.ws-nav-menu__trigger:active { transform: scale(0.97); }
+.ws-nav-menu__chevron { inline-size: var(--ws-space-12); block-size: var(--ws-space-12); stroke-width: var(--ws-border-control); transition: transform var(--ws-duration-quick) var(--ws-easing-standard); }
+.ws-nav-menu__trigger[aria-expanded='true'] .ws-nav-menu__chevron { transform: scaleY(-1); }
+.ws-nav-menu__panel {
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: calc(-1 * var(--ws-space-24));
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ws-space-4);
+  inline-size: var(--ws-size-site-menu);
+  margin-block-start: var(--ws-space-8);
+  padding: var(--ws-space-16);
+  border: var(--ws-border-hairline) solid var(--ws-color-separator-default);
+  border-radius: var(--ws-radius-xl);
+  /* Solid, not glass: the bar is its own layer for page changes, so a blur here would see only the bar, not the page under the panel. */
+  background: var(--ws-color-bg-elevated);
+  box-shadow: var(--ws-elevation-3);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(calc(-1 * var(--ws-space-8))) scale(var(--ws-motion-menu-scale));
+  transition: opacity var(--ws-duration-quick) var(--ws-easing-exit), transform var(--ws-duration-standard) var(--ws-easing-standard), visibility 0s linear var(--ws-duration-quick);
+}
+.ws-nav-menu__trigger[aria-expanded='true'] + .ws-nav-menu__panel { opacity: 1; visibility: visible; transform: none; transition: opacity var(--ws-duration-quick) var(--ws-easing-standard), transform var(--ws-duration-standard) var(--ws-easing-standard), visibility 0s; }
+.ws-nav-menu__panel a { display: grid; grid-template-columns: var(--ws-size-site-menu-icon) minmax(0, 1fr); align-content: center; align-items: center; column-gap: var(--ws-space-12); min-block-size: var(--ws-target-touch); padding: var(--ws-space-8); border-radius: var(--ws-radius-md); color: var(--ws-color-label-primary); text-decoration: none; transition: background-color var(--ws-duration-quick) var(--ws-easing-standard); }
+.ws-nav-menu__panel a:hover { background: var(--ws-color-fill-tertiary); color: var(--ws-color-label-primary); }
+.ws-nav-menu__panel .ws-app-icon { grid-row: span 2; }
+.ws-nav-menu__name { font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); font-weight: var(--ws-weight-semibold); }
+.ws-nav-menu__detail { color: var(--ws-color-label-secondary); font-size: var(--ws-display-eyebrow-size); line-height: var(--ws-display-eyebrow-line); font-weight: var(--ws-weight-regular); }
 
 /* Site menu: the bar's links in a sheet, below the site-nav breakpoint. Spec: components/sheet.md. */
 .ws-button.ws-site-menu__trigger, .ws-button.ws-site-menu__close { min-block-size: var(--ws-target-touch); border-radius: var(--ws-radius-full); color: var(--ws-color-label-primary); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); }
@@ -129,9 +183,42 @@
 .ws-site-menu__links a:hover { background: var(--ws-color-fill-tertiary); }
 .ws-site-menu__links a[aria-current='page'] { color: var(--ws-color-accent-default); font-weight: var(--ws-weight-semibold); }
 
+/* Segmented tabs: a track of tabs that switch the view below it. Spec: components/segmented-control.md. */
+.ws-segmented-tabs { display: grid; justify-items: start; gap: var(--ws-space-32); }
+.ws-segmented-tabs__list { display: flex; flex-wrap: wrap; gap: var(--ws-space-4); max-inline-size: 100%; padding: var(--ws-space-4); border-radius: var(--ws-radius-xl); background: var(--ws-color-fill-tertiary); }
+.ws-segmented-tabs__tab {
+  display: inline-grid;
+  place-items: center;
+  min-block-size: var(--ws-target-touch);
+  padding-inline: var(--ws-space-16);
+  border-radius: var(--ws-radius-lg);
+  color: var(--ws-color-label-secondary);
+  font-size: var(--ws-display-label-size);
+  line-height: var(--ws-display-label-line);
+  font-weight: var(--ws-weight-medium);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--ws-duration-quick) var(--ws-easing-standard), color var(--ws-duration-quick) var(--ws-easing-standard), box-shadow var(--ws-duration-quick) var(--ws-easing-standard), transform var(--ws-duration-quick) var(--ws-easing-standard);
+}
+/* Holds the width the label takes at the selected weight, so the track does not shift when the selection moves. */
+.ws-segmented-tabs__tab::after { content: attr(data-label); block-size: 0; overflow: hidden; visibility: hidden; font-weight: var(--ws-weight-semibold); }
+.ws-segmented-tabs__tab[data-hovered] { background: var(--ws-color-fill-tertiary); }
+.ws-segmented-tabs__tab[data-pressed] { transform: scale(0.97); }
+.ws-segmented-tabs__tab[data-selected] { background: var(--ws-color-bg-elevated); color: var(--ws-color-label-primary); font-weight: var(--ws-weight-semibold); box-shadow: var(--ws-elevation-1); }
+.ws-segmented-tabs__tab[data-marked] { grid-template-columns: auto auto; column-gap: var(--ws-space-8); }
+.ws-segmented-tabs__tab[data-marked]::after { grid-column: 2; }
+.ws-segmented-tabs__panel { inline-size: 100%; }
+/* Kept panels share one cell, so the outgoing one fades under the incoming one. All but the selected are inert and hidden. */
+.ws-segmented-tabs__panels { display: grid; inline-size: 100%; }
+.ws-segmented-tabs__panels > .ws-segmented-tabs__panel { grid-area: 1 / 1; min-inline-size: 0; border-radius: var(--ws-radius-2xl); transition: opacity var(--ws-duration-emphasized) var(--ws-easing-standard) var(--ws-duration-instant), transform var(--ws-duration-reveal-move) var(--ws-easing-standard) var(--ws-duration-instant), visibility 0s; }
+.ws-segmented-tabs__panels > .ws-segmented-tabs__panel[data-inert] { opacity: 0; visibility: hidden; transform: translateY(var(--ws-space-16)) scale(var(--ws-motion-panel-scale)); transition: opacity var(--ws-duration-standard) var(--ws-easing-exit), transform var(--ws-duration-emphasized) var(--ws-easing-standard), visibility 0s linear var(--ws-duration-standard); }
+/* Only the panel coming in moves, and only after a switch. The one it replaces leaves at once, so the two are never stacked. */
+.ws-segmented-tabs__panel[data-switched][data-entering] { animation: ws-site-fade var(--ws-duration-emphasized) var(--ws-easing-standard), ws-site-panel-rise var(--ws-duration-reveal-move) var(--ws-easing-standard); }
+
 @keyframes ws-site-fade { from { opacity: 0; } }
 @keyframes ws-site-fade-out { to { opacity: 0; } }
 @keyframes ws-site-rise { from { transform: translateY(100%); } }
+@keyframes ws-site-panel-rise { from { transform: translateY(var(--ws-space-16)); } }
 
 /* Moving between pages: the old page fades out over the new one, which then arrives by its own reveal. The bar
    holds still. The old page is lifted above the new, or the new one would cover the fade from its first frame. */
@@ -140,8 +227,20 @@
 ::view-transition-old(ws-site-bar) { display: none; }
 ::view-transition-new(ws-site-bar) { animation: none; }
 
+/* Without scripts the Menu button can open nothing: it stays away, and below the site-nav breakpoint the links
+   take a row of their own in the bar instead of folding into the menu. */
+html:not([data-scripts='on']) .ws-button.ws-site-menu__trigger { display: none; }
+/* Likewise a nav menu's button: where no script runs, its plain link stands in for it. */
+html:not([data-scripts='on']) .ws-nav-menu { display: none; }
+.ws-nav-menu__fallback { display: flex; }
+[data-scripts='on'] .ws-nav-menu__fallback { display: none; }
+@media (width <= 860px) {
+  .ws-site-bar__nav { order: 1; flex-basis: 100%; }
+  /* With its links on rows of their own the bar is tall, and taller than the room kept for it above a section: it stays at the top of the page and does not follow the reader down over what a link has just brought into view. */
+  html:not([data-scripts='on']) .ws-site-bar { position: relative; }
+  [data-scripts='on'] .ws-site-bar__nav { display: none; }
+}
 @media (width > 860px) {
-  .ws-site-bar__nav { display: flex; }
   .ws-site-bar__wide { display: block; }
   .ws-button.ws-site-menu__trigger, .ws-site-menu__error { display: none; }
 }
@@ -150,16 +249,25 @@
 @media (prefers-reduced-motion: reduce) {
   [data-motion='on'] [data-reveal] { transform: none; transition: opacity var(--ws-duration-quick) var(--ws-easing-linear); transition-delay: 0s; }
   .ws-site-bar::before, .ws-site-bar__inner { transition: none; }
+  .ws-root .ws-nav-menu__panel, .ws-root .ws-nav-menu__trigger[aria-expanded='true'] + .ws-nav-menu__panel { transform: none; transition: opacity var(--ws-duration-quick) var(--ws-easing-linear), visibility 0s linear var(--ws-duration-quick); }
+  .ws-root .ws-nav-menu__trigger[aria-expanded='true'] + .ws-nav-menu__panel { transition-delay: 0s; }
+  .ws-root .ws-nav-menu__trigger:active { transform: none; }
+  .ws-root .ws-segmented-tabs__panels > .ws-segmented-tabs__panel { transform: none; transition: opacity var(--ws-duration-quick) var(--ws-easing-linear), visibility 0s; }
+  .ws-root .ws-segmented-tabs__panels > .ws-segmented-tabs__panel[data-inert] { transition: opacity var(--ws-duration-quick) var(--ws-easing-linear), visibility 0s linear var(--ws-duration-quick); }
   .ws-site-bar[data-scrolled]::before, .ws-site-bar[data-scrolled] .ws-site-bar__inner { transform: none; }
   .ws-root .ws-site-menu, .ws-root .ws-site-menu__scrim[data-entering] { animation: ws-site-fade var(--ws-duration-quick) var(--ws-easing-linear); }
   .ws-root .ws-site-menu[data-exiting], .ws-root .ws-site-menu__scrim[data-exiting] { animation: ws-site-fade var(--ws-duration-quick) var(--ws-easing-linear) reverse; }
+  .ws-segmented-tabs__tab[data-pressed] { transform: none; }
+  .ws-root .ws-segmented-tabs__panel[data-switched][data-entering] { animation: ws-site-fade var(--ws-duration-quick) var(--ws-easing-linear); }
 }
 @media (prefers-reduced-transparency: reduce) {
   .ws-site-bar::before, .ws-site-menu { background: var(--ws-color-bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
   .ws-site-bar::before { opacity: 1; border-color: var(--ws-color-separator-opaque); background: var(--ws-color-bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .ws-site-menu { border-color: var(--ws-color-separator-opaque); }
+  .ws-site-menu, .ws-nav-menu__panel { border-color: var(--ws-color-separator-opaque); }
+  .ws-segmented-tabs__list { outline: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
+  .ws-segmented-tabs__tab[data-selected] { box-shadow: inset 0 0 0 var(--ws-border-control) var(--ws-color-label-primary); }
   .ws-site-bar__brand a, .ws-site-bar__nav a, .ws-site-bar__wide a, .ws-site-menu__links a { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
   .ws-button.ws-link-button--plain { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 }

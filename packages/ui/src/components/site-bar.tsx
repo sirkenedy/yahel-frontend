@@ -87,6 +87,9 @@ export function SiteMenu({ label, closeLabel, errorLabel, children }: SiteMenuPr
     };
   }, [isOpen]);
 
+  // Until a script says it runs, the bar keeps its links in view and this button out of it: it could open nothing.
+  useEffect(() => document.documentElement.setAttribute('data-scripts', 'on'), []);
+
   const open = async () => {
     if (Sheet) return setOpen(true);
     setStatus('loading');

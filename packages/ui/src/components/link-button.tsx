@@ -1,4 +1,5 @@
 import type { AnchorHTMLAttributes, ReactNode, Ref } from 'react';
+import { Chevron } from './chevron';
 
 export type LinkButtonVariant = 'filled' | 'inverse' | 'plain';
 
@@ -10,14 +11,6 @@ export interface LinkButtonProps extends Omit<AnchorHTMLAttributes<HTMLAnchorEle
   size?: 'regular' | 'large';
   children: ReactNode;
   ref?: Ref<HTMLAnchorElement>;
-}
-
-function Chevron() {
-  return (
-    <svg className="ws-link-button__chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 2.5 9.5 7 5 11.5" />
-    </svg>
-  );
 }
 
 /** Navigation that carries the weight of a button. It goes somewhere, so it is a link. */

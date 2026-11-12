@@ -114,7 +114,16 @@
     "site-bar": "68px",
     "site-bar-compact": "56px",
     "site-cta": "52px",
-    "reveal-rise": "28px"
+    "reveal-rise": "28px",
+    "reveal-pop-rise": "18px",
+    "site-menu": "560px",
+    "site-menu-icon": "36px",
+    "site-dock-icon": "60px",
+    "site-product-icon": "72px",
+    "site-avatar": "56px",
+    "hero-scroll": "520px",
+    "hero-perspective": "1600px",
+    "site-window": "1080px"
   },
   "display": {
     "xl": {
@@ -165,5 +174,12 @@
       "weight": "600",
       "tracking": "0.06em"
     }
+  },
+  "motion": {
+    "pop-scale": "0.86",
+    "panel-scale": "0.985",
+    "menu-scale": "0.98",
+    "hero-tilt": "6deg",
+    "hero-scale": "0.94"
   }
 }

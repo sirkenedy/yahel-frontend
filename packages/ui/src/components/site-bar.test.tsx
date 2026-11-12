@@ -95,6 +95,14 @@ describe('SiteMenu', () => {
     return { user, dialog: await screen.findByRole('dialog', { name: 'Menu' }) };
   };
 
+  it('says that scripts run here, so the bar can offer the button in place of its links', () => {
+    document.documentElement.removeAttribute('data-scripts');
+
+    renderBar();
+
+    expect(document.documentElement).toHaveAttribute('data-scripts', 'on');
+  });
+
   it('opens a modal dialog named for the button, hides the page behind it, and moves focus into it', async () => {
     const { dialog } = await open();
 
