@@ -21,9 +21,10 @@
     "check:tokens": "pnpm --filter @yahel/tokens build && node packages/ui/scripts/check-css-tokens.mjs",
     "check:budget": "node scripts/check-bundle-budget.mjs",
     "check:security": "pnpm audit --audit-level=high --prod",
-    "verify": "pnpm check:boundaries && pnpm check:tokens && pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:budget && pnpm e2e",
+    "verify": "pnpm test:scripts && pnpm check:boundaries && pnpm check:tokens && pnpm api:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm check:budget && pnpm e2e",
     "check:boundaries": "node scripts/check-boundaries.mjs",
-    "check:attribution": "node scripts/check-attribution.mjs"
+    "check:attribution": "node scripts/check-attribution.mjs",
+    "test:scripts": "node --test scripts/agent/*.test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

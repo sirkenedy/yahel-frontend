@@ -37,7 +37,8 @@ if (mode === 'write') {
     try {
       const verdict = JSON.parse(readFileSync(file, 'utf8'));
       const blocking = (verdict.findings ?? []).filter((f) => f.severity === 'blocker' || f.severity === 'major');
-      if (verdict.verdict !== 'approve' || blocking.length) problems.push(`${name}: not approved (${blocking.length} blocking finding(s))`);
+      if (verdict.verdict !== 'approve' && verdict.verdict !== 'request_changes') problems.push(`${name}: "verdict" must be exactly "approve" or "request_changes", found ${JSON.stringify(verdict.verdict)}`);
+      else if (verdict.verdict !== 'approve' || blocking.length) problems.push(`${name}: not approved (${blocking.length} blocking finding(s))`);
       if (verdict.fingerprint !== fingerprint()) problems.push(`${name}: reviewed a different version of the change; run that reviewer again`);
     } catch {
       problems.push(`${name}: verdict is not valid JSON`);

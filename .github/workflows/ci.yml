@@ -27,6 +27,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_BODY: ${{ github.event.pull_request.body }}
+      - run: pnpm test:scripts
       - run: pnpm check:boundaries
       - run: pnpm check:tokens
       - run: pnpm api:check
