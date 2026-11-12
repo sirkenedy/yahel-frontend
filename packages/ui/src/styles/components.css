@@ -173,9 +173,11 @@
   .ws-button:active { transform: none; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .ws-glass, .ws-tabbar, .ws-tooltip { background: var(--ws-color-bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .ws-glass, .ws-tabbar { background: var(--ws-color-bg-elevated); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .ws-tooltip { background: var(--ws-color-bg-elevated-2); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (prefers-contrast: more) {
   .ws-button--plain, .ws-root a { text-decoration: underline; }
   .ws-card, .ws-list { border: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
+  .ws-tooltip { border-color: var(--ws-color-separator-opaque); }
 }
