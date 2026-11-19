@@ -38,7 +38,7 @@ export function HomeHero({ signInUrl, products, onPickProduct, productsLink, acc
       </Reveal>
       <ul className="home-dock" aria-label={m.dockLabel}>
         {products.map((product, position) => (
-          <Reveal as="li" key={product.id} variant="pop" index={blocksBeforeIcons + position}>
+          <Reveal eager as="li" key={product.id} variant="pop" index={blocksBeforeIcons + position}>
             <a
               {...productsLink}
               href={productsLink.href}

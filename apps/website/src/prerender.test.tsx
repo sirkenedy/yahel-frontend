@@ -6,6 +6,8 @@ const template = '<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset
 const head = (html: string) => html.slice(0, html.indexOf('</head>'));
 const root = (html: string) => html.slice(html.indexOf('<div id="root"'));
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 describe('renderDocument', () => {
   it('writes the home page, About and Careers', () => {
     expect(pages).toEqual(['/', '/about', '/careers']);
@@ -18,7 +20,7 @@ describe('renderDocument', () => {
   ])('draws the page at %s into the root, heading and copy included', async (path, _title, heading, copy) => {
     const html = await renderDocument(template, path);
 
-    expect(root(html)).toMatch(new RegExp(`<h1[^>]*>${heading.replace(/[.?]/g, '\\$&')}</h1>`));
+    expect(root(html)).toMatch(new RegExp(`<h1[^>]*>${escapeRegExp(heading)}</h1>`));
     expect(root(html)).toContain(copy);
     expect(root(html)).toContain('© Yahel');
   });
@@ -57,7 +59,7 @@ describe('renderDocument', () => {
     const html = root(await renderDocument(template, '/'));
 
     for (const heading of ['Nine apps. One way of working.', 'For you. For your whole organisation.', 'You can always see who has access.', 'Start free.', 'One account for all of it.']) {
-      expect(html).toMatch(new RegExp(`<h2[^>]*>${heading.replace(/[.]/g, '\\$&')}</h2>`));
+      expect(html).toMatch(new RegExp(`<h2[^>]*>${escapeRegExp(heading)}</h2>`));
     }
     for (const id of ['products', 'accounts', 'security', 'plans']) expect(html).toContain(`<section id="${id}"`);
     expect(html.match(/role="tab"/g)).toHaveLength(9);

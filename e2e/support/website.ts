@@ -40,7 +40,8 @@ export async function openPageThatDidNotLoad(page: Page) {
 /** Scrolls through the page so everything that arrives on scroll has arrived and stopped moving. */
 export async function revealAll(page: Page) {
   for (const element of await page.locator('[data-reveal]').all()) {
-    await element.scrollIntoViewIfNeeded();
+    // Centred, not merely in view: content waits until it is clear of the bottom edge before it arrives.
+    await element.evaluate((node) => node.scrollIntoView({ block: 'center' }));
     await expect(element).toHaveCSS('opacity', '1');
   }
   await settle(page);

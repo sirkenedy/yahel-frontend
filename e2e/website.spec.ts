@@ -839,22 +839,15 @@ test.describe('home page', () => {
   });
 
   test('an icon waiting to pop in is small and low', async ({ page }) => {
-    await page.addInitScript(() => {
-      // Hold the observer back, so the waiting state can be read before anything arrives.
-      window.IntersectionObserver = class {
-        observe() {}
-        unobserve() {}
-        disconnect() {}
-        takeRecords() {
-          return [];
-        }
-      } as unknown as typeof IntersectionObserver;
-    });
     await openSite(page, '/');
     const icon = dock(page).getByRole('listitem').first();
+    await expect(icon).toHaveCSS('opacity', '1');
+
+    // The icons arrive as the page is drawn, so the waiting state is read by putting one back into it.
+    await icon.evaluate((node) => node.removeAttribute('data-in'));
 
     await expect(icon).toHaveCSS('opacity', '0');
-    expect(await style(icon, 'transform')).toBe('matrix(0.86, 0, 0, 0.86, 0, 18)');
+    await expect(icon).toHaveCSS('transform', 'matrix(0.86, 0, 0, 0.86, 0, 18)');
   });
 
   test('switching product fades the old panel out and brings the new one in, rising', async ({ page }) => {
