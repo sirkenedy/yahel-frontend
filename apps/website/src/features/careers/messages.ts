@@ -1,0 +1,21 @@
+export const careersMessages = {
+  documentTitle: 'Careers at Yahel',
+  eyebrow: 'Careers',
+  title: 'Build the tools people open every day.',
+  lead: 'Join the team making mail, files, documents and meetings work as one product.',
+  rolesAction: 'See open roles',
+  workTitle: 'How we work',
+  work: [
+    { title: '[HOW YOU WORK 1]', text: '[One or two sentences: for example where and when people work.]' },
+    { title: '[HOW YOU WORK 2]', text: '[One or two sentences: for example how decisions are made.]' },
+    { title: '[BENEFITS]', text: '[What you offer: pay, leave, equipment, learning.]' },
+  ],
+  rolesTitle: 'Open roles',
+  teamsLabel: 'Team',
+  allTeams: 'All',
+  teams: { engineering: 'Engineering', design: 'Design', operations: 'Operations' },
+  roleTitle: '[ROLE TITLE]',
+  roleDetail: (team: string) => `${team} · [LOCATION]`,
+  viewRole: 'View role',
+  contact: 'Nothing that fits? Write to [CAREERS EMAIL] and tell us what you do well.',
+} as const;

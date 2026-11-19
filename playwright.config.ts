@@ -13,10 +13,18 @@ export default defineConfig({
     // WebKit needs a recent macOS or Linux. It always runs in CI; locally, opt in with E2E_WEBKIT=1.
     ...(process.env.CI || process.env.E2E_WEBKIT ? [{ name: 'mobile-safari', use: { ...devices['iPhone 14'] } }] : []),
   ],
-  webServer: {
-    command: 'pnpm --filter @yahel/shell preview',
-    url: 'http://localhost:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: 'pnpm --filter @yahel/shell preview',
+      url: 'http://localhost:4173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    {
+      command: 'pnpm --filter @yahel/website preview',
+      url: 'http://localhost:4174',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+  ],
 });

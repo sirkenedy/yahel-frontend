@@ -1,0 +1,131 @@
+/* The home page's own layout. Loaded with the site's stylesheet, so the written page is whole before any script runs. Tokens only, as in ../../site.css.
+   Spec: design-system/docs/patterns/website.md. Movement is opacity and transform only. */
+
+/* Each product's colour, for the parts of the page drawn in it. */
+[data-product='mail'] { --product-hue: var(--ws-app-mail); }
+[data-product='calendar'] { --product-hue: var(--ws-app-calendar); }
+[data-product='drive'] { --product-hue: var(--ws-app-drive); }
+[data-product='docs'] { --product-hue: var(--ws-app-docs); }
+[data-product='sheets'] { --product-hue: var(--ws-app-sheets); }
+[data-product='slides'] { --product-hue: var(--ws-app-slides); }
+[data-product='chat'] { --product-hue: var(--ws-app-chat); }
+[data-product='meet'] { --product-hue: var(--ws-app-meet); }
+[data-product='admin'] { --product-hue: var(--ws-app-admin); }
+
+.home-intro { display: grid; gap: var(--ws-space-16); max-inline-size: var(--ws-size-layer-lg); }
+.home-dot { flex: none; inline-size: var(--ws-space-8); block-size: var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--product-hue); }
+
+/* Hero. The window runs on under the section below, so the edge it lifts off as it tilts and drifts is never seen. */
+.site-hero.home-hero { padding-block-end: 0; }
+.home-dock { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ws-space-12); max-inline-size: 100%; margin: var(--ws-space-12) 0 0; padding: var(--ws-space-12) var(--ws-space-16); border: var(--ws-border-hairline) solid var(--ws-color-separator-default); border-radius: var(--ws-radius-2xl); background: var(--ws-material-thin); box-shadow: var(--ws-elevation-2); list-style: none; }
+.home-dock__icon { display: block; inline-size: var(--ws-space-48); border-radius: var(--ws-radius-md); }
+.home-dock .ws-app-icon { box-shadow: inset 0 var(--ws-border-hairline) 0 var(--ws-material-clear), var(--ws-elevation-2); }
+.home-dock__icon:active { transform: scale(0.97); }
+.home-window-frame { inline-size: 100%; max-inline-size: var(--ws-size-site-window); margin-block: var(--ws-space-12) calc(-1 * var(--ws-space-64)); }
+.home-window {
+  overflow: hidden;
+  border: var(--ws-border-hairline) solid var(--ws-color-separator-default);
+  border-block-end: 0;
+  border-start-start-radius: var(--ws-radius-2xl);
+  border-start-end-radius: var(--ws-radius-2xl);
+  background: var(--ws-color-bg-elevated);
+  box-shadow: var(--ws-elevation-4);
+  text-align: start;
+  /* Without script, --scroll-progress is unset and the window rests flat at full size. */
+  transform-origin: 50% 0;
+  transform: perspective(var(--ws-size-hero-perspective)) rotateX(calc((1 - var(--scroll-progress, 1)) * var(--ws-motion-hero-tilt))) translateY(calc(var(--scroll-progress, 1) * -1 * var(--ws-space-32)))
+    scale(calc(var(--ws-motion-hero-scale) + var(--scroll-progress, 1) * (1 - var(--ws-motion-hero-scale))));
+  transition: transform var(--ws-duration-quick) var(--ws-easing-linear);
+  will-change: transform;
+}
+/* Where scripts run the window starts tilted, as it will be at the top of the page, so it does not move when the page's script takes over. */
+[data-scripts='on'] .home-window { --scroll-progress: 0; }
+.home-window__bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--ws-space-12); min-block-size: var(--ws-space-48); padding-inline: var(--ws-space-16); border-block-end: var(--ws-border-hairline) solid var(--ws-color-separator-default); font-size: var(--ws-display-eyebrow-size); line-height: var(--ws-display-eyebrow-line); }
+.home-window__lights { display: flex; gap: var(--ws-space-4); }
+.home-window__lights span { inline-size: var(--ws-space-8); block-size: var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-fill-primary); }
+.home-window__address { color: var(--ws-color-label-secondary); }
+.home-window__context { display: flex; align-items: center; justify-self: end; gap: var(--ws-space-8); font-weight: var(--ws-weight-medium); }
+.home-window__avatar { display: grid; place-items: center; inline-size: var(--ws-icon-lg); block-size: var(--ws-icon-lg); border-radius: var(--ws-radius-full); background: var(--ws-color-accent-soft); color: var(--ws-color-accent-default); font-size: var(--ws-type-caption-2-size); font-weight: var(--ws-weight-bold); }
+.home-window__body { display: grid; gap: var(--ws-space-20); padding: var(--ws-space-24) var(--ws-space-24) calc(var(--ws-space-24) + var(--ws-space-32)); background: var(--ws-color-bg-grouped); }
+.home-window__cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(calc(var(--ws-size-pane-min) - var(--ws-space-24)), 100%), 1fr)); gap: var(--ws-space-16); }
+.home-window__card { display: grid; align-content: start; gap: var(--ws-space-12); padding: var(--ws-space-16); border-radius: var(--ws-radius-xl); background: var(--ws-color-bg-elevated); font-size: var(--ws-display-label-size); line-height: var(--ws-display-label-line); }
+.home-window__title { display: flex; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-label-secondary); font-size: var(--ws-display-eyebrow-size); font-weight: var(--ws-weight-semibold); }
+.home-window__title::before { content: ''; inline-size: var(--ws-space-8); block-size: var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--product-hue); }
+.home-window__row { display: flex; justify-content: space-between; gap: var(--ws-space-12); font-weight: var(--ws-weight-medium); }
+.home-window__row .ws-secondary { font-weight: var(--ws-weight-regular); }
+.home-window__message { display: grid; font-weight: var(--ws-weight-semibold); }
+.home-window__message .ws-secondary { font-weight: var(--ws-weight-regular); }
+.home-window__file { display: flex; align-items: center; gap: var(--ws-space-12); font-weight: var(--ws-weight-medium); }
+.home-window__file::before { content: ''; flex: none; inline-size: var(--ws-size-indicator); block-size: var(--ws-size-indicator); border-radius: var(--ws-radius-xs); background: var(--product-hue); }
+
+/* Products. The section sits above the hero window that runs under it. */
+.home-products { position: relative; }
+.home-products .ws-segmented-tabs { gap: var(--ws-space-48); }
+.home-product { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--ws-size-layer-sm), 100%), 1fr)); align-items: center; gap: var(--ws-space-24); block-size: 100%; padding: var(--ws-space-24); border-radius: var(--ws-radius-2xl); background: var(--ws-color-bg-grouped); }
+.home-product__text { display: grid; justify-items: start; gap: var(--ws-space-20); }
+.home-product__icon { inline-size: var(--ws-size-site-product-icon); }
+.home-product__icon .ws-app-icon { box-shadow: inset 0 var(--ws-border-hairline) 0 var(--ws-material-clear), var(--ws-elevation-2); }
+.home-product__line { max-inline-size: var(--ws-size-layer-md); }
+.home-mock { overflow: hidden; border: var(--ws-border-hairline) solid var(--ws-color-separator-default); border-radius: var(--ws-radius-xl); background: var(--ws-color-bg-elevated); box-shadow: var(--ws-elevation-2); }
+.home-mock__bar { display: grid; place-items: center; min-block-size: var(--ws-space-40); border-block-end: var(--ws-border-hairline) solid var(--ws-color-separator-default); color: var(--ws-color-label-secondary); font-size: var(--ws-display-eyebrow-size); line-height: var(--ws-display-eyebrow-line); }
+.home-mock__body { display: flex; min-block-size: var(--ws-size-pane-min); }
+.home-mock__side { display: grid; align-content: start; gap: var(--ws-space-12); inline-size: 30%; padding: var(--ws-space-16); border-inline-end: var(--ws-border-hairline) solid var(--ws-color-separator-default); }
+.home-mock__main { display: grid; flex: 1; align-content: start; gap: var(--ws-space-12); padding: var(--ws-space-20); }
+.home-mock__body span { block-size: var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-bg-sunken); }
+.home-mock__side span:nth-child(1) { block-size: var(--ws-space-32); border-radius: var(--ws-radius-md); background: var(--product-hue); }
+.home-mock__side span:nth-child(2) { inline-size: 80%; background: var(--ws-color-separator-opaque); }
+.home-mock__side span:nth-child(3) { inline-size: 60%; }
+.home-mock__side span:nth-child(4) { inline-size: 70%; }
+.home-mock__main span:nth-child(1) { inline-size: 45%; block-size: var(--ws-space-12); background: var(--ws-color-label-primary); }
+.home-mock__main span:nth-child(2) { inline-size: 92%; }
+.home-mock__main span:nth-child(3) { inline-size: 84%; }
+.home-mock__main span:nth-child(4) { inline-size: 66%; }
+.home-mock__main span:nth-child(5) { block-size: calc(var(--ws-space-48) * 2); border-radius: var(--ws-radius-lg); background: color-mix(in srgb, var(--product-hue) 12%, var(--ws-color-bg-elevated)); }
+
+/* Accounts */
+.home-accounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(calc(var(--ws-size-layer-sm) + var(--ws-space-40)), 100%), 1fr)); gap: var(--ws-space-24); }
+.home-account { display: grid; align-content: start; justify-items: start; gap: var(--ws-space-20); block-size: 100%; padding: var(--ws-space-24); border-radius: var(--ws-radius-2xl); background: var(--ws-color-bg-elevated); box-shadow: var(--ws-elevation-2); }
+.home-account__avatar { display: grid; place-items: center; inline-size: var(--ws-size-site-avatar); block-size: var(--ws-size-site-avatar); border-radius: var(--ws-radius-full); background: var(--ws-color-accent-soft); color: var(--ws-color-accent-default); font-size: var(--ws-display-heading-size); font-weight: var(--ws-weight-bold); }
+.home-account__text { color: var(--ws-color-label-secondary); }
+.home-account--inverse { --ticks-colour: currentColor; background: var(--ws-color-bg-inverse); box-shadow: none; color: var(--ws-color-label-on-inverse); }
+.home-account--inverse .home-account__avatar { border-radius: var(--ws-radius-lg); background: var(--ws-color-accent-solid); color: var(--ws-color-label-on-accent); }
+.home-account--inverse .home-account__text { color: color-mix(in srgb, var(--ws-color-label-on-inverse) 78%, var(--ws-color-bg-inverse)); }
+/* As on the closing band: the accent ring is too close to the inverse surface, so the ring takes the card's text colour. */
+.ws-root .home-account--inverse :focus-visible { outline-color: var(--ws-color-label-on-inverse); }
+
+/* Plans */
+.home-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--ws-size-layer-sm), 100%), 1fr)); gap: var(--ws-space-24); }
+.home-plan { display: grid; align-content: start; gap: var(--ws-space-12); padding: var(--ws-space-32); border-radius: var(--ws-radius-2xl); background: var(--ws-color-bg-elevated); box-shadow: var(--ws-elevation-2); }
+.home-plan__name { margin: 0; font-size: var(--ws-display-body-size); line-height: var(--ws-display-body-line); font-weight: var(--ws-weight-semibold); }
+
+.site-band.home-band { padding-block: var(--ws-space-88); }
+
+@media (width > 600px) {
+  .home-dock { gap: var(--ws-space-16); padding: var(--ws-space-16) var(--ws-space-20); }
+  .home-dock__icon { inline-size: var(--ws-size-site-dock-icon); border-radius: var(--ws-radius-lg); }
+  .home-product { gap: var(--ws-space-40); padding: var(--ws-space-40); }
+  .home-account { padding: var(--ws-space-32); }
+}
+
+/* Cards and icons lift under a pointer. They sit inside the element that reveals, so the two movements never share a transform. */
+@media (hover: hover) and (pointer: fine) {
+  .home-lift { transition: transform var(--ws-duration-standard) var(--ws-easing-spring); }
+  .home-lift:hover { transform: translateY(calc(-1 * var(--ws-space-4))); }
+}
+
+/* Reader preferences */
+@media (prefers-reduced-motion: reduce) {
+  .ws-root .home-window { transform: none; transition: none; will-change: auto; }
+  .ws-root .home-lift:hover, .ws-root .home-dock__icon:active { transform: none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .home-dock { background: var(--ws-color-bg-elevated); }
+}
+@media (prefers-contrast: more) {
+  .home-dock, .home-window, .home-mock, .home-window__bar, .home-mock__bar, .home-mock__side { border-color: var(--ws-color-separator-opaque); }
+  .home-dock { background: var(--ws-color-bg-elevated); }
+  .home-account, .home-plan, .home-product, .home-window__card { border: var(--ws-border-hairline) solid var(--ws-color-separator-opaque); }
+}
+@media print {
+  .home-window { transform: none; }
+}

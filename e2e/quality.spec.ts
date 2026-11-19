@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { mockApi, signIn } from './support/api';
+import { openPageThatDidNotLoad, openSiteFully, settle } from './support/website';
 
 // Every screen is checked in each theme the design system ships.
 const themes = [
@@ -10,6 +11,13 @@ const themes = [
   { name: 'light, increased contrast', colorScheme: 'light', contrast: 'more' },
   { name: 'dark, increased contrast', colorScheme: 'dark', contrast: 'more' },
 ] as const;
+
+async function openCareersFiltered(page: Page) {
+  await openSiteFully(page, '/careers');
+  await page.getByRole('tab', { name: 'Engineering' }).click();
+  await page.getByRole('tabpanel', { name: 'Engineering' }).waitFor();
+  await settle(page);
+}
 
 const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   { name: 'sign-in', open: async (page) => void (await page.goto('/sign-in')) },
@@ -39,6 +47,48 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await signIn(page);
       await page.getByRole('link', { name: 'Manage account' }).click();
       await page.getByRole('heading', { name: 'Account' }).waitFor();
+    },
+  },
+  { name: 'website home', open: (page) => openSiteFully(page, '/') },
+  {
+    name: 'website home with the products menu open',
+    open: async (page) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await openSiteFully(page, '/');
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.getByRole('banner').getByRole('button', { name: 'Products' }).click();
+      await page.getByRole('link', { name: 'Admin admin.yahel.com' }).waitFor();
+      await settle(page);
+    },
+  },
+  {
+    name: 'website home with another product selected',
+    open: async (page) => {
+      await openSiteFully(page, '/');
+      await page.getByRole('tab', { name: 'Calendar' }).click();
+      await page.getByRole('tabpanel', { name: 'Calendar' }).waitFor();
+      await settle(page);
+    },
+  },
+  { name: 'website about', open: (page) => openSiteFully(page, '/about') },
+  { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
+  { name: 'website careers', open: (page) => openSiteFully(page, '/careers') },
+  { name: 'website careers filtered', open: openCareersFiltered },
+  {
+    name: 'website page that did not load',
+    open: async (page) => {
+      await openPageThatDidNotLoad(page);
+      await settle(page);
+    },
+  },
+  {
+    name: 'website about with the menu open',
+    open: async (page) => {
+      await page.setViewportSize({ width: 390, height: 800 });
+      await openSiteFully(page, '/about');
+      await page.getByRole('button', { name: 'Menu' }).click();
+      await page.getByRole('dialog', { name: 'Menu' }).waitFor();
+      await settle(page);
     },
   },
 ];
@@ -100,3 +150,36 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
   const viewport = page.viewportSize()!;
   expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
 });
+
+// The public website has no session and its own bar, so each of its pages gets the text-size and direction checks itself.
+const publicScreens: { name: string; open: (page: Page) => Promise<void> }[] = [
+  { name: 'website home', open: (page) => openSiteFully(page, '/') },
+  { name: 'website about', open: (page) => openSiteFully(page, '/about') },
+  { name: 'website careers', open: (page) => openSiteFully(page, '/careers') },
+  { name: 'website careers filtered', open: openCareersFiltered },
+  { name: 'website page not found', open: (page) => openSiteFully(page, '/no-such-page') },
+];
+
+for (const screen of publicScreens) {
+  test(`layout: ${screen.name} holds at 200% text size`, async ({ page }) => {
+    await screen.open(page);
+    await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
+    await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeVisible();
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Create account' })).toBeInViewport({ ratio: 0.99 }); // WebKit reports 0.99995 for a fully visible element at fractional sizes
+  });
+
+  test(`layout: ${screen.name} mirrors for right-to-left without overflow`, async ({ page }) => {
+    await screen.open(page);
+    await page.evaluate(() => (document.documentElement.dir = 'rtl'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const brand = await page.getByRole('link', { name: 'Yahel home' }).boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
+  });
+}

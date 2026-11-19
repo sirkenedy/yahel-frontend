@@ -1,0 +1,64 @@
+import { LinkButton, Reveal, RevealGroup } from '@yahel/ui';
+import type { AnchorHTMLAttributes } from 'react';
+import { aboutMessages as m } from './messages';
+
+const careersPath = '/careers';
+
+/** `rolesLink` is the route's link to the Careers page, so following it changes page without loading the document again. */
+export function AboutPage({ rolesLink }: { rolesLink?: AnchorHTMLAttributes<HTMLAnchorElement> }) {
+  return (
+    <>
+      <title>{m.documentTitle}</title>
+      <RevealGroup as="section" className="site-container site-hero">
+        <Reveal as="p" className="ws-eyebrow">
+          {m.eyebrow}
+        </Reveal>
+        <Reveal as="h1" className="ws-display-xl">
+          {m.title}
+        </Reveal>
+        <Reveal as="p" className="ws-lead site-measure">
+          {m.lead}
+        </Reveal>
+      </RevealGroup>
+
+      <section className="site-section site-section--surface">
+        <div className="site-container site-stack">
+          <Reveal as="h2" className="ws-display-l site-heading">
+            {m.valuesTitle}
+          </Reveal>
+          <RevealGroup className="site-points">
+            {m.values.map((value) => (
+              <Reveal key={value.title} className="site-point">
+                <h3 className="ws-display-heading">{value.title}</h3>
+                <p className="ws-secondary">{value.text}</p>
+              </Reveal>
+            ))}
+          </RevealGroup>
+        </div>
+      </section>
+
+      <section className="site-section">
+        <RevealGroup className="site-container about-cards">
+          <Reveal className="about-card">
+            <h2 className="ws-display-title">{m.storyTitle}</h2>
+            <p className="ws-secondary">{m.story}</p>
+          </Reveal>
+          <Reveal className="about-card">
+            <h2 className="ws-display-title">{m.whereTitle}</h2>
+            <p className="ws-secondary">{m.where}</p>
+            <p className="ws-secondary">{m.contact}</p>
+          </Reveal>
+        </RevealGroup>
+      </section>
+
+      <section className="site-container site-band-section">
+        <Reveal className="site-band">
+          <h2 className="ws-display-l site-heading">{m.bandTitle}</h2>
+          <LinkButton {...rolesLink} href={rolesLink?.href ?? careersPath} variant="inverse" size="large">
+            {m.bandAction}
+          </LinkButton>
+        </Reveal>
+      </section>
+    </>
+  );
+}
