@@ -6,10 +6,24 @@ Web frontend for Yahel: a suite of apps for personal accounts and organisations.
 pnpm install
 cp .env.example .env        # point VITE_API_URL at the backend (default http://localhost:3200/api)
 pnpm dev                    # http://localhost:5173
+pnpm dev:accounts           # sign-in and account flows, http://localhost:5175
 pnpm verify                 # everything CI checks
 ```
 
 Requires Node 22 or later and pnpm.
+
+## Settings
+
+Copy `.env.example` to `.env`. The shell uses only `VITE_API_URL`; the accounts app reads all of them.
+
+| Variable | For |
+|---|---|
+| `VITE_API_URL` | The backend, ending in `/api` |
+| `VITE_APP_URL` | Where someone goes after signing in when no other address was asked for |
+| `VITE_RETURN_ORIGINS` | Further origins a `?return=` address may point to, comma separated. Anything else is ignored |
+| `VITE_SIGN_UP_URL` | Where "Create an account" leads. The link is hidden while unset |
+| `VITE_HELP_URL`, `VITE_PRIVACY_URL`, `VITE_TERMS_URL` | Footer links. Each is hidden while unset |
+| `VITE_STAND_INS` | `on` serves features the backend lacks (passkeys, the account chooser, texted codes, account help) from stand-ins and shows a "Demo data" label. Development only: a build with it on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set |
 
 | Read | For |
 |---|---|
