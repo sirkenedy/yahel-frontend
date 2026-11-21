@@ -28,7 +28,10 @@ export interface PasskeyAssertion {
   userHandle: string | null;
 }
 
-/** The server half of signing in with a passkey. */
+/**
+ * The server half of signing in with a passkey. A real server uses its own relying-party id and ignores
+ * the one passed here, which exists for the stand-in; see docs/roadmap.md, "What each real endpoint must do".
+ */
 export interface PasskeyCeremony {
   begin(input: { email?: string; rpId: string }): Promise<PasskeyAssertionOptions>;
   finish(assertion: PasskeyAssertion): Promise<SignedIn>;
@@ -52,6 +55,7 @@ export interface KnownAccount {
 /** The accounts that have signed in on this device, for the account chooser. */
 export interface AccountDirectory {
   list(): Promise<KnownAccount[]>;
+  /** Stand-in only: a real server records sign-ins itself, and this leaves the interface when it does. */
   remember(account: KnownAccount): Promise<void>;
   remove(email: string): Promise<void>;
 }
@@ -66,7 +70,7 @@ export interface RecoveryOption {
 
 /** Where a password-reset code can be sent, and sending it. */
 export interface RecoveryChannels {
-  /** Must answer the same way whether or not the address has an account. */
+  /** Must answer the same way, in shape and in time, whether or not the address has an account. */
   options(email: string): Promise<RecoveryOption[]>;
   send(email: string, method: RecoveryMethod): Promise<void>;
 }

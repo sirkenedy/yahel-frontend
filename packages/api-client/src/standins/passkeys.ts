@@ -2,6 +2,11 @@
 // The browser half (WebAuthn) is real and lives in @yahel/auth; this plays the server. It hands out a fixed
 // challenge, checks nothing cryptographic, and signs in the demo person. An assertion with an empty
 // signature is refused, as a server would refuse one it cannot verify.
+//
+// The real endpoints must use the server's own relying-party id and check the origin themselves, ignoring
+// the `rpId` this stand-in echoes back; return the same (empty) `allowCredentials` for every address,
+// with or without an account; issue single-use, short-lived challenges; and take the device id in
+// `finish`, as /auth/login does.
 import type { PasskeyCeremony } from '../capabilities';
 import { ApiError } from '../errors';
 import { demoProfile } from './demo-data';
