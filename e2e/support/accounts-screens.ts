@@ -119,7 +119,7 @@ const screens: Screen[] = [
     name: 'accounts help sent',
     open: async (page) => {
       await openHelpStep(page);
-      await page.getByLabel('Email or phone we can reach you on').fill('amara@example.com');
+      await page.getByLabel('Email or phone we can reach you on').fill('amara@personal.example');
       await page.getByRole('button', { name: 'Send request' }).click();
       await page.getByRole('heading', { name: 'We’re on it.' }).waitFor();
     },

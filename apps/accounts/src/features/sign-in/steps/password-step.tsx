@@ -1,36 +1,31 @@
-import { FlowButton, FlowLink, FlowPasswordField, FlowStep } from '@yahel/ui';
+import { FlowButton, FlowLink, FlowPasswordField, FlowStep, UsernameHint } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { stepPath } from '../machine';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
+import { useStepField } from '../use-step-field';
 import { StepFrame } from './step-frame';
+
+const prompts = { 'challenge-expired': m.challengeExpired, 'reset-done': m.resetDoneSignInFailed } as const;
 
 export function PasswordStep() {
   const { state, actions, meta } = useSignInFlow();
-  const [password, setPassword] = useState('');
-  const [problem, setProblem] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const request = meta.requests.password;
+  const password = useStepField({ problemOf: (value) => (value === '' ? m.passwordRequired : null), onValid: actions.signInWithPassword });
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
     // A revealed password is hidden again before anything else happens, so it is not left on screen.
     setRevealed(false);
-    if (password === '') {
-      setProblem(m.passwordRequired);
-      event.currentTarget.querySelector<HTMLInputElement>('input[name="password"]')?.focus();
-      return;
-    }
-    actions.signInWithPassword(password);
+    password.submit(event);
   };
 
   return (
-    <StepFrame title={m.passwordTitle} failure={request.failure}>
+    <StepFrame title={m.passwordTitle} failure={request.failure ?? (state.passwordPrompt ? prompts[state.passwordPrompt] : null)}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
-          {/* Lets a password manager pair the password with the account it is for. */}
-          <input type="hidden" name="username" autoComplete="username" value={state.email ?? ''} readOnly />
+          <UsernameHint value={state.email ?? ''} />
           <FlowPasswordField
             label={m.passwordLabel}
             name="password"
@@ -41,12 +36,10 @@ export function PasswordStep() {
             hideLabel={m.hidePassword}
             isRevealed={revealed}
             onRevealedChange={setRevealed}
-            value={password}
-            onChange={(next) => {
-              setPassword(next);
-              setProblem(null);
-            }}
-            error={problem ?? undefined}
+            value={password.value}
+            onChange={password.change}
+            error={password.error}
+            inputRef={password.inputRef}
             isRequired
           />
         </FlowStep.Body>

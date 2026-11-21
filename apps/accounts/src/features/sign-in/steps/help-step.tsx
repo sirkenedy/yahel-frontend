@@ -1,43 +1,19 @@
 import { FlowButton, FlowNotice, FlowStep, FlowTextField } from '@yahel/ui';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
+import { useStepField } from '../use-step-field';
 import { StepFrame } from './step-frame';
 
 export function HelpStep() {
   const { actions, meta } = useSignInFlow();
-  const [contact, setContact] = useState('');
-  const [problem, setProblem] = useState<string | null>(null);
   const request = meta.requests.help;
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (contact.trim() === '') {
-      setProblem(m.helpRequired);
-      event.currentTarget.querySelector<HTMLInputElement>('input[name="contact"]')?.focus();
-      return;
-    }
-    actions.requestHelp(contact.trim());
-  };
+  const contact = useStepField({ problemOf: (value) => (value.trim() === '' ? m.helpRequired : null), onValid: (value) => actions.requestHelp(value.trim()) });
 
   return (
     <StepFrame title={m.helpTitle} lede={m.helpLede} failure={request.failure}>
-      <FlowStep.Form onSubmit={submit}>
+      <FlowStep.Form onSubmit={contact.submit}>
         <FlowStep.Body>
-          <FlowTextField
-            label={m.helpLabel}
-            name="contact"
-            autoComplete="email"
-            spellCheck="false"
-            value={contact}
-            onChange={(next) => {
-              setContact(next);
-              setProblem(null);
-            }}
-            error={problem ?? undefined}
-            isRequired
-          />
+          <FlowTextField label={m.helpLabel} name="contact" autoComplete="email" spellCheck="false" value={contact.value} onChange={contact.change} error={contact.error} inputRef={contact.inputRef} isRequired />
           <FlowNotice>{m.helpPromise}</FlowNotice>
         </FlowStep.Body>
         <FlowStep.Actions>

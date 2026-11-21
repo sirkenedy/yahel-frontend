@@ -37,6 +37,22 @@ describe('reduce', () => {
     expect(reduce(rejected, { type: 'reset-code-sent', method: 'phone', destination: 'y' })).toMatchObject({ resetCodeRejected: false, recovery: { method: 'phone', destination: 'y' } });
   });
 
+  it('drops an expired challenge and says why the person is back at the password step', () => {
+    const expired = after({ type: 'email-entered', email }, { type: 'second-step-required', challengeToken: 'c-1' }, { type: 'challenge-expired' });
+
+    expect(expired).toMatchObject({ email, challengeToken: null, passwordPrompt: 'challenge-expired' });
+    expect(resumeStep('code', expired, facts())).toBe('password');
+    expect(reduce(expired, { type: 'second-step-required', challengeToken: 'c-2' }).passwordPrompt).toBeNull();
+  });
+
+  it('treats a completed reset as final: the code is gone and only signing in remains', () => {
+    const done = after({ type: 'email-entered', email }, { type: 'reset-code-sent', method: 'email', destination: 'x' }, { type: 'reset-code-entered', code: 'A7kZq2' }, { type: 'password-reset' });
+
+    expect(done).toMatchObject({ email, resetCode: null, recovery: null, passwordPrompt: 'reset-done' });
+    expect(resumeStep('new-password', done, facts())).toBe('recover');
+    expect(resumeStep('password', done, facts())).toBe('password');
+  });
+
   it('forgets everything on sign-out', () => {
     expect(after({ type: 'email-entered', email }, { type: 'passkey-started' }, { type: 'help-requested' }, { type: 'signed-out' })).toEqual(initialSignInState);
   });

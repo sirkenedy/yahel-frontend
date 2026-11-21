@@ -24,9 +24,9 @@ export function AppFrame({ links, children }: AppFrameProps) {
     <FlowShell skipLabel={m.skipToQuestion}>
       <FlowShell.Header
         brand={
-          <a href={links.home} aria-label={m.brandHome} translate="no">
+          <FlowShell.BrandLink href={links.home} label={m.brandHome}>
             <BrandMark label={m.brand} />
-          </a>
+          </FlowShell.BrandLink>
         }
       >
         {links.signUp ? (

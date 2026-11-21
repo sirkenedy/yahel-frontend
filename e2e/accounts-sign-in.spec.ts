@@ -373,7 +373,7 @@ test.describe('accounts: help', () => {
     await page.getByRole('button', { name: 'Send request' }).click();
     await expect(page.getByText('Enter an email or phone number.')).toBeVisible();
 
-    await page.getByLabel('Email or phone we can reach you on').fill('amara@example.com');
+    await page.getByLabel('Email or phone we can reach you on').fill('amara@personal.example');
     await page.getByRole('button', { name: 'Send request' }).click();
     await expect(page.getByRole('heading', { name: 'We’re on it.' })).toBeVisible();
     await expect(page).toHaveURL(at('/signin/help-sent'));
@@ -597,5 +597,160 @@ test.describe('accounts: keyboard only', () => {
     await password(page).focus();
     const frame = await password(page).evaluate((el) => getComputedStyle(el.parentElement!).boxShadow);
     expect(frame).not.toBe('none');
+  });
+});
+
+test.describe('accounts: leaving a step while its request is running', () => {
+  /** The first request to `path` hangs for a moment and then drops; later ones reach the mock. */
+  const dropFirstSlowly = async (page: Page, path: string) => {
+    let first = true;
+    await page.route(`**/api${path}`, async (route) => {
+      if (!first) return route.fallback();
+      first = false;
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await route.abort('internetdisconnected');
+    });
+  };
+
+  test('Sign in still works after going back mid-request and returning', async ({ page }) => {
+    await mockApi(page);
+    await dropFirstSlowly(page, '/v1/auth/login');
+    await openPasswordStep(page);
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('button', { name: 'Signing in…' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Back' }).click();
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+
+    // The dropped request belongs to the visit that was left, so its failure is not shown here.
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
+  });
+
+  test('Send code still works after going back mid-request and returning', async ({ page }) => {
+    const api = await mockApi(page);
+    await dropFirstSlowly(page, '/v1/auth/forgot-password');
+    await openRecoverStep(page);
+    await page.getByRole('radio', { name: /^Email/ }).check();
+    await page.getByRole('button', { name: 'Send code' }).click();
+    await expect(page.getByRole('button', { name: 'Sending…' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Back' }).click();
+    await page.getByRole('link', { name: 'Forgot password?' }).click();
+    await expect(page.getByRole('button', { name: 'Send code' })).toBeVisible();
+
+    await page.getByRole('radio', { name: /^Email/ }).check();
+    await page.getByRole('button', { name: 'Send code' }).click();
+    await expect(page.getByRole('heading', { name: 'Enter the code.' })).toBeVisible();
+    // The dropped request never reached the backend; the one after the return did.
+    expect(api.calls.filter((call) => call.path === '/v1/auth/forgot-password')).toHaveLength(1);
+  });
+});
+
+test.describe('accounts: when things go wrong after the hard part', () => {
+  test('a reset that worked is not undone by a sign-in that failed', async ({ page }) => {
+    const api = await mockApi(page);
+    await openNewPasswordStep(page);
+    let dropped = false;
+    await page.route('**/api/v1/auth/login', (route) => {
+      if (dropped) return route.fallback();
+      dropped = true;
+      return route.abort('internetdisconnected');
+    });
+    await page.getByLabel('New password', { exact: true }).fill(newPassword);
+    await page.getByRole('button', { name: 'Save and sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('Your new password is saved');
+    await expect(page).toHaveURL(at('/signin/password'));
+
+    await password(page).fill(newPassword);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
+    expect(api.calls.filter((call) => call.path === '/v1/auth/reset-password')).toHaveLength(1);
+
+    await page.goBack();
+    await expect(page).toHaveURL(at('/signin/done'));
+  });
+
+  test('an expired second step sends the person to sign in again, with the reason', async ({ page }) => {
+    await mockApi(page);
+    await openCodeStep(page);
+    await page.route('**/api/v1/auth/mfa/challenge', (route) =>
+      route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ success: false, code: 'INVALID_TOKEN', message: 'Invalid or expired token', meta: { requestId: 'e2e' } }) }),
+    );
+
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await page.getByRole('button', { name: 'Verify' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('That took too long');
+    await page.goForward();
+    await expect(page).toHaveURL(at('/signin/password'));
+  });
+});
+
+test.describe('accounts: page furniture', () => {
+  test('each step names itself in the page title', async ({ page }) => {
+    await mockApi(page);
+    await page.goto(at('/signin'));
+    await expect(page).toHaveTitle('Choose an account · Yahel');
+
+    await page.getByRole('button', { name: 'Use another account' }).click();
+    await expect(page).toHaveTitle('Welcome back · Yahel');
+
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page).toHaveTitle('Enter your password · Yahel');
+  });
+
+  test('the browser chrome colour follows the theme switch', async ({ page }) => {
+    await mockApi(page);
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto(at('/signin'));
+    const themeColour = page.locator('meta[name="theme-color"]');
+    const canvas = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ws-color-daylight-canvas').trim());
+
+    await expect(themeColour).toHaveAttribute('content', await canvas());
+    const light = await themeColour.getAttribute('content');
+
+    await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+    await expect(themeColour).not.toHaveAttribute('content', light!);
+    await expect(themeColour).toHaveAttribute('content', await canvas());
+  });
+
+  test('the brand link returns to the start without reloading the page', async ({ page }) => {
+    await mockApi(page);
+    await openPasswordStep(page);
+    await page.evaluate(() => ((window as unknown as { stillHere: boolean }).stillHere = true));
+
+    await page.getByRole('link', { name: 'Yahel sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    expect(await page.evaluate(() => (window as unknown as { stillHere?: boolean }).stillHere)).toBe(true);
+  });
+
+  test('a passkey is offered wherever the browser supports them, built-in authenticator or not', async ({ page }) => {
+    await mockApi(page);
+    await openEmailStep(page);
+
+    expect(await page.evaluate(() => Boolean(window.PublicKeyCredential))).toBe(true);
+    await expect(page.getByRole('button', { name: 'Sign in with a passkey' })).toBeVisible();
+  });
+
+  test('focus moves to the next row after an account is removed', async ({ page }) => {
+    await mockApi(page);
+    await page.goto(at('/signin'));
+    await page.getByRole('button', { name: 'Remove an account' }).click();
+
+    await page.getByRole('button', { name: /^Remove amara\.okafor/ }).click();
+
+    await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(2);
+    await expect(page.getByRole('button', { name: `Remove ${credentials.email} from this device` })).toBeFocused();
   });
 });

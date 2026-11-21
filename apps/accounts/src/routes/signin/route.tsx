@@ -11,7 +11,7 @@ export const Route = createFileRoute('/signin')({
 });
 
 function SignInLayout() {
-  const { session, capabilities, passkeys, signIn, config, facts } = Route.useRouteContext();
+  const { session, capabilities, passkeys, signIn, config } = Route.useRouteContext();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'email';
@@ -24,7 +24,6 @@ function SignInLayout() {
         session={session}
         capabilities={capabilities}
         passkeys={passkeys}
-        passkeyOffered={facts.passkeysOffered}
         store={signIn}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}

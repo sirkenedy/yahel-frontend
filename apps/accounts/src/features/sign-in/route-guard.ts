@@ -3,7 +3,7 @@ import type { AccountCapabilities } from '@yahel/api-client';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import { resumeStep } from './machine';
 import type { SignInFacts, SignInStep } from './machine';
-import { knownAccountsQuery, passkeyOfferedQuery } from './queries';
+import { knownAccountsQuery } from './queries';
 import type { SignInStore } from './store';
 
 export interface SignInGuardContext {
@@ -14,10 +14,10 @@ export interface SignInGuardContext {
   signIn: SignInStore;
 }
 
-/** Gathers what the step guards need to know. Both lookups are cached, so later steps do not wait. */
+/** Gathers what the step guards need to know. The lookup is cached, so later steps do not wait. */
 export async function loadSignInFacts({ session, queryClient, capabilities, passkeys }: SignInGuardContext): Promise<SignInFacts> {
-  const [accounts, passkeysOffered] = await Promise.all([queryClient.ensureQueryData(knownAccountsQuery(capabilities.directory)), queryClient.ensureQueryData(passkeyOfferedQuery(passkeys))]);
-  return { signedIn: session.store.getState().status === 'signed-in', knownAccounts: accounts.length, passkeysOffered, helpOffered: capabilities.helpDesk !== null };
+  const accounts = await queryClient.ensureQueryData(knownAccountsQuery(capabilities.directory));
+  return { signedIn: session.store.getState().status === 'signed-in', knownAccounts: accounts.length, passkeysOffered: passkeys?.isSupported() ?? false, helpOffered: capabilities.helpDesk !== null };
 }
 
 /** The step to show instead of `step`, or `null` when `step` itself can be shown. */

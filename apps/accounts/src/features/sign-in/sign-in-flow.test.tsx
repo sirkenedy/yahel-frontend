@@ -49,13 +49,15 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   let latest: SignInFlowValue | undefined;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
-      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} passkeyOffered={passkeys !== null} store={store} navigate={navigate} leave={leave}>
+      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} leave={leave}>
         <Probe onValue={(value) => (latest = value)} />
       </SignInFlowProvider>
     </QueryClientProvider>
   );
   const view = render(tree(step));
-  return { session, capabilities, store, navigate, leave, queryClient, flow: () => latest!, goTo: (next: SignInStep) => view.rerender(tree(next)) };
+  /** Everything the query client is holding on to, as text, to search for things that must not be kept. */
+  const retained = () => JSON.stringify([queryClient.getMutationCache().getAll().map((mutation) => mutation.state), queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])]);
+  return { session, capabilities, store, navigate, leave, queryClient, retained, flow: () => latest!, goTo: (next: SignInStep) => view.rerender(tree(next)) };
 };
 
 describe('SignInFlowProvider', () => {
@@ -154,6 +156,79 @@ describe('SignInFlowProvider', () => {
     await waitFor(() => expect(flow().meta.requests.password.failure).toBeNull());
   });
 
+  it('lets the person leave a step while its request is running, come back, and try again', async () => {
+    const { flow, session, store, goTo, navigate } = setup({ step: 'password' });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+    let fail: (error: unknown) => void = () => undefined;
+    session.signIn.mockImplementationOnce(() => new Promise((_resolve, reject) => (fail = reject)));
+
+    act(() => void flow().actions.signInWithPassword('first'));
+    await waitFor(() => expect(flow().meta.requests.password.isPending).toBe(true));
+    goTo('email');
+    goTo('password');
+    expect(flow().meta.requests.password.isPending).toBe(true);
+
+    await act(async () => fail(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' })));
+    await waitFor(() => expect(flow().meta.requests.password.isPending).toBe(false));
+    expect(flow().meta.requests.password.failure).toBeNull();
+
+    act(() => void flow().actions.signInWithPassword('second'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
+    expect(session.signIn).toHaveBeenLastCalledWith(email, 'second');
+  });
+
+  it('sends the person back to sign in again when the second-step challenge has expired', async () => {
+    const { flow, session, navigate, store } = setup({ step: 'code' });
+    act(() => {
+      store.dispatch({ type: 'email-entered', email });
+      store.dispatch({ type: 'second-step-required', challengeToken: 'c-1' });
+    });
+    session.completeSecondStep.mockRejectedValue(new ApiError({ status: 401, code: 'INVALID_TOKEN', message: 'Invalid or expired token' }));
+
+    act(() => void flow().actions.verifyCode('482910'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('password', { replace: true }));
+    expect(store.getState()).toMatchObject({ challengeToken: null, passwordPrompt: 'challenge-expired' });
+  });
+
+  it('keeps no password, code or token in the query client once a request has settled', async () => {
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens: { ...tokens, accessToken: 'access-secret', refreshToken: 'refresh-secret' }, profile } }) };
+    const { flow, session, navigate, store, retained } = setup({ step: 'password', passkeys });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+    session.signIn.mockResolvedValueOnce({ ok: false, reason: 'mfa-required', challengeToken: 'challenge-secret' });
+
+    act(() => void flow().actions.signInWithPassword('password-secret'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('code'));
+    act(() => void flow().actions.verifyCode('135790'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
+
+    act(() => {
+      store.dispatch({ type: 'email-entered', email });
+      store.dispatch({ type: 'reset-code-sent', method: 'email', destination: 'x' });
+      store.dispatch({ type: 'reset-code-entered', code: 'R3s3tC' });
+    });
+    act(() => void flow().actions.saveNewPassword('New-password-secret-1'));
+    await waitFor(() => expect(session.api.auth.resetPassword).toHaveBeenCalled());
+    await waitFor(() => expect(flow().meta.requests.newPassword.isPending).toBe(false));
+
+    act(() => void flow().actions.startPasskey());
+    await waitFor(() => expect(session.establish).toHaveBeenCalled());
+    await waitFor(() => expect(flow().meta.requests.passkey.isPending).toBe(false));
+
+    const held = retained();
+    for (const secret of ['password-secret', '135790', 'New-password-secret-1', 'R3s3tC', 'challenge-secret', 'access-secret', 'refresh-secret']) expect(held).not.toContain(secret);
+    expect(store.getState()).toMatchObject({ challengeToken: null, resetCode: null });
+  });
+
+  it('fetches a passkey challenge ahead of the press on the steps that offer one', async () => {
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn() };
+    const { goTo } = setup({ step: 'email', passkeys });
+    await waitFor(() => expect(passkeys.prepare).toHaveBeenCalledWith(undefined));
+
+    goTo('help');
+    expect(passkeys.prepare).toHaveBeenCalledTimes(1);
+  });
+
   it('texts a second-step code and says where it went', async () => {
     const { flow, store } = setup({ step: 'code' });
     act(() => store.dispatch({ type: 'second-step-required', challengeToken: 'c-1' }));
@@ -164,7 +239,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('starts the passkey prompt from the press, shows the wait, and signs in when the device answers', async () => {
-    const passkeys = { isAvailable: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens, profile } }) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens, profile } }) };
     const { flow, session, navigate, store } = setup({ passkeys });
 
     act(() => flow().actions.startPasskey());
@@ -177,7 +252,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('stays on the passkey step when the prompt is closed, and can ask again', async () => {
-    const passkeys = { isAvailable: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'cancelled' }) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'cancelled' }) };
     const { flow, session, navigate } = setup({ passkeys });
 
     act(() => flow().actions.startPasskey());
@@ -192,7 +267,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('reports a passkey the server or the device refused', async () => {
-    const passkeys = { isAvailable: vi.fn(), signIn: vi.fn().mockRejectedValue(new DOMException('broken', 'UnknownError')) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockRejectedValue(new DOMException('broken', 'UnknownError')) };
     const { flow } = setup({ passkeys });
 
     act(() => flow().actions.startPasskey());
@@ -258,6 +333,28 @@ describe('SignInFlowProvider', () => {
     expect(session.signIn).not.toHaveBeenCalled();
   });
 
+  it('treats the reset as final when the sign-in after it fails: the code is spent and the password step explains', async () => {
+    const { flow, session, navigate, store } = setup({ step: 'new-password' });
+    act(() => {
+      store.dispatch({ type: 'email-entered', email });
+      store.dispatch({ type: 'reset-code-sent', method: 'email', destination: 'x' });
+      store.dispatch({ type: 'reset-code-entered', code: 'A7kZq2' });
+    });
+    session.signIn.mockRejectedValueOnce(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' }));
+
+    act(() => void flow().actions.saveNewPassword('Sunrise over Lekki 94!'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('password', { replace: true }));
+    expect(session.api.auth.resetPassword).toHaveBeenCalledTimes(1);
+    expect(store.getState()).toMatchObject({ resetCode: null, recovery: null, resetCodeRejected: false, passwordPrompt: 'reset-done' });
+    expect(flow().meta.requests.newPassword.failure).toBeNull();
+    expect(navigate).not.toHaveBeenCalledWith('recover-code', expect.anything());
+
+    act(() => void flow().actions.signInWithPassword('Sunrise over Lekki 94!'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
+    expect(session.api.auth.resetPassword).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps the person on the new-password step when the password itself is refused', async () => {
     const { flow, session, navigate, store } = setup({ step: 'new-password' });
     act(() => {
@@ -277,7 +374,7 @@ describe('SignInFlowProvider', () => {
   it('files a help request and shows the confirmation', async () => {
     const { flow, navigate, store } = setup({ step: 'help' });
 
-    act(() => flow().actions.requestHelp('amara@example.com'));
+    act(() => flow().actions.requestHelp('amara@personal.example'));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('help-sent'));
     expect(store.getState().helpRequested).toBe(true);
@@ -302,12 +399,24 @@ describe('SignInFlowProvider', () => {
       session.store.setState({ status: 'signed-in', profile });
       store.dispatch({ type: 'email-entered', email });
     });
-    session.signOut.mockRejectedValue(new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'x' }));
     queryClient.setQueryData(['mail', 'personal', 'inbox'], ['kept private']);
+    let remembered = false;
+    let settledBeforeSignOut = false;
+    const original = capabilities.directory!.remember.bind(capabilities.directory);
+    const remember = vi.spyOn(capabilities.directory!, 'remember').mockImplementation(async (account) => {
+      await original(account);
+      remembered = true;
+    });
+    session.signOut.mockImplementation(async () => {
+      settledBeforeSignOut = remembered;
+      throw new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'x' });
+    });
 
     act(() => flow().actions.signOut());
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('choose', { replace: true }));
+    expect(remember.mock.invocationCallOrder[0]).toBeLessThan(session.signOut.mock.invocationCallOrder[0]!);
+    expect(settledBeforeSignOut).toBe(true);
     expect(store.getState().email).toBeNull();
     expect(queryClient.getQueryData(['mail', 'personal', 'inbox'])).toBeUndefined();
     expect((await capabilities.directory!.list())[0]).toMatchObject({ email, signedOut: true });
