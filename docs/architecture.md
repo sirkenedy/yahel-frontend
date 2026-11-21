@@ -9,12 +9,16 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 ```
 apps/
   shell/            sign-in, home, account. Later: app launcher, account switcher
+  accounts/         sign in, account recovery. Later: personal sign-up, business sign-up, first admin sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
-  ui/               component styles (CSS on tokens) and React components on React Aria; icons, fonts
-  api-client/       the only code that talks to the backend; types generated from its OpenAPI description
-  auth/             session: sign-in, token refresh, sign-out; the only code that touches web storage
+  ui/               component styles (CSS on tokens) and React components on React Aria; icons, fonts;
+                    the Daylight flow components used by the accounts app
+  api-client/       the only code that talks to the backend; types generated from its OpenAPI description;
+                    account capabilities and the stand-ins for those the backend lacks
+  auth/             session: sign-in, second step, token refresh, sign-out; passkeys (WebAuthn);
+                    the return-address check; the only code that touches web storage
 e2e/                browser tests: desktop, mobile, mobile Safari; accessibility and layout checks
 design-system/      the written design system: principles, foundations, patterns, 60 component specs
 docs/               this file, the rulebook, decisions, roadmap, agent pipeline
@@ -61,6 +65,34 @@ apps/<app>/src/
 
 A feature exposes what routes need and nothing else. Features do not import other features; shared pieces move down into a package.
 
+### 3.1 Flows (the accounts app)
+
+A flow is a sequence of one-question screens: sign in, create an account, create a workspace. Each flow is a feature with the same parts.
+
+```
+apps/accounts/src/
+  routes/<flow>/route.tsx       layout: loads the facts the guards need, mounts the provider and the frame
+  routes/<flow>/<step>.tsx      one route per step; `beforeLoad` redirects to the step that can honestly be shown
+  features/<flow>/
+    machine.ts                  pure: typed steps, `reduce(state, event)`, `resumeStep`, `backOf`, step addresses
+    store.ts                    the flow state for this page session (memory only)
+    <flow>-flow.tsx             the provider: owns the store and every request; exposes `{ state, actions, meta }`
+    failure.ts, validation.ts   failures and field problems in plain words
+    steps/<step>-step.tsx       presentational; reads the provider's context and nothing else
+  features/chrome/              the frame around every flow: brand, theme control, footer
+  config.ts                     every outbound address, from `VITE_*` settings; nothing is derived from the host
+```
+
+- **Every step has an address**, so Back, Forward and links work. **Flow state is never in the address or in web storage.** A reload therefore starts the flow again, except that a restored session goes straight to the signed-in screen.
+- **Steps do not call the API, the session or the router.** The provider does, through TanStack Query mutations guarded so that a second press cannot start a second request.
+- **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
+
+### 3.2 Capabilities and stand-ins
+
+Some designed features have no backend endpoint yet: passkeys, the account chooser, a texted code, help finding an account. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
+
+Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/stand-in-guard.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
+
 ## 4. Data
 
 - **Server state** lives in TanStack Query. Query keys start with the feature name and include the account context, so personal and organisation data can never share a cache entry.
@@ -75,6 +107,7 @@ A feature exposes what routes need and nothing else. Features do not import othe
 - Styles are plain CSS on `--ws-*` tokens. There is no CSS-in-JS and no utility framework: the token layer is the abstraction.
 - Behaviour and accessibility come from React Aria Components, wrapped so apps never import it directly.
 - Light, dark and increased-contrast versions of both come from the token CSS and follow system settings.
+- **Daylight** is the look of the account flows: paper canvas, one indigo action, Bricolage Grotesque headlines. It is a named set of tokens beside the existing ones (`color.daylight.*`, `flow.*`, type roles `flow-*`) with its own stylesheet, `@yahel/ui/daylight.css`, so apps that show no flow do not load it. Its contrast pairs are checked by the token build like every other.
 
 ## 6. Quality gates
 
@@ -89,7 +122,7 @@ Every pull request must pass all of these. They are what makes unattended mergin
 | Types | Strict TypeScript across every package | `tsc` |
 | Unit tests | Behaviour of the client, session, components and features | Vitest |
 | Build and budget | It builds; bundles stay within size budgets | `scripts/check-bundle-budget.mjs` |
-| Browser tests | Each flow works on desktop, mobile and mobile Safari | Playwright |
+| Browser tests | Each flow works on desktop, mobile and mobile Safari. The accounts app is tested as a demo build (stand-ins on) served on its own port | Playwright |
 | Accessibility and layout | Every screen in four themes; no sideways scroll; touch targets; 200% text; right to left | `e2e/quality.spec.ts` |
 | Security | No known-vulnerable shipped dependency, no secret in history, static analysis clean | CI `security`, `codeql` |
 | Protected paths | The rules themselves did not change without a maintainer | `scripts/agent/check-protected-paths.mjs` |
@@ -97,4 +130,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: personal and business sign-up and the first admin sign-in (slices 2 to 4 of the accounts app), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
