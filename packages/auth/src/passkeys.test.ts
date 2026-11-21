@@ -10,17 +10,53 @@ const setup = (overrides: Partial<PasskeyEnvironment> = {}, get = vi.fn()) => {
     begin: vi.fn().mockResolvedValue({ challenge: '-_8B', rpId: 'accounts.yahel.example', timeoutMs: 60_000, allowCredentials: [{ id: 'AQID' }], userVerification: 'required' }),
     finish: vi.fn().mockResolvedValue(signedIn),
   };
-  const environment: PasskeyEnvironment = { credentials: { get }, platformAuthenticatorAvailable: async () => true, rpId: 'accounts.yahel.example', ...overrides };
+  const environment: PasskeyEnvironment = { credentials: { get }, supported: true, rpId: 'accounts.yahel.example', ...overrides };
   return { ceremony, get, client: createPasskeyClient(ceremony, environment) };
 };
 
 describe('createPasskeyClient', () => {
-  it('is available only when the browser has WebAuthn and the device has a built-in authenticator', async () => {
-    await expect(setup().client.isAvailable()).resolves.toBe(true);
-    await expect(setup({ platformAuthenticatorAvailable: async () => false }).client.isAvailable()).resolves.toBe(false);
-    await expect(setup({ platformAuthenticatorAvailable: undefined }).client.isAvailable()).resolves.toBe(false);
-    await expect(setup({ credentials: undefined }).client.isAvailable()).resolves.toBe(false);
-    await expect(setup({ platformAuthenticatorAvailable: () => Promise.reject(new Error('blocked')) }).client.isAvailable()).resolves.toBe(false);
+  it('is offered whenever the browser has WebAuthn, wherever the passkey lives', () => {
+    expect(setup().client.isSupported()).toBe(true);
+    expect(setup({ supported: false }).client.isSupported()).toBe(false);
+    expect(setup({ credentials: undefined }).client.isSupported()).toBe(false);
+  });
+
+  it('uses a challenge fetched ahead of the press, once, and asks for a fresh one after that', async () => {
+    const credential = { rawId: bytes(1), response: { clientDataJSON: bytes(1), authenticatorData: bytes(1), signature: bytes(1), userHandle: null } };
+    const { client, ceremony, get } = setup({}, vi.fn().mockResolvedValue(credential));
+
+    client.prepare('amara@northwind.example');
+    expect(ceremony.begin).toHaveBeenCalledTimes(1);
+
+    await client.signIn('amara@northwind.example');
+    expect(ceremony.begin).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledTimes(1);
+
+    await client.signIn('amara@northwind.example');
+    expect(ceremony.begin).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not use a challenge prepared for a different account', async () => {
+    const { client, ceremony } = setup({}, vi.fn().mockResolvedValue(null));
+
+    client.prepare();
+    await client.signIn('amara@northwind.example');
+
+    expect(ceremony.begin).toHaveBeenLastCalledWith({ email: 'amara@northwind.example', rpId: 'accounts.yahel.example' });
+    expect(ceremony.begin).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again when the challenge fetched ahead failed, and prepares nothing where passkeys are unsupported', async () => {
+    const { client, ceremony } = setup({}, vi.fn().mockResolvedValue(null));
+    ceremony.begin.mockRejectedValueOnce(new Error('offline'));
+
+    client.prepare();
+    await expect(client.signIn()).resolves.toEqual({ status: 'cancelled' });
+    expect(ceremony.begin).toHaveBeenCalledTimes(2);
+
+    const unsupported = setup({ supported: false });
+    unsupported.client.prepare();
+    expect(unsupported.ceremony.begin).not.toHaveBeenCalled();
   });
 
   it('asks the device to sign the server challenge and sends the answer back as base64url', async () => {
