@@ -45,12 +45,18 @@ To add a board: put the file in the folder for its group, add it to `project/can
 | About (interactive) | `project/website/About.dc.html` |
 | Careers (interactive) | `project/website/Careers.dc.html` |
 
-## 5 Accounts and sign-in
+## 4 Sign-in and onboarding
 
-| Board | File |
-|---|---|
-| Sign in and create account, working prototype (interactive) | `project/accounts/Auth.dc.html` |
-| Account flows and shared sign-in | `project/accounts/AuthFlow.dc.html` |
+Sign-in, personal sign-up, business sign-up and the first admin sign-in ("Daylight"). Each screen is drawn four times: desktop light (the plain name), `Dark`, `Mobile` and `MobileDark`.
+
+| Folder | What it holds | Screens |
+|---|---|---|
+| `project/accounts/` | The design brief: principles and house rules | DaylightBrief |
+| `project/accounts/flow/` | The working prototype (`Prototype.dc.html`) and thin wrappers that open it at sign-in, personal, business, dark and mobile | Prototype, PrototypeSignIn, PrototypeBusiness |
+| `project/accounts/screens/signin/` | Sign in: email, password, passkey, code, account chooser, recovery and help | 11: Chooser, Email, Passkey, Password, Code, Recover, Rcode, Newpass, Help, Helpsent, Done |
+| `project/accounts/screens/personal/` | Personal account creation, step by step | 15: Type, Name, Birth, Address, Ownemail, Owncode, Passkey, Password, Addpasskey, Recovery, Code, Review, Creating, Ready, Contact |
+| `project/accounts/screens/business/` | Business (workspace) creation: business details, domain, plan, checkout, administrator | 13: Start, You, Domainq, Domain, Domainok, Find, Registrant, Admin, Plan, Checkout, Cardotp, Creating, Ready |
+| `project/accounts/screens/admin/` | An administrator's first sign-in: passkey, code, phone, welcome | 6: Signin, Phone, Code, Welcome, Addpasskey, Passkey |
 
 ## 6 Decisions
 

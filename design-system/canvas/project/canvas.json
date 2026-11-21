@@ -32,7 +32,7 @@
     },
     {
       "id": "accounts",
-      "name": "5 Accounts and sign-in"
+      "name": "4 Sign-in and onboarding"
     },
     {
       "id": "decisions",
@@ -122,24 +122,6 @@
       "expand": "fill",
       "is_interactive": true
     },
-    "accounts/Auth.dc.html": {
-      "x": 0,
-      "y": 0,
-      "w": 1440,
-      "h": 900,
-      "title": "Accounts and sign-in / Sign in and create account, working prototype",
-      "page": "accounts",
-      "expand": "fill",
-      "is_interactive": true
-    },
-    "accounts/AuthFlow.dc.html": {
-      "x": 1520,
-      "y": 0,
-      "w": 1440,
-      "h": 1100,
-      "title": "Accounts and sign-in / Account flows and shared sign-in",
-      "page": "accounts"
-    },
     "decisions/Decisions.dc.html": {
       "x": 0,
       "y": 0,
@@ -201,6 +183,1512 @@
       "h": 844,
       "title": "Products / Home / Phone, dark",
       "page": "products"
+    },
+    "accounts/DaylightBrief.dc.html": {
+      "h": 1320,
+      "page": "accounts",
+      "title": "Onboarding / 00 Daylight brief",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "accounts/flow/Prototype.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Create account · desktop, light",
+      "w": 1440,
+      "x": 0,
+      "y": 1760
+    },
+    "accounts/flow/PrototypeDark.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Create account · desktop, dark",
+      "w": 1440,
+      "x": 1520,
+      "y": 1760
+    },
+    "accounts/flow/PrototypeSignIn.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Sign in · desktop, light",
+      "w": 1440,
+      "x": 3040,
+      "y": 1760
+    },
+    "accounts/flow/PrototypeBusiness.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Business sign-up · desktop, light",
+      "w": 1440,
+      "x": 4560,
+      "y": 1760
+    },
+    "accounts/flow/PrototypeMobile.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Create account · mobile, light",
+      "w": 390,
+      "x": 6080,
+      "y": 1760
+    },
+    "accounts/flow/PrototypeMobileDark.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "accounts",
+      "title": "Onboarding / Prototype / Create account · mobile, dark",
+      "w": 390,
+      "x": 6550,
+      "y": 1760
+    },
+    "accounts/screens/signin/SignInChooser.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 01 Choose an account / Desktop, light",
+      "w": 1440,
+      "x": 0,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInEmail.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 02 Email / Desktop, light",
+      "w": 1440,
+      "x": 1520,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInPasskey.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 03 Passkey / Desktop, light",
+      "w": 1440,
+      "x": 3040,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInPassword.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 04 Password / Desktop, light",
+      "w": 1440,
+      "x": 4560,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInCode.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 05 Two-step code / Desktop, light",
+      "w": 1440,
+      "x": 6080,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInRecover.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 06 Recovery / Desktop, light",
+      "w": 1440,
+      "x": 7600,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInRcode.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 07 Recovery code / Desktop, light",
+      "w": 1440,
+      "x": 9120,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInNewpass.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 08 New password / Desktop, light",
+      "w": 1440,
+      "x": 10640,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInHelp.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 09 Other ways back / Desktop, light",
+      "w": 1440,
+      "x": 12160,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInHelpsent.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 10 Request sent / Desktop, light",
+      "w": 1440,
+      "x": 13680,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInDone.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 11 Signed in / Desktop, light",
+      "w": 1440,
+      "x": 15200,
+      "y": 3220
+    },
+    "accounts/screens/signin/SignInChooserDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 01 Choose an account / Desktop, dark",
+      "w": 1440,
+      "x": 0,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInEmailDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 02 Email / Desktop, dark",
+      "w": 1440,
+      "x": 1520,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInPasskeyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 03 Passkey / Desktop, dark",
+      "w": 1440,
+      "x": 3040,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInPasswordDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 04 Password / Desktop, dark",
+      "w": 1440,
+      "x": 4560,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInCodeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 05 Two-step code / Desktop, dark",
+      "w": 1440,
+      "x": 6080,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInRecoverDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 06 Recovery / Desktop, dark",
+      "w": 1440,
+      "x": 7600,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInRcodeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 07 Recovery code / Desktop, dark",
+      "w": 1440,
+      "x": 9120,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInNewpassDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 08 New password / Desktop, dark",
+      "w": 1440,
+      "x": 10640,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInHelpDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 09 Other ways back / Desktop, dark",
+      "w": 1440,
+      "x": 12160,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInHelpsentDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 10 Request sent / Desktop, dark",
+      "w": 1440,
+      "x": 13680,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInDoneDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 11 Signed in / Desktop, dark",
+      "w": 1440,
+      "x": 15200,
+      "y": 4240
+    },
+    "accounts/screens/signin/SignInChooserMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 01 Choose an account / Mobile, light",
+      "w": 390,
+      "x": 0,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInEmailMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 02 Email / Mobile, light",
+      "w": 390,
+      "x": 470,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInPasskeyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 03 Passkey / Mobile, light",
+      "w": 390,
+      "x": 940,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInPasswordMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 04 Password / Mobile, light",
+      "w": 390,
+      "x": 1410,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInCodeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 05 Two-step code / Mobile, light",
+      "w": 390,
+      "x": 1880,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInRecoverMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 06 Recovery / Mobile, light",
+      "w": 390,
+      "x": 2350,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInRcodeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 07 Recovery code / Mobile, light",
+      "w": 390,
+      "x": 2820,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInNewpassMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 08 New password / Mobile, light",
+      "w": 390,
+      "x": 3290,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInHelpMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 09 Other ways back / Mobile, light",
+      "w": 390,
+      "x": 3760,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInHelpsentMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 10 Request sent / Mobile, light",
+      "w": 390,
+      "x": 4230,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInDoneMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 11 Signed in / Mobile, light",
+      "w": 390,
+      "x": 4700,
+      "y": 5260
+    },
+    "accounts/screens/signin/SignInChooserMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 01 Choose an account / Mobile, dark",
+      "w": 390,
+      "x": 0,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInEmailMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 02 Email / Mobile, dark",
+      "w": 390,
+      "x": 470,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInPasskeyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 03 Passkey / Mobile, dark",
+      "w": 390,
+      "x": 940,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInPasswordMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 04 Password / Mobile, dark",
+      "w": 390,
+      "x": 1410,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInCodeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 05 Two-step code / Mobile, dark",
+      "w": 390,
+      "x": 1880,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInRecoverMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 06 Recovery / Mobile, dark",
+      "w": 390,
+      "x": 2350,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInRcodeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 07 Recovery code / Mobile, dark",
+      "w": 390,
+      "x": 2820,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInNewpassMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 08 New password / Mobile, dark",
+      "w": 390,
+      "x": 3290,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInHelpMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 09 Other ways back / Mobile, dark",
+      "w": 390,
+      "x": 3760,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInHelpsentMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 10 Request sent / Mobile, dark",
+      "w": 390,
+      "x": 4230,
+      "y": 6224
+    },
+    "accounts/screens/signin/SignInDoneMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 2 Sign in / 11 Signed in / Mobile, dark",
+      "w": 390,
+      "x": 4700,
+      "y": 6224
+    },
+    "accounts/screens/personal/PersonalType.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 01 Who is it for / Desktop, light",
+      "w": 1440,
+      "x": 0,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalName.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 02 Name / Desktop, light",
+      "w": 1440,
+      "x": 1520,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalBirth.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 03 Basics / Desktop, light",
+      "w": 1440,
+      "x": 3040,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalAddress.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 04 Address / Desktop, light",
+      "w": 1440,
+      "x": 4560,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalOwnemail.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 05 Use your email / Desktop, light",
+      "w": 1440,
+      "x": 6080,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalOwncode.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 06 Confirm email / Desktop, light",
+      "w": 1440,
+      "x": 7600,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalPasskey.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 07 Create passkey / Desktop, light",
+      "w": 1440,
+      "x": 9120,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalPassword.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 08 Password / Desktop, light",
+      "w": 1440,
+      "x": 10640,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalAddpasskey.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 09 Add a passkey / Desktop, light",
+      "w": 1440,
+      "x": 12160,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalRecovery.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 10 Recovery / Desktop, light",
+      "w": 1440,
+      "x": 13680,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalCode.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 11 Recovery code / Desktop, light",
+      "w": 1440,
+      "x": 15200,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalReview.dc.html": {
+      "h": 999,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 12 Review and agree / Desktop, light",
+      "w": 1440,
+      "x": 16720,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalCreating.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 13 Creating / Desktop, light",
+      "w": 1440,
+      "x": 18240,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalReady.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 14 Ready / Desktop, light",
+      "w": 1440,
+      "x": 19760,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalContact.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 15 Trusted contact (after sign-up) / Desktop, light",
+      "w": 1440,
+      "x": 21280,
+      "y": 7708
+    },
+    "accounts/screens/personal/PersonalTypeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 01 Who is it for / Desktop, dark",
+      "w": 1440,
+      "x": 0,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalNameDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 02 Name / Desktop, dark",
+      "w": 1440,
+      "x": 1520,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalBirthDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 03 Basics / Desktop, dark",
+      "w": 1440,
+      "x": 3040,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalAddressDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 04 Address / Desktop, dark",
+      "w": 1440,
+      "x": 4560,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalOwnemailDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 05 Use your email / Desktop, dark",
+      "w": 1440,
+      "x": 6080,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalOwncodeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 06 Confirm email / Desktop, dark",
+      "w": 1440,
+      "x": 7600,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalPasskeyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 07 Create passkey / Desktop, dark",
+      "w": 1440,
+      "x": 9120,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalPasswordDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 08 Password / Desktop, dark",
+      "w": 1440,
+      "x": 10640,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalAddpasskeyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 09 Add a passkey / Desktop, dark",
+      "w": 1440,
+      "x": 12160,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalRecoveryDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 10 Recovery / Desktop, dark",
+      "w": 1440,
+      "x": 13680,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalCodeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 11 Recovery code / Desktop, dark",
+      "w": 1440,
+      "x": 15200,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalReviewDark.dc.html": {
+      "h": 999,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 12 Review and agree / Desktop, dark",
+      "w": 1440,
+      "x": 16720,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalCreatingDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 13 Creating / Desktop, dark",
+      "w": 1440,
+      "x": 18240,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalReadyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 14 Ready / Desktop, dark",
+      "w": 1440,
+      "x": 19760,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalContactDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 15 Trusted contact (after sign-up) / Desktop, dark",
+      "w": 1440,
+      "x": 21280,
+      "y": 8827
+    },
+    "accounts/screens/personal/PersonalTypeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 01 Who is it for / Mobile, light",
+      "w": 390,
+      "x": 0,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalNameMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 02 Name / Mobile, light",
+      "w": 390,
+      "x": 470,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalBirthMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 03 Basics / Mobile, light",
+      "w": 390,
+      "x": 940,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalAddressMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 04 Address / Mobile, light",
+      "w": 390,
+      "x": 1410,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalOwnemailMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 05 Use your email / Mobile, light",
+      "w": 390,
+      "x": 1880,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalOwncodeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 06 Confirm email / Mobile, light",
+      "w": 390,
+      "x": 2350,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalPasskeyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 07 Create passkey / Mobile, light",
+      "w": 390,
+      "x": 2820,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalPasswordMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 08 Password / Mobile, light",
+      "w": 390,
+      "x": 3290,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalAddpasskeyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 09 Add a passkey / Mobile, light",
+      "w": 390,
+      "x": 3760,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalRecoveryMobile.dc.html": {
+      "h": 884,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 10 Recovery / Mobile, light",
+      "w": 390,
+      "x": 4230,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalCodeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 11 Recovery code / Mobile, light",
+      "w": 390,
+      "x": 4700,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalReviewMobile.dc.html": {
+      "h": 1043,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 12 Review and agree / Mobile, light",
+      "w": 390,
+      "x": 5170,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalCreatingMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 13 Creating / Mobile, light",
+      "w": 390,
+      "x": 5640,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalReadyMobile.dc.html": {
+      "h": 884,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 14 Ready / Mobile, light",
+      "w": 390,
+      "x": 6110,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalContactMobile.dc.html": {
+      "h": 886,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 15 Trusted contact (after sign-up) / Mobile, light",
+      "w": 390,
+      "x": 6580,
+      "y": 9946
+    },
+    "accounts/screens/personal/PersonalTypeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 01 Who is it for / Mobile, dark",
+      "w": 390,
+      "x": 0,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalNameMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 02 Name / Mobile, dark",
+      "w": 390,
+      "x": 470,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalBirthMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 03 Basics / Mobile, dark",
+      "w": 390,
+      "x": 940,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalAddressMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 04 Address / Mobile, dark",
+      "w": 390,
+      "x": 1410,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalOwnemailMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 05 Use your email / Mobile, dark",
+      "w": 390,
+      "x": 1880,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalOwncodeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 06 Confirm email / Mobile, dark",
+      "w": 390,
+      "x": 2350,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalPasskeyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 07 Create passkey / Mobile, dark",
+      "w": 390,
+      "x": 2820,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalPasswordMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 08 Password / Mobile, dark",
+      "w": 390,
+      "x": 3290,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalAddpasskeyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 09 Add a passkey / Mobile, dark",
+      "w": 390,
+      "x": 3760,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalRecoveryMobileDark.dc.html": {
+      "h": 884,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 10 Recovery / Mobile, dark",
+      "w": 390,
+      "x": 4230,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalCodeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 11 Recovery code / Mobile, dark",
+      "w": 390,
+      "x": 4700,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalReviewMobileDark.dc.html": {
+      "h": 1043,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 12 Review and agree / Mobile, dark",
+      "w": 390,
+      "x": 5170,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalCreatingMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 13 Creating / Mobile, dark",
+      "w": 390,
+      "x": 5640,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalReadyMobileDark.dc.html": {
+      "h": 884,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 14 Ready / Mobile, dark",
+      "w": 390,
+      "x": 6110,
+      "y": 11109
+    },
+    "accounts/screens/personal/PersonalContactMobileDark.dc.html": {
+      "h": 886,
+      "page": "accounts",
+      "title": "Onboarding / 3 Personal account / 15 Trusted contact (after sign-up) / Mobile, dark",
+      "w": 390,
+      "x": 6580,
+      "y": 11109
+    },
+    "accounts/screens/business/BusinessStart.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 01 Your business / Desktop, light",
+      "w": 1440,
+      "x": 0,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessYou.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 02 About you / Desktop, light",
+      "w": 1440,
+      "x": 1520,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessDomainq.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 03 Domain / Desktop, light",
+      "w": 1440,
+      "x": 3040,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessDomain.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 04 Enter domain / Desktop, light",
+      "w": 1440,
+      "x": 4560,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessDomainok.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 05 Confirm domain / Desktop, light",
+      "w": 1440,
+      "x": 6080,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessFind.dc.html": {
+      "h": 965,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 06 Find a domain / Desktop, light",
+      "w": 1440,
+      "x": 7600,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessRegistrant.dc.html": {
+      "h": 930,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 07 Business address / Desktop, light",
+      "w": 1440,
+      "x": 9120,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessAdmin.dc.html": {
+      "h": 1014,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Desktop, light",
+      "w": 1440,
+      "x": 10640,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessPlan.dc.html": {
+      "h": 908,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 09 Plan / Desktop, light",
+      "w": 1440,
+      "x": 12160,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessCheckout.dc.html": {
+      "h": 1553,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 10 Checkout / Desktop, light",
+      "w": 1440,
+      "x": 13680,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessCardotp.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 11 Confirm with your bank / Desktop, light",
+      "w": 1440,
+      "x": 15200,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessCreating.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 12 Creating / Desktop, light",
+      "w": 1440,
+      "x": 16720,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessReady.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 13 Ready / Desktop, light",
+      "w": 1440,
+      "x": 18240,
+      "y": 12792
+    },
+    "accounts/screens/business/BusinessStartDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 01 Your business / Desktop, dark",
+      "w": 1440,
+      "x": 0,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessYouDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 02 About you / Desktop, dark",
+      "w": 1440,
+      "x": 1520,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessDomainqDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 03 Domain / Desktop, dark",
+      "w": 1440,
+      "x": 3040,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessDomainDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 04 Enter domain / Desktop, dark",
+      "w": 1440,
+      "x": 4560,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessDomainokDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 05 Confirm domain / Desktop, dark",
+      "w": 1440,
+      "x": 6080,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessFindDark.dc.html": {
+      "h": 965,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 06 Find a domain / Desktop, dark",
+      "w": 1440,
+      "x": 7600,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessRegistrantDark.dc.html": {
+      "h": 930,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 07 Business address / Desktop, dark",
+      "w": 1440,
+      "x": 9120,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessAdminDark.dc.html": {
+      "h": 1014,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Desktop, dark",
+      "w": 1440,
+      "x": 10640,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessPlanDark.dc.html": {
+      "h": 908,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 09 Plan / Desktop, dark",
+      "w": 1440,
+      "x": 12160,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessCheckoutDark.dc.html": {
+      "h": 1553,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 10 Checkout / Desktop, dark",
+      "w": 1440,
+      "x": 13680,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessCardotpDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 11 Confirm with your bank / Desktop, dark",
+      "w": 1440,
+      "x": 15200,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessCreatingDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 12 Creating / Desktop, dark",
+      "w": 1440,
+      "x": 16720,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessReadyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 13 Ready / Desktop, dark",
+      "w": 1440,
+      "x": 18240,
+      "y": 14465
+    },
+    "accounts/screens/business/BusinessStartMobile.dc.html": {
+      "h": 960,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 01 Your business / Mobile, light",
+      "w": 390,
+      "x": 0,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessYouMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 02 About you / Mobile, light",
+      "w": 390,
+      "x": 470,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessDomainqMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 03 Domain / Mobile, light",
+      "w": 390,
+      "x": 940,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessDomainMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 04 Enter domain / Mobile, light",
+      "w": 390,
+      "x": 1410,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessDomainokMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 05 Confirm domain / Mobile, light",
+      "w": 390,
+      "x": 1880,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessFindMobile.dc.html": {
+      "h": 1013,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 06 Find a domain / Mobile, light",
+      "w": 390,
+      "x": 2350,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessRegistrantMobile.dc.html": {
+      "h": 1198,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 07 Business address / Mobile, light",
+      "w": 390,
+      "x": 2820,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessAdminMobile.dc.html": {
+      "h": 1043,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Mobile, light",
+      "w": 390,
+      "x": 3290,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessPlanMobile.dc.html": {
+      "h": 1015,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 09 Plan / Mobile, light",
+      "w": 390,
+      "x": 3760,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessCheckoutMobile.dc.html": {
+      "h": 2261,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 10 Checkout / Mobile, light",
+      "w": 390,
+      "x": 4230,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessCardotpMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 11 Confirm with your bank / Mobile, light",
+      "w": 390,
+      "x": 4700,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessCreatingMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 12 Creating / Mobile, light",
+      "w": 390,
+      "x": 5170,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessReadyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 13 Ready / Mobile, light",
+      "w": 390,
+      "x": 5640,
+      "y": 16138
+    },
+    "accounts/screens/business/BusinessStartMobileDark.dc.html": {
+      "h": 960,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 01 Your business / Mobile, dark",
+      "w": 390,
+      "x": 0,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessYouMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 02 About you / Mobile, dark",
+      "w": 390,
+      "x": 470,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessDomainqMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 03 Domain / Mobile, dark",
+      "w": 390,
+      "x": 940,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessDomainMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 04 Enter domain / Mobile, dark",
+      "w": 390,
+      "x": 1410,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessDomainokMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 05 Confirm domain / Mobile, dark",
+      "w": 390,
+      "x": 1880,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessFindMobileDark.dc.html": {
+      "h": 1013,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 06 Find a domain / Mobile, dark",
+      "w": 390,
+      "x": 2350,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessRegistrantMobileDark.dc.html": {
+      "h": 1198,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 07 Business address / Mobile, dark",
+      "w": 390,
+      "x": 2820,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessAdminMobileDark.dc.html": {
+      "h": 1043,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Mobile, dark",
+      "w": 390,
+      "x": 3290,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessPlanMobileDark.dc.html": {
+      "h": 1015,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 09 Plan / Mobile, dark",
+      "w": 390,
+      "x": 3760,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessCheckoutMobileDark.dc.html": {
+      "h": 2261,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 10 Checkout / Mobile, dark",
+      "w": 390,
+      "x": 4230,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessCardotpMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 11 Confirm with your bank / Mobile, dark",
+      "w": 390,
+      "x": 4700,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessCreatingMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 12 Creating / Mobile, dark",
+      "w": 390,
+      "x": 5170,
+      "y": 18519
+    },
+    "accounts/screens/business/BusinessReadyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 4 Business sign-up / 13 Ready / Mobile, dark",
+      "w": 390,
+      "x": 5640,
+      "y": 18519
+    },
+    "accounts/screens/admin/AdminSignin.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 01 Sign in / Desktop, light",
+      "w": 1440,
+      "x": 0,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminPhone.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 02 Verify it’s you / Desktop, light",
+      "w": 1440,
+      "x": 1520,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminCode.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 03 Code / Desktop, light",
+      "w": 1440,
+      "x": 3040,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminWelcome.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 04 Welcome / Desktop, light",
+      "w": 1440,
+      "x": 4560,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminAddpasskey.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 05 Add a passkey / Desktop, light",
+      "w": 1440,
+      "x": 6080,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminPasskey.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 06 Create passkey / Desktop, light",
+      "w": 1440,
+      "x": 7600,
+      "y": 21420
+    },
+    "accounts/screens/admin/AdminSigninDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 01 Sign in / Desktop, dark",
+      "w": 1440,
+      "x": 0,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminPhoneDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 02 Verify it’s you / Desktop, dark",
+      "w": 1440,
+      "x": 1520,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminCodeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 03 Code / Desktop, dark",
+      "w": 1440,
+      "x": 3040,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminWelcomeDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 04 Welcome / Desktop, dark",
+      "w": 1440,
+      "x": 4560,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminAddpasskeyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 05 Add a passkey / Desktop, dark",
+      "w": 1440,
+      "x": 6080,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminPasskeyDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 06 Create passkey / Desktop, dark",
+      "w": 1440,
+      "x": 7600,
+      "y": 22440
+    },
+    "accounts/screens/admin/AdminSigninMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 01 Sign in / Mobile, light",
+      "w": 390,
+      "x": 0,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminPhoneMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 02 Verify it’s you / Mobile, light",
+      "w": 390,
+      "x": 470,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminCodeMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 03 Code / Mobile, light",
+      "w": 390,
+      "x": 940,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminWelcomeMobile.dc.html": {
+      "h": 946,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 04 Welcome / Mobile, light",
+      "w": 390,
+      "x": 1410,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminAddpasskeyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 05 Add a passkey / Mobile, light",
+      "w": 390,
+      "x": 1880,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminPasskeyMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 06 Create passkey / Mobile, light",
+      "w": 390,
+      "x": 2350,
+      "y": 23460
+    },
+    "accounts/screens/admin/AdminSigninMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 01 Sign in / Mobile, dark",
+      "w": 390,
+      "x": 0,
+      "y": 24526
+    },
+    "accounts/screens/admin/AdminPhoneMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 02 Verify it’s you / Mobile, dark",
+      "w": 390,
+      "x": 470,
+      "y": 24526
+    },
+    "accounts/screens/admin/AdminCodeMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 03 Code / Mobile, dark",
+      "w": 390,
+      "x": 940,
+      "y": 24526
+    },
+    "accounts/screens/admin/AdminWelcomeMobileDark.dc.html": {
+      "h": 946,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 04 Welcome / Mobile, dark",
+      "w": 390,
+      "x": 1410,
+      "y": 24526
+    },
+    "accounts/screens/admin/AdminAddpasskeyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 05 Add a passkey / Mobile, dark",
+      "w": 390,
+      "x": 1880,
+      "y": 24526
+    },
+    "accounts/screens/admin/AdminPasskeyMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 5 Business: first sign-in to Admin / 06 Create passkey / Mobile, dark",
+      "w": 390,
+      "x": 2350,
+      "y": 24526
     }
   },
   "order": [
@@ -217,13 +1705,262 @@
     "products/drive/DrivePhone.dc.html",
     "products/home/HomePhoneDark.dc.html",
     "website/Landing.dc.html",
-    "accounts/Auth.dc.html",
-    "accounts/AuthFlow.dc.html",
     "decisions/Decisions.dc.html",
     "website/WebsiteSystem.dc.html",
     "website/About.dc.html",
-    "website/Careers.dc.html"
+    "website/Careers.dc.html",
+    "accounts/DaylightBrief.dc.html",
+    "accounts/flow/Prototype.dc.html",
+    "accounts/flow/PrototypeDark.dc.html",
+    "accounts/flow/PrototypeSignIn.dc.html",
+    "accounts/flow/PrototypeBusiness.dc.html",
+    "accounts/flow/PrototypeMobile.dc.html",
+    "accounts/flow/PrototypeMobileDark.dc.html",
+    "accounts/screens/signin/SignInChooser.dc.html",
+    "accounts/screens/signin/SignInEmail.dc.html",
+    "accounts/screens/signin/SignInPasskey.dc.html",
+    "accounts/screens/signin/SignInPassword.dc.html",
+    "accounts/screens/signin/SignInCode.dc.html",
+    "accounts/screens/signin/SignInRecover.dc.html",
+    "accounts/screens/signin/SignInRcode.dc.html",
+    "accounts/screens/signin/SignInNewpass.dc.html",
+    "accounts/screens/signin/SignInHelp.dc.html",
+    "accounts/screens/signin/SignInHelpsent.dc.html",
+    "accounts/screens/signin/SignInDone.dc.html",
+    "accounts/screens/signin/SignInChooserDark.dc.html",
+    "accounts/screens/signin/SignInEmailDark.dc.html",
+    "accounts/screens/signin/SignInPasskeyDark.dc.html",
+    "accounts/screens/signin/SignInPasswordDark.dc.html",
+    "accounts/screens/signin/SignInCodeDark.dc.html",
+    "accounts/screens/signin/SignInRecoverDark.dc.html",
+    "accounts/screens/signin/SignInRcodeDark.dc.html",
+    "accounts/screens/signin/SignInNewpassDark.dc.html",
+    "accounts/screens/signin/SignInHelpDark.dc.html",
+    "accounts/screens/signin/SignInHelpsentDark.dc.html",
+    "accounts/screens/signin/SignInDoneDark.dc.html",
+    "accounts/screens/signin/SignInChooserMobile.dc.html",
+    "accounts/screens/signin/SignInEmailMobile.dc.html",
+    "accounts/screens/signin/SignInPasskeyMobile.dc.html",
+    "accounts/screens/signin/SignInPasswordMobile.dc.html",
+    "accounts/screens/signin/SignInCodeMobile.dc.html",
+    "accounts/screens/signin/SignInRecoverMobile.dc.html",
+    "accounts/screens/signin/SignInRcodeMobile.dc.html",
+    "accounts/screens/signin/SignInNewpassMobile.dc.html",
+    "accounts/screens/signin/SignInHelpMobile.dc.html",
+    "accounts/screens/signin/SignInHelpsentMobile.dc.html",
+    "accounts/screens/signin/SignInDoneMobile.dc.html",
+    "accounts/screens/signin/SignInChooserMobileDark.dc.html",
+    "accounts/screens/signin/SignInEmailMobileDark.dc.html",
+    "accounts/screens/signin/SignInPasskeyMobileDark.dc.html",
+    "accounts/screens/signin/SignInPasswordMobileDark.dc.html",
+    "accounts/screens/signin/SignInCodeMobileDark.dc.html",
+    "accounts/screens/signin/SignInRecoverMobileDark.dc.html",
+    "accounts/screens/signin/SignInRcodeMobileDark.dc.html",
+    "accounts/screens/signin/SignInNewpassMobileDark.dc.html",
+    "accounts/screens/signin/SignInHelpMobileDark.dc.html",
+    "accounts/screens/signin/SignInHelpsentMobileDark.dc.html",
+    "accounts/screens/signin/SignInDoneMobileDark.dc.html",
+    "accounts/screens/personal/PersonalType.dc.html",
+    "accounts/screens/personal/PersonalName.dc.html",
+    "accounts/screens/personal/PersonalBirth.dc.html",
+    "accounts/screens/personal/PersonalAddress.dc.html",
+    "accounts/screens/personal/PersonalOwnemail.dc.html",
+    "accounts/screens/personal/PersonalOwncode.dc.html",
+    "accounts/screens/personal/PersonalPasskey.dc.html",
+    "accounts/screens/personal/PersonalPassword.dc.html",
+    "accounts/screens/personal/PersonalAddpasskey.dc.html",
+    "accounts/screens/personal/PersonalRecovery.dc.html",
+    "accounts/screens/personal/PersonalCode.dc.html",
+    "accounts/screens/personal/PersonalReview.dc.html",
+    "accounts/screens/personal/PersonalCreating.dc.html",
+    "accounts/screens/personal/PersonalReady.dc.html",
+    "accounts/screens/personal/PersonalContact.dc.html",
+    "accounts/screens/personal/PersonalTypeDark.dc.html",
+    "accounts/screens/personal/PersonalNameDark.dc.html",
+    "accounts/screens/personal/PersonalBirthDark.dc.html",
+    "accounts/screens/personal/PersonalAddressDark.dc.html",
+    "accounts/screens/personal/PersonalOwnemailDark.dc.html",
+    "accounts/screens/personal/PersonalOwncodeDark.dc.html",
+    "accounts/screens/personal/PersonalPasskeyDark.dc.html",
+    "accounts/screens/personal/PersonalPasswordDark.dc.html",
+    "accounts/screens/personal/PersonalAddpasskeyDark.dc.html",
+    "accounts/screens/personal/PersonalRecoveryDark.dc.html",
+    "accounts/screens/personal/PersonalCodeDark.dc.html",
+    "accounts/screens/personal/PersonalReviewDark.dc.html",
+    "accounts/screens/personal/PersonalCreatingDark.dc.html",
+    "accounts/screens/personal/PersonalReadyDark.dc.html",
+    "accounts/screens/personal/PersonalContactDark.dc.html",
+    "accounts/screens/personal/PersonalTypeMobile.dc.html",
+    "accounts/screens/personal/PersonalNameMobile.dc.html",
+    "accounts/screens/personal/PersonalBirthMobile.dc.html",
+    "accounts/screens/personal/PersonalAddressMobile.dc.html",
+    "accounts/screens/personal/PersonalOwnemailMobile.dc.html",
+    "accounts/screens/personal/PersonalOwncodeMobile.dc.html",
+    "accounts/screens/personal/PersonalPasskeyMobile.dc.html",
+    "accounts/screens/personal/PersonalPasswordMobile.dc.html",
+    "accounts/screens/personal/PersonalAddpasskeyMobile.dc.html",
+    "accounts/screens/personal/PersonalRecoveryMobile.dc.html",
+    "accounts/screens/personal/PersonalCodeMobile.dc.html",
+    "accounts/screens/personal/PersonalReviewMobile.dc.html",
+    "accounts/screens/personal/PersonalCreatingMobile.dc.html",
+    "accounts/screens/personal/PersonalReadyMobile.dc.html",
+    "accounts/screens/personal/PersonalContactMobile.dc.html",
+    "accounts/screens/personal/PersonalTypeMobileDark.dc.html",
+    "accounts/screens/personal/PersonalNameMobileDark.dc.html",
+    "accounts/screens/personal/PersonalBirthMobileDark.dc.html",
+    "accounts/screens/personal/PersonalAddressMobileDark.dc.html",
+    "accounts/screens/personal/PersonalOwnemailMobileDark.dc.html",
+    "accounts/screens/personal/PersonalOwncodeMobileDark.dc.html",
+    "accounts/screens/personal/PersonalPasskeyMobileDark.dc.html",
+    "accounts/screens/personal/PersonalPasswordMobileDark.dc.html",
+    "accounts/screens/personal/PersonalAddpasskeyMobileDark.dc.html",
+    "accounts/screens/personal/PersonalRecoveryMobileDark.dc.html",
+    "accounts/screens/personal/PersonalCodeMobileDark.dc.html",
+    "accounts/screens/personal/PersonalReviewMobileDark.dc.html",
+    "accounts/screens/personal/PersonalCreatingMobileDark.dc.html",
+    "accounts/screens/personal/PersonalReadyMobileDark.dc.html",
+    "accounts/screens/personal/PersonalContactMobileDark.dc.html",
+    "accounts/screens/business/BusinessStart.dc.html",
+    "accounts/screens/business/BusinessYou.dc.html",
+    "accounts/screens/business/BusinessDomainq.dc.html",
+    "accounts/screens/business/BusinessDomain.dc.html",
+    "accounts/screens/business/BusinessDomainok.dc.html",
+    "accounts/screens/business/BusinessFind.dc.html",
+    "accounts/screens/business/BusinessRegistrant.dc.html",
+    "accounts/screens/business/BusinessAdmin.dc.html",
+    "accounts/screens/business/BusinessPlan.dc.html",
+    "accounts/screens/business/BusinessCheckout.dc.html",
+    "accounts/screens/business/BusinessCardotp.dc.html",
+    "accounts/screens/business/BusinessCreating.dc.html",
+    "accounts/screens/business/BusinessReady.dc.html",
+    "accounts/screens/business/BusinessStartDark.dc.html",
+    "accounts/screens/business/BusinessYouDark.dc.html",
+    "accounts/screens/business/BusinessDomainqDark.dc.html",
+    "accounts/screens/business/BusinessDomainDark.dc.html",
+    "accounts/screens/business/BusinessDomainokDark.dc.html",
+    "accounts/screens/business/BusinessFindDark.dc.html",
+    "accounts/screens/business/BusinessRegistrantDark.dc.html",
+    "accounts/screens/business/BusinessAdminDark.dc.html",
+    "accounts/screens/business/BusinessPlanDark.dc.html",
+    "accounts/screens/business/BusinessCheckoutDark.dc.html",
+    "accounts/screens/business/BusinessCardotpDark.dc.html",
+    "accounts/screens/business/BusinessCreatingDark.dc.html",
+    "accounts/screens/business/BusinessReadyDark.dc.html",
+    "accounts/screens/business/BusinessStartMobile.dc.html",
+    "accounts/screens/business/BusinessYouMobile.dc.html",
+    "accounts/screens/business/BusinessDomainqMobile.dc.html",
+    "accounts/screens/business/BusinessDomainMobile.dc.html",
+    "accounts/screens/business/BusinessDomainokMobile.dc.html",
+    "accounts/screens/business/BusinessFindMobile.dc.html",
+    "accounts/screens/business/BusinessRegistrantMobile.dc.html",
+    "accounts/screens/business/BusinessAdminMobile.dc.html",
+    "accounts/screens/business/BusinessPlanMobile.dc.html",
+    "accounts/screens/business/BusinessCheckoutMobile.dc.html",
+    "accounts/screens/business/BusinessCardotpMobile.dc.html",
+    "accounts/screens/business/BusinessCreatingMobile.dc.html",
+    "accounts/screens/business/BusinessReadyMobile.dc.html",
+    "accounts/screens/business/BusinessStartMobileDark.dc.html",
+    "accounts/screens/business/BusinessYouMobileDark.dc.html",
+    "accounts/screens/business/BusinessDomainqMobileDark.dc.html",
+    "accounts/screens/business/BusinessDomainMobileDark.dc.html",
+    "accounts/screens/business/BusinessDomainokMobileDark.dc.html",
+    "accounts/screens/business/BusinessFindMobileDark.dc.html",
+    "accounts/screens/business/BusinessRegistrantMobileDark.dc.html",
+    "accounts/screens/business/BusinessAdminMobileDark.dc.html",
+    "accounts/screens/business/BusinessPlanMobileDark.dc.html",
+    "accounts/screens/business/BusinessCheckoutMobileDark.dc.html",
+    "accounts/screens/business/BusinessCardotpMobileDark.dc.html",
+    "accounts/screens/business/BusinessCreatingMobileDark.dc.html",
+    "accounts/screens/business/BusinessReadyMobileDark.dc.html",
+    "accounts/screens/admin/AdminSignin.dc.html",
+    "accounts/screens/admin/AdminPhone.dc.html",
+    "accounts/screens/admin/AdminCode.dc.html",
+    "accounts/screens/admin/AdminWelcome.dc.html",
+    "accounts/screens/admin/AdminAddpasskey.dc.html",
+    "accounts/screens/admin/AdminPasskey.dc.html",
+    "accounts/screens/admin/AdminSigninDark.dc.html",
+    "accounts/screens/admin/AdminPhoneDark.dc.html",
+    "accounts/screens/admin/AdminCodeDark.dc.html",
+    "accounts/screens/admin/AdminWelcomeDark.dc.html",
+    "accounts/screens/admin/AdminAddpasskeyDark.dc.html",
+    "accounts/screens/admin/AdminPasskeyDark.dc.html",
+    "accounts/screens/admin/AdminSigninMobile.dc.html",
+    "accounts/screens/admin/AdminPhoneMobile.dc.html",
+    "accounts/screens/admin/AdminCodeMobile.dc.html",
+    "accounts/screens/admin/AdminWelcomeMobile.dc.html",
+    "accounts/screens/admin/AdminAddpasskeyMobile.dc.html",
+    "accounts/screens/admin/AdminPasskeyMobile.dc.html",
+    "accounts/screens/admin/AdminSigninMobileDark.dc.html",
+    "accounts/screens/admin/AdminPhoneMobileDark.dc.html",
+    "accounts/screens/admin/AdminCodeMobileDark.dc.html",
+    "accounts/screens/admin/AdminWelcomeMobileDark.dc.html",
+    "accounts/screens/admin/AdminAddpasskeyMobileDark.dc.html",
+    "accounts/screens/admin/AdminPasskeyMobileDark.dc.html"
   ],
-  "notes": {},
+  "notes": {
+    "accounts-admin": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "accounts",
+      "text": "Onboarding · 5 Business: first sign-in to Admin",
+      "w": 240,
+      "x": 0,
+      "y": 21100
+    },
+    "accounts-business": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "accounts",
+      "text": "Onboarding · 4 Business sign-up",
+      "w": 240,
+      "x": 0,
+      "y": 12472
+    },
+    "accounts-guide": {
+      "fill": "blue",
+      "page": "accounts",
+      "size": 40,
+      "text": "How this page is organised\n\n1 Clickable prototype: press Play. Every button, field and choice works. Use the moon for dark mode and the eye button to blur personal details while sharing your screen. The dark bar jumps between Sign in, Personal and Business.\n\n2 Every screen, four ways: desktop light, desktop dark, mobile light, mobile dark.\n\n5 Business: after checkout the admin signs in to Admin (password, phone code), accepts a plain-language notice about admin-managed accounts, and is offered a passkey. Admin, domain verification and mail setup move to the Onboarding collection.\n\nPrivacy by design: the progress card never shows what you typed, and the review screen hides birthday and recovery details until you choose Show.",
+      "w": 1400,
+      "x": 1520,
+      "y": 0
+    },
+    "accounts-personal": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "accounts",
+      "text": "Onboarding · 3 Personal account",
+      "w": 240,
+      "x": 0,
+      "y": 7388
+    },
+    "accounts-proto": {
+      "kind": "title1",
+      "maxW": 7000,
+      "page": "accounts",
+      "text": "Onboarding · 1 Clickable prototype",
+      "w": 240,
+      "x": 0,
+      "y": 1440
+    },
+    "accounts-s0": {
+      "kind": "title1",
+      "maxW": 4400,
+      "page": "accounts",
+      "text": "Onboarding · Daylight brief",
+      "w": 240,
+      "x": 0,
+      "y": -320
+    },
+    "accounts-signin": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "accounts",
+      "text": "Onboarding · 2 Sign in",
+      "w": 240,
+      "x": 0,
+      "y": 2900
+    }
+  },
   "designSystems": []
 }
