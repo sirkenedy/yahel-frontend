@@ -16,7 +16,7 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
     const bytes = (...values: number[]) => new Uint8Array(values).buffer;
     Object.defineProperty(window, 'PublicKeyCredential', {
       configurable: true,
-      value: result === 'unsupported' ? undefined : { isUserVerifyingPlatformAuthenticatorAvailable: async () => true },
+      value: result === 'unsupported' ? undefined : class PublicKeyCredential {},
     });
     Object.defineProperty(navigator, 'credentials', {
       configurable: true,

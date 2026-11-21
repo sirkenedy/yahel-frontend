@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { syncThemeColour } from './theme-colour';
 
 export type Theme = 'light' | 'dark';
 
@@ -17,6 +18,7 @@ export function useTheme() {
   const toggle = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
+    syncThemeColour();
     setTheme(next);
   };
   return { theme, toggle };

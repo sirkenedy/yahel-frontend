@@ -1,4 +1,5 @@
 import { AccountChip, FlowNotice, FlowStep } from '@yahel/ui';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
@@ -15,6 +16,12 @@ interface StepFrameProps {
 export function StepFrame({ title, lede, failure, children }: StepFrameProps) {
   const { state, meta } = useSignInFlow();
   const showsAccount = state.email !== null && state.step !== 'choose' && state.step !== 'email' && state.step !== 'help' && state.step !== 'help-sent';
+
+  // The tab and the browser's history list name the step the person is on.
+  useEffect(() => {
+    document.title = m.pageTitle(title);
+  }, [title]);
+
   return (
     <FlowStep direction={meta.direction}>
       {meta.backHref ? <FlowStep.Back href={meta.backHref}>{m.back}</FlowStep.Back> : null}

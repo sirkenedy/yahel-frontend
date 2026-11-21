@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
+import { LinkRouter } from '@yahel/ui';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppFrame } from './app-frame';
 import { chromeMessages as m } from './messages';
 
@@ -19,6 +20,29 @@ describe('AppFrame', () => {
     expect(within(footer).getByRole('link', { name: m.help })).toHaveAttribute('href', links.help);
     expect(within(footer).getByRole('link', { name: m.privacy })).toHaveAttribute('href', links.privacy);
     expect(within(footer).queryByRole('link', { name: m.terms })).not.toBeInTheDocument();
+  });
+
+  it('sends the brand link through the router, so the flow is not wiped by a page load', async () => {
+    const navigate = vi.fn();
+    render(
+      <LinkRouter navigate={navigate}>
+        <AppFrame links={links}>q</AppFrame>
+      </LinkRouter>,
+    );
+
+    await userEvent.click(screen.getByRole('link', { name: m.brandHome }));
+
+    expect(navigate).toHaveBeenCalledWith('/signin', undefined);
+  });
+
+  it('keeps the browser chrome the colour of the page when the theme is switched', async () => {
+    document.documentElement.style.setProperty('--ws-color-daylight-canvas', '#0B0D1F');
+    render(<AppFrame links={links}>q</AppFrame>);
+
+    await userEvent.click(screen.getByRole('button', { name: m.switchToDark }));
+
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute('content', '#0B0D1F');
+    document.documentElement.style.removeProperty('--ws-color-daylight-canvas');
   });
 
   it('offers account creation only when there is somewhere to send people', () => {

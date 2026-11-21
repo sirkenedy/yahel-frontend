@@ -10,9 +10,9 @@ const instant = async () => undefined;
 const api = { auth: { forgotPassword: vi.fn() } } as unknown as Session['api'];
 const sessionWith = (status: 'signed-in' | 'signed-out') => ({ store: { getState: () => ({ status, profile: null }) } }) as unknown as Session;
 
-const context = ({ status = 'signed-out' as 'signed-in' | 'signed-out', standIns = true, passkeyAvailable = true } = {}) => {
+const context = ({ status = 'signed-out' as 'signed-in' | 'signed-out', standIns = true, passkeySupported = true } = {}) => {
   const capabilities = createAccountCapabilities(api, standIns ? createStandIns(instant) : undefined);
-  const passkeys = capabilities.passkeys ? ({ isAvailable: vi.fn().mockResolvedValue(passkeyAvailable), signIn: vi.fn() } as PasskeyClient) : null;
+  const passkeys = capabilities.passkeys ? ({ isSupported: () => passkeySupported, prepare: vi.fn(), signIn: vi.fn() } as PasskeyClient) : null;
   return { session: sessionWith(status), queryClient: new QueryClient(), capabilities, passkeys, signIn: createSignInStore() };
 };
 
@@ -25,20 +25,21 @@ describe('loadSignInFacts', () => {
     await expect(loadSignInFacts(context({ standIns: false }))).resolves.toEqual({ signedIn: false, knownAccounts: 0, passkeysOffered: false, helpOffered: false });
   });
 
-  it('does not offer passkeys on a device without a built-in authenticator', async () => {
-    await expect(loadSignInFacts(context({ passkeyAvailable: false }))).resolves.toMatchObject({ passkeysOffered: false });
+  it('does not offer passkeys in a browser without WebAuthn', async () => {
+    await expect(loadSignInFacts(context({ passkeySupported: false }))).resolves.toMatchObject({ passkeysOffered: false });
   });
 
   it('knows when someone is signed in', async () => {
     await expect(loadSignInFacts(context({ status: 'signed-in' }))).resolves.toMatchObject({ signedIn: true });
   });
 
-  it('asks each question once and reuses the answer on later steps', async () => {
+  it('reads the known accounts once and reuses the answer on later steps', async () => {
     const shared = context();
+    const list = vi.spyOn(shared.capabilities.directory!, 'list');
     await loadSignInFacts(shared);
     await loadSignInFacts(shared);
 
-    expect(shared.passkeys!.isAvailable).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenCalledTimes(1);
   });
 
   it('starts from the email step when the list of known accounts cannot be read', async () => {

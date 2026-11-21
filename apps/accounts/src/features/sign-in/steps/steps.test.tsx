@@ -1,11 +1,13 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { initialSignInState } from '../machine';
 import { signInMessages as m } from '../messages';
 import { SignInFlowContext } from '../sign-in-flow';
-import type { FlowRequest, SignInFlowValue } from '../sign-in-flow';
+import type { SignInFlowValue } from '../sign-in-flow';
+import type { FlowRequest } from '../use-flow-request';
 import { ChooseStep } from './choose-step';
 import { CodeStep } from './code-step';
 import { DoneStep } from './done-step';
@@ -24,8 +26,7 @@ const profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: '
 
 type Overrides = { state?: Partial<SignInFlowValue['state']>; offers?: Partial<SignInFlowValue['meta']['offers']>; requests?: Partial<SignInFlowValue['meta']['requests']>; backHref?: string | null };
 
-const setup = (ui: ReactElement, { state, offers, requests, backHref = null }: Overrides = {}) => {
-  const actions = {
+const fakeActions = () => ({
     chooseAccount: vi.fn(),
     enterEmail: vi.fn(),
     useAnotherAccount: vi.fn(),
@@ -41,18 +42,22 @@ const setup = (ui: ReactElement, { state, offers, requests, backHref = null }: O
     requestHelp: vi.fn(),
     signOut: vi.fn(),
     continueToApp: vi.fn(),
-  };
-  const value: SignInFlowValue = {
-    state: { ...initialSignInState, step: 'email', profile: null, accounts: [], recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, removedAccount: null, ...state },
-    actions,
-    meta: {
-      direction: 'forward',
-      backHref,
+});
+
+const flowValue = (actions: SignInFlowValue['actions'], { state, offers, requests, backHref = null }: Overrides = {}): SignInFlowValue => ({
+  state: { ...initialSignInState, step: 'email', profile: null, accounts: [], recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, removedAccount: null, ...state },
+  actions,
+  meta: {
+    direction: 'forward',
+    backHref,
       offers: { passkey: true, textCode: true, help: true, ...offers },
       requests: { password: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, removeAccount: idle, signOut: idle, recoveryOptions: idle, ...requests },
     },
-  };
-  const { container } = render(<SignInFlowContext value={value}>{ui}</SignInFlowContext>);
+});
+
+const setup = (ui: ReactElement, overrides: Overrides = {}) => {
+  const actions = fakeActions();
+  const { container } = render(<SignInFlowContext value={flowValue(actions, overrides)}>{ui}</SignInFlowContext>);
   return { actions, container, user: userEvent.setup() };
 };
 
@@ -97,6 +102,48 @@ describe('ChooseStep', () => {
     expect(rowFor(email)).toBeEnabled();
   });
 
+  it.each([
+    ['the row that takes its place', 'amara.okafor@yahel.example', m.removeLabel(email)],
+    ['the row before it when it was the last', 'kofi@northwind.example', m.removeLabel(email)],
+  ])('moves focus to %s once an account has been removed', async (_name, removed, focused) => {
+    function Chooser() {
+      const [left, setLeft] = useState(accounts);
+      const actions = { ...fakeActions(), removeAccount: (address: string) => void setTimeout(() => setLeft((list) => list.filter((account) => account.email !== address)), 0) };
+      return (
+        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left } })}>
+          <ChooseStep />
+        </SignInFlowContext>
+      );
+    }
+    render(<Chooser />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: m.removeAnAccount }));
+
+    await user.click(screen.getByRole('button', { name: m.removeLabel(removed) }));
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: m.removeLabel(removed) })).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: focused })).toHaveFocus();
+  });
+
+  it('moves focus to "Use another account" when a removal leaves nothing else to remove', async () => {
+    function Chooser() {
+      const [left, setLeft] = useState(accounts.slice(0, 1));
+      const actions = { ...fakeActions(), removeAccount: () => void setTimeout(() => setLeft([]), 0) };
+      return (
+        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left } })}>
+          <ChooseStep />
+        </SignInFlowContext>
+      );
+    }
+    render(<Chooser />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: m.removeAnAccount }));
+
+    await user.click(screen.getByRole('button', { name: m.removeLabel('amara.okafor@yahel.example') }));
+
+    await waitFor(() => expect(screen.getByRole('button', { name: m.useAnother })).toHaveFocus());
+  });
+
   it('confirms a removal and reports one that failed', () => {
     setup(<ChooseStep />, { state: { step: 'choose', accounts, removedAccount: email }, requests: { removeAccount: failing(m.offline) } });
 
@@ -137,13 +184,13 @@ describe('EmailStep', () => {
     expect(screen.getByLabelText(m.emailLabel)).not.toHaveAttribute('aria-invalid', 'true');
   });
 
-  it('is set up for password managers and passkey autofill', () => {
+  it('is set up for password managers', () => {
     setup(<EmailStep />);
 
     const input = screen.getByLabelText(m.emailLabel);
     expect(input).toHaveAttribute('type', 'email');
     expect(input).toHaveAttribute('name', 'email');
-    expect(input).toHaveAttribute('autocomplete', 'username webauthn');
+    expect(input).toHaveAttribute('autocomplete', 'username');
     expect(input).toHaveAttribute('spellcheck', 'false');
   });
 
@@ -209,11 +256,33 @@ describe('PasswordStep', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCredentials);
   });
 
+  it.each([
+    ['challenge-expired', m.challengeExpired],
+    ['reset-done', m.resetDoneSignInFailed],
+  ] as const)('explains why the person is back here (%s), until a new attempt has its own result', (passwordPrompt, message) => {
+    setup(<PasswordStep />, { state: { ...state, passwordPrompt } });
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
+  });
+
+  it('shows the latest attempt\'s failure in place of the earlier explanation', () => {
+    setup(<PasswordStep />, { state: { ...state, passwordPrompt: 'reset-done' }, requests: { password: failing(m.wrongCredentials) } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCredentials);
+  });
+
+  it('names the step in the page title', () => {
+    setup(<PasswordStep />, { state });
+
+    expect(document.title).toBe('Enter your password · Yahel');
+  });
+
   it('labels the field for password managers and pairs it with the account', () => {
     const { container } = setup(<PasswordStep />, { state });
 
     expect(screen.getByLabelText(m.passwordLabel)).toHaveAttribute('autocomplete', 'current-password');
-    expect(container.querySelector('input[autocomplete="username"]')).toHaveValue(email);
+    const hint = container.querySelector('input[autocomplete="username"]');
+    expect(hint).toHaveValue(email);
+    expect(hint).toHaveAttribute('type', 'text');
   });
 
   it('leads to recovery, and to a passkey where one is offered', async () => {

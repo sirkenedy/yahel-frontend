@@ -1,4 +1,5 @@
 export const signInMessages = {
+  pageTitle: (question: string) => `${question.replace(/[.?]$/, '')} · Yahel`,
   back: 'Back',
   or: 'or',
 
@@ -115,6 +116,8 @@ export const signInMessages = {
   cannotSignIn: 'This account can’t sign in right now. Ask your administrator, or contact Yahel support.',
   singleSignOnRequired: 'Your organisation signs in another way. Ask your administrator how.',
   wrongCode: 'That code didn’t work. Check it and try again.',
+  challengeExpired: 'That took too long, so the code can no longer be used. Sign in again to get a new one.',
+  resetDoneSignInFailed: 'Your new password is saved, but we couldn’t sign you in just now. Sign in with your new password.',
   tooManyCodes: 'Too many wrong codes. Go back, sign in again and use the new code.',
   tooManyResetCodes: 'Too many wrong codes. Send a new code and try again.',
   passwordRefused: 'That password wasn’t accepted. Use 12 or more characters with upper and lower case letters, a number and a symbol.',

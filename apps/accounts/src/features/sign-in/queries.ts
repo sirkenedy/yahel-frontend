@@ -13,11 +13,18 @@ export const knownAccountsQuery = (directory: AccountDirectory | null) =>
     staleTime: Infinity,
   });
 
-export const passkeyOfferedQuery = (passkeys: PasskeyClient | null) =>
+const CHALLENGE_LIFETIME = 4 * 60_000;
+
+/** Asks the server for a passkey challenge ahead of the press. The challenge itself stays inside the passkey client. */
+export const passkeyChallengeQuery = (passkeys: PasskeyClient | null, email: string | null) =>
   queryOptions({
-    queryKey: ['sign-in', 'passkey-offered'],
-    queryFn: () => (passkeys ? passkeys.isAvailable() : false),
-    staleTime: Infinity,
+    queryKey: ['sign-in', 'passkey-challenge', email],
+    queryFn: () => {
+      passkeys?.prepare(email ?? undefined);
+      return true;
+    },
+    staleTime: CHALLENGE_LIFETIME,
+    gcTime: 0,
   });
 
 export const recoveryOptionsQuery = (recovery: RecoveryChannels, email: string | null) =>

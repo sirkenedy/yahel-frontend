@@ -12,4 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_TERMS_URL?: string;
   /** `on` serves features the backend lacks from stand-ins. Never set for a real build. */
   readonly VITE_STAND_INS?: string;
+  /** `local` lets a build fall back to development addresses. Set by `pnpm build`; never by a release. */
+  readonly VITE_LOCAL_BUILD?: string;
 }

@@ -8,11 +8,14 @@ import { preload } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import './app.css';
 import { chromeMessages } from './features/chrome/messages';
+import { followSystemThemeColour } from './features/chrome/theme-colour';
 import { createAppRouter, queryClient } from './router';
 import { loadCapabilities, session } from './session';
 
 // Headlines are the first thing read on every screen, so their font is fetched alongside the script.
 preload(displayFont, { as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' });
+
+followSystemThemeColour();
 
 const root = createRoot(document.getElementById('root')!);
 

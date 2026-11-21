@@ -1,23 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AccountCapabilities, KnownAccount, Profile, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import type { FlowDirection } from '@yahel/ui';
-import { createContext, use, useEffect, useState } from 'react';
+import { createContext, use, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
-import { describeFailure, isRejectedResetCode } from './failure';
-import type { FailureContext } from './failure';
+import { describeFailure } from './failure';
 import { backOf, directionOf, stepPath } from './machine';
 import type { SignInState, SignInStep } from './machine';
-import { knownAccountsQuery, recoveryOptionsQuery } from './queries';
+import { knownAccountsQuery, passkeyChallengeQuery, recoveryOptionsQuery } from './queries';
+import { useSignInRequests } from './requests';
+import type { SignInRequests } from './requests';
 import type { SignInStore } from './store';
-import { useSingleFlight } from './use-single-flight';
-
-/** One request the flow can make: whether it is running, and what went wrong last time in plain words. */
-export interface FlowRequest {
-  isPending: boolean;
-  failure: string | null;
-}
+import type { FlowRequest } from './use-flow-request';
 
 export interface SignInFlowValue {
   state: SignInState & {
@@ -55,7 +50,7 @@ export interface SignInFlowValue {
     /** Address of the step before this one, or `null` on a first step. */
     backHref: string | null;
     offers: { passkey: boolean; textCode: boolean; help: boolean };
-    requests: Record<'password' | 'passkey' | 'code' | 'textCode' | 'sendResetCode' | 'resendResetCode' | 'newPassword' | 'help' | 'removeAccount' | 'signOut' | 'recoveryOptions', FlowRequest>;
+    requests: Record<keyof SignInRequests | 'recoveryOptions', FlowRequest>;
   };
 }
 
@@ -72,7 +67,6 @@ export interface SignInFlowProviderProps {
   session: Session;
   capabilities: AccountCapabilities;
   passkeys: PasskeyClient | null;
-  passkeyOffered: boolean;
   store: SignInStore;
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
   /** Sends the browser to the validated return address. */
@@ -80,172 +74,28 @@ export interface SignInFlowProviderProps {
   children: ReactNode;
 }
 
-const request = (mutation: { isPending: boolean; error: unknown }, context: FailureContext = 'other'): FlowRequest => ({
-  isPending: mutation.isPending,
-  failure: mutation.error ? describeFailure(mutation.error, context) : null,
-});
+const status = ({ isPending, failure }: FlowRequest): FlowRequest => ({ isPending, failure });
 
 /**
- * Owns the sign-in flow: its state, every request it makes and where each outcome leads. Steps read
- * `{ state, actions, meta }` from context and know nothing about the session, the API or the router.
+ * Gives the sign-in steps one thing to read: `{ state, actions, meta }`. The state comes from the store
+ * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
+ * about the session, the API or the router.
  */
-export function SignInFlowProvider({ step, session, capabilities, passkeys, passkeyOffered, store, navigate, leave, children }: SignInFlowProviderProps) {
+export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, leave, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
   const flow = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
+  const passkeyOffered = passkeys?.isSupported() ?? false;
   const accounts = useQuery(knownAccountsQuery(capabilities.directory)).data ?? [];
   const recoveryOptions = useQuery({ ...recoveryOptionsQuery(capabilities.recovery, flow.email), enabled: step === 'recover' && flow.email !== null });
+  // Fetched before the press so the browser's prompt can open inside it.
+  useQuery({ ...passkeyChallengeQuery(passkeys, flow.email), enabled: passkeyOffered && (step === 'email' || step === 'password') });
 
-  const [travel, setTravel] = useState<{ step: SignInStep; direction: FlowDirection }>({ step, direction: 'forward' });
-  if (travel.step !== step) setTravel({ step, direction: directionOf(travel.step, step) });
+  // Derived during render when the step changes: which way the person moved, and how many steps they have seen.
+  const [travel, setTravel] = useState<{ step: SignInStep; direction: FlowDirection; visit: number }>({ step, direction: 'forward', visit: 0 });
+  if (travel.step !== step) setTravel({ step, direction: directionOf(travel.step, step), visit: travel.visit + 1 });
 
-  const rememberAccount = (signedOut: boolean) => {
-    const who = session.store.getState().profile;
-    if (!who || !capabilities.directory) return;
-    const name = who.displayName?.trim() || [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email;
-    void capabilities.directory
-      .remember({ name, email: who.email, kind: 'person', signedOut })
-      .then(() => queryClient.invalidateQueries({ queryKey: knownAccountsQuery(capabilities.directory).queryKey }))
-      .catch(() => undefined);
-  };
-
-  const finish = () => {
-    store.dispatch({ type: 'signed-in' });
-    rememberAccount(false);
-    navigate('done', { replace: true });
-  };
-
-  const afterPassword = (result: Awaited<ReturnType<Session['signIn']>>) => {
-    if (result.ok) return finish();
-    store.dispatch({ type: 'second-step-required', challengeToken: result.challengeToken });
-    navigate('code');
-  };
-
-  const email = () => store.getState().email ?? '';
-
-  const password = useMutation({ mutationFn: (value: string) => session.signIn(email(), value), onSuccess: afterPassword });
-
-  const passkey = useMutation({
-    mutationFn: async () => {
-      if (!passkeys) return { status: 'cancelled' as const };
-      return passkeys.signIn(store.getState().email ?? undefined);
-    },
-    onSuccess: (result) => {
-      if (result.status !== 'signed-in') return;
-      session.establish(result.signedIn);
-      finish();
-    },
-  });
-
-  const code = useMutation({ mutationFn: (value: string) => session.completeSecondStep(store.getState().challengeToken ?? '', value), onSuccess: finish });
-
-  const textCode = useMutation({
-    mutationFn: async () => {
-      if (!capabilities.textCodes) throw new Error('Text codes are not offered');
-      return capabilities.textCodes.send(store.getState().challengeToken ?? '');
-    },
-  });
-
-  const sendReset = async (method: RecoveryMethod) => {
-    await capabilities.recovery.send(email(), method);
-    return method;
-  };
-  const sendResetCode = useMutation({
-    mutationFn: sendReset,
-    onSuccess: (method) => {
-      const destination = recoveryOptions.data?.find((option) => option.method === method)?.destination ?? '';
-      store.dispatch({ type: 'reset-code-sent', method, destination });
-      navigate('recover-code');
-    },
-  });
-  const resendResetCode = useMutation({ mutationFn: () => sendReset(store.getState().recovery?.method ?? 'email') });
-
-  const newPassword = useMutation({
-    mutationFn: async (value: string) => {
-      await session.api.auth.resetPassword({ email: email(), token: store.getState().resetCode ?? '', password: value });
-      return session.signIn(email(), value);
-    },
-    onSuccess: afterPassword,
-    onError: (error) => {
-      if (!isRejectedResetCode(error)) return;
-      store.dispatch({ type: 'reset-code-rejected' });
-      navigate('recover-code', { replace: true });
-    },
-  });
-
-  const help = useMutation({
-    mutationFn: async (contact: string) => {
-      if (!capabilities.helpDesk) throw new Error('Account help is not offered');
-      await capabilities.helpDesk.request({ contact });
-    },
-    onSuccess: () => {
-      store.dispatch({ type: 'help-requested' });
-      navigate('help-sent');
-    },
-  });
-
-  const removeAccount = useMutation({
-    mutationFn: async (address: string) => {
-      await capabilities.directory?.remove(address);
-      const left = await queryClient.fetchQuery({ ...knownAccountsQuery(capabilities.directory), staleTime: 0 });
-      return { address, left: left.length };
-    },
-    onSuccess: ({ left }) => {
-      if (left === 0) navigate('email', { replace: true });
-    },
-  });
-
-  const signOut = useMutation({
-    mutationFn: async () => {
-      rememberAccount(true);
-      // Signing out locally always succeeds; a failed server call must not keep the person signed in here.
-      await session.signOut().catch(() => undefined);
-    },
-    onSettled: () => {
-      store.dispatch({ type: 'signed-out' });
-      queryClient.clear();
-      navigate('choose', { replace: true });
-    },
-  });
-
-  const run = {
-    password: useSingleFlight(password.mutate),
-    passkey: useSingleFlight(passkey.mutate),
-    code: useSingleFlight(code.mutate),
-    textCode: useSingleFlight(textCode.mutate),
-    sendResetCode: useSingleFlight(sendResetCode.mutate),
-    resendResetCode: useSingleFlight(resendResetCode.mutate),
-    newPassword: useSingleFlight(newPassword.mutate),
-    help: useSingleFlight(help.mutate),
-    removeAccount: useSingleFlight(removeAccount.mutate),
-    signOut: useSingleFlight(signOut.mutate),
-  };
-
-  // A failure belongs to the step it happened on. Clearing it when that step is left means coming back
-  // later starts clean. The passkey request is left alone: it is started on one step and awaited on the next.
-  const { reset: resetPassword } = password;
-  const { reset: resetCode } = code;
-  const { reset: resetTextCode } = textCode;
-  const { reset: resetSendResetCode } = sendResetCode;
-  const { reset: resetResend } = resendResetCode;
-  const { reset: resetNewPassword } = newPassword;
-  const { reset: resetHelp } = help;
-  const { reset: resetRemove } = removeAccount;
-  useEffect(() => {
-    const leaving: Partial<Record<SignInStep, () => void>> = {
-      password: resetPassword,
-      code: () => {
-        resetCode();
-        resetTextCode();
-      },
-      recover: resetSendResetCode,
-      'recover-code': resetResend,
-      'new-password': resetNewPassword,
-      help: resetHelp,
-      choose: resetRemove,
-    };
-    return leaving[step];
-  }, [step, resetPassword, resetCode, resetTextCode, resetSendResetCode, resetResend, resetNewPassword, resetHelp, resetRemove]);
+  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions: () => recoveryOptions.data ?? [] });
 
   const facts = { signedIn: profile !== null, knownAccounts: accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
   const back = backOf(step, flow, facts);
@@ -257,10 +107,10 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, pass
       profile,
       accounts,
       recoveryOptions: recoveryOptions.data ?? null,
-      textedTo: textCode.data?.destination ?? null,
-      passkeyCancelled: passkey.data?.status === 'cancelled',
-      resetCodeResent: resendResetCode.isSuccess,
-      removedAccount: removeAccount.data?.address ?? null,
+      textedTo: requests.textCode.outcome ?? null,
+      passkeyCancelled: requests.passkey.outcome === 'cancelled',
+      resetCodeResent: requests.resendResetCode.outcome === 'sent',
+      removedAccount: requests.removeAccount.outcome?.address ?? null,
     },
     actions: {
       chooseAccount: (address) => {
@@ -275,24 +125,24 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, pass
         store.dispatch({ type: 'another-account-wanted' });
         navigate('email');
       },
-      removeAccount: run.removeAccount,
-      signInWithPassword: run.password,
+      removeAccount: requests.removeAccount.start,
+      signInWithPassword: requests.password.start,
       startPasskey: () => {
-        if (!run.passkey()) return;
+        if (!requests.passkey.start()) return;
         store.dispatch({ type: 'passkey-started' });
         navigate('passkey');
       },
-      verifyCode: run.code,
-      sendTextCode: run.textCode,
-      sendResetCode: run.sendResetCode,
-      resendResetCode: run.resendResetCode,
-      enterResetCode: (value) => {
-        store.dispatch({ type: 'reset-code-entered', code: value });
+      verifyCode: requests.code.start,
+      sendTextCode: requests.textCode.start,
+      sendResetCode: requests.sendResetCode.start,
+      resendResetCode: requests.resendResetCode.start,
+      enterResetCode: (code) => {
+        store.dispatch({ type: 'reset-code-entered', code });
         navigate('new-password');
       },
-      saveNewPassword: run.newPassword,
-      requestHelp: run.help,
-      signOut: run.signOut,
+      saveNewPassword: requests.newPassword.start,
+      requestHelp: requests.help.start,
+      signOut: requests.signOut.start,
       continueToApp: leave,
     },
     meta: {
@@ -300,16 +150,16 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, pass
       backHref: back ? stepPath(back) : null,
       offers: { passkey: passkeyOffered, textCode: capabilities.textCodes !== null, help: capabilities.helpDesk !== null },
       requests: {
-        password: request(password, 'password'),
-        passkey: request(passkey, 'passkey'),
-        code: request(code, 'code'),
-        textCode: request(textCode),
-        sendResetCode: request(sendResetCode),
-        resendResetCode: request(resendResetCode),
-        newPassword: request(newPassword, 'reset'),
-        help: request(help),
-        removeAccount: request(removeAccount),
-        signOut: request(signOut),
+        password: status(requests.password),
+        passkey: status(requests.passkey),
+        code: status(requests.code),
+        textCode: status(requests.textCode),
+        sendResetCode: status(requests.sendResetCode),
+        resendResetCode: status(requests.resendResetCode),
+        newPassword: status(requests.newPassword),
+        help: status(requests.help),
+        removeAccount: status(requests.removeAccount),
+        signOut: status(requests.signOut),
         recoveryOptions: { isPending: recoveryOptions.isPending, failure: recoveryOptions.error ? describeFailure(recoveryOptions.error, 'other') : null },
       },
     },

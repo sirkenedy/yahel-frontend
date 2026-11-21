@@ -6,7 +6,9 @@ export type SignInStep = (typeof signInSteps)[number];
 /**
  * Everything the flow remembers between steps. It lives in memory only: a reload clears it, and nothing
  * here is ever written to the address bar or to web storage. Passwords and second-step codes are not here
- * at all; they stay in the field that collected them.
+ * at all: they go from the field that collected them straight into the request, and the request keeps no
+ * copy (see `use-flow-request.ts`). The two short-lived secrets that must outlive a step, the challenge
+ * token and the reset code, are dropped the moment they have been used.
  */
 export interface SignInState {
   email: string | null;
@@ -22,6 +24,8 @@ export interface SignInState {
   resetCode: string | null;
   resetCodeRejected: boolean;
   helpRequested: boolean;
+  /** Why the person has been brought back to the password step, when it was not their own doing. */
+  passwordPrompt: 'challenge-expired' | 'reset-done' | null;
 }
 
 export const initialSignInState: SignInState = {
@@ -33,6 +37,7 @@ export const initialSignInState: SignInState = {
   resetCode: null,
   resetCodeRejected: false,
   helpRequested: false,
+  passwordPrompt: null,
 };
 
 export type SignInEvent =
@@ -40,7 +45,9 @@ export type SignInEvent =
   | { type: 'email-entered'; email: string }
   | { type: 'another-account-wanted' }
   | { type: 'second-step-required'; challengeToken: string }
+  | { type: 'challenge-expired' }
   | { type: 'passkey-started' }
+  | { type: 'password-reset' }
   | { type: 'reset-code-sent'; method: RecoveryMethod; destination: string }
   | { type: 'reset-code-entered'; code: string }
   | { type: 'reset-code-rejected' }
@@ -58,7 +65,12 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
     case 'signed-out':
       return initialSignInState;
     case 'second-step-required':
-      return { ...state, challengeToken: event.challengeToken };
+      return { ...state, challengeToken: event.challengeToken, passwordPrompt: null };
+    case 'challenge-expired':
+      return { ...state, challengeToken: null, passwordPrompt: 'challenge-expired' };
+    case 'password-reset':
+      // The code is spent and the reset cannot be repeated: only signing in remains.
+      return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, passwordPrompt: 'reset-done' };
     case 'passkey-started':
       return { ...state, passkeyStarted: true };
     case 'reset-code-sent':
