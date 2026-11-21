@@ -73,3 +73,12 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Help finding an account (`help-desk.ts`): `POST /v1/auth/account-help`
 - [ ] To add with slice 2: address availability (`GET /v1/auth/address-availability`) and passkey registration (`/v1/me/passkeys/registration/options` and `/verify`)
 - [ ] To add with slice 3: domain search and purchase, plans, checkout and the card code
+
+### What each real endpoint must do
+
+These are requirements on the backend, written down so the stand-ins are not mistaken for the contract. The same notes head each stand-in file.
+
+- **Recovery destinations** (`POST /v1/auth/recovery/options`): for an address with no account, answer with a decoy of the same shape (the same number and kinds of destination, plausibly masked, stable for that address) and in the same time as for a real one. Otherwise the endpoint tells anyone whether an address has an account, and part of its phone number. Rate limit by address and by caller.
+- **Passkey sign-in** (`/v1/auth/passkeys/assertion/options` and `/verify`): the server uses its own relying-party id and checks the origin itself; it must ignore any id sent by the client (the interface's `rpId` argument exists only so the stand-in can echo it, and leaves when the endpoint arrives). `allowCredentials` must not differ between an address with passkeys, one without, and one with no account: return an empty list for everyone. Challenges are single use and short lived. `verify` carries the device id, as `/auth/login` does, so the session is bound to the device.
+- **Accounts known on this device** (`/v1/auth/known-accounts`): the server records an account against the device when it signs in and marks it when it signs out; the client does not assert names, addresses or kinds, so `remember` leaves the interface when the endpoint exists. The device id is the only key to the list, so it must be treated as a secret: unguessable, never logged, never in an address.
+- **Second-step code by text** and **account help**: rate limit by challenge or by caller, and answer the same way whether or not anything was sent.
