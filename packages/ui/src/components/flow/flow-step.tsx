@@ -30,7 +30,7 @@ function FlowStepRoot({ direction = 'forward', children }: FlowStepProps) {
   useEffect(() => {
     const section = ref.current;
     if (!section) return;
-    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea') : null;
+    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]):not([aria-hidden="true"]), select, textarea') : null;
     (field ?? document.getElementById(headingId))?.focus({ preventScroll: true });
   }, [headingId]);
 

@@ -1,6 +1,6 @@
 import { Button as AriaButton, Link } from 'react-aria-components';
 import type { ButtonProps as AriaButtonProps, LinkProps as AriaLinkProps } from 'react-aria-components';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { FlowIcon } from './flow-icon';
 
 /**
@@ -17,6 +17,7 @@ export interface FlowButtonProps extends Omit<AriaButtonProps, 'className' | 'ch
   children: ReactNode;
   /** Shown in place of children while `isPending`, so the button says what is happening. */
   pendingLabel?: string;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** An action. While pending it says what is happening and ignores further presses. */

@@ -1,3 +1,4 @@
+import { Link } from 'react-aria-components';
 import type { ReactNode } from 'react';
 import { FlowIcon } from './flow-icon';
 
@@ -33,6 +34,23 @@ function FlowShellHeader({ brand, children }: FlowShellHeaderProps) {
       <span className="ws-flow__brand">{brand}</span>
       <div className="ws-flow__header-actions">{children}</div>
     </header>
+  );
+}
+
+interface FlowShellBrandLinkProps {
+  href: string;
+  /** Where the link leads, for assistive technology: "Yahel sign in". */
+  label: string;
+  /** The brand mark. */
+  children: ReactNode;
+}
+
+/** The brand mark as a link. In-app addresses go through the router, so pressing it does not reload the page. */
+function FlowShellBrandLink({ href, label, children }: FlowShellBrandLinkProps) {
+  return (
+    <Link className="ws-flow__brand-link" href={href} aria-label={label} translate="no">
+      {children}
+    </Link>
   );
 }
 
@@ -115,6 +133,7 @@ function FlowShellFooterLink({ href, children }: { href: string; children: React
  */
 export const FlowShell = Object.assign(FlowShellRoot, {
   Header: FlowShellHeader,
+  BrandLink: FlowShellBrandLink,
   Main: FlowShellMain,
   Question: FlowShellQuestion,
   Summary: FlowShellSummary,

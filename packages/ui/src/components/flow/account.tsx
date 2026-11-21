@@ -1,5 +1,5 @@
 import { Button } from 'react-aria-components';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { FlowIcon } from './flow-icon';
 
 export type AccountKind = 'person' | 'organisation';
@@ -83,10 +83,16 @@ function AccountListAccount({ name, email, kind = 'person', detail, actionPrefix
   );
 }
 
-function AccountListAction({ onPress, children }: { onPress: () => void; children: ReactNode }) {
+interface AccountListActionProps {
+  onPress: () => void;
+  ref?: Ref<HTMLButtonElement>;
+  children: ReactNode;
+}
+
+function AccountListAction({ onPress, ref, children }: AccountListActionProps) {
   return (
     <li className="ws-flow-accounts__item">
-      <Button className="ws-flow-accounts__row ws-flow-accounts__row--action" onPress={onPress}>
+      <Button ref={ref} className="ws-flow-accounts__row ws-flow-accounts__row--action" onPress={onPress}>
         <span className="ws-flow-avatar ws-flow-avatar--outline" aria-hidden="true">
           <FlowIcon name="plus" />
         </span>

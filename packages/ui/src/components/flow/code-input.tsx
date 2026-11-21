@@ -1,4 +1,5 @@
 import { FieldError, Input, Label, Text, TextField as AriaTextField } from 'react-aria-components';
+import type { Ref } from 'react';
 
 const disallowed = { digits: /\D/g, alphanumeric: /[^a-z0-9]/gi } as const;
 
@@ -15,6 +16,8 @@ export interface CodeInputProps {
   error?: string;
   name?: string;
   isDisabled?: boolean;
+  /** The input element, for moving focus to the code when it needs attention. */
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 /**
@@ -22,7 +25,7 @@ export interface CodeInputProps {
  * box, Backspace steps back, the browser can offer the code from a message, and a screen reader meets
  * one labelled field instead of six.
  */
-export function CodeInput({ label, value, onChange, length = 6, characters = 'digits', help, error, name = 'code', isDisabled }: CodeInputProps) {
+export function CodeInput({ label, value, onChange, length = 6, characters = 'digits', help, error, name = 'code', isDisabled, inputRef }: CodeInputProps) {
   const current = Math.min(value.length, length - 1);
   return (
     <AriaTextField
@@ -43,7 +46,7 @@ export function CodeInput({ label, value, onChange, length = 6, characters = 'di
             {value.charAt(index)}
           </span>
         ))}
-        <Input className="ws-flow-code__input" spellCheck={false} autoCapitalize="off" autoCorrect="off" />
+        <Input ref={inputRef} className="ws-flow-code__input" spellCheck={false} autoCapitalize="off" autoCorrect="off" />
       </div>
       <FieldError className="ws-flow-field__error">{error}</FieldError>
       {help ? (
