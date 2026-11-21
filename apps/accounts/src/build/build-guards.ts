@@ -22,10 +22,13 @@ const isSecureAddress = (value: string | undefined) => {
  * Stops a build that would send people's sign-in to a development address. The app falls back to
  * `localhost` when an address is not set, which is right on a developer's machine and never right in a
  * release. A release build must name the backend and the app, both over https. Two kinds of build are
- * let through because they are never released: the demo build, and one that says it is local.
+ * let through because they are never released: the demo build, and one that says it is local. A demo
+ * build is one with stand-ins on as well as the demo opt-in: the opt-in alone, left behind in a
+ * deployment's settings, exempts nothing.
  */
 export function assertReleaseAddresses(command: 'build' | 'serve', env: Record<string, string | undefined>) {
-  if (command !== 'build' || env.VITE_STAND_INS_ALLOW_BUILD === 'demo' || env.VITE_LOCAL_BUILD === 'local') return;
+  const isDemoBuild = env.VITE_STAND_INS === 'on' && env.VITE_STAND_INS_ALLOW_BUILD === 'demo';
+  if (command !== 'build' || isDemoBuild || env.VITE_LOCAL_BUILD === 'local') return;
   const wrong = ['VITE_API_URL', 'VITE_APP_URL'].filter((name) => !isSecureAddress(env[name]));
   if (wrong.length === 0) return;
   throw new Error(

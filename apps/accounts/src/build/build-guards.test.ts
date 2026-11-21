@@ -37,9 +37,16 @@ describe('assertReleaseAddresses', () => {
   });
 
   it('lets through the demo build, a build that says it is local, and the development server', () => {
-    expect(() => assertReleaseAddresses('build', { VITE_STAND_INS_ALLOW_BUILD: 'demo' })).not.toThrow();
+    expect(() => assertReleaseAddresses('build', { VITE_STAND_INS: 'on', VITE_STAND_INS_ALLOW_BUILD: 'demo' })).not.toThrow();
     expect(() => assertReleaseAddresses('build', { VITE_LOCAL_BUILD: 'local' })).not.toThrow();
     expect(() => assertReleaseAddresses('serve', {})).not.toThrow();
+  });
+
+  it.each([
+    ['alone', { VITE_STAND_INS_ALLOW_BUILD: 'demo' }],
+    ['with stand-ins off', { VITE_STAND_INS: 'off', VITE_STAND_INS_ALLOW_BUILD: 'demo' }],
+  ])('does not exempt a build for the demo opt-in %s', (_name, env) => {
+    expect(() => assertReleaseAddresses('build', env)).toThrow(/VITE_API_URL and VITE_APP_URL/);
   });
 
   it('is not switched off by a mistyped opt-in', () => {
