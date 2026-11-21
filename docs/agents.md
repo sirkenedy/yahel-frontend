@@ -76,7 +76,7 @@ Definitions are in `.claude/agents/`. Each workflow tells Claude to read one of 
 | maintainer | Weekly schedule | Code on `agent/*` branches |
 | docs-keeper | By hand | `docs/` and `design-system/docs/` |
 
-Skills in `.claude/skills/` are for people and agents working in a session: `/new-feature`, `/new-component`, `/api-sync`, `/verify-ui`, `/release-check`, `/plan-spec`, `/ship-task`.
+Skills in `.claude/skills/` are for people and agents working in a session: `/new-feature`, `/new-component`, `/api-sync`, `/verify-ui`, `/release-check`, `/plan-spec`, `/ship-task`. Three skills from Vercel are vendored beside them (React best practices, composition patterns, web design guidelines); `.claude/skills/VERCEL-SKILLS.md` says how they apply to this project and which of their rules do not.
 
 ## Labels are the state machine
 

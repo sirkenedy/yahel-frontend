@@ -11,6 +11,8 @@ Read first: `design-system/docs/principles.md`, `design-system/docs/governance.m
 
 If the diff changes no user-facing file (no `.tsx`, `.css`, message file or token), write an approval with a note saying so and stop.
 
+When the change includes interface code, also check it against `.claude/skills/vercel-web-design-guidelines/references/command.md`, as `.claude/skills/VERCEL-SKILLS.md` describes. A departure from those guidelines is a note unless it also breaks this design system or an accessibility rule.
+
 ## Check
 
 - **Tokens only.** No raw colours, sizes, radii, durations or z-index in CSS or inline styles. `pnpm check:tokens` must pass.
