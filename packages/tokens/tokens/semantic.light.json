@@ -67,13 +67,38 @@
       "hover": "rgba(11, 11, 13, 0.08)",
       "pressed": "rgba(11, 11, 13, 0.16)"
     },
-    "scrim": "rgba(11, 11, 13, 0.32)"
+    "scrim": "rgba(11, 11, 13, 0.32)",
+    "daylight": {
+      "canvas": "{palette.daylight.paper}",
+      "surface": "{palette.daylight.white}",
+      "field": "{palette.daylight.white}",
+      "ink": "{palette.daylight.ink}",
+      "soft": "{palette.daylight.ink-soft}",
+      "mute": "{palette.daylight.ink-mute}",
+      "line": "rgba(13, 15, 26, 0.10)",
+      "line-strong": "rgba(13, 15, 26, 0.22)",
+      "accent": "{palette.daylight.indigo}",
+      "on-accent": "{palette.daylight.white}",
+      "link": "{palette.daylight.indigo}",
+      "tint": "{palette.daylight.indigo-tint}",
+      "selected": "{palette.daylight.indigo-select}",
+      "ring": "rgba(44, 56, 196, 0.16)",
+      "track": "rgba(13, 15, 26, 0.10)",
+      "success": "{palette.daylight.green}",
+      "danger": "{palette.daylight.red}",
+      "warning": "{palette.daylight.amber}",
+      "mark-pale": "{palette.daylight.indigo-pale}",
+      "mark-left": "{palette.daylight.indigo-mid}",
+      "mark-right": "{palette.daylight.indigo}",
+      "wordmark": "{palette.daylight.wordmark}"
+    }
   },
   "elevation": {
     "1": "0 1px 2px rgba(11, 11, 13, 0.06), 0 1px 1px rgba(11, 11, 13, 0.04)",
     "2": "0 2px 4px rgba(11, 11, 13, 0.06), 0 8px 20px rgba(11, 11, 13, 0.08)",
     "3": "0 4px 8px rgba(11, 11, 13, 0.06), 0 16px 40px rgba(11, 11, 13, 0.12)",
-    "4": "0 8px 16px rgba(11, 11, 13, 0.08), 0 32px 72px rgba(11, 11, 13, 0.18)"
+    "4": "0 8px 16px rgba(11, 11, 13, 0.08), 0 32px 72px rgba(11, 11, 13, 0.18)",
+    "daylight": "0 1px 2px rgba(13, 15, 26, 0.04), 0 18px 48px rgba(13, 15, 26, 0.07)"
   },
   "material": {
     "clear": "rgba(255, 255, 255, 0.24)",
