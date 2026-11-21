@@ -3,7 +3,6 @@ import { ApiError } from '@yahel/api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { signInMessages as m } from './messages';
 import { useFlowRequest } from './use-flow-request';
 
 const deferred = <Value,>() => {
@@ -16,10 +15,12 @@ const deferred = <Value,>() => {
   return { promise, resolve, reject };
 };
 
+const describeFailure = (error: unknown) => (error instanceof ApiError && error.status === 401 ? 'Wrong password.' : 'Something went wrong.');
+
 const setup = (run: (input: string) => Promise<string>, callbacks: { onDone?: (outcome: string) => void; onFailed?: (error: unknown) => void } = {}) => {
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  const hook = renderHook(({ visit }) => useFlowRequest<string, string>({ visit, context: 'password', run, ...callbacks }), { wrapper, initialProps: { visit: 1 } });
+  const hook = renderHook(({ visit }) => useFlowRequest<string, string>({ visit, describe: describeFailure, run, ...callbacks }), { wrapper, initialProps: { visit: 1 } });
   return { ...hook, queryClient };
 };
 
@@ -69,7 +70,7 @@ describe('useFlowRequest', () => {
     const { result, rerender } = setup(run, { onFailed });
 
     act(() => void result.current.start('wrong'));
-    await waitFor(() => expect(result.current.failure).toBe(m.wrongCredentials));
+    await waitFor(() => expect(result.current.failure).toBe('Wrong password.'));
     expect(onFailed).toHaveBeenCalledTimes(1);
 
     rerender({ visit: 2 });
@@ -79,7 +80,7 @@ describe('useFlowRequest', () => {
   it('keeps showing a flow-scoped result on the step that follows', async () => {
     const queryClient = new QueryClient();
     const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-    const { result, rerender } = renderHook(({ visit }) => useFlowRequest({ visit, scope: 'flow', run: async () => 'cancelled' as const }), { wrapper, initialProps: { visit: 1 } });
+    const { result, rerender } = renderHook(({ visit }) => useFlowRequest({ visit, scope: 'flow', describe: describeFailure, run: async () => 'cancelled' as const }), { wrapper, initialProps: { visit: 1 } });
 
     act(() => void result.current.start());
     rerender({ visit: 2 });

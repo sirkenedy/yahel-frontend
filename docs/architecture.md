@@ -78,14 +78,20 @@ apps/accounts/src/
     store.ts                    the flow state for this page session (memory only)
     requests.ts                 every request the flow makes and where each outcome leads (`useFlowRequest`)
     <flow>-flow.tsx             the provider: joins the store and the requests into `{ state, actions, meta }`
-    use-step-field.ts           one field of a step: value, problem, submit, focus on the problem
     failure.ts, validation.ts   failures and field problems in plain words
     steps/<step>-step.tsx       presentational; reads the provider's context and nothing else
+  flow/                         what every flow is built from; no feature's wording or state lives here
+    use-flow-request.ts         a request owned by a flow (see below)
+    use-step-field.ts           one field of a step: value, problem, submit, focus on the problem; `submitFields` for several
+    use-step-travel.ts          which way the person moved and how many steps they have seen
+    flow-store.ts               the in-memory store a flow's `reduce` drives
+    step-frame.tsx              the way back, the question, the page title and a failed request
   features/chrome/              the frame around every flow: brand, theme control, footer
   config.ts                     every outbound address, from `VITE_*` settings; nothing is derived from the host
 ```
 
 - **Every step has an address**, so Back, Forward and links work. **Flow state is never in the address or in web storage.** A reload therefore starts the flow again, except that a restored session goes straight to the signed-in screen.
+- **Flows share code through `src/flow/`, never through each other.** A feature may import `flow/` and packages; it may not import another feature (rulebook 1.3). What goes in `flow/` takes its words and its state as arguments.
 - **Steps do not call the API, the session or the router.** The flow's requests do (`requests.ts`), each through `useFlowRequest`: a TanStack mutation that ignores a second press, cannot be stranded by leaving the step, and keeps no password, code or token after it settles.
 - **A release build names its addresses.** `apps/accounts/src/build/build-guards.ts` fails a build that would fall back to a development address or ship stand-ins; `pnpm build` opts into local addresses, `build:release` does not.
 - **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.

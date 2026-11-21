@@ -7,7 +7,7 @@ import { initialSignInState } from '../machine';
 import { signInMessages as m } from '../messages';
 import { SignInFlowContext } from '../sign-in-flow';
 import type { SignInFlowValue } from '../sign-in-flow';
-import type { FlowRequest } from '../use-flow-request';
+import type { FlowRequest } from '../../../flow/use-flow-request';
 import { ChooseStep } from './choose-step';
 import { CodeStep } from './code-step';
 import { DoneStep } from './done-step';

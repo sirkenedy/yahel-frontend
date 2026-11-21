@@ -2,7 +2,7 @@ import { CodeInput, FlowButton, FlowNotice, FlowStep, FlowTextField } from '@yah
 import { useState } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { useStepField } from '../../../flow/use-step-field';
 import { StepFrame } from './step-frame';
 
 const CODE_LENGTH = 6;

@@ -2,11 +2,12 @@ import type { QueryClient } from '@tanstack/react-query';
 import { isApiError } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
-import { isRejectedResetCode } from './failure';
+import { useFlowRequest } from '../../flow/use-flow-request';
+import { describeFailure, isRejectedResetCode } from './failure';
+import type { FailureContext } from './failure';
 import type { SignInStep } from './machine';
 import { knownAccountsQuery } from './queries';
 import type { SignInStore } from './store';
-import { useFlowRequest } from './use-flow-request';
 
 export interface SignInRequestDeps {
   /** Counts the steps shown so far; see `useFlowRequest`. */
@@ -31,6 +32,7 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  */
 export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
+  const describe = (context: FailureContext) => (error: unknown) => describeFailure(error, context);
 
   const rememberAccount = async (signedOut: boolean) => {
     const who = session.store.getState().profile;
@@ -59,7 +61,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const password = useFlowRequest({
     visit,
-    context: 'password',
+    describe: describe('password'),
     run: async (value: string) => settle(await session.signIn(email(), value)),
     onDone: afterSignIn,
   });
@@ -67,7 +69,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   const passkey = useFlowRequest({
     visit,
     scope: 'flow',
-    context: 'passkey',
+    describe: describe('passkey'),
     run: async () => {
       const result = await (passkeys?.signIn(store.getState().email ?? undefined) ?? { status: 'cancelled' as const });
       if (result.status !== 'signed-in') return 'cancelled' as const;
@@ -81,7 +83,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const code = useFlowRequest({
     visit,
-    context: 'code',
+    describe: describe('code'),
     run: (value: string) => session.completeSecondStep(store.getState().challengeToken ?? '', value),
     onDone: finish,
     onFailed: (error) => {
@@ -94,6 +96,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const textCode = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async () => {
       if (!capabilities.textCodes) throw new Error('Text codes are not offered');
       return (await capabilities.textCodes.send(store.getState().challengeToken ?? '')).destination;
@@ -102,6 +105,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const sendResetCode = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async (method: RecoveryMethod) => {
       await capabilities.recovery.send(email(), method);
       store.dispatch({ type: 'reset-code-sent', method, destination: recoveryOptions().find((option) => option.method === method)?.destination ?? '' });
@@ -111,6 +115,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const resendResetCode = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async () => {
       await capabilities.recovery.send(email(), store.getState().recovery?.method ?? 'email');
       return 'sent' as const;
@@ -119,7 +124,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const newPassword = useFlowRequest({
     visit,
-    context: 'reset',
+    describe: describe('reset'),
     run: async (value: string) => {
       await session.api.auth.resetPassword({ email: email(), token: store.getState().resetCode ?? '', password: value });
       // From here the reset is final and the code is spent, whatever happens to the sign-in that follows.
@@ -140,6 +145,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const help = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async (contact: string) => {
       if (!capabilities.helpDesk) throw new Error('Account help is not offered');
       await capabilities.helpDesk.request({ contact });
@@ -152,6 +158,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const removeAccount = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async (address: string) => {
       await capabilities.directory?.remove(address);
       const left = await queryClient.fetchQuery({ ...knownAccountsQuery(capabilities.directory), staleTime: 0 });
@@ -164,6 +171,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
 
   const signOut = useFlowRequest({
     visit,
+    describe: describe('other'),
     run: async () => {
       await rememberAccount(true);
       // Signing out here always succeeds; a failed server call must not keep the person signed in on this device.

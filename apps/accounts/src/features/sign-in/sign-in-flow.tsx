@@ -2,9 +2,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AccountCapabilities, KnownAccount, Profile, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import type { FlowDirection } from '@yahel/ui';
-import { createContext, use, useState } from 'react';
+import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
+import { requestStatus as status } from '../../flow/use-flow-request';
+import type { FlowRequest } from '../../flow/use-flow-request';
+import { useStepTravel } from '../../flow/use-step-travel';
 import { describeFailure } from './failure';
 import { backOf, directionOf, stepPath } from './machine';
 import type { SignInState, SignInStep } from './machine';
@@ -12,7 +15,6 @@ import { knownAccountsQuery, passkeyChallengeQuery, recoveryOptionsQuery } from 
 import { useSignInRequests } from './requests';
 import type { SignInRequests } from './requests';
 import type { SignInStore } from './store';
-import type { FlowRequest } from './use-flow-request';
 
 export interface SignInFlowValue {
   state: SignInState & {
@@ -74,8 +76,6 @@ export interface SignInFlowProviderProps {
   children: ReactNode;
 }
 
-const status = ({ isPending, failure }: FlowRequest): FlowRequest => ({ isPending, failure });
-
 /**
  * Gives the sign-in steps one thing to read: `{ state, actions, meta }`. The state comes from the store
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
@@ -91,9 +91,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
   // Fetched before the press so the browser's prompt can open inside it.
   useQuery({ ...passkeyChallengeQuery(passkeys, flow.email), enabled: passkeyOffered && (step === 'email' || step === 'password') });
 
-  // Derived during render when the step changes: which way the person moved, and how many steps they have seen.
-  const [travel, setTravel] = useState<{ step: SignInStep; direction: FlowDirection; visit: number }>({ step, direction: 'forward', visit: 0 });
-  if (travel.step !== step) setTravel({ step, direction: directionOf(travel.step, step), visit: travel.visit + 1 });
+  const travel = useStepTravel(step, directionOf);
 
   const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions: () => recoveryOptions.data ?? [] });
 

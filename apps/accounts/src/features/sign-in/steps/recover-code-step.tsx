@@ -1,7 +1,7 @@
 import { CodeInput, FlowButton, FlowNotice, FlowStep } from '@yahel/ui';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { useStepField } from '../../../flow/use-step-field';
 import { StepFrame } from './step-frame';
 
 const CODE_LENGTH = 6;

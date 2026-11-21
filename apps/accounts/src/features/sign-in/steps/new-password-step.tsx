@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { useStepField } from '../../../flow/use-step-field';
 import { newPasswordProblem, passwordStrength } from '../validation';
 import { StepFrame } from './step-frame';
 

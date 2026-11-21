@@ -7,7 +7,7 @@ export type SignInStep = (typeof signInSteps)[number];
  * Everything the flow remembers between steps. It lives in memory only: a reload clears it, and nothing
  * here is ever written to the address bar or to web storage. Passwords and second-step codes are not here
  * at all: they go from the field that collected them straight into the request, and the request keeps no
- * copy (see `use-flow-request.ts`). The two short-lived secrets that must outlive a step, the challenge
+ * copy (see `flow/use-flow-request.ts`). The two short-lived secrets that must outlive a step, the challenge
  * token and the reset code, are dropped the moment they have been used.
  */
 export interface SignInState {

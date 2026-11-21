@@ -2,7 +2,7 @@ import { FlowButton, FlowDivider, FlowIcon, FlowLink, FlowStep, FlowTextField } 
 import { stepPath } from '../machine';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { useStepField } from '../../../flow/use-step-field';
 import { emailProblem } from '../validation';
 import { StepFrame } from './step-frame';
 

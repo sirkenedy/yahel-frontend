@@ -4,7 +4,7 @@ import type { FormEvent } from 'react';
 import { stepPath } from '../machine';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { useStepField } from '../../../flow/use-step-field';
 import { StepFrame } from './step-frame';
 
 const prompts = { 'challenge-expired': m.challengeExpired, 'reset-done': m.resetDoneSignInFailed } as const;

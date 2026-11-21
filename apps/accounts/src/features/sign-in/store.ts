@@ -1,16 +1,7 @@
-import { createStore } from 'zustand/vanilla';
+import { createFlowStore } from '../../flow/flow-store';
 import { initialSignInState, reduce } from './machine';
-import type { SignInEvent, SignInState } from './machine';
 
-/** Holds the flow's state for one page session. Created once per app load and passed in router context. */
-export function createSignInStore() {
-  const store = createStore<SignInState>(() => initialSignInState);
-  return {
-    getState: store.getState,
-    getInitialState: store.getInitialState,
-    subscribe: store.subscribe,
-    dispatch: (event: SignInEvent) => store.setState(reduce(store.getState(), event), true),
-  };
-}
+/** The sign-in flow's state for one page session. */
+export const createSignInStore = () => createFlowStore(initialSignInState, reduce);
 
 export type SignInStore = ReturnType<typeof createSignInStore>;
