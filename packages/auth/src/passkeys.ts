@@ -1,10 +1,10 @@
-import type { PasskeyAssertion, PasskeyCeremony, SignedIn } from '@yahel/api-client';
+import type { PasskeyAssertion, PasskeyAssertionOptions, PasskeyCeremony, SignedIn } from '@yahel/api-client';
 
 /** The parts of the browser a passkey sign-in needs, passed in so they can be replaced in tests. */
 export interface PasskeyEnvironment {
   credentials: Pick<CredentialsContainer, 'get'> | undefined;
-  /** Resolves true when the device has a built-in authenticator: fingerprint, face or screen lock. */
-  platformAuthenticatorAvailable: (() => Promise<boolean>) | undefined;
+  /** Whether the browser has WebAuthn at all. The passkey itself may be on this device, a phone or a security key. */
+  supported: boolean;
   /** The site the passkey belongs to: this page's host name. */
   rpId: string;
 }
@@ -38,17 +38,34 @@ const describeAssertion = (credential: PublicKeyCredential): PasskeyAssertion =>
 
 /** The browser half of signing in with a passkey (WebAuthn). The server half is the ceremony. */
 export function createPasskeyClient(ceremony: PasskeyCeremony, environment: PasskeyEnvironment) {
+  let prepared: { email: string | undefined; options: Promise<PasskeyAssertionOptions> } | null = null;
+  const begin = (email: string | undefined) => ceremony.begin({ email, rpId: environment.rpId });
+
   return {
-    /** Passkey sign-in is offered only when this resolves true. Never throws. */
-    async isAvailable() {
-      if (!environment.credentials || !environment.platformAuthenticatorAvailable) return false;
-      return environment.platformAuthenticatorAvailable().catch(() => false);
+    /** Passkey sign-in is offered only when this is true. */
+    isSupported() {
+      return environment.supported && environment.credentials !== undefined;
+    },
+
+    /**
+     * Fetches the server's challenge ahead of the press, so that `signIn` can open the browser prompt
+     * without a network round trip in between: some browsers only allow the prompt inside the press itself.
+     * Never throws; if it fails, `signIn` asks again.
+     */
+    prepare(email?: string) {
+      if (!this.isSupported()) return;
+      const options = begin(email);
+      options.catch(() => undefined);
+      prepared = { email, options };
     },
 
     /** Call from a press handler: browsers only show the prompt in response to a user action. */
     async signIn(email?: string): Promise<PasskeyResult> {
       if (!environment.credentials) return { status: 'cancelled' };
-      const options = await ceremony.begin({ email, rpId: environment.rpId });
+      // A challenge is used once. One fetched ahead for this account is taken; anything else is asked for now.
+      const ready = prepared && prepared.email === email ? prepared.options : null;
+      prepared = null;
+      const options = await (ready ? ready.catch(() => begin(email)) : begin(email));
       let credential: Credential | null;
       try {
         credential = await environment.credentials.get({
@@ -74,6 +91,6 @@ export type PasskeyClient = ReturnType<typeof createPasskeyClient>;
 
 export const browserPasskeyEnvironment = (): PasskeyEnvironment => ({
   credentials: window.navigator.credentials,
-  platformAuthenticatorAvailable: window.PublicKeyCredential ? () => window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable() : undefined,
+  supported: Boolean(window.PublicKeyCredential),
   rpId: window.location.hostname,
 });
