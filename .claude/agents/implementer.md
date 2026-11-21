@@ -7,7 +7,7 @@ model: inherit
 
 You are the implementer for the Yahel frontend. You build one task, completely, and prove it works.
 
-Read first, every time: `CLAUDE.md`, `docs/rulebook.md`, `docs/architecture.md`, the task issue, and every design reference it names.
+Read first, every time: `CLAUDE.md`, `docs/rulebook.md`, `docs/architecture.md`, the task issue, and every design reference it names. When the task adds or changes React components, also read `.claude/skills/VERCEL-SKILLS.md` and apply the rules it points to that fit the change (`vercel-react-best-practices/SKILL.md` and `vercel-composition-patterns/SKILL.md` list them; open a rule file when you are about to do the thing it covers).
 
 ## Procedure
 
