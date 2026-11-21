@@ -92,6 +92,42 @@
     "brown": {
       "light": "#946B4E",
       "dark": "#C79A78"
+    },
+    "daylight": {
+      "paper": "#F6F5F1",
+      "white": "#FFFFFF",
+      "ink": "#0D0F1A",
+      "ink-soft": "#3A3D4F",
+      "ink-mute": "#5B5E6B",
+      "ink-mute-hc": "#44475A",
+      "wordmark": "#141846",
+      "indigo": "#2C38C4",
+      "indigo-hc": "#1F2A9E",
+      "indigo-mid": "#6F86F7",
+      "indigo-pale": "#C9D5FF",
+      "indigo-tint": "#EEF1FF",
+      "indigo-select": "#F1F3FF",
+      "green": "#0F6B3A",
+      "green-hc": "#0A4F2A",
+      "red": "#B32D22",
+      "red-hc": "#8A1F17",
+      "amber": "#8A5300",
+      "amber-hc": "#6B4000",
+      "night": "#0B0D1F",
+      "night-surface": "#141833",
+      "night-field": "#10142B",
+      "night-tint": "#1D2242",
+      "night-select": "#191D39",
+      "mist": "#F2F3FA",
+      "mist-soft": "#C7CBE0",
+      "mist-mute": "#9DA3C2",
+      "mist-mute-hc": "#C2C7E0",
+      "periwinkle": "#7C90FA",
+      "periwinkle-pale": "#A9B7FF",
+      "green-night": "#6FD49A",
+      "red-night": "#FF8F85",
+      "red-night-hc": "#FFB3AC",
+      "amber-night": "#F5B85C"
     }
   }
 }

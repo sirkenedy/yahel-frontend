@@ -30,6 +30,16 @@
     "danger": {
       "text": "{palette.red.hc-light}",
       "solid": "{palette.red.hc-light}"
+    },
+    "daylight": {
+      "mute": "{palette.daylight.ink-mute-hc}",
+      "line": "rgba(13, 15, 26, 0.32)",
+      "line-strong": "{palette.daylight.ink-mute}",
+      "accent": "{palette.daylight.indigo-hc}",
+      "link": "{palette.daylight.indigo-hc}",
+      "success": "{palette.daylight.green-hc}",
+      "danger": "{palette.daylight.red-hc}",
+      "warning": "{palette.daylight.amber-hc}"
     }
   }
 }

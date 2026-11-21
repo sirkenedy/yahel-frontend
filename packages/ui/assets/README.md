@@ -6,6 +6,7 @@
 | `app-icons/` | One tile per app in its identity hue from `tokens/apps.json` | Ours |
 | `icons/` | Interface icons in three weights: `regular`, `bold`, `fill`. Named by what they mean in our product; `icons.json` maps each to its source name | Phosphor Icons 2.1.1, MIT (`LICENSE-phosphor.txt`) |
 | `fonts/` | Inter Variable, Latin and Latin Extended subsets, with `inter.css` | SIL Open Font Licence 1.1 (`LICENSE-inter.txt`) |
+| `fonts/` | Bricolage Grotesque Variable (weight and optical size), Latin and Latin Extended subsets, with `bricolage-grotesque.css` and its scaled fallback face. Loaded only by `daylight.css` | SIL Open Font Licence 1.1 (`LICENSE-bricolage-grotesque.txt`) |
 
 ## Rules
 

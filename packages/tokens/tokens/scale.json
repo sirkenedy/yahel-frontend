@@ -19,7 +19,8 @@
     "lg": "16px",
     "xl": "20px",
     "2xl": "28px",
-    "full": "999px"
+    "full": "999px",
+    "field": "14px"
   },
   "target": {
     "touch": "44px",
@@ -47,17 +48,24 @@
     "emphasized": "420ms",
     "hover-delay": "500ms",
     "loop": "1400ms",
-    "toast": "5000ms"
+    "toast": "5000ms",
+    "rise": "520ms",
+    "stagger": "50ms",
+    "field": "160ms",
+    "spin": "900ms"
   },
   "easing": {
     "standard": "cubic-bezier(0.2, 0, 0, 1)",
     "exit": "cubic-bezier(0.4, 0, 1, 1)",
     "spring": "cubic-bezier(0.3, 1.3, 0.4, 1)",
-    "linear": "linear"
+    "linear": "linear",
+    "pop": "cubic-bezier(0.3, 1.4, 0.4, 1)"
   },
   "font": {
     "sans": "-apple-system, BlinkMacSystemFont, 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif",
-    "mono": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+    "mono": "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
+    "display": "'Bricolage Grotesque Variable', 'Bricolage Grotesque Fallback', 'Inter', system-ui, sans-serif",
+    "text": "'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif"
   },
   "weight": {
     "regular": "400",
@@ -69,7 +77,9 @@
     "hairline": "1px",
     "control": "1.5px",
     "focus": "2px",
-    "focus-offset": "2px"
+    "focus-offset": "2px",
+    "ring": "4px",
+    "focus-strong": "3px"
   },
   "opacity": {
     "disabled": "0.4",
@@ -103,5 +113,29 @@
     "switch-height": "31px",
     "switch-width-pointer": "40px",
     "switch-height-pointer": "24px"
+  },
+  "flow": {
+    "column": "540px",
+    "measure": "500px",
+    "wrap": "1120px",
+    "summary": "360px",
+    "field": "56px",
+    "action": "54px",
+    "code-box": "66px",
+    "code-box-max": "60px",
+    "code-row": "420px",
+    "choice": "60px",
+    "avatar": "40px",
+    "avatar-sm": "32px",
+    "brand": "108px",
+    "spinner": "52px",
+    "success-mark": "88px",
+    "pip": "18px",
+    "rise": "10px",
+    "gutter": "48px",
+    "gutter-compact": "20px",
+    "section-gap": "26px",
+    "body-gap": "18px",
+    "strength-bar": "5px"
   }
 }
