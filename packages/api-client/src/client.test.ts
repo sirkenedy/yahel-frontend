@@ -56,4 +56,45 @@ describe('createApiClient', () => {
 
     await expect(api.auth.login({ email: 'a@b.c', password: 'p', deviceId: 'd' })).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
   });
+
+  it.each([
+    ['mfaChallenge', '/api/v1/auth/mfa/challenge', { challengeToken: 'c-1', code: '482910', deviceId: 'd', trustDevice: false }, { accessToken: 'a', refreshToken: 'r', expiresIn: 900, tokenType: 'Bearer' }],
+    ['forgotPassword', '/api/v1/auth/forgot-password', { email: 'amara@northwind.example' }, { message: 'If this email exists, a reset link has been sent' }],
+    ['resetPassword', '/api/v1/auth/reset-password', { email: 'amara@northwind.example', token: 'A7kZq2', password: 'New-passw0rd-here' }, { message: 'Password reset successfully. Please log in again.' }],
+    ['verifyEmail', '/api/v1/auth/verify-email', { email: 'amara@northwind.example', token: 'A7kZq2' }, { message: 'Email verified successfully' }],
+    ['resendVerification', '/api/v1/auth/verify-email/resend', { email: 'amara@northwind.example' }, { message: 'If this email exists and is unverified, a new link has been sent' }],
+  ] as const)('auth.%s posts its body to %s without a bearer token and unwraps the result', async (method, path, body, data) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect((api.auth[method] as (input: typeof body) => Promise<unknown>)(body)).resolves.toEqual(data);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual(body);
+    expect(init.headers.Authorization).toBeUndefined();
+  });
+
+  it.each([
+    ['sendPhoneOtp', '/api/v1/auth/phone/send-otp', { phone: '+2348035550142' }, { message: 'Verification code sent.' }],
+    ['verifyPhoneOtp', '/api/v1/auth/phone/verify', { phone: '+2348035550142', code: 'A7kZq2' }, { message: 'Phone number verified successfully.' }],
+  ] as const)('auth.%s posts its body to %s as the signed-in person', async (method, path, body, data) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect((api.auth[method] as (input: typeof body) => Promise<unknown>)(body)).resolves.toEqual(data);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(JSON.parse(init.body)).toEqual(body);
+    expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it('surfaces a refused second-step code with its backend code', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(401, { success: false, code: 'MFA_INVALID', message: 'Invalid or expired MFA code' }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+
+    await expect(api.auth.mfaChallenge({ challengeToken: 'c-1', code: '000000', deviceId: 'd' })).rejects.toMatchObject({ status: 401, code: 'MFA_INVALID' });
+  });
 });

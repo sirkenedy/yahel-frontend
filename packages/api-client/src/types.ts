@@ -18,6 +18,11 @@ export interface MfaRequired {
 
 export type LoginResult = AuthTokens | MfaRequired;
 
+/** What the backend returns when the outcome is only that the request was accepted. */
+export interface Acknowledgement {
+  message: string;
+}
+
 export interface ProfilePhoto {
   url: string | null;
   urls: { thumbnail: string | null; medium: string | null; original: string | null } | null;
