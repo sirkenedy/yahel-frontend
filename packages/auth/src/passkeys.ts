@@ -1,4 +1,5 @@
 import type { PasskeyAssertion, PasskeyAssertionOptions, PasskeyCeremony, SignedIn } from '@yahel/api-client';
+import { isDismissal, toBase64Url, toBytes } from './webauthn';
 
 /** The parts of the browser a passkey sign-in needs, passed in so they can be replaced in tests. */
 export interface PasskeyEnvironment {
@@ -12,18 +13,6 @@ export interface PasskeyEnvironment {
 /** `cancelled` covers dismissing the prompt, a timeout and a device with no passkey for this site: none is an error to show. */
 export type PasskeyResult = { status: 'signed-in'; signedIn: SignedIn } | { status: 'cancelled' };
 
-const toBytes = (base64url: string) => {
-  const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-  return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
-};
-
-const toBase64Url = (buffer: ArrayBuffer) =>
-  btoa(String.fromCharCode(...new Uint8Array(buffer)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-
-const isDismissal = (error: unknown) => error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'AbortError');
 
 const describeAssertion = (credential: PublicKeyCredential): PasskeyAssertion => {
   const response = credential.response as AuthenticatorAssertionResponse;
@@ -89,7 +78,7 @@ export function createPasskeyClient(ceremony: PasskeyCeremony, environment: Pass
 
 export type PasskeyClient = ReturnType<typeof createPasskeyClient>;
 
-export const browserPasskeyEnvironment = (): PasskeyEnvironment => ({
+export const browserPasskeyEnvironment = () => ({
   credentials: window.navigator.credentials,
   supported: Boolean(window.PublicKeyCredential),
   rpId: window.location.hostname,

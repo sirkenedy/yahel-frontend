@@ -4,3 +4,5 @@ export { browserPasskeyEnvironment, createPasskeyClient } from './passkeys';
 export type { PasskeyClient, PasskeyEnvironment, PasskeyResult } from './passkeys';
 export { resolveReturnAddress } from './return-address';
 export type { ReturnAddressPolicy } from './return-address';
+export { createPasskeyRegistrar } from './passkey-registration';
+export type { NewPasskeyResult, PasskeyCreationEnvironment, PasskeyOwner, PasskeyRegistrar } from './passkey-registration';
