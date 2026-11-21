@@ -23,6 +23,7 @@ Copy `.env.example` to `.env`. The shell uses only `VITE_API_URL`; the accounts 
 | `VITE_RETURN_ORIGINS` | Further origins a `?return=` address may point to, comma separated. Anything else is ignored |
 | `VITE_SIGN_UP_URL` | Where "Create an account" leads. The link is hidden while unset |
 | `VITE_HELP_URL`, `VITE_PRIVACY_URL`, `VITE_TERMS_URL` | Footer links. Each is hidden while unset |
+| `VITE_LOCAL_BUILD` | `local` lets a build use the development addresses. `pnpm build` sets it. A release is built with `pnpm --filter @yahel/accounts build:release`, which fails unless `VITE_API_URL` and `VITE_APP_URL` are https addresses |
 | `VITE_STAND_INS` | `on` serves features the backend lacks (passkeys, the account chooser, texted codes, account help) from stand-ins and shows a "Demo data" label. Development only: a build with it on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set |
 
 | Read | For |

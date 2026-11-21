@@ -76,7 +76,9 @@ apps/accounts/src/
   features/<flow>/
     machine.ts                  pure: typed steps, `reduce(state, event)`, `resumeStep`, `backOf`, step addresses
     store.ts                    the flow state for this page session (memory only)
-    <flow>-flow.tsx             the provider: owns the store and every request; exposes `{ state, actions, meta }`
+    requests.ts                 every request the flow makes and where each outcome leads (`useFlowRequest`)
+    <flow>-flow.tsx             the provider: joins the store and the requests into `{ state, actions, meta }`
+    use-step-field.ts           one field of a step: value, problem, submit, focus on the problem
     failure.ts, validation.ts   failures and field problems in plain words
     steps/<step>-step.tsx       presentational; reads the provider's context and nothing else
   features/chrome/              the frame around every flow: brand, theme control, footer
@@ -84,14 +86,15 @@ apps/accounts/src/
 ```
 
 - **Every step has an address**, so Back, Forward and links work. **Flow state is never in the address or in web storage.** A reload therefore starts the flow again, except that a restored session goes straight to the signed-in screen.
-- **Steps do not call the API, the session or the router.** The provider does, through TanStack Query mutations guarded so that a second press cannot start a second request.
+- **Steps do not call the API, the session or the router.** The flow's requests do (`requests.ts`), each through `useFlowRequest`: a TanStack mutation that ignores a second press, cannot be stranded by leaving the step, and keeps no password, code or token after it settles.
+- **A release build names its addresses.** `apps/accounts/src/build/build-guards.ts` fails a build that would fall back to a development address or ship stand-ins; `pnpm build` opts into local addresses, `build:release` does not.
 - **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
 
 ### 3.2 Capabilities and stand-ins
 
 Some designed features have no backend endpoint yet: passkeys, the account chooser, a texted code, help finding an account. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
 
-Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/stand-in-guard.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
+Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/build-guards.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
 
 ## 4. Data
 

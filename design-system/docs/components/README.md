@@ -133,3 +133,16 @@ Element or role, accessible name, focus order, announcements, increased-contrast
 ## Content
 Label guidance with good and bad examples.
 ```
+
+## Sign-in and onboarding flows (Daylight)
+
+The components of the account flows drawn in `canvas/project/accounts/`. They use the Daylight token set and are built in `@yahel/ui` (`components/flow/`, `daylight.css`). The screens themselves are described in `sign-in-screens.md`.
+
+| Component | Notes | Spec | Status |
+|---|---|---|---|
+| Flow shell, brand mark, progress, receipt, demo label | The page frame; "03 / 07 · About 90 sec"; the summary that builds | `flow-shell.md` | Specified |
+| Flow step | One question: back link, heading, lede, form, body, actions, links; rise and stagger; focus on arrival | `flow-step.md` | Specified |
+| Flow field, password field, code input, username hint | 56 px field; six-box code that is one input | `flow-field.md` | Specified |
+| Flow actions and divider | Primary, quiet, field, link, round and destructive actions; links for navigation | `flow-actions.md` | Specified |
+| Flow notice, waiting card, success mark, password strength | Feedback inside a step | `flow-feedback.md` | Specified |
+| Account chip, account list, choices | The chooser and one-of-a-few options | `flow-account.md` | Specified |

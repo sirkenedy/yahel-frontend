@@ -153,6 +153,19 @@ The owner decided the product name is **Yahel**. This replaces the name kept und
 - The icon stroke uses `border.control` until an icon stroke token exists.
 - Rejected: a text button ("Show") beside the field, which wraps and overflows at 200% text on narrow screens; revealing only while pressed, which cannot be used with a keyboard or assistive technology.
 
+### Daylight field outline: stronger than drawn (2026-11-22)
+
+- The account designs draw the field and code-box outline as 22% ink on white, about 1.6:1 against the paper canvas. The owner's direction is that control boundaries meet 3:1 in all four themes.
+- The outline is now its own token, `color.daylight.control-line`: `#8A8C99` in light, `#6F7494` in dark, and the mute text colour in the increased-contrast themes. It is checked at 3:1 against the canvas, the field and the surface by the token build. The same token outlines the radio mark of a choice.
+- It is the lightest neutral that passes, so the look stays as close to the drawing as the rule allows. Quiet buttons, cards and rows keep the drawn hairline: their text, not their edge, identifies them.
+- Rejected: keeping the drawn value in the default themes and strengthening it only with increased contrast (what was first built).
+
+### Daylight sign-in: departures from the boards (2026-11-22)
+
+- **Back link on every step.** The boards show steps without a Back link because each board opens its step directly; the prototype shows one whenever there is a step before. Built: every step that has an earlier step has a Back link, and the first steps have none.
+- **Reset code and backup codes.** The boards draw every code as six digits. The backend's reset code is six letters and numbers, so the recovery code step takes letters and numbers and its label says "6-character code". Second-step backup codes are ten characters and do not fit the boxes, so "Use a backup code" swaps the boxes for an ordinary field.
+- **Passkeys** are offered wherever the browser supports them, not only on devices with a fingerprint or face reader, so a passkey on a phone or a security key works.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |
