@@ -1,4 +1,4 @@
-import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, PasskeyCeremony, RecoveryChannels, StandInName, TextCodeSender } from './capabilities';
+import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, AddressAvailability, PasskeyCeremony, PasskeyRegistration, RecoveryChannels, SignUpPreferences, StandInName, TextCodeSender, TrustedContacts } from './capabilities';
 import type { ApiClient } from './client';
 
 /** The stand-in implementations, as `@yahel/api-client/standins` builds them. */
@@ -8,6 +8,10 @@ export interface StandIns {
   directory: AccountDirectory;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
+  passkeyRegistration: PasskeyRegistration;
+  addresses: AddressAvailability;
+  trustedContacts: TrustedContacts;
+  preferences: SignUpPreferences;
 }
 
 /** `amara@northwind.example` becomes `a•••@northwind.example`: derived from what was typed, so it reveals nothing. */
@@ -30,7 +34,7 @@ const emailRecovery = (api: Pick<ApiClient, 'auth'>): RecoveryChannels => ({
  */
 export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, standIns: [] };
+  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -42,6 +46,10 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns
     directory: standIns.directory,
     recovery,
     helpDesk: standIns.helpDesk,
+    passkeyRegistration: standIns.passkeyRegistration,
+    addresses: standIns.addresses,
+    trustedContacts: standIns.trustedContacts,
+    preferences: standIns.preferences,
     standIns: Object.keys(standIns) as StandInName[],
   };
 }

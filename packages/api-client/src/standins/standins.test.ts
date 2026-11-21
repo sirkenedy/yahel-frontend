@@ -66,4 +66,53 @@ describe('stand-ins', () => {
 
     await expect(createStandIns(instant).helpDesk.request({ contact: 'a@b.example' })).resolves.toBeUndefined();
   });
+
+  it('passkey registration: hands out a challenge without being told who is asking, and accepts the new passkey', async () => {
+    const { passkeyRegistration } = createStandIns(instant);
+
+    const options = await passkeyRegistration.begin({ rpId: 'accounts.yahel.example' });
+
+    expect(options).toMatchObject({ rp: { id: 'accounts.yahel.example', name: 'Yahel' }, algorithms: [-7, -257] });
+    expect(options.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(options.userHandle).toMatch(/^[A-Za-z0-9_-]+$/);
+    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] })).resolves.toBeUndefined();
+  });
+
+  it('passkey registration: refuses an attestation it could not verify', async () => {
+    const { passkeyRegistration } = createStandIns(instant);
+
+    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] })).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('addresses: says only whether a name is free, and offers free names like it', async () => {
+    const { addresses } = createStandIns(instant);
+
+    expect(await addresses.check('amara.okafor')).toEqual({ available: false, alternatives: ['okafor.amara', 'amaraokafor', 'amara.okafor1'] });
+    expect(await addresses.check('chidi.eze')).toMatchObject({ available: true });
+    expect(Object.keys(await addresses.check('admin')).sort()).toEqual(['alternatives', 'available']);
+    expect((await addresses.check('okafor')).alternatives).not.toContain('okafor');
+  });
+
+  it('addresses: stops a check that was cancelled, and refuses the forty-first', async () => {
+    const { addresses } = createStandIns(instant);
+    const cancelled = new AbortController();
+    cancelled.abort();
+
+    await expect(addresses.check('chidi.eze', cancelled.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    for (let attempt = 0; attempt < 40; attempt += 1) await addresses.check('chidi.eze');
+    await expect(addresses.check('chidi.eze')).rejects.toMatchObject({ status: 429 });
+  });
+
+  it('trusted contacts: accepts an invitation, then refuses the fourth', async () => {
+    const { trustedContacts } = createStandIns(instant);
+
+    for (let attempt = 0; attempt < 3; attempt += 1) await expect(trustedContacts.invite('chidi.eze@personal.example')).resolves.toBeUndefined();
+    await expect(trustedContacts.invite('chidi.eze@personal.example')).rejects.toMatchObject({ status: 429 });
+  });
+
+  it('preferences: keeps the choices it was given', async () => {
+    const { preferences } = createStandIns(instant);
+
+    await expect(preferences.save({ productNews: true, activityHistory: false })).resolves.toBeUndefined();
+  });
 });

@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, LoginResult, Profile, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -76,6 +76,7 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     request,
     auth: {
+      register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
       refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
       logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),
@@ -90,6 +91,13 @@ export function createApiClient(options: ApiClientOptions) {
     me: {
       get: (signal?: AbortSignal) => request<Profile>('GET', '/api/v1/me', { auth: true, signal }),
       update: (body: Schemas['UpdateProfileDto']) => request<Profile>('PATCH', '/api/v1/me', { auth: true, body }),
+      recovery: {
+        get: () => request<RecoveryMethods>('GET', '/api/v1/me/recovery', { auth: true }),
+        updateEmail: (body: Schemas['UpdateRecoveryEmailDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/email', { auth: true, body }),
+        /** Stages the number and texts a code to it; `verifyPhone` confirms it. */
+        updatePhone: (body: Schemas['UpdatePhoneDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/phone', { auth: true, body }),
+        verifyPhone: (body: Schemas['VerifyRecoveryPhoneDto']) => request<RecoveryMethods>('POST', '/api/v1/me/recovery/phone/verify', { auth: true, body }),
+      },
     },
   };
 }

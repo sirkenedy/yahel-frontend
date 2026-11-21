@@ -58,6 +58,7 @@ describe('createApiClient', () => {
   });
 
   it.each([
+    ['register', '/api/v1/auth/register', { email: 'amara.okafor@yahel.example', firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: 'Sunrise-over-Lekki-94' }, { message: 'Registration successful.' }],
     ['mfaChallenge', '/api/v1/auth/mfa/challenge', { challengeToken: 'c-1', code: '482910', deviceId: 'd', trustDevice: false }, { accessToken: 'a', refreshToken: 'r', expiresIn: 900, tokenType: 'Bearer' }],
     ['forgotPassword', '/api/v1/auth/forgot-password', { email: 'amara@northwind.example' }, { message: 'If this email exists, a reset link has been sent' }],
     ['resetPassword', '/api/v1/auth/reset-password', { email: 'amara@northwind.example', token: 'A7kZq2', password: 'New-passw0rd-here' }, { message: 'Password reset successfully. Please log in again.' }],
@@ -89,6 +90,41 @@ describe('createApiClient', () => {
     expect(url).toBe(`http://api.test${path}`);
     expect(JSON.parse(init.body)).toEqual(body);
     expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  const recovery = { recoveryEmail: { configured: false, value: null, lastUpdatedAt: null, pending: { value: 'a***@personal.example', requestedAt: '2026-11-22T10:00:00.000Z', usableAt: '2026-11-29T10:00:00.000Z' } }, phone: { configured: false, verified: false, value: null, lastUpdatedAt: null, pending: null } };
+
+  it.each([
+    ['updateEmail', 'PATCH', '/api/v1/me/recovery/email', { recoveryEmail: 'amara@personal.example' }],
+    ['updatePhone', 'PATCH', '/api/v1/me/recovery/phone', { phone: '+2348035550142' }],
+    ['verifyPhone', 'POST', '/api/v1/me/recovery/phone/verify', { code: 'A7kZq2' }],
+  ] as const)('me.recovery.%s sends its body as the signed-in person and returns the masked methods', async (method, verb, path, body) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: recovery }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect((api.me.recovery[method] as (input: typeof body) => Promise<unknown>)(body)).resolves.toEqual(recovery);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe(verb);
+    expect(JSON.parse(init.body)).toEqual(body);
+    expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it('me.recovery.get reads the masked methods as the signed-in person', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: recovery }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(api.me.recovery.get()).resolves.toEqual(recovery);
+    expect(fetchMock.mock.calls[0]![0]).toBe('http://api.test/api/v1/me/recovery');
+    expect(fetchMock.mock.calls[0]![1].headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it('surfaces a taken address from register with its backend code', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(409, { success: false, code: 'EMAIL_ALREADY_EXISTS', message: 'An account with this email already exists' }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+
+    await expect(api.auth.register({ email: 'amara@yahel.example', firstName: 'Amara', lastName: '', dateOfBirth: '1994-03-14T00:00:00.000Z', password: 'Sunrise-over-Lekki-94' })).rejects.toMatchObject({ status: 409, code: 'EMAIL_ALREADY_EXISTS' });
   });
 
   it('surfaces a refused second-step code with its backend code', async () => {

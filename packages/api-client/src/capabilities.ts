@@ -80,7 +80,59 @@ export interface AccountHelpDesk {
   request(input: { contact: string }): Promise<void>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk';
+/** What the server asks the device to create. Binary values are base64url text. */
+export interface PasskeyCreationOptions {
+  challenge: string;
+  rp: { id: string; name: string };
+  /** A random handle for the account-to-be. It says nothing about the person. */
+  userHandle: string;
+  timeoutMs: number;
+  /** COSE algorithm identifiers the server accepts, most preferred first. */
+  algorithms: number[];
+}
+
+/** The new passkey's public half, as the device describes it. Binary values are base64url text. */
+export interface PasskeyAttestation {
+  credentialId: string;
+  clientDataJSON: string;
+  attestationObject: string;
+  transports: string[];
+}
+
+/**
+ * The server half of creating a passkey during sign-up. `begin` runs before the account exists, so it
+ * takes and reveals nothing about a person; `finish` runs once they are signed in and attaches the
+ * passkey to the account. See docs/roadmap.md, "What each real endpoint must do".
+ */
+export interface PasskeyRegistration {
+  begin(input: { rpId: string }): Promise<PasskeyCreationOptions>;
+  finish(attestation: PasskeyAttestation): Promise<void>;
+}
+
+export interface AddressCheck {
+  /** Only ever "available" or not: never why, and never whose it is. */
+  available: boolean;
+  /** Free addresses close to the one asked about. */
+  alternatives: string[];
+}
+
+/** Whether a Yahel address (the part before the @) can still be had. */
+export interface AddressAvailability {
+  check(name: string, signal?: AbortSignal): Promise<AddressCheck>;
+}
+
+/** Someone the person trusts to vouch for them if every other way back in is lost. Needs a session. */
+export interface TrustedContacts {
+  /** Answers the same way whether or not the invited address has a Yahel account. */
+  invite(email: string): Promise<void>;
+}
+
+/** The two choices on the review screen. Both are off unless the person turns them on. Needs a session. */
+export interface SignUpPreferences {
+  save(choices: { productNews: boolean; activityHistory: boolean }): Promise<void>;
+}
+
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -89,6 +141,10 @@ export interface AccountCapabilities {
   directory: AccountDirectory | null;
   recovery: RecoveryChannels;
   helpDesk: AccountHelpDesk | null;
+  passkeyRegistration: PasskeyRegistration | null;
+  addresses: AddressAvailability | null;
+  trustedContacts: TrustedContacts | null;
+  preferences: SignUpPreferences | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }
