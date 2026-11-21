@@ -1,6 +1,7 @@
 import { Outlet, createRootRouteWithContext, retainSearchParams, useRouter } from '@tanstack/react-router';
 import { DemoMarker, LinkRouter } from '@yahel/ui';
 import { NotFound } from '../features/chrome/not-found';
+import { PageRouteError } from '../features/chrome/route-error';
 import { chromeMessages as m } from '../features/chrome/messages';
 import type { RouterContext } from '../router';
 
@@ -14,6 +15,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   search: { middlewares: [retainSearchParams(['return'])] },
   component: Root,
   notFoundComponent: NotFound,
+  errorComponent: PageRouteError,
 });
 
 function Root() {

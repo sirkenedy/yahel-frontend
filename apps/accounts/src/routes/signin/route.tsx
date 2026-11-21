@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useLocation, useNavigate } from '@tanstack/react-router';
 import { resolveReturnAddress } from '@yahel/auth';
 import { AppFrame } from '../../features/chrome/app-frame';
+import { PageRouteError } from '../../features/chrome/route-error';
 import { stepOfPath, stepPath } from '../../features/sign-in/machine';
 import { loadSignInFacts } from '../../features/sign-in/route-guard';
 import { SignInFlowProvider } from '../../features/sign-in/sign-in-flow';
@@ -8,6 +9,7 @@ import { SignInFlowProvider } from '../../features/sign-in/sign-in-flow';
 export const Route = createFileRoute('/signin')({
   beforeLoad: async ({ context }) => ({ facts: await loadSignInFacts(context) }),
   component: SignInLayout,
+  errorComponent: PageRouteError,
 });
 
 function SignInLayout() {

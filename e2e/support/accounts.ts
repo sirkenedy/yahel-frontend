@@ -82,3 +82,36 @@ export async function openHelpStep(page: Page) {
   await page.getByRole('link', { name: 'Forgot your email?' }).click();
   await page.getByRole('heading', { name: 'Let’s find your account.' }).waitFor();
 }
+
+type Breakable = Window & { failNextStep?: boolean };
+
+/**
+ * Lets a test make the next step fail as it appears, once, the way a defect in a step would: the step asks
+ * the browser what kind of pointer is in use when it mounts, and that question throws. Call before the
+ * first navigation, then `failNextStep` just before the step is opened.
+ */
+export async function armStepFailure(page: Page) {
+  await page.addInitScript(() => {
+    const ask = window.matchMedia.bind(window);
+    window.matchMedia = (query) => {
+      const breakable = window as Breakable;
+      if (breakable.failNextStep && query.includes('pointer')) {
+        breakable.failNextStep = false;
+        throw new Error('A step failed while it was being shown');
+      }
+      return ask(query);
+    };
+  });
+}
+
+export const failNextStep = (page: Page) => page.evaluate(() => void ((window as Breakable).failNextStep = true));
+
+/** Opens the email step and makes the password step fail as it appears. */
+export async function openBrokenStep(page: Page) {
+  await armStepFailure(page);
+  await openEmailStep(page);
+  await page.getByLabel('Email').fill(credentials.email);
+  await failNextStep(page);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('heading', { name: 'Something went wrong.' }).waitFor();
+}

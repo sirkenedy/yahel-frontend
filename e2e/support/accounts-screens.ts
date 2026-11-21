@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './accounts';
+import { at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './accounts';
 
 const openPasskeyStep = async (page: Page, outcome: 'success' | 'cancelled') => {
   await stubPasskeys(page, outcome);
@@ -143,6 +143,7 @@ const screens: Screen[] = [
       await page.getByText('Use 12 characters or more.').waitFor();
     },
   },
+  { name: 'accounts step that failed to show', open: openBrokenStep },
   {
     name: 'accounts page not found',
     open: async (page) => {

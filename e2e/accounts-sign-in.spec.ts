@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
+import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openBrokenStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
 import { backupCode, credentials, mockApi, resetCode, secondStepCode, twoStepCredentials } from './support/api';
 
 const newPassword = 'Sunrise over Lekki 94!';
@@ -752,5 +752,34 @@ test.describe('accounts: page furniture', () => {
 
     await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(2);
     await expect(page.getByRole('button', { name: `Remove ${credentials.email} from this device` })).toBeFocused();
+  });
+});
+
+test.describe('accounts: when a screen fails', () => {
+  test('a step that fails to show is replaced by a styled message, and Try again brings the step back', async ({ page }) => {
+    await mockApi(page);
+    const logged: string[] = [];
+    page.on('console', (message) => void (message.type() === 'error' ? logged.push(message.text()) : null));
+    await openBrokenStep(page);
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Something went wrong.' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Yahel' })).toBeVisible();
+    await expect(page.getByRole('contentinfo')).toContainText('Your data stays in Africa.');
+    await expect(page.getByRole('main')).not.toContainText('A step failed while it was being shown');
+    expect(logged.join(' ')).toContain('A step failed while it was being shown');
+
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByText(credentials.email)).toBeVisible();
+  });
+
+  test('the way back from a failed step leads to the start of sign in', async ({ page }) => {
+    await mockApi(page);
+    await openBrokenStep(page);
+
+    await page.getByRole('link', { name: 'Back to sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
   });
 });
