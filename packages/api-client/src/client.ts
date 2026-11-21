@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { AuthTokens, LoginResult, Profile, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, LoginResult, Profile, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -79,6 +79,13 @@ export function createApiClient(options: ApiClientOptions) {
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
       refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
       logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),
+      mfaChallenge: (body: Schemas['MfaChallengeSubmitDto']) => request<AuthTokens>('POST', '/api/v1/auth/mfa/challenge', { body }),
+      forgotPassword: (body: Schemas['ForgotPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/forgot-password', { body }),
+      resetPassword: (body: Schemas['ResetPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/reset-password', { body }),
+      verifyEmail: (body: Schemas['VerifyEmailDto']) => request<Acknowledgement>('POST', '/api/v1/auth/verify-email', { body }),
+      resendVerification: (body: Schemas['ResendVerificationDto']) => request<Acknowledgement>('POST', '/api/v1/auth/verify-email/resend', { body }),
+      sendPhoneOtp: (body: Schemas['SendPhoneOtpDto']) => request<Acknowledgement>('POST', '/api/v1/auth/phone/send-otp', { auth: true, body }),
+      verifyPhoneOtp: (body: Schemas['VerifyPhoneOtpDto']) => request<Acknowledgement>('POST', '/api/v1/auth/phone/verify', { auth: true, body }),
     },
     me: {
       get: (signal?: AbortSignal) => request<Profile>('GET', '/api/v1/me', { auth: true, signal }),
