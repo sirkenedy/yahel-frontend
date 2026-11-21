@@ -1,5 +1,5 @@
 import { createApiClient, isMfaRequired } from '@yahel/api-client';
-import type { ApiClient, AuthTokens, Profile } from '@yahel/api-client';
+import type { ApiClient, AuthTokens, Profile, SignedIn } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
 export type SessionStatus = 'unknown' | 'signed-out' | 'signed-in';
@@ -106,6 +106,18 @@ export function createSession(options: SessionOptions) {
       accept(result);
       await loadProfile();
       return { ok: true };
+    },
+
+    /** Finishes a sign-in that stopped for a second step. `trustDevice` skips that step on this device for 30 days. */
+    async completeSecondStep(challengeToken: string, code: string, trustDevice = false) {
+      accept(await api.auth.mfaChallenge({ challengeToken, code, deviceId: deviceId(), trustDevice }));
+      await loadProfile();
+    },
+
+    /** Starts a session from a sign-in that happened outside the password endpoint, such as a passkey. */
+    establish({ tokens, profile }: SignedIn) {
+      accept(tokens);
+      store.setState({ status: 'signed-in', profile });
     },
 
     async signOut() {
