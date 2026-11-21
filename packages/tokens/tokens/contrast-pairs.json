@@ -264,6 +264,21 @@
       "color.daylight.wordmark",
       "color.daylight.canvas",
       3
+    ],
+    [
+      "color.daylight.control-line",
+      "color.daylight.canvas",
+      3
+    ],
+    [
+      "color.daylight.control-line",
+      "color.daylight.field",
+      3
+    ],
+    [
+      "color.daylight.control-line",
+      "color.daylight.surface",
+      3
     ]
   ]
 }

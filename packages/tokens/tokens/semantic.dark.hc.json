@@ -39,7 +39,8 @@
       "link": "{palette.daylight.indigo-pale}",
       "success": "{palette.daylight.green-night}",
       "danger": "{palette.daylight.red-night-hc}",
-      "warning": "{palette.daylight.amber-night}"
+      "warning": "{palette.daylight.amber-night}",
+      "control-line": "{palette.daylight.mist-mute}"
     }
   }
 }

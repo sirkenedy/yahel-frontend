@@ -127,7 +127,9 @@
       "green-night": "#6FD49A",
       "red-night": "#FF8F85",
       "red-night-hc": "#FFB3AC",
-      "amber-night": "#F5B85C"
+      "amber-night": "#F5B85C",
+      "ink-line": "#8A8C99",
+      "mist-line": "#6F7494"
     }
   }
 }
