@@ -1,7 +1,7 @@
 import { FieldError, Input, Label, Text, TextField as AriaTextField, ToggleButton } from 'react-aria-components';
 import type { TextFieldProps as AriaTextFieldProps } from 'react-aria-components';
 import { useState } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { FlowIcon } from './flow-icon';
 
 export interface FlowTextFieldProps extends Omit<AriaTextFieldProps, 'className' | 'children'> {
@@ -10,6 +10,8 @@ export interface FlowTextFieldProps extends Omit<AriaTextFieldProps, 'className'
   help?: string;
   /** Says what is wrong and how to fix it. Setting it marks the field invalid. */
   error?: string;
+  /** The input element, for moving focus to the field when it needs attention. */
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 interface FieldFrameProps extends FlowTextFieldProps {
@@ -17,12 +19,12 @@ interface FieldFrameProps extends FlowTextFieldProps {
   trailing?: ReactNode;
 }
 
-function FieldFrame({ label, help, error, trailing, ...props }: FieldFrameProps) {
+function FieldFrame({ label, help, error, trailing, inputRef, ...props }: FieldFrameProps) {
   return (
     <AriaTextField validationBehavior="aria" {...props} isInvalid={props.isInvalid ?? Boolean(error)} className="ws-flow-field">
       <Label className="ws-flow-field__label">{label}</Label>
       <div className="ws-flow-field__control">
-        <Input className="ws-flow-field__input" />
+        <Input ref={inputRef} className="ws-flow-field__input" />
         {trailing}
       </div>
       <FieldError className="ws-flow-field__error">
@@ -77,4 +79,18 @@ export function FlowPasswordField({ showText, hideText, showLabel, hideLabel, is
       }
     />
   );
+}
+
+export interface UsernameHintProps {
+  /** The account the password on this step belongs to. */
+  value: string;
+}
+
+/**
+ * Tells a password manager which account a password is for, on a step that has a password field but no
+ * visible email field. It is a real text input, because managers ignore `type="hidden"`, kept out of
+ * sight, out of the tab order and out of the accessibility tree.
+ */
+export function UsernameHint({ value }: UsernameHintProps) {
+  return <input className="ws-flow-username-hint" type="text" name="username" autoComplete="username" value={value} readOnly tabIndex={-1} aria-hidden="true" />;
 }

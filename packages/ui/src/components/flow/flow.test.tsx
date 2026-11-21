@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AccountChip,
@@ -24,6 +24,7 @@ import {
   PasswordStrength,
   Receipt,
   SuccessMark,
+  UsernameHint,
 } from '../../index';
 import type { CodeInputProps } from '../../index';
 
@@ -58,6 +59,21 @@ describe('FlowShell', () => {
     expect(footer).toHaveTextContent('Your data stays in Africa.');
     expect(footer).toHaveTextContent('Language: English (Nigeria)');
     expect(within(footer).getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', 'https://yahel.example/privacy');
+  });
+
+  it('links the brand through the router, so pressing it does not reload the page', async () => {
+    const navigate = vi.fn();
+    render(
+      <LinkRouter navigate={navigate}>
+        <FlowShell.BrandLink href="/signin" label="Yahel sign in">
+          <BrandMark label="Yahel" />
+        </FlowShell.BrandLink>
+      </LinkRouter>,
+    );
+
+    await userEvent.click(screen.getByRole('link', { name: 'Yahel sign in' }));
+
+    expect(navigate).toHaveBeenCalledWith('/signin', undefined);
   });
 
   it('offers a skip link that targets the main region', () => {
@@ -113,6 +129,19 @@ describe('FlowStep', () => {
     render(step());
 
     expect(screen.getByRole('heading', { name: 'Enter your password.' })).toHaveFocus();
+  });
+
+  it('passes over the hidden username hint when choosing the first field', () => {
+    pointerDevice(true);
+    render(
+      <FlowStep>
+        <FlowStep.Heading>Enter your password.</FlowStep.Heading>
+        <UsernameHint value="amara@northwind.example" />
+        <FlowTextField label="Password" />
+      </FlowStep>,
+    );
+
+    expect(screen.getByLabelText('Password')).toHaveFocus();
   });
 
   it('moves focus to the heading when the step has no field', () => {
@@ -204,6 +233,50 @@ describe('FlowTextField', () => {
     expect(input).toHaveAttribute('name', 'email');
     expect(input).toHaveAttribute('type', 'email');
     expect(input).toHaveAttribute('autocomplete', 'username');
+  });
+});
+
+describe('UsernameHint', () => {
+  it('is a real username text input that nobody can see, reach or hear', () => {
+    const { container } = render(<UsernameHint value="amara@northwind.example" />);
+    const hint = container.querySelector('input')!;
+
+    expect(hint).toHaveAttribute('type', 'text');
+    expect(hint).toHaveAttribute('autocomplete', 'username');
+    expect(hint).toHaveValue('amara@northwind.example');
+    expect(hint).toHaveAttribute('tabindex', '-1');
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+});
+
+describe('field and button refs', () => {
+  function Harness() {
+    const field = useRef<HTMLInputElement>(null);
+    const code = useRef<HTMLInputElement>(null);
+    const action = useRef<HTMLButtonElement>(null);
+    const [codeValue, setCodeValue] = useState('');
+    return (
+      <>
+        <FlowTextField label="Email" inputRef={field} />
+        <CodeInput label="6-digit code" value={codeValue} onChange={setCodeValue} inputRef={code} />
+        <FlowButton ref={action}>Remove</FlowButton>
+        <FlowButton onPress={() => field.current?.focus()}>Focus email</FlowButton>
+        <FlowButton onPress={() => code.current?.focus()}>Focus code</FlowButton>
+        <FlowButton onPress={() => action.current?.focus()}>Focus remove</FlowButton>
+      </>
+    );
+  }
+
+  it('hand out their elements so an owner can move focus without searching the page', async () => {
+    render(<Harness />);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: 'Focus email' }));
+    expect(screen.getByLabelText('Email')).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Focus code' }));
+    expect(screen.getByLabelText('6-digit code')).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Focus remove' }));
+    expect(screen.getByRole('button', { name: 'Remove' })).toHaveFocus();
   });
 });
 
