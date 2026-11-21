@@ -90,7 +90,8 @@
       "mark-pale": "{palette.daylight.indigo-pale}",
       "mark-left": "{palette.daylight.indigo-mid}",
       "mark-right": "{palette.daylight.indigo}",
-      "wordmark": "{palette.daylight.wordmark}"
+      "wordmark": "{palette.daylight.wordmark}",
+      "control-line": "{palette.daylight.ink-line}"
     }
   },
   "elevation": {
