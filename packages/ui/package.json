@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/index.css",
+    "./daylight.css": "./src/styles/daylight.css",
     "./assets/*": "./assets/*"
   },
   "scripts": {
