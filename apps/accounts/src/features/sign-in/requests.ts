@@ -65,19 +65,24 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   const password = useFlowRequest({
     visit,
     describe: describe('password'),
-    run: async (value: string) => {
+    run: async (value: string, { isCurrent }) => {
       try {
         return settle(await session.signIn(email(), value));
       } catch (error) {
         // The backend says this only once the password has matched, so the registration is this person's
         // to confirm. A fresh code is asked for: the one sent when the account was made may be long gone.
         if (!hasCode(error, 'EMAIL_NOT_VERIFIED')) throw error;
-        store.dispatch({ type: 'email-unconfirmed', password: value });
         await session.api.auth.resendVerification({ email: email() }).catch(() => undefined);
+        // The proof is held only for the confirm step, and only if the person is still where they asked for it.
+        if (!isCurrent()) return 'left' as const;
+        store.dispatch({ type: 'email-unconfirmed', password: value });
         return 'confirm-email' as const;
       }
     },
-    onDone: (outcome) => (outcome === 'confirm-email' ? navigate('confirm-email') : afterSignIn(outcome)),
+    onDone: (outcome) => {
+      if (outcome === 'confirm-email') navigate('confirm-email');
+      else if (outcome !== 'left') afterSignIn(outcome);
+    },
   });
 
   const confirmEmail = useFlowRequest({

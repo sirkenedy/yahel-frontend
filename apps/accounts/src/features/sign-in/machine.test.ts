@@ -51,9 +51,9 @@ describe('reduce', () => {
   });
 
   it('treats a completed reset as final: the code is gone and only signing in remains', () => {
-    const done = after({ type: 'email-entered', email }, { type: 'reset-code-sent', method: 'email', destination: 'x' }, { type: 'reset-code-entered', code: 'A7kZq2' }, { type: 'password-reset' });
+    const done = after({ type: 'email-entered', email }, { type: 'email-unconfirmed', password: 'proven' }, { type: 'reset-code-sent', method: 'email', destination: 'x' }, { type: 'reset-code-entered', code: 'A7kZq2' }, { type: 'password-reset' });
 
-    expect(done).toMatchObject({ email, resetCode: null, recovery: null, passwordPrompt: 'reset-done' });
+    expect(done).toMatchObject({ email, resetCode: null, recovery: null, provenPassword: null, passwordPrompt: 'reset-done' });
     expect(resumeStep('new-password', done, facts())).toBe('recover');
     expect(resumeStep('password', done, facts())).toBe('password');
   });

@@ -531,6 +531,25 @@ describe('confirming an email at sign-in', () => {
     expect(flow().meta.requests.password.feedback).toBeNull();
   });
 
+  it.each(['recover', 'email'] as const)('holds no password and leads nowhere when the password step is left (for %s) while the request runs', async (elsewhere) => {
+    const context = setup({ step: 'password' });
+    act(() => context.store.dispatch({ type: 'email-entered', email }));
+    context.session.signIn.mockRejectedValueOnce(unconfirmed());
+    let sent: () => void = () => undefined;
+    context.session.api.auth.resendVerification.mockImplementationOnce(() => new Promise((resolve) => (sent = () => resolve({ message: 'ok' }))));
+
+    act(() => void context.flow().actions.signInWithPassword('password-secret'));
+    await waitFor(() => expect(context.session.api.auth.resendVerification).toHaveBeenCalled());
+    expect(context.store.getState().provenPassword).toBeNull();
+    context.goTo(elsewhere);
+    await act(async () => sent());
+
+    await waitFor(() => expect(context.flow().meta.requests.password.isPending).toBe(false));
+    expect(context.store.getState().provenPassword).toBeNull();
+    expect(context.navigate).not.toHaveBeenCalledWith('confirm-email');
+    expect(context.retained()).not.toContain('password-secret');
+  });
+
   it('still shows the code step when asking for the fresh code fails', async () => {
     const context = setup({ step: 'password' });
     act(() => context.store.dispatch({ type: 'email-entered', email }));

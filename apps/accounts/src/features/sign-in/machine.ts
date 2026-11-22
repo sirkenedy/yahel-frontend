@@ -90,7 +90,7 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
       return state.provenPassword === null ? state : { ...state, provenPassword: null };
     case 'password-reset':
       // The code is spent and the reset cannot be repeated: only signing in remains.
-      return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, resetCodeSpent: false, passwordPrompt: 'reset-done' };
+      return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, resetCodeSpent: false, provenPassword: null, passwordPrompt: 'reset-done' };
     case 'passkey-started':
       return { ...state, passkeyStarted: true };
     case 'reset-code-sent':
