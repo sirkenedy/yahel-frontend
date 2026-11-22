@@ -12,8 +12,11 @@ export interface BirthDate {
   year: number;
 }
 
-/** The parts of an account that are set up after it exists. Each is settled once: saved, or given up on. */
+/** The parts of an account that are set up after it exists. Each is settled once: saved, refused by the server, or skipped. */
 export type SetupPart = 'recoveryEmail' | 'preferences' | 'passkey' | 'phone';
+
+/** What the last screen has to tell the person: a part the server refused, or the phone code they skipped. */
+export type Unsaved = SetupPart | 'phoneSkipped';
 
 /** An answer the server refused, and the step that has to be answered again. */
 export type Rejection = { step: 'address'; reason: 'taken' } | { step: 'birth'; reason: 'underage' } | { step: 'own-email'; reason: 'not-personal' };
@@ -31,12 +34,18 @@ export interface Creation {
   created: boolean;
   /** The server said the address already has an account; whose it is is not yet known. */
   conflicted: boolean;
-  /** An existing email has to be confirmed with a code before the account can be signed in to. */
-  emailCode: 'not-needed' | 'awaited' | 'confirmed';
+  /**
+   * An existing email has to be confirmed with a code before the account can be signed in to. `awaited`:
+   * a code was sent for a registration that is provably this person's (made in this visit, or one their
+   * password signs in to). `unobtainable`: the address has a registration or an account that is not
+   * provably theirs, so the code screen is shown but no code is asked for and none is ever submitted:
+   * confirming it would switch on an account someone else set the password of.
+   */
+  emailCode: 'not-needed' | 'awaited' | 'unobtainable' | 'confirmed';
   signedIn: boolean;
   /** What has been settled, and of that, what could not be saved (the person is told on the last screen). */
   settled: readonly SetupPart[];
-  unsaved: readonly SetupPart[];
+  unsaved: readonly Unsaved[];
   /** A code has been texted to the recovery phone and not yet entered or skipped. */
   phoneCodeAwaited: boolean;
   finished: boolean;
@@ -45,8 +54,9 @@ export interface Creation {
 /**
  * Everything the flow remembers between steps. It lives in memory only: a reload clears it, and nothing
  * here is ever written to the address bar or to web storage. The password is the one secret that has to be
- * kept across steps, because the account is not created until the last of them; it is dropped the moment
- * the new account has been signed in to. Codes are never here: they go from the field straight into the
+ * kept across steps, because the account is not created until the last of them. It is dropped the moment
+ * the new account has been signed in to, and with everything else (`reset`) when the flow is left, started
+ * again or stopped by a failed screen. It is never handed back to a field or to a step. Codes are never here: they go from the field straight into the
  * request, which keeps no copy (see `flow/use-flow-request.ts`). The passkey held here is its public half.
  */
 export interface PersonalState {
@@ -58,6 +68,8 @@ export interface PersonalState {
   addressKind: 'yahel' | 'own';
   /** The part before the @ of the Yahel address. */
   username: string;
+  /** What is in the address field, chosen or not. Held here so the field and what is known about it cannot disagree. */
+  addressDraft: string;
   ownEmail: string;
   password: string | null;
   passkey: PasskeyAttestation | null;
@@ -86,6 +98,7 @@ export const initialPersonalState: PersonalState = {
   gender: 'unspecified',
   addressKind: 'yahel',
   username: '',
+  addressDraft: '',
   ownEmail: '',
   password: null,
   passkey: null,
@@ -102,9 +115,9 @@ export const initialPersonalState: PersonalState = {
 export type PersonalEvent =
   | { type: 'name-entered'; firstName: string; lastName: string }
   | { type: 'birth-entered'; birth: BirthDate; gender: Gender }
+  | { type: 'address-typed'; draft: string }
   | { type: 'address-chosen'; username: string }
   | { type: 'own-email-chosen'; email: string }
-  | { type: 'address-kind-chosen'; kind: PersonalState['addressKind'] }
   | { type: 'password-chosen'; password: string }
   | { type: 'passkey-started' }
   | { type: 'passkey-created'; attestation: PasskeyAttestation }
@@ -117,14 +130,16 @@ export type PersonalEvent =
   | { type: 'creation-stage'; stage: Creation['stage'] }
   | { type: 'account-created' }
   | { type: 'account-conflicted' }
-  | { type: 'email-code-needed' }
+  | { type: 'email-code-needed'; obtainable: boolean }
   | { type: 'email-confirmed' }
   | { type: 'signed-in' }
-  | { type: 'setup-settled'; part: SetupPart; saved: boolean }
+  | { type: 'setup-settled'; part: SetupPart; outcome: 'saved' | 'refused' | 'skipped' }
   | { type: 'phone-code-sent' }
   | { type: 'creation-finished' }
   | { type: 'answer-rejected'; rejection: Rejection }
-  | { type: 'contact-invited'; email: string };
+  | { type: 'contact-invited'; email: string }
+  | { type: 'address-abandoned' }
+  | { type: 'reset' };
 
 const clearRejection = (state: PersonalState, step: Rejection['step']) => (state.rejection?.step === step ? null : state.rejection);
 const inCreation = (state: PersonalState, change: Partial<Creation>): PersonalState => ({ ...state, creation: { ...state.creation, ...change } });
@@ -135,12 +150,12 @@ export function reduce(state: PersonalState, event: PersonalEvent): PersonalStat
       return { ...state, firstName: event.firstName, lastName: event.lastName };
     case 'birth-entered':
       return { ...state, birth: event.birth, gender: event.gender, rejection: clearRejection(state, 'birth') };
+    case 'address-typed':
+      return { ...state, addressDraft: event.draft };
     case 'address-chosen':
-      return { ...state, addressKind: 'yahel', username: event.username, rejection: clearRejection(state, 'address') };
+      return { ...state, addressKind: 'yahel', username: event.username, addressDraft: event.username, rejection: clearRejection(state, 'address') };
     case 'own-email-chosen':
       return { ...state, addressKind: 'own', ownEmail: event.email, rejection: clearRejection(state, 'own-email') };
-    case 'address-kind-chosen':
-      return { ...state, addressKind: event.kind };
     case 'password-chosen':
       return { ...state, password: event.password };
     case 'passkey-started':
@@ -166,7 +181,7 @@ export function reduce(state: PersonalState, event: PersonalEvent): PersonalStat
     case 'account-conflicted':
       return inCreation(state, { conflicted: true });
     case 'email-code-needed':
-      return inCreation(state, { emailCode: 'awaited' });
+      return inCreation(state, { emailCode: event.obtainable ? 'awaited' : 'unobtainable' });
     case 'email-confirmed':
       return inCreation(state, { emailCode: 'confirmed' });
     case 'signed-in':
@@ -175,7 +190,7 @@ export function reduce(state: PersonalState, event: PersonalEvent): PersonalStat
     case 'setup-settled':
       return inCreation(state, {
         settled: [...state.creation.settled, event.part],
-        unsaved: event.saved ? state.creation.unsaved : [...state.creation.unsaved, event.part],
+        unsaved: event.outcome === 'saved' ? state.creation.unsaved : [...state.creation.unsaved, event.outcome === 'skipped' && event.part === 'phone' ? 'phoneSkipped' : event.part],
         phoneCodeAwaited: event.part === 'phone' ? false : state.creation.phoneCodeAwaited,
       });
     case 'phone-code-sent':
@@ -187,11 +202,19 @@ export function reduce(state: PersonalState, event: PersonalEvent): PersonalStat
       return { ...state, rejection: event.rejection, editing: true, creation: initialCreation };
     case 'contact-invited':
       return { ...state, contactInvited: event.email };
+    case 'address-abandoned':
+      // The emailed code will not be entered (a mistyped address, say). Whatever was registered under that
+      // address is left behind unconfirmed; the answers stand, and the address is asked for again.
+      return { ...state, editing: true, rejection: null, creation: initialCreation };
+    case 'reset':
+      return initialPersonalState;
   }
 }
 
+export const fullNameOf = ({ firstName, lastName }: Pick<PersonalState, 'firstName' | 'lastName'>) => [firstName, lastName].filter(Boolean).join(' ');
+
 /** The address the person will sign in with. */
-export const addressOf = (state: PersonalState, mailDomain: string) => (state.addressKind === 'own' ? state.ownEmail : `${state.username}@${mailDomain}`);
+export const addressOf = (state: Pick<PersonalState, 'addressKind' | 'ownEmail' | 'username'>, mailDomain: string) => (state.addressKind === 'own' ? state.ownEmail : `${state.username}@${mailDomain}`);
 
 /** What is true outside the flow's own state when a step is about to be shown. */
 export interface PersonalFacts {
@@ -203,7 +226,7 @@ const hasAddress = (state: PersonalState) => (state.addressKind === 'own' ? stat
 
 /** Once the account exists (or may), the answers are final: only what comes after can be shown. */
 const stepAfterCreation = ({ creation }: PersonalState): PersonalStep | null => {
-  if (creation.emailCode === 'awaited') return 'own-code';
+  if (creation.emailCode === 'awaited' || creation.emailCode === 'unobtainable') return 'own-code';
   if (!creation.created) return null;
   if (!creation.signedIn) return 'creating';
   if (creation.phoneCodeAwaited) return 'code';
@@ -233,11 +256,13 @@ export function resumeStep(step: PersonalStep, state: PersonalState, facts: Pers
       if (!state.password) return resumeStep('password', state, facts);
       return facts.passkeysOffered ? 'add-passkey' : 'recovery';
     case 'passkey':
-      return state.password && state.passkeyStarted && facts.passkeysOffered ? 'passkey' : resumeStep('add-passkey', state, facts);
+      // Once the passkey is made the prompt has nothing left to show; the offer says one is ready.
+      return state.password && state.passkeyStarted && !state.passkey && facts.passkeysOffered ? 'passkey' : resumeStep('add-passkey', state, facts);
     case 'recovery':
       return state.password ? 'recovery' : resumeStep('password', state, facts);
     case 'review':
-      return state.password && state.recoveryAnswered ? 'review' : resumeStep('recovery', state, facts);
+      // Never without an address: the password step leads back to whichever address step is missing its answer.
+      return hasAddress(state) && state.password && state.recoveryAnswered ? 'review' : resumeStep(hasAddress(state) ? 'recovery' : 'password', state, facts);
     case 'creating':
       return state.creation.started ? 'creating' : resumeStep('review', state, facts);
     case 'own-code':
@@ -282,6 +307,12 @@ export function backOf(step: PersonalStep, state: PersonalState, facts: Personal
       return 'ready';
   }
 }
+
+/** The account exists, or may: the answers are final, and visiting the start of the flow does not begin again. */
+export const hasAccountUnderway = (state: PersonalState) => stepAfterCreation(state) !== null;
+
+/** Whose account the signed-in screens of the flow are about. */
+export const accountOf = (state: PersonalState, mailDomain: string) => (state.creation.signedIn ? { name: fullNameOf(state), email: addressOf(state, mailDomain) } : null);
 
 /** The step that follows `step` once it has been answered. An answer changed from the review returns there. */
 export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'add-passkey' | 'passkey' | 'recovery', state: PersonalState, facts: PersonalFacts): PersonalStep {

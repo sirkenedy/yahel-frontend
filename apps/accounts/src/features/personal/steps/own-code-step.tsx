@@ -15,7 +15,7 @@ export function OwnCodeStep() {
       <FlowStep.Form onSubmit={code.submit}>
         <FlowStep.Body>
           <CodeInput label={m.codeLabel} length={CODE_LENGTH} characters="alphanumeric" value={code.value} onChange={code.change} error={code.error} inputRef={code.inputRef} />
-          {state.emailCodeResent ? <FlowNotice>{m.newCodeSent}</FlowNotice> : null}
+          {state.emailCodeResent ? <FlowNotice>{m.emailCodeAskedAgain}</FlowNotice> : null}
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary" isPending={request.isPending} pendingLabel={m.verifying}>
@@ -26,6 +26,9 @@ export function OwnCodeStep() {
       <FlowStep.Links>
         <FlowButton variant="link" onPress={actions.resendEmailCode} isPending={resend.isPending} pendingLabel={m.sending}>
           {m.sendNewCode}
+        </FlowButton>
+        <FlowButton variant="link" onPress={actions.useDifferentAddress} isDisabled={request.isPending}>
+          {m.useDifferentAddress}
         </FlowButton>
         <FlowLink href={meta.links.signIn}>{m.signInInstead}</FlowLink>
       </FlowStep.Links>

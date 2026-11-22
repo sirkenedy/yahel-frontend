@@ -1,6 +1,6 @@
 import type { AccountCapabilities } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
-import { resumeStep } from './machine';
+import { hasAccountUnderway, resumeStep } from './machine';
 import type { PersonalFacts, PersonalStep } from './machine';
 import type { PersonalStore } from './store';
 
@@ -27,4 +27,19 @@ export const isSignedInElsewhere = ({ session, personal }: Pick<PersonalGuardCon
 export const stepInsteadOf = (step: PersonalStep, store: PersonalStore, facts: PersonalFacts) => {
   const honest = resumeStep(step, store.getState(), facts);
   return honest === step ? null : honest;
+};
+
+/**
+ * Forgets every answer, the password and the passkey with them. Called when the flow is left, started
+ * again, or stopped by a screen that failed. `unlessUnderway` spares a visit whose account exists or may:
+ * its answers are final, and what remains needs them to finish.
+ */
+export const forgetSignUp = (store: PersonalStore, { unlessUnderway = false } = {}) => {
+  if (unlessUnderway && hasAccountUnderway(store.getState())) return;
+  store.dispatch({ type: 'reset' });
+};
+
+/** Reaching the review ends any change that was being made from it, however it was reached. */
+export const arriveAtReview = (store: PersonalStore) => {
+  if (store.getState().editing) store.dispatch({ type: 'edit-finished' });
 };

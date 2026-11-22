@@ -3,18 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { submitFields, useStepField } from './use-step-field';
 
-function Harness({ onValid, refused }: { onValid: (value: string) => void; refused?: string }) {
-  const { value, change, error, submit, inputRef, reject } = useStepField({ initial: 'a', problemOf: (value) => (value.length < 3 ? 'Use 3 characters or more.' : null), onValid });
+function Harness({ onValid }: { onValid: (value: string) => void }) {
+  const { value, change, error, submit, inputRef } = useStepField({ initial: 'a', problemOf: (value) => (value.length < 3 ? 'Use 3 characters or more.' : null), onValid });
   return (
     <form onSubmit={submit} noValidate>
       <input aria-label="Name" ref={inputRef} value={value} onChange={(event) => change(event.target.value)} />
       <output>{error}</output>
       <button type="submit">Continue</button>
-      {refused ? (
-        <button type="button" onClick={() => reject(refused)}>
-          Refuse
-        </button>
-      ) : null}
     </form>
   );
 }
@@ -60,13 +55,28 @@ describe('useStepField', () => {
     expect(onValid).toHaveBeenCalledWith('abc');
   });
 
-  it('shows a problem found elsewhere and moves focus to the field', async () => {
-    render(<Harness onValid={vi.fn()} refused="That name is taken." />);
+  it('uses a value held elsewhere when given one, and reports edits there', async () => {
+    const onChange = vi.fn();
+    function Held() {
+      const { value, change, error, submit, inputRef } = useStepField({ value: 'amara', onChange, problemOf: (text) => (text === 'amara' ? 'That address is taken.' : null) });
+      return (
+        <form onSubmit={submit} noValidate>
+          <input aria-label="Address" ref={inputRef} value={value} onChange={(event) => change(event.target.value)} />
+          <output>{error}</output>
+          <button type="submit">Continue</button>
+        </form>
+      );
+    }
+    render(<Held />);
+    const user = userEvent.setup();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Refuse' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByRole('status')).toHaveTextContent('That address is taken.');
 
-    expect(screen.getByRole('status')).toHaveTextContent('That name is taken.');
-    expect(screen.getByLabelText('Name')).toHaveFocus();
+    await user.type(screen.getByLabelText('Address'), '1');
+    expect(onChange).toHaveBeenCalledWith('amara1');
+    expect(screen.getByLabelText('Address')).toHaveValue('amara');
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 });
 

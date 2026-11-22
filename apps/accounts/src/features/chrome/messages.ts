@@ -23,8 +23,10 @@ export const chromeMessages = {
   notFoundLede: 'The address may be mistyped, or the page may have moved.',
   goToSignIn: 'Go to sign in',
   errorTitle: 'Something went wrong.',
-  errorLede: 'This page hit a problem on our side. Try again, or go back to the start of sign in.',
+  errorLede: 'This page hit a problem on our side. Try again, or go back to the start.',
   errorPageTitle: 'Something went wrong · Yahel',
   tryAgain: 'Try again',
   backToSignIn: 'Back to sign in',
+  startAgain: 'Start again',
+  signedInAs: (email: string) => `Signed in as ${email}`,
 } as const;

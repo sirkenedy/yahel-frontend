@@ -1,7 +1,7 @@
 import { Outlet, createRootRouteWithContext, retainSearchParams, useRouter } from '@tanstack/react-router';
 import { DemoMarker, LinkRouter } from '@yahel/ui';
 import { NotFound } from '../features/chrome/not-found';
-import { PageRouteError } from '../features/chrome/route-error';
+import { PageRouteError } from '../route-error';
 import { chromeMessages as m } from '../features/chrome/messages';
 import type { RouterContext } from '../router';
 

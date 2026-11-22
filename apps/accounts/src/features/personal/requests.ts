@@ -1,10 +1,11 @@
+import { ApiError } from '@yahel/api-client';
 import type { AccountCapabilities, Schemas } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { internationalNumber } from './countries';
 import { describeFailure, hasCode, isRefusal } from './failure';
 import type { FailureContext } from './failure';
-import { addressOf } from './machine';
+import { addressOf, fullNameOf } from './machine';
 import type { Creation, PersonalState, PersonalStep, Rejection, SetupPart } from './machine';
 import type { PersonalStore } from './store';
 import { isoBirthDate } from './validation';
@@ -20,15 +21,17 @@ export interface PersonalRequestDeps {
   navigate: (step: PersonalStep, options?: { replace?: boolean }) => void;
   /** Moves on from a step that has been answered. */
   advance: (from: 'passkey') => void;
+  /** Waits about as long as a request would. Tests pass one that resolves at once. */
+  pause?: () => Promise<void>;
 }
 
-/** `existing-account`: the address has an account already and the person has proved the mailbox is theirs. */
-export type CreateOutcome = 'ready' | 'confirm-email' | 'confirm-phone' | 'rejected' | 'existing-account';
+const ROUND_TRIP = 600;
+const realPause = () => new Promise<void>((resolve) => setTimeout(resolve, ROUND_TRIP));
+
+export type CreateOutcome = 'ready' | 'confirm-email' | 'confirm-phone' | 'rejected';
 
 // The backend takes any text for gender and gives "female" as its example.
 const genderForApi = { woman: 'female', man: 'male', another: 'other' } as const;
-
-export const fullNameOf = ({ firstName, lastName }: Pick<PersonalState, 'firstName' | 'lastName'>) => [firstName, lastName].filter(Boolean).join(' ');
 
 /** What the design collects, as the backend's register endpoint takes it. */
 export const registrationOf = (state: PersonalState, email: string): Schemas['RegisterDto'] => ({
@@ -46,7 +49,7 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
  * Every request the personal flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`.
  */
-export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, advance }: PersonalRequestDeps) {
+export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, advance, pause = realPause }: PersonalRequestDeps) {
   const state = () => store.getState();
   const address = () => addressOf(state(), mailDomain);
   const describe = (context: FailureContext) => (error: unknown) => describeFailure(error, context);
@@ -74,10 +77,12 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     return 'rejected';
   };
 
-  const askForEmailCode = async (resend: boolean): Promise<CreateOutcome> => {
-    // After a conflict no code is on its way, so one is asked for. The answer is the same whoever the address belongs to.
-    if (resend) await session.api.auth.resendVerification({ email: address() }).catch(() => undefined);
-    store.dispatch({ type: 'email-code-needed' });
+  /**
+   * Shows the emailed-code screen. `obtainable` says whether a code exists for a registration that is
+   * provably this person's; when it does not, the same screen is shown and nothing is ever asked of the server.
+   */
+  const awaitEmailCode = (obtainable: boolean): CreateOutcome => {
+    store.dispatch({ type: 'email-code-needed', obtainable });
     return 'confirm-email';
   };
 
@@ -86,10 +91,10 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     if (!save || state().creation.settled.includes(part)) return;
     try {
       await save();
-      store.dispatch({ type: 'setup-settled', part, saved: true });
+      store.dispatch({ type: 'setup-settled', part, outcome: 'saved' });
     } catch (error) {
       if (!isRefusal(error)) throw error;
-      store.dispatch({ type: 'setup-settled', part, saved: false });
+      store.dispatch({ type: 'setup-settled', part, outcome: 'refused' });
     }
   };
 
@@ -116,7 +121,12 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
       // A second step can only belong to an account that existed before, so it is a refusal too.
       refused = !(await session.signIn(address(), state().password ?? '')).ok;
     } catch (error) {
-      if (usesOwnEmail() && emailCode !== 'confirmed' && hasCode(error, 'EMAIL_NOT_VERIFIED')) return askForEmailCode(conflicted);
+      if (usesOwnEmail() && emailCode !== 'confirmed' && hasCode(error, 'EMAIL_NOT_VERIFIED')) {
+        // The backend checks the password before it says this, so the unconfirmed registration is this
+        // person's: the one just made, or one of theirs from an earlier visit, which needs a fresh code.
+        if (conflicted) await session.api.auth.resendVerification({ email: address() }).catch(() => undefined);
+        return awaitEmailCode(true);
+      }
       if (!conflicted || !hasCode(error, 'INVALID_CREDENTIALS')) throw error;
       refused = true;
     }
@@ -125,8 +135,10 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
       return null;
     }
     if (!usesOwnEmail()) return reject({ step: 'address', reason: 'taken' });
-    // Only someone who has shown the mailbox is theirs is told that it already has an account.
-    return emailCode === 'confirmed' ? 'existing-account' : askForEmailCode(true);
+    // The address has a registration or an account under another password. It may be someone else's,
+    // made to be switched on by this person's code, so no code is asked for and none will be submitted.
+    // The screen is the same one; the way forward for the real owner is to sign in or reset the password.
+    return awaitEmailCode(false);
   };
 
   /** Stages the recovery phone, which texts it a code. It is settled later, when the code is entered or skipped. */
@@ -138,7 +150,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
       store.dispatch({ type: 'phone-code-sent' });
     } catch (error) {
       if (!isRefusal(error)) throw error;
-      store.dispatch({ type: 'setup-settled', part: 'phone', saved: false });
+      store.dispatch({ type: 'setup-settled', part: 'phone', outcome: 'refused' });
     }
   };
 
@@ -180,6 +192,11 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('code'),
     run: async (code: string) => {
+      if (state().creation.emailCode !== 'awaited') {
+        // No code was sent, so none can be right, and one from someone else's registration must not be used.
+        await pause();
+        throw new ApiError({ status: 401, code: 'INVALID_TOKEN', message: 'No code was issued for this visit' });
+      }
       await session.api.auth.verifyEmail({ email: address(), token: code });
       store.dispatch({ type: 'email-confirmed' });
     },
@@ -193,7 +210,9 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('other'),
     run: async () => {
-      await session.api.auth.resendVerification({ email: address() });
+      // Asked for only where a code may be used; otherwise the screen answers the same way and sends nothing.
+      if (state().creation.emailCode === 'awaited') await session.api.auth.resendVerification({ email: address() });
+      else await pause();
       return 'sent' as const;
     },
   });
@@ -208,7 +227,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     describe: describe('code'),
     run: async (code: string) => {
       await session.api.me.recovery.verifyPhone({ code });
-      store.dispatch({ type: 'setup-settled', part: 'phone', saved: true });
+      store.dispatch({ type: 'setup-settled', part: 'phone', outcome: 'saved' });
     },
     onDone: finish,
   });
@@ -236,7 +255,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
 
   /** Leaves the phone unconfirmed; the last screen says so. */
   const skipPhone = () => {
-    store.dispatch({ type: 'setup-settled', part: 'phone', saved: false });
+    store.dispatch({ type: 'setup-settled', part: 'phone', outcome: 'skipped' });
     finish();
   };
 

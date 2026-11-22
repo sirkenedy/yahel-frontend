@@ -1,5 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FlowRequest } from '../../../flow/use-flow-request';
@@ -41,12 +42,13 @@ const fakeActions = (): PersonalFlowValue['actions'] => ({
   startBusiness: vi.fn(),
   enterName: vi.fn(),
   enterBirth: vi.fn(),
-  considerAddress: vi.fn(),
+  typeAddress: vi.fn(),
   chooseAddress: vi.fn(),
   useOwnEmail: vi.fn(),
   useYahelAddress: vi.fn(),
   chooseOwnEmail: vi.fn(),
   choosePassword: vi.fn(),
+  keepPassword: vi.fn(),
   startPasskey: vi.fn(),
   continueWithoutPasskey: vi.fn(),
   enterRecovery: vi.fn(),
@@ -55,6 +57,8 @@ const fakeActions = (): PersonalFlowValue['actions'] => ({
   edit: vi.fn(),
   createAccount: vi.fn(),
   confirmEmail: vi.fn(),
+  useDifferentAddress: vi.fn(),
+  startAgain: vi.fn(),
   resendEmailCode: vi.fn(),
   verifyPhone: vi.fn(),
   resendPhoneCode: vi.fn(),
@@ -75,8 +79,14 @@ const answered: Partial<PersonalFlowValue['state']> = {
   recoveryAnswered: true,
 };
 
+// Steps are never given the password, so the fake context has none to give.
+const answersOnly = ({ password, ...answers }: typeof initialPersonalState) => {
+  void password;
+  return answers;
+};
+
 const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links, requests, meta }: Overrides = {}): PersonalFlowValue => ({
-  state: { ...initialPersonalState, step: 'name', address: '@yahel.example', fullName: '', addressCheck: { status: 'idle', alternatives: [] }, passkeyCancelled: false, emailCodeResent: false, phoneCodeResent: false, existingAccount: false, ...state },
+  state: { ...answersOnly(initialPersonalState), step: 'name', hasPassword: false, address: '@yahel.example', fullName: '', addressCheck: { status: 'idle', alternatives: [] }, passkeyCancelled: false, emailCodeResent: false, phoneCodeResent: false, ...state },
   actions,
   meta: {
     direction: 'forward',
@@ -94,6 +104,25 @@ const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
   const view = render(<PersonalFlowContext value={flowValue(actions, overrides)}>{ui}</PersonalFlowContext>);
   return { actions, user: userEvent.setup(), rerender: (next: Overrides) => view.rerender(<PersonalFlowContext value={flowValue(actions, next)}>{ui}</PersonalFlowContext>) };
+};
+
+/** The address step shows what the flow holds for the field, so its tests keep that as the flow would. */
+const setupAddress = (overrides: Overrides = {}) => {
+  const actions = fakeActions();
+  function Held() {
+    const [draft, setDraft] = useState(overrides.state?.addressDraft ?? overrides.state?.username ?? '');
+    const typeAddress = (next: string) => {
+      actions.typeAddress(next);
+      setDraft(next);
+    };
+    return (
+      <PersonalFlowContext value={flowValue({ ...actions, typeAddress }, { ...overrides, state: { ...overrides.state, addressDraft: draft } })}>
+        <AddressStep />
+      </PersonalFlowContext>
+    );
+  }
+  render(<Held />);
+  return { actions, user: userEvent.setup() };
 };
 
 const press = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
@@ -253,13 +282,13 @@ describe('BirthStep', () => {
 
 describe('AddressStep', () => {
   it('shows the mail domain after the name and tells the flow what is typed, lower case with full stops for spaces', async () => {
-    const { actions, user } = setup(<AddressStep />);
+    const { actions, user } = setupAddress();
 
     await user.type(screen.getByLabelText(m.addressLabel), 'Amara O');
 
     expect(screen.getByText('@yahel.example')).toBeInTheDocument();
     expect(screen.getByLabelText(m.addressLabel)).toHaveValue('amara.o');
-    expect(actions.considerAddress).toHaveBeenLastCalledWith('amara.o');
+    expect(actions.typeAddress).toHaveBeenLastCalledWith('amara.o');
   });
 
   it.each([
@@ -268,7 +297,7 @@ describe('AddressStep', () => {
     ['amara_o', m.addressCharacters],
     ['amara..o', m.addressDots],
   ])('holds back "%s"', async (typed, problem) => {
-    const { actions, user } = setup(<AddressStep />);
+    const { actions, user } = setupAddress();
 
     if (typed) await user.type(screen.getByLabelText(m.addressLabel), typed);
     await press(m.continue);
@@ -278,7 +307,7 @@ describe('AddressStep', () => {
   });
 
   it('says a free address is free and lets it be chosen', async () => {
-    const { actions } = setup(<AddressStep />, { state: { ...answered, addressCheck: { status: 'available', alternatives: [] } } });
+    const { actions } = setupAddress({ state: { ...answered, addressCheck: { status: 'available', alternatives: [] } } });
 
     expect(screen.getByText(m.addressAvailable)).toBeInTheDocument();
     await press(m.continue);
@@ -287,7 +316,7 @@ describe('AddressStep', () => {
   });
 
   it('says a taken address is taken, nothing more, and will not choose it', async () => {
-    const { actions } = setup(<AddressStep />, { state: { ...answered, username: 'amara', addressCheck: { status: 'taken', alternatives: ['amara1', 'amara.mail'] } } });
+    const { actions } = setupAddress({ state: { ...answered, username: 'amara', addressCheck: { status: 'taken', alternatives: ['amara1', 'amara.mail'] } } });
 
     expect(screen.getByText(m.addressTaken)).toBeInTheDocument();
     expect(screen.queryByText(m.addressAvailable)).not.toBeInTheDocument();
@@ -297,27 +326,36 @@ describe('AddressStep', () => {
   });
 
   it('fills in a free alternative with one press', async () => {
-    const { actions } = setup(<AddressStep />, { state: { ...answered, username: 'amara', addressCheck: { status: 'taken', alternatives: ['amara1', 'amara.mail'] } } });
+    const { actions } = setupAddress({ state: { ...answered, username: 'amara', addressCheck: { status: 'taken', alternatives: ['amara1', 'amara.mail'] } } });
 
     await userEvent.click(within(screen.getByRole('group', { name: m.alsoFree })).getByRole('button', { name: 'amara.mail' }));
 
     expect(screen.getByLabelText(m.addressLabel)).toHaveValue('amara.mail');
-    expect(actions.considerAddress).toHaveBeenLastCalledWith('amara.mail');
+    expect(actions.typeAddress).toHaveBeenLastCalledWith('amara.mail');
   });
 
   it('says when it is checking, and lets the person continue when it could not check', async () => {
-    const { actions, rerender } = setup(<AddressStep />, { state: { ...answered, addressCheck: { status: 'checking', alternatives: [] } } });
+    const checking = setupAddress({ state: { ...answered, addressCheck: { status: 'checking', alternatives: [] } } });
     expect(screen.getByText(m.addressChecking)).toBeInTheDocument();
+    cleanup();
 
-    rerender({ state: { ...answered, addressCheck: { status: 'unknown', alternatives: [] } } });
+    const { actions } = setupAddress({ state: { ...answered, addressCheck: { status: 'unknown', alternatives: [] } } });
     expect(screen.getByText(m.addressUnchecked)).toBeInTheDocument();
     await press(m.continue);
 
     expect(actions.chooseAddress).toHaveBeenCalledWith('amara.okafor');
+    expect(checking.actions.chooseAddress).not.toHaveBeenCalled();
+  });
+
+  it('shows what the flow holds for the field, so the field and what is said about it agree', () => {
+    setupAddress({ state: { ...answered, username: '', addressDraft: 'amara', addressCheck: { status: 'taken', alternatives: [] } } });
+
+    expect(screen.getByLabelText(m.addressLabel)).toHaveValue('amara');
+    expect(screen.getByText(m.addressTakenPlain)).toBeInTheDocument();
   });
 
   it('says the address was taken when creating the account found it so, until it is changed', async () => {
-    const { user } = setup(<AddressStep />, { state: { ...answered, rejection: { step: 'address', reason: 'taken' } } });
+    const { user } = setupAddress({ state: { ...answered, rejection: { step: 'address', reason: 'taken' } } });
     expect(screen.getByText(m.addressTakenPlain)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText(m.addressLabel), '1');
@@ -326,7 +364,7 @@ describe('AddressStep', () => {
   });
 
   it('offers an existing email instead', async () => {
-    const { actions } = setup(<AddressStep />);
+    const { actions } = setupAddress();
 
     await press(m.useOwnEmail);
 
@@ -386,6 +424,29 @@ describe('PasswordStep', () => {
     await press(m.continue);
 
     expect(actions.choosePassword).toHaveBeenCalledWith('Sunrise over Lekki 94');
+  });
+
+  it('never puts a password already chosen back on screen: the field is empty, and leaving it empty keeps the password', async () => {
+    const { actions } = setup(<PasswordStep />, { state: { ...answered, hasPassword: true } });
+
+    expect(field()).toHaveValue('');
+    expect(screen.getByRole('status')).toHaveTextContent(m.passwordKept);
+    await press(m.continue);
+
+    expect(actions.keepPassword).toHaveBeenCalledTimes(1);
+    expect(actions.choosePassword).not.toHaveBeenCalled();
+  });
+
+  it('replaces a password already chosen when a new one is typed, by the same rule', async () => {
+    const { actions, user } = setup(<PasswordStep />, { state: { ...answered, hasPassword: true } });
+
+    await user.type(field(), 'short{Enter}');
+    expect(screen.getByText(m.passwordTooShort)).toBeInTheDocument();
+    await user.clear(field());
+    await user.type(field(), 'Harmattan in Jos 2026!{Enter}');
+
+    expect(actions.choosePassword).toHaveBeenCalledWith('Harmattan in Jos 2026!');
+    expect(actions.keepPassword).not.toHaveBeenCalled();
   });
 
   it('hides a revealed password again on submit, and tells password managers whose it is', async () => {
@@ -540,7 +601,17 @@ describe('ReviewStep', () => {
 
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: m.agreement.terms })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: m.agreement.privacy })).toHaveAttribute('href', 'https://yahel.example/privacy');
+    expect(screen.getByRole('link', { name: new RegExp(`^${m.agreement.privacy}`) })).toHaveAttribute('href', 'https://yahel.example/privacy');
+  });
+
+  it('opens the terms and the privacy policy in a new tab, so reading them does not lose the answers', () => {
+    setup(<ReviewStep />, { state: answered });
+
+    for (const name of [m.agreement.terms, m.agreement.privacy]) {
+      const link = screen.getByRole('link', { name: new RegExp(`^${name} ?\\(${m.opensInNewTab}\\)$`) });
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    }
   });
 
   it('creates the account on agreement', async () => {
@@ -583,12 +654,21 @@ describe('CreatingStep', () => {
     expect(screen.queryByRole('link', { name: m.backToReview })).not.toBeInTheDocument();
   });
 
-  it('sends someone whose address already has an account to sign in', () => {
-    setup(<CreatingStep />, { state: { ...creating('signing-in'), existingAccount: true } });
+  it('offers to start again from nothing, until the account exists', async () => {
+    const { actions, rerender } = setup(<CreatingStep />, { state: creating('account'), requests: { create: failing(m.offline) } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.existingAccount);
-    expect(screen.getByRole('link', { name: m.signInInstead })).toHaveAttribute('href', '/signin');
-    expect(screen.queryByRole('button', { name: m.tryAgain })).not.toBeInTheDocument();
+    await press(m.startAgain);
+    expect(actions.startAgain).toHaveBeenCalledTimes(1);
+
+    rerender({ state: creating('signing-in', true), requests: { create: failing(m.offline) } });
+    expect(screen.queryByRole('button', { name: m.startAgain })).not.toBeInTheDocument();
+  });
+
+  it('does not say it is reserving an address the person already owns', () => {
+    setup(<CreatingStep />, { state: { ...creating('account'), addressKind: 'own', address: 'amara@mail.example' }, requests: { create: pending } });
+
+    expect(screen.getByText(m.creatingLedeOwnEmail('amara@mail.example'))).toBeInTheDocument();
+    expect(screen.queryByText(/Reserving/)).not.toBeInTheDocument();
   });
 });
 
@@ -615,8 +695,16 @@ describe('OwnCodeStep and CodeStep', () => {
     expect(screen.getByRole('link', { name: m.signInInstead })).toHaveAttribute('href', '/signin');
 
     rerender({ state: { emailCodeResent: true }, requests: { confirmEmail: failing(m.wrongCode) } });
-    expect(screen.getByRole('status')).toHaveTextContent(m.newCodeSent);
+    expect(screen.getByRole('status')).toHaveTextContent(m.emailCodeAskedAgain);
     expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCode);
+  });
+
+  it('offers a way back to a different address, so a mistyped one does not strand the person', async () => {
+    const { actions } = setup(<OwnCodeStep />, { state: { address: 'amra@mail.example' } });
+
+    await press(m.useDifferentAddress);
+
+    expect(actions.useDifferentAddress).toHaveBeenCalledTimes(1);
   });
 
   it('asks for the texted code, naming the masked number', async () => {
@@ -658,9 +746,17 @@ describe('ReadyStep and ContactStep', () => {
     setup(<ReadyStep />, { state: { ...answered, contactInvited: 'chidi.eze@personal.example', creation: { ...initialPersonalState.creation, unsaved: ['phone', 'passkey'] } } });
 
     expect(screen.getByText(m.unsaved.phone)).toBeInTheDocument();
+    expect(screen.queryByText(m.unsaved.phoneSkipped)).not.toBeInTheDocument();
     expect(screen.getByText(m.unsaved.passkey)).toBeInTheDocument();
     expect(screen.getByText(m.trustInvited('chidi.eze@personal.example'))).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: new RegExp(m.trustTitle) })).not.toBeInTheDocument();
+  });
+
+  it('tells a phone whose code was skipped from one the server would not take', () => {
+    setup(<ReadyStep />, { state: { ...answered, creation: { ...initialPersonalState.creation, unsaved: ['phoneSkipped'] } } });
+
+    expect(screen.getByText(m.unsaved.phoneSkipped)).toBeInTheDocument();
+    expect(screen.queryByText(m.unsaved.phone)).not.toBeInTheDocument();
   });
 
   it('does not offer a trusted contact where there is nowhere to send the invitation', () => {

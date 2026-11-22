@@ -9,15 +9,11 @@ export function AddressStep() {
   const { state, actions, meta } = usePersonalFlow();
   const { status, alternatives } = state.addressCheck;
   const taken = alternatives.length > 0 ? m.addressTaken : m.addressTakenPlain;
-  const name = useStepField({ initial: state.username, problemOf: (value) => addressProblem(value) ?? (status === 'taken' ? taken : null), onValid: actions.chooseAddress });
+  const name = useStepField({ value: state.addressDraft, onChange: actions.typeAddress, problemOf: (value) => addressProblem(value) ?? (status === 'taken' ? taken : null), onValid: actions.chooseAddress });
   // Refused when the account was being created: said until the name is changed.
   const refused = state.rejection?.step === 'address' && name.value === state.username;
 
-  const change = (typed: string) => {
-    const next = normaliseAddress(typed);
-    name.change(next);
-    actions.considerAddress(next);
-  };
+  const change = (typed: string) => name.change(normaliseAddress(typed));
 
   return (
     <StepFrame title={m.addressTitle} lede={m.addressLede}>

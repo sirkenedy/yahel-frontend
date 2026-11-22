@@ -1,18 +1,21 @@
 import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@tanstack/react-router';
 import { resolveReturnAddress } from '@yahel/auth';
 import { useState } from 'react';
+import { useStore } from 'zustand';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
-import { PageRouteError } from '../../features/chrome/route-error';
-import { progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
+import { PageRouteError } from '../../route-error';
+import { accountOf, progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
 import { PersonalFlowProvider } from '../../features/personal/personal-flow';
-import { isSignedInElsewhere, personalFacts } from '../../features/personal/route-guard';
+import { forgetSignUp, isSignedInElsewhere, personalFacts } from '../../features/personal/route-guard';
 
 export const Route = createFileRoute('/personal')({
   beforeLoad: ({ context }) => {
     if (isSignedInElsewhere(context)) throw redirect({ to: '/signin', replace: true });
     return { facts: personalFacts(context) };
   },
+  // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.
+  onLeave: ({ context }) => forgetSignUp(context.personal),
   component: PersonalLayout,
   errorComponent: PageRouteError,
 });
@@ -24,11 +27,13 @@ function PersonalLayout() {
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'type';
   const [detailsHidden, setDetailsHidden] = useState(false);
   const { businessSignUpUrl } = config;
+  const account = accountOf(useStore(personal), config.mailDomain);
 
   return (
     <AppFrame
       links={{ home: '/personal', homeLabel: chromeMessages.brandSignUp, signIn: step === 'type' ? config.signInUrl : null, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }}
       // Offered on the numbered questions, which are the ones that ask for personal details.
+      account={account}
       privacy={progressOf(step) ? { isOn: detailsHidden, onToggle: () => setDetailsHidden(!detailsHidden) } : null}
     >
       <PersonalFlowProvider

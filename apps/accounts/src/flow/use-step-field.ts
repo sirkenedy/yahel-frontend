@@ -3,6 +3,9 @@ import type { FormEvent } from 'react';
 
 export interface StepFieldOptions {
   initial?: string;
+  /** The value, when something other than the field holds it. Give `onChange` with it; `initial` is then unused. */
+  value?: string;
+  onChange?: (value: string) => void;
   /** What is wrong with the value, in words for the person, or `null` when it can be sent. */
   problemOf: (value: string) => string | null;
   /** Called on submit with a value that has no problem. Leave out when the field is one of several (`submitFields`). */
@@ -13,13 +16,15 @@ export interface StepFieldOptions {
  * One field of a step: its value, its problem, and what submitting does. A problem is found on submit,
  * shown beside the field with focus moved to it, and cleared as soon as the value is edited.
  */
-export function useStepField<Control extends HTMLElement = HTMLInputElement>({ initial = '', problemOf, onValid }: StepFieldOptions) {
-  const [value, setValue] = useState(initial);
+export function useStepField<Control extends HTMLElement = HTMLInputElement>({ initial = '', value: held, onChange, problemOf, onValid }: StepFieldOptions) {
+  const [own, setOwn] = useState(initial);
+  const value = held ?? own;
   const [problem, setProblem] = useState<string | null>(null);
   const inputRef = useRef<Control>(null);
 
   const change = (next: string) => {
-    setValue(next);
+    if (onChange) onChange(next);
+    else setOwn(next);
     setProblem(null);
   };
 
@@ -32,19 +37,13 @@ export function useStepField<Control extends HTMLElement = HTMLInputElement>({ i
 
   const focus = () => inputRef.current?.focus();
 
-  /** Shows a problem found outside the step, such as an answer the server refused, and moves focus to the field. */
-  const reject = (found: string) => {
-    setProblem(found);
-    focus();
-  };
-
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (check()) onValid?.(value);
     else focus();
   };
 
-  return { value, change, error: problem ?? undefined, submit, inputRef, check, focus, reject };
+  return { value, change, error: problem ?? undefined, submit, inputRef, check, focus };
 }
 
 type CheckedField = Pick<ReturnType<typeof useStepField>, 'check' | 'focus'>;

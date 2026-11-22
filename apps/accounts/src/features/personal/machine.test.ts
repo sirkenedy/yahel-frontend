@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addressOf, backOf, directionOf, initialPersonalState, nextOf, personalSteps, progressOf, reduce, resumeStep, stepOfPath, stepPath } from './machine';
+import { accountOf, addressOf, backOf, directionOf, hasAccountUnderway, initialPersonalState, nextOf, personalSteps, progressOf, reduce, resumeStep, stepOfPath, stepPath } from './machine';
 import type { PersonalEvent, PersonalFacts, PersonalState, PersonalStep } from './machine';
 
 const facts: PersonalFacts = { passkeysOffered: true, contactOffered: true };
@@ -32,7 +32,7 @@ describe('reduce', () => {
   it('switches between a Yahel address and an existing email without losing either', () => {
     const state = after(addressed, { type: 'own-email-chosen', email: 'amara@mail.example' });
     expect(state).toMatchObject({ addressKind: 'own', ownEmail: 'amara@mail.example', username: 'amara.okafor' });
-    expect(reduce(state, { type: 'address-kind-chosen', kind: 'yahel' }).addressKind).toBe('yahel');
+    expect(reduce(state, addressed).addressKind).toBe('yahel');
   });
 
   it('skipping recovery clears what was typed there and still lets the review show', () => {
@@ -56,12 +56,13 @@ describe('reduce', () => {
   });
 
   it('records each part of setting up as settled, and which could not be saved', () => {
-    const state = after(...started, { type: 'setup-settled', part: 'recoveryEmail', saved: true }, { type: 'phone-code-sent' }, { type: 'setup-settled', part: 'phone', saved: false });
-    expect(state.creation).toMatchObject({ settled: ['recoveryEmail', 'phone'], unsaved: ['phone'], phoneCodeAwaited: false });
+    const state = after(...started, { type: 'setup-settled', part: 'recoveryEmail', outcome: 'saved' }, { type: 'passkey-created', attestation }, { type: 'setup-settled', part: 'passkey', outcome: 'refused' }, { type: 'phone-code-sent' }, { type: 'setup-settled', part: 'phone', outcome: 'skipped' });
+    expect(state.creation).toMatchObject({ settled: ['recoveryEmail', 'passkey', 'phone'], unsaved: ['passkey', 'phoneSkipped'], phoneCodeAwaited: false });
+    expect(after(...started, { type: 'setup-settled', part: 'phone', outcome: 'refused' }).creation.unsaved).toEqual(['phone']);
   });
 
   it('tracks the stage, the email code and the finish', () => {
-    const state = after(...started, { type: 'creation-stage', stage: 'signing-in' }, { type: 'email-code-needed' });
+    const state = after(...started, { type: 'creation-stage', stage: 'signing-in' }, { type: 'email-code-needed', obtainable: true });
     expect(state.creation).toMatchObject({ stage: 'signing-in', emailCode: 'awaited' });
     expect(reduce(state, { type: 'email-confirmed' }).creation.emailCode).toBe('confirmed');
     expect(reduce(state, { type: 'creation-finished' }).creation.finished).toBe(true);
@@ -86,6 +87,29 @@ describe('reduce', () => {
   it('marks an edit from the review, and its end', () => {
     expect(after({ type: 'edit-started' }).editing).toBe(true);
     expect(after({ type: 'edit-started' }, { type: 'edit-finished' }).editing).toBe(false);
+  });
+
+  it('keeps what is typed in the address field, and makes it the choice once chosen', () => {
+    expect(after({ type: 'address-typed', draft: 'amara' })).toMatchObject({ addressDraft: 'amara', username: '' });
+    expect(after({ type: 'address-typed', draft: 'amara' }, addressed)).toMatchObject({ addressDraft: 'amara.okafor', username: 'amara.okafor' });
+  });
+
+  it('marks an emailed code as unobtainable when the registration is not provably this person’s', () => {
+    expect(after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed', obtainable: false }).creation.emailCode).toBe('unobtainable');
+  });
+
+  it('gives up on an emailed code: the attempt ends, every answer stands, and the address is asked for again', () => {
+    const state = after(...answered, { type: 'own-email-chosen', email: 'amra@mail.example' }, { type: 'creation-started' }, { type: 'account-created' }, { type: 'email-code-needed', obtainable: true }, { type: 'address-abandoned' });
+
+    expect(state.creation).toEqual(initialPersonalState.creation);
+    expect(state).toMatchObject({ editing: true, firstName: 'Amara', ownEmail: 'amra@mail.example', password: 'Sunrise over Lekki 94' });
+    expect(resumeStep('own-email', state, facts)).toBe('own-email');
+  });
+
+  it('forgets everything on reset: the answers, the password and the passkey', () => {
+    const state = after(...started, { type: 'passkey-created', attestation }, { type: 'address-typed', draft: 'x' }, { type: 'reset' });
+
+    expect(state).toEqual(initialPersonalState);
   });
 
   it('remembers who was invited as a trusted contact', () => {
@@ -133,7 +157,7 @@ describe('resumeStep', () => {
   });
 
   it('asks for the kind of address that was chosen when the password step has none', () => {
-    expect(resume('password', after(named, born, { type: 'address-kind-chosen', kind: 'own' }))).toBe('own-email');
+    expect(resume('password', { ...after(named, born), addressKind: 'own' })).toBe('own-email');
   });
 
   it('skips the passkey steps in a browser that cannot make one', () => {
@@ -160,9 +184,54 @@ describe('resumeStep', () => {
   });
 
   it('holds the person at the email code while one is awaited, even before the account is known to be theirs', () => {
-    const awaiting = after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed' });
+    const awaiting = after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed', obtainable: true });
     for (const step of ['name', 'review', 'creating', 'ready'] as const) expect(resume(step, awaiting)).toBe('own-code');
     expect(resume('own-code', reduce(awaiting, { type: 'email-confirmed' }))).toBe('creating');
+  });
+});
+
+describe('resumeStep: the review and the passkey prompt', () => {
+  it('never shows the review without an address, whatever else is answered', () => {
+    const noAddress = { ...after(...answered), username: '' };
+    expect(resumeStep('review', noAddress, facts)).toBe('address');
+
+    const noOwnEmail = { ...after(...answered), addressKind: 'own' as const };
+    expect(resumeStep('review', noOwnEmail, facts)).toBe('own-email');
+  });
+
+  it('keeps the address that was chosen while the other kind is only being looked at', () => {
+    const editing = after(...answered, { type: 'edit-started' });
+
+    // "Use an email I already have" from the address step changes nothing until an email is given.
+    expect(resumeStep('own-email', editing, facts)).toBe('own-email');
+    expect(backOf('own-email', editing, facts)).toBe('review');
+    expect(resumeStep('review', editing, facts)).toBe('review');
+    expect(addressOf(editing, 'yahel.example')).toBe('amara.okafor@yahel.example');
+  });
+
+  it('shows the passkey offer, not an empty prompt, once the passkey is made', () => {
+    const made = after(named, born, addressed, secured, { type: 'passkey-started' }, { type: 'passkey-created', attestation });
+
+    expect(resumeStep('passkey', made, facts)).toBe('add-passkey');
+  });
+
+  it('holds the person at the code screen for an unobtainable code too', () => {
+    const state = after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed', obtainable: false });
+
+    expect(resumeStep('review', state, facts)).toBe('own-code');
+  });
+});
+
+describe('hasAccountUnderway and accountOf', () => {
+  it('says when the answers have become final', () => {
+    expect(hasAccountUnderway(after(...started))).toBe(false);
+    expect(hasAccountUnderway(after(...started, { type: 'account-created' }))).toBe(true);
+    expect(hasAccountUnderway(after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed', obtainable: false }))).toBe(true);
+  });
+
+  it('names the account only once it is signed in to', () => {
+    expect(accountOf(after(...started, { type: 'account-created' }), 'yahel.example')).toBeNull();
+    expect(accountOf(after(...started, { type: 'signed-in' }), 'yahel.example')).toEqual({ name: 'Amara Okafor', email: 'amara.okafor@yahel.example' });
   });
 });
 
@@ -190,7 +259,7 @@ describe('backOf', () => {
   });
 
   it('follows the kind of address and what the browser offers', () => {
-    expect(back('password', after({ type: 'address-kind-chosen', kind: 'own' }))).toBe('own-email');
+    expect(back('password', after({ type: 'own-email-chosen', email: 'amara@mail.example' }))).toBe('own-email');
     expect(back('recovery', initialPersonalState, { ...facts, passkeysOffered: false })).toBe('password');
   });
 

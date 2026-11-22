@@ -1,4 +1,4 @@
-import { BrandMark, FlowButton, FlowIcon, FlowLink, FlowShell } from '@yahel/ui';
+import { AccountAvatar, BrandMark, FlowButton, FlowIcon, FlowLink, FlowShell } from '@yahel/ui';
 import type { ReactNode } from 'react';
 import { chromeMessages as m } from './messages';
 import { useTheme } from './use-theme';
@@ -20,11 +20,13 @@ export interface AppFrameProps {
   links: AppFrameLinks;
   /** A control that blurs personal details for screen shares and calls, on screens that ask for them. */
   privacy?: { isOn: boolean; onToggle: () => void } | null;
+  /** Whose account is signed in, shown on every screen where someone is. */
+  account?: { name: string; email: string } | null;
   children: ReactNode;
 }
 
 /** The frame around every account screen: brand, theme control, the question, and the footer. */
-export function AppFrame({ links, privacy, children }: AppFrameProps) {
+export function AppFrame({ links, privacy, account, children }: AppFrameProps) {
   const { theme, toggle } = useTheme();
   return (
     <FlowShell skipLabel={m.skipToQuestion} isPrivate={privacy?.isOn}>
@@ -55,6 +57,7 @@ export function AppFrame({ links, privacy, children }: AppFrameProps) {
         <FlowButton variant="round" aria-label={theme === 'dark' ? m.switchToLight : m.switchToDark} onPress={toggle}>
           <FlowIcon name={theme === 'dark' ? 'sun' : 'moon'} />
         </FlowButton>
+        {account ? <AccountAvatar name={account.name} label={m.signedInAs(account.email)} /> : null}
       </FlowShell.Header>
       <FlowShell.Main>
         <FlowShell.Question>{children}</FlowShell.Question>

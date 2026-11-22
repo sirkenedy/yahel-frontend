@@ -4,7 +4,7 @@ import type { AccountCapabilities } from '@yahel/api-client';
 import type { PasskeyClient, PasskeyRegistrar, Session } from '@yahel/auth';
 import { config } from './config';
 import type { AppConfig } from './config';
-import { StepRouteError } from './features/chrome/route-error';
+import { StepRouteError } from './route-error';
 import { createPersonalStore } from './features/personal/store';
 import type { PersonalStore } from './features/personal/store';
 import { createSignInStore } from './features/sign-in/store';

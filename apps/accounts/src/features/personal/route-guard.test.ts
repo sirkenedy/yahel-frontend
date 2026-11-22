@@ -2,7 +2,7 @@ import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { describe, expect, it, vi } from 'vitest';
-import { isSignedInElsewhere, personalFacts, stepInsteadOf } from './route-guard';
+import { arriveAtReview, forgetSignUp, isSignedInElsewhere, personalFacts, stepInsteadOf } from './route-guard';
 import { createPersonalStore } from './store';
 
 const instant = async () => undefined;
@@ -45,5 +45,63 @@ describe('stepInsteadOf', () => {
 
     personal.dispatch({ type: 'name-entered', firstName: 'Amara', lastName: '' });
     expect(stepInsteadOf('birth', personal, facts)).toBeNull();
+  });
+});
+
+describe('forgetSignUp', () => {
+  const answered = () => {
+    const personal = createPersonalStore();
+    personal.dispatch({ type: 'name-entered', firstName: 'Amara', lastName: '' });
+    personal.dispatch({ type: 'password-chosen', password: 'Sunrise over Lekki 94' });
+    personal.dispatch({ type: 'passkey-created', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: [] } });
+    return personal;
+  };
+
+  it('forgets every answer, the password and the passkey', () => {
+    const personal = answered();
+
+    forgetSignUp(personal);
+
+    expect(personal.getState()).toEqual(personal.getInitialState());
+  });
+
+  it('forgets even an account that is underway when the flow is left', () => {
+    const personal = answered();
+    personal.dispatch({ type: 'account-created' });
+
+    forgetSignUp(personal);
+
+    expect(personal.getState().password).toBeNull();
+  });
+
+  it('can spare a visit whose account already exists, which needs its answers to finish', () => {
+    const personal = answered();
+    forgetSignUp(personal, { unlessUnderway: true });
+    expect(personal.getState()).toEqual(personal.getInitialState());
+
+    const underway = answered();
+    underway.dispatch({ type: 'account-created' });
+    forgetSignUp(underway, { unlessUnderway: true });
+    expect(underway.getState()).toMatchObject({ firstName: 'Amara', password: 'Sunrise over Lekki 94' });
+  });
+});
+
+describe('arriveAtReview', () => {
+  it('ends a change that was being made, however the review was reached', () => {
+    const personal = createPersonalStore();
+    personal.dispatch({ type: 'edit-started' });
+
+    arriveAtReview(personal);
+
+    expect(personal.getState().editing).toBe(false);
+  });
+
+  it('leaves the state alone when nothing was being changed', () => {
+    const personal = createPersonalStore();
+    const before = personal.getState();
+
+    arriveAtReview(personal);
+
+    expect(personal.getState()).toBe(before);
   });
 });

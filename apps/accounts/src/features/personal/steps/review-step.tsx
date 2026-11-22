@@ -74,9 +74,21 @@ export function ReviewStep() {
           ) : null}
           <FlowStep.Note>
             {m.agreement.before}
-            {terms ? <a href={terms}>{m.agreement.terms}</a> : m.agreement.terms}
+            {terms ? (
+              <FlowStep.NoteLink href={terms} newTabLabel={m.opensInNewTab}>
+                {m.agreement.terms}
+              </FlowStep.NoteLink>
+            ) : (
+              m.agreement.terms
+            )}
             {m.agreement.between}
-            {privacy ? <a href={privacy}>{m.agreement.privacy}</a> : m.agreement.privacy}
+            {privacy ? (
+              <FlowStep.NoteLink href={privacy} newTabLabel={m.opensInNewTab}>
+                {m.agreement.privacy}
+              </FlowStep.NoteLink>
+            ) : (
+              m.agreement.privacy
+            )}
             {m.agreement.after}
           </FlowStep.Note>
         </FlowStep.Body>

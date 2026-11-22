@@ -1,4 +1,4 @@
-import { FlowButton, FlowPasswordField, FlowStep, PasswordStrength, UsernameHint } from '@yahel/ui';
+import { FlowButton, FlowNotice, FlowPasswordField, FlowStep, PasswordStrength, UsernameHint } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { passwordStrength } from '../../../flow/credentials';
@@ -11,7 +11,9 @@ import { StepFrame } from './step-frame';
 export function PasswordStep() {
   const { state, actions } = usePersonalFlow();
   const [revealed, setRevealed] = useState(false);
-  const password = useStepField({ initial: state.password ?? '', problemOf: passwordProblem, onValid: actions.choosePassword });
+  // The field always starts empty: a password already chosen is never put back on screen. Left empty, it is kept.
+  const keeps = (value: string) => state.hasPassword && value === '';
+  const password = useStepField({ problemOf: (value) => (keeps(value) ? null : passwordProblem(value)), onValid: (value) => (keeps(value) ? actions.keepPassword() : actions.choosePassword(value)) });
   const score = passwordStrength(password.value, state.firstName);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -24,6 +26,7 @@ export function PasswordStep() {
     <StepFrame title={m.passwordTitle} lede={m.passwordLede}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
+          {state.hasPassword ? <FlowNotice>{m.passwordKept}</FlowNotice> : null}
           <UsernameHint value={state.address} />
           <FlowPasswordField
             label={m.passwordLabel}
@@ -40,7 +43,7 @@ export function PasswordStep() {
             onChange={password.change}
             error={password.error}
             inputRef={password.inputRef}
-            isRequired
+            isRequired={!state.hasPassword}
           />
           <PasswordStrength score={score}>{m.strength(m.strengthVerdicts[score], password.value.length)}</PasswordStrength>
         </FlowStep.Body>

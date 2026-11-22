@@ -8,7 +8,7 @@ import { preload } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import './app.css';
 import { assertDeployment } from './deployment';
-import { RootErrorBoundary } from './features/chrome/error-screen';
+import { RootErrorBoundary, errorExitFor } from './features/chrome/error-screen';
 import { chromeMessages } from './features/chrome/messages';
 import { followSystemThemeColour } from './features/chrome/theme-colour';
 import { createAppRouter, queryClient } from './router';
@@ -34,7 +34,7 @@ root.render(
 void Promise.all([loadCapabilities(), session.init()]).then(([loaded]) => {
   root.render(
     <StrictMode>
-      <RootErrorBoundary onRetry={() => window.location.reload()}>
+      <RootErrorBoundary onRetry={() => window.location.reload()} exit={errorExitFor(window.location.pathname)}>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={createAppRouter(loaded)} />
         </QueryClientProvider>

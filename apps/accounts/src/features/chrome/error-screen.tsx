@@ -5,16 +5,27 @@ import { AppFrame } from './app-frame';
 import { chromeMessages as m } from './messages';
 
 const SIGN_IN = '/signin';
+const SIGN_UP = '/personal';
+
+/** Where the way out of a failed screen leads, and what it is called. */
+export interface ErrorExit {
+  href: string;
+  label: string;
+}
+
+/** The way out that fits where the person was: the start of sign-up from sign-up, the start of sign-in from anywhere else. */
+export const errorExitFor = (pathname: string): ErrorExit => (pathname === SIGN_UP || pathname.startsWith(`${SIGN_UP}/`) ? { href: SIGN_UP, label: m.startAgain } : { href: SIGN_IN, label: m.backToSignIn });
 
 export interface ErrorScreenProps {
   /** What went wrong. It goes to the console for whoever is debugging; the person is never shown it. */
   error: unknown;
   /** Clears the failure and shows the screen again. */
   onRetry: () => void;
+  exit: ErrorExit;
 }
 
 /** What a person sees in place of a step that failed to show: a plain apology, a retry and the way back to the start. */
-export function StepError({ error, onRetry }: ErrorScreenProps) {
+export function StepError({ error, onRetry, exit }: ErrorScreenProps) {
   useEffect(() => {
     console.error(error);
     document.title = m.errorPageTitle;
@@ -30,8 +41,8 @@ export function StepError({ error, onRetry }: ErrorScreenProps) {
         <FlowButton variant="primary" onPress={onRetry}>
           {m.tryAgain}
         </FlowButton>
-        <FlowLink variant="quiet" href={SIGN_IN}>
-          {m.backToSignIn}
+        <FlowLink variant="quiet" href={exit.href}>
+          {exit.label}
         </FlowLink>
       </FlowStep.Actions>
     </FlowStep>
@@ -41,7 +52,7 @@ export function StepError({ error, onRetry }: ErrorScreenProps) {
 /** The same message with the frame around it, for a failure that took the frame down too. */
 export function PageError(props: ErrorScreenProps) {
   return (
-    <AppFrame links={{ home: SIGN_IN, help: null, privacy: null, terms: null }}>
+    <AppFrame links={{ home: props.exit.href, help: null, privacy: null, terms: null }}>
       <StepError {...props} />
     </AppFrame>
   );
@@ -50,6 +61,7 @@ export function PageError(props: ErrorScreenProps) {
 interface RootErrorBoundaryProps {
   /** Starts the app again from nothing. */
   onRetry: () => void;
+  exit: ErrorExit;
   children: ReactNode;
 }
 
@@ -62,6 +74,6 @@ export class RootErrorBoundary extends Component<RootErrorBoundaryProps, { error
   }
 
   override render() {
-    return this.state.failed ? <PageError error={this.state.error} onRetry={this.props.onRetry} /> : this.props.children;
+    return this.state.failed ? <PageError error={this.state.error} onRetry={this.props.onRetry} exit={this.props.exit} /> : this.props.children;
   }
 }

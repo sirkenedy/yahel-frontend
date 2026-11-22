@@ -75,14 +75,24 @@ const setup = ({ step = 'review' as PersonalStep, standIns = true, passkeys = tr
         navigate={navigate}
         leaveForBusiness={business ? leaveForBusiness : null}
         leave={leave}
+        pause={instant}
       >
         <Probe onValue={(value) => (latest = value)} />
       </PersonalFlowProvider>
     </QueryClientProvider>
   );
   const view = render(tree(step));
-  /** Everything the query client is holding on to, as text, to search for things that must not be kept. */
-  const retained = () => JSON.stringify([queryClient.getMutationCache().getAll().map((mutation) => mutation.state), queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])]);
+  /**
+   * Everything the query client is holding on to, as text, to search for things that must not be kept:
+   * each mutation's whole state and each query's key and data, with errors written out in full, because
+   * turning an Error into JSON on its own drops its message.
+   */
+  const spelled = (error: unknown) => (error instanceof Error ? [error.name, error.message, { ...error }] : error);
+  const retained = () =>
+    JSON.stringify([
+      queryClient.getMutationCache().getAll().map((mutation) => ({ ...mutation.state, error: spelled(mutation.state.error), failureReason: spelled(mutation.state.failureReason), options: Object.keys(mutation.options) })),
+      queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data, spelled(query.state.error)]),
+    ]);
   const flow = () => latest!;
   const create = async (expected: PersonalStep | null = 'ready') => {
     act(() => flow().actions.createAccount());
@@ -109,6 +119,43 @@ describe('PersonalFlowProvider: the questions', () => {
     expect(flow().state).toMatchObject({ address, fullName: 'Amara Okafor' });
   });
 
+  it('keeps the address that was chosen when the other kind is opened from the review and then left', () => {
+    const { flow, store, navigate } = setup();
+
+    act(() => flow().actions.edit('address'));
+    act(() => flow().actions.useOwnEmail());
+
+    expect(navigate).toHaveBeenLastCalledWith('own-email');
+    expect(store.getState()).toMatchObject({ addressKind: 'yahel', username: 'amara.okafor' });
+    expect(flow().state.address).toBe(address);
+  });
+
+  it('never hands the password to a step, only whether one is chosen', () => {
+    const { flow } = setup();
+
+    expect(flow().state.hasPassword).toBe(true);
+    expect(JSON.stringify(flow().state)).not.toContain(password);
+    expect(flow().state).not.toHaveProperty('password');
+  });
+
+  it('moves on with the password already chosen, without it being typed again', () => {
+    const { flow, store, navigate } = setup({ step: 'password' });
+
+    act(() => flow().actions.keepPassword());
+
+    expect(navigate).toHaveBeenLastCalledWith('add-passkey');
+    expect(store.getState().password).toBe(password);
+  });
+
+  it('starts again from nothing on request: no answers, no password, no passkey', () => {
+    const { flow, store, navigate } = setup({ events: [...answers, { type: 'passkey-created', attestation }, { type: 'address-typed', draft: 'amara' }] });
+
+    act(() => flow().actions.startAgain());
+
+    expect(store.getState()).toEqual(store.getInitialState());
+    expect(navigate).toHaveBeenLastCalledWith('type', { replace: true });
+  });
+
   it('branches to an existing email and back', () => {
     const { flow, store, navigate } = setup({ step: 'address', events: answers.slice(0, 2) });
 
@@ -120,6 +167,9 @@ describe('PersonalFlowProvider: the questions', () => {
 
     act(() => flow().actions.useYahelAddress());
     expect(navigate).toHaveBeenLastCalledWith('address');
+    // Looking at the other kind changes nothing until an address of that kind is given.
+    expect(store.getState()).toMatchObject({ addressKind: 'own', ownEmail });
+    act(() => flow().actions.chooseAddress('amara.okafor'));
     expect(store.getState().addressKind).toBe('yahel');
   });
 
@@ -148,7 +198,6 @@ describe('PersonalFlowProvider: the questions', () => {
 
     act(() => answer(flow()));
     expect(navigate).toHaveBeenLastCalledWith('review');
-    expect(store.getState().editing).toBe(false);
   });
 
   it('changes the sign-in from the review by way of the passkey offer', () => {
@@ -203,20 +252,35 @@ describe('PersonalFlowProvider: the address check', () => {
     await waitFor(() => expect(flow().state.addressCheck).toEqual({ status: 'idle', alternatives: ['amara.okafor', 'okafor.amara', 'amaraokafor'] }));
   });
 
+  it('holds what is typed in one place, so a field that is empty again is not still called taken', async () => {
+    const { flow, store, goTo } = setup({ step: 'address', events: answers.slice(0, 2) });
+
+    act(() => flow().actions.typeAddress('amara'));
+    await waitFor(() => expect(flow().state.addressCheck.status).toBe('taken'));
+    expect(store.getState().addressDraft).toBe('amara');
+    goTo('birth');
+    goTo('address');
+    expect(flow().state.addressDraft).toBe('amara');
+    expect(flow().state.addressCheck.status).toBe('taken');
+
+    act(() => flow().actions.typeAddress(''));
+    expect(flow().state.addressCheck.status).toBe('idle');
+  });
+
   it('checks what is typed once typing pauses, and says only free or taken', async () => {
     const { flow, capabilities } = setup({ step: 'address', events: answers.slice(0, 2) });
     const check = vi.spyOn(capabilities.addresses!, 'check');
 
-    act(() => flow().actions.considerAddress('ama'));
+    act(() => flow().actions.typeAddress('ama'));
     expect(flow().state.addressCheck.status).toBe('idle');
-    act(() => flow().actions.considerAddress('amar'));
-    act(() => flow().actions.considerAddress('amara'));
+    act(() => flow().actions.typeAddress('amar'));
+    act(() => flow().actions.typeAddress('amara'));
     expect(flow().state.addressCheck.status).toBe('checking');
 
     await waitFor(() => expect(flow().state.addressCheck).toEqual({ status: 'taken', alternatives: ['amara.mail', 'amara1', 'hello.amara'] }));
     expect(check.mock.calls.map(([name]) => name)).not.toContain('amar');
 
-    act(() => flow().actions.considerAddress('chidi.eze'));
+    act(() => flow().actions.typeAddress('chidi.eze'));
     await waitFor(() => expect(flow().state.addressCheck.status).toBe('available'));
   });
 
@@ -224,7 +288,7 @@ describe('PersonalFlowProvider: the address check', () => {
     const { flow, capabilities } = setup({ step: 'address', events: answers.slice(0, 2) });
     vi.spyOn(capabilities.addresses!, 'check').mockRejectedValue(failure(429, 'TOO_MANY_REQUESTS'));
 
-    act(() => flow().actions.considerAddress('chidi.eze'));
+    act(() => flow().actions.typeAddress('chidi.eze'));
 
     await waitFor(() => expect(flow().state.addressCheck).toEqual({ status: 'unknown', alternatives: [] }));
   });
@@ -293,6 +357,23 @@ describe('PersonalFlowProvider: creating the account', () => {
 
     expect(store.getState().password).toBeNull();
     expect(retained()).not.toContain(password);
+    expect(retained()).not.toContain('Sunrise');
+  });
+
+  it('keeps nothing secret in the query client while a request is in flight or after it has failed', async () => {
+    const { session, flow, retained, create } = setup();
+    let fail: (error: unknown) => void = () => undefined;
+    session.signIn.mockImplementationOnce(() => new Promise((_resolve, reject) => (fail = reject)));
+
+    await create(null);
+    await waitFor(() => expect(session.signIn).toHaveBeenCalled());
+    expect(flow().meta.requests.create.isPending).toBe(true);
+    expect(retained()).not.toContain('Sunrise');
+
+    // A failure whose own text repeats what was sent must not bring the password into the cache's view of it.
+    await act(async () => fail(new ApiError({ status: 500, code: 'INTERNAL_SERVER_ERROR', message: 'x' })));
+    await waitFor(() => expect(flow().meta.requests.create.failure).toBe(m.unexpected));
+    expect(retained()).toContain('INTERNAL_SERVER_ERROR');
     expect(retained()).not.toContain('Sunrise');
   });
 
@@ -484,7 +565,7 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
     act(() => flow().actions.skipPhone());
 
     expect(navigate).toHaveBeenLastCalledWith('ready', { replace: true });
-    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['phone'], phoneCodeAwaited: false });
+    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['phoneSkipped'], phoneCodeAwaited: false });
   });
 
   it('finishes without the phone when the server will not take the number', async () => {
@@ -534,35 +615,83 @@ describe('PersonalFlowProvider: an email the person already has', () => {
     expect(session.api.auth.resendVerification).toHaveBeenCalledWith({ email: ownEmail });
   });
 
-  it('gives nothing away about an address that already has an account: the same screen, and a code asked for', async () => {
-    const { session, store, flow, create } = setup({ events: own });
-    session.api.auth.register.mockRejectedValue(failure(409, 'EMAIL_ALREADY_EXISTS'));
-    session.signIn.mockRejectedValue(failure(401, 'INVALID_CREDENTIALS'));
+  // Someone may have registered the address first, with their own password, and left it unconfirmed, waiting
+  // for the real owner's code to switch their account on. So when the address has a registration or an account
+  // this person's password does not open, no code is asked for and none is ever submitted.
+  const takenByAnother = async () => {
+    const context = setup({ events: own });
+    context.session.api.auth.register.mockRejectedValue(failure(409, 'EMAIL_ALREADY_EXISTS'));
+    context.session.signIn.mockRejectedValue(failure(401, 'INVALID_CREDENTIALS'));
+    await context.create('own-code');
+    context.goTo('own-code');
+    return context;
+  };
 
-    await create('own-code');
+  it('shows the same screen for an address that already has a registration or an account, and asks the server for nothing', async () => {
+    const { session, store, flow } = await takenByAnother();
 
-    expect(session.api.auth.resendVerification).toHaveBeenCalledWith({ email: ownEmail });
-    expect(store.getState()).toMatchObject({ rejection: null, creation: { emailCode: 'awaited', conflicted: true, created: false } });
-    expect(flow().state.existingAccount).toBe(false);
+    expect(session.api.auth.resendVerification).not.toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({ rejection: null, creation: { emailCode: 'unobtainable', conflicted: true, created: false } });
     expect(flow().meta.requests.create.failure).toBeNull();
   });
 
-  it('tells only someone who has proved the mailbox is theirs that it already has an account', async () => {
-    const { session, flow, navigate, goTo, create } = setup({ events: own });
-    session.api.auth.register.mockRejectedValue(failure(409, 'EMAIL_ALREADY_EXISTS'));
-    session.signIn.mockRejectedValue(failure(401, 'INVALID_CREDENTIALS'));
-    await create('own-code');
-    goTo('own-code');
+  it('never submits a code for a registration that is not provably this person’s, whatever is typed', async () => {
+    const { session, store, flow, navigate, retained } = await takenByAnother();
+    navigate.mockClear();
 
     act(() => flow().actions.confirmEmail('B4nQ7x'));
-    await waitFor(() => expect(navigate).toHaveBeenLastCalledWith('creating', { replace: true }));
-    goTo('creating');
 
-    await waitFor(() => expect(flow().state.existingAccount).toBe(true));
-    expect(session.api.auth.register).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(flow().meta.requests.confirmEmail.failure).toBe(m.wrongCode));
+    expect(session.api.auth.verifyEmail).not.toHaveBeenCalled();
+    expect(session.api.auth.resendVerification).not.toHaveBeenCalled();
+    expect(session.signIn).toHaveBeenCalledTimes(1);
+    expect(store.getState().creation.emailCode).toBe('unobtainable');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(retained()).not.toContain('B4nQ7x');
   });
 
-  it('picks up an unconfirmed account of the person’s own from an earlier attempt', async () => {
+  it('does not ask for a code for such a registration when "Send a new code" is pressed, and answers as it would for anyone', async () => {
+    const { session, flow } = await takenByAnother();
+
+    act(() => flow().actions.resendEmailCode());
+
+    await waitFor(() => expect(flow().state.emailCodeResent).toBe(true));
+    expect(session.api.auth.resendVerification).not.toHaveBeenCalled();
+    expect(session.api.auth.verifyEmail).not.toHaveBeenCalled();
+  });
+
+  it('treats an existing account with a second step the same way: no code, nothing confirmed, no challenge kept', async () => {
+    const { session, store, flow, retained, create } = setup({ events: own });
+    session.api.auth.register.mockRejectedValue(failure(409, 'EMAIL_ALREADY_EXISTS'));
+    session.signIn.mockResolvedValue({ ok: false, reason: 'mfa-required', challengeToken: 'challenge-of-someone-else' });
+
+    await create('own-code');
+    act(() => flow().actions.confirmEmail('B4nQ7x'));
+
+    await waitFor(() => expect(flow().meta.requests.confirmEmail.failure).toBe(m.wrongCode));
+    expect(session.api.auth.verifyEmail).not.toHaveBeenCalled();
+    expect(session.api.auth.resendVerification).not.toHaveBeenCalled();
+    expect(JSON.stringify(store.getState())).not.toContain('challenge-of-someone-else');
+    expect(retained()).not.toContain('challenge-of-someone-else');
+  });
+
+  it('lets a mistyped address be put right from the code screen: the attempt ends and every other answer stands', async () => {
+    const { session, store, flow, navigate, create } = setup({ events: own });
+    session.signIn.mockRejectedValueOnce(failure(403, 'EMAIL_NOT_VERIFIED'));
+    await create('own-code');
+
+    act(() => flow().actions.useDifferentAddress());
+    expect(navigate).toHaveBeenLastCalledWith('own-email', { replace: true });
+    expect(store.getState()).toMatchObject({ editing: true, password, firstName: 'Amara', creation: { started: false, created: false, emailCode: 'not-needed' } });
+
+    act(() => flow().actions.chooseOwnEmail('amara.okafor@mail.example'));
+    expect(navigate).toHaveBeenLastCalledWith('review');
+    await create('ready');
+    expect(session.api.auth.register).toHaveBeenCalledTimes(2);
+    expect(session.api.auth.register).toHaveBeenLastCalledWith(expect.objectContaining({ email: 'amara.okafor@mail.example' }));
+  });
+
+  it('picks up an unconfirmed registration of the person’s own from an earlier visit: their password opens it, so a code may be asked for and used', async () => {
     const { session, flow, navigate, create } = setup({ events: own });
     session.api.auth.register.mockRejectedValue(failure(409, 'EMAIL_ALREADY_EXISTS'));
     session.signIn.mockRejectedValueOnce(failure(403, 'EMAIL_NOT_VERIFIED'));
@@ -572,6 +701,7 @@ describe('PersonalFlowProvider: an email the person already has', () => {
 
     act(() => flow().actions.confirmEmail('B4nQ7x'));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
+    expect(session.api.auth.verifyEmail).toHaveBeenCalledWith({ email: ownEmail, token: 'B4nQ7x' });
   });
 });
 

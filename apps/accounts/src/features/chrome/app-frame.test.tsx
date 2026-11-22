@@ -88,6 +88,18 @@ describe('AppFrame', () => {
     expect(screen.queryByRole('button', { name: m.showDetails })).not.toBeInTheDocument();
   });
 
+  it('shows whose account is signed in, and nothing when nobody is', () => {
+    const { rerender } = render(
+      <AppFrame links={links} account={{ name: 'Amara Okafor', email: 'amara.okafor@yahel.example' }}>
+        q
+      </AppFrame>,
+    );
+    expect(within(screen.getByRole('banner')).getByRole('img', { name: m.signedInAs('amara.okafor@yahel.example') })).toHaveTextContent('AO');
+
+    rerender(<AppFrame links={links}>q</AppFrame>);
+    expect(screen.queryByRole('img', { name: /Signed in as/ })).not.toBeInTheDocument();
+  });
+
   it('switches between light and dark, naming the control for what it will do', async () => {
     render(<AppFrame links={links}>q</AppFrame>);
 
