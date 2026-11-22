@@ -583,6 +583,25 @@ describe('CheckoutStep', () => {
     expect(actions.chooseSeats).toHaveBeenLastCalledWith(10);
   });
 
+  it('Enter in the number of people checks the number and never starts the payment', async () => {
+    const { actions, user } = setup(<CheckoutStep />, { state: { ...ready, seats: 12, quote: { status: 'ready', value: paidQuote } } });
+    await fillCard(user);
+
+    await user.clear(field(m.seatsMoreLabel));
+    await user.type(field(m.seatsMoreLabel), '25{Enter}');
+    expect(actions.pay).not.toHaveBeenCalled();
+    await user.clear(field(m.seatsMoreLabel));
+    await user.type(field(m.seatsMoreLabel), '4{Enter}');
+    expect(field(m.seatsMoreLabel)).toHaveAccessibleDescription(m.seatsMoreInvalid(11));
+    expect(actions.pay).not.toHaveBeenCalled();
+
+    await press(m.payAndStart('₦60,000'));
+    await user.clear(field(m.seatsMoreLabel));
+    await user.type(field(m.seatsMoreLabel), '25');
+    await press(m.payAndStart('₦60,000'));
+    expect(actions.pay).toHaveBeenCalledTimes(1);
+  });
+
   it('adds a domain bought here to the order, to what is due and to what paying agrees to', () => {
     const domain = { name: 'example.com', yearly: naira(18_500) };
     setup(<CheckoutStep />, { state: { ...ready, domainSource: 'bought', domain: domain.name, quote: { status: 'ready', value: { ...trialQuote, domain, dueToday: naira(18_500) } } } });

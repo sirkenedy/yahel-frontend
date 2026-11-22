@@ -1,6 +1,6 @@
 import { FlowButton, FlowChip, FlowChips, FlowNotice, FlowStep, FlowTextField, OrderSummary, Receipt } from '@yahel/ui';
 import { useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
+import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
 import { useBusinessFlow } from '../business-flow';
 import { brandOf, formatCardNumber, formatExpiry, formatSecurityCode } from '../card';
@@ -65,6 +65,13 @@ export function CheckoutStep() {
     chooseMany(String(Math.max(state.seats, largest + 1)));
   };
 
+  // The number of people sits inside the payment form, where Enter would otherwise pay: it only checks the number.
+  const checkManyOnEnter = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    many.check();
+  };
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     setAddressAsked(true);
     form.submit(event, () => {
@@ -86,7 +93,7 @@ export function CheckoutStep() {
                 ))}
                 <FlowChip value={MORE}>{m.moreSeats(largest + 1)}</FlowChip>
               </FlowChips>
-              {state.seats > largest ? <FlowTextField label={m.seatsMoreLabel} name="seats" inputMode="numeric" autoComplete="off" value={many.value} onChange={many.change} onBlur={many.blur} error={many.error} inputRef={many.inputRef} /> : null}
+              {state.seats > largest ? <FlowTextField label={m.seatsMoreLabel} name="seats" inputMode="numeric" autoComplete="off" value={many.value} onChange={many.change} onBlur={many.blur} error={many.error} inputRef={many.inputRef} onKeyDown={checkManyOnEnter} /> : null}
               {sums.trial ? (
                 <FlowStep.Note>{m.seatsHelpTrial}</FlowStep.Note>
               ) : (
