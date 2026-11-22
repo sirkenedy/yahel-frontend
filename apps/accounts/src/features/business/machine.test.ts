@@ -5,7 +5,7 @@ import type { BusinessEvent, BusinessFacts, BusinessState, BusinessStep } from '
 const all: BusinessFacts = { domainsForSale: true, billing: true };
 const bare: BusinessFacts = { domainsForSale: false, billing: false };
 const after = (...events: BusinessEvent[]): BusinessState => events.reduce(reduce, initialBusinessState);
-const offer = { domain: 'northwindstudio.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true };
+const offer = { domain: 'example.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true };
 const address = { street: '12 Admiralty Way', street2: '', city: 'Lekki', state: 'Lagos', localArea: '', postalCode: '', phoneCountry: 'NG', phone: '803 555 0142' };
 const payment = { id: 'pay_1', card: { brand: 'Visa', lastFour: '4081' }, sentTo: null };
 
@@ -86,9 +86,9 @@ describe('reduce', () => {
 describe('what the answers add up to', () => {
   it('names the domain and the administrator’s address for either kind of domain', () => {
     expect(domainOf(after(...owned))).toBe('northwind.example');
-    expect(domainOf(after(...bought))).toBe('northwindstudio.com');
+    expect(domainOf(after(...bought))).toBe('example.com');
     expect(domainOf(after(business, { type: 'domain-source-chosen', source: 'bought' }))).toBe('');
-    expect(adminAddressOf(after(...bought, admin))).toBe('amara@northwindstudio.com');
+    expect(adminAddressOf(after(...bought, admin))).toBe('amara@example.com');
   });
 
   it('counts the people chosen at checkout, or the smallest team of the size given', () => {

@@ -11,14 +11,16 @@ export const business = {
   month: 'March',
   year: '1994',
   domain: 'harbourline.example',
-  boughtDomain: 'harbourlinestudio.com',
+  /** What the domain search is asked for when a domain is bought: its best match is a name reserved for examples (RFC 2606). */
+  boughtSearch: 'example',
+  boughtDomain: 'example.com',
   street: '12 Admiralty Way',
   city: 'Lekki',
   state: 'Lagos',
   phone: '803 555 0142',
   adminUser: 'amara',
   adminAddress: 'amara@harbourline.example',
-  boughtAdminAddress: 'amara@harbourlinestudio.com',
+  boughtAdminAddress: 'amara@example.com',
   password: 'Harbourline Lagos 2026!',
 };
 
@@ -49,6 +51,12 @@ export async function fillAddress(page: Page) {
   await page.getByLabel('City or town').fill(business.city);
   await page.getByLabel('State', { exact: true }).selectOption({ label: business.state });
   await page.getByLabel('Business phone').fill(business.phone);
+}
+
+/** Searches for the name the tests buy, in place of the business's own name, and waits for its results. */
+export async function searchForBoughtDomain(page: Page) {
+  await page.getByLabel('Search for a domain').fill(business.boughtSearch);
+  await page.getByRole('radio', { name: new RegExp(`^${business.boughtDomain.replace('.', '\\.')} `) }).waitFor();
 }
 
 export async function fillCard(page: Page, number = card.number) {
@@ -87,6 +95,7 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
     await proceed(page);
     await heading(page, 'Find your domain.').waitFor();
     if (stop === 'find') return;
+    await searchForBoughtDomain(page);
     await page.getByRole('radio', { name: new RegExp(`^${business.boughtDomain.replace('.', '\\.')}`) }).check({ force: true });
     await proceed(page);
     await heading(page, `Register ${business.boughtDomain}`).waitFor();

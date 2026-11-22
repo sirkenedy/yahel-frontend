@@ -28,7 +28,7 @@ describe('the domain', () => {
     expect(normaliseDomain('  @Northwind.Example ')).toBe('northwind.example');
   });
 
-  it.each(['northwind.example', 'mail.northwind.co.ke', 'north-wind.africa', 'a1.ng'])('accepts %s', (domain) => {
+  it.each(['northwind.example', 'mail.northwind.example', 'north-wind.example', 'a1.example'])('accepts %s', (domain) => {
     expect(domainProblem(domain)).toBeNull();
   });
 
@@ -115,11 +115,11 @@ describe('the workspace’s short name', () => {
 
   it('falls back to the domain when the name leaves too little', () => {
     expect(slugOf('日本', 'nihon.example')).toBe('nihon-example');
-    expect(slugOf('A', 'a-co.ng')).toBe('a-co-ng');
-    expect(slugOfDomain('mail.northwind.co.ke')).toBe('mail-northwind-co-ke');
+    expect(slugOf('A', 'a-co.example')).toBe('a-co-example');
+    expect(slugOfDomain('mail.northwind.example')).toBe('mail-northwind-example');
   });
 
   it('always matches what the backend requires', () => {
-    for (const slug of [slugOf('Northwind Studio', 'n.example'), slugOf('!!', 'northwind.example'), slugOfDomain('a1.ng')]) expect(slug).toMatch(/^[a-z0-9-]{2,50}$/);
+    for (const slug of [slugOf('Northwind Studio', 'n.example'), slugOf('!!', 'northwind.example'), slugOfDomain('a1.example')]) expect(slug).toMatch(/^[a-z0-9-]{2,50}$/);
   });
 });

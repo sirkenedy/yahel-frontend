@@ -151,11 +151,11 @@ describe('stand-ins for a new workspace', () => {
   it('domain market: offers four names made from the words asked about, the first marked best, at the boards’ prices', async () => {
     const { domainMarket } = createStandIns(instant);
 
-    await expect(domainMarket.search('Northwind Studio')).resolves.toEqual([
-      { domain: 'northwindstudio.com', yearly: naira(18_500), bestMatch: true },
-      { domain: 'northwindstudio.ng', yearly: naira(9_000), bestMatch: false },
-      { domain: 'northwindstudio.africa', yearly: naira(22_000), bestMatch: false },
-      { domain: 'northwindstudiohq.com', yearly: naira(18_500), bestMatch: false },
+    await expect(domainMarket.search('Example')).resolves.toEqual([
+      { domain: 'example.com', yearly: naira(18_500), bestMatch: true },
+      { domain: 'example.ng', yearly: naira(9_000), bestMatch: false },
+      { domain: 'example.africa', yearly: naira(22_000), bestMatch: false },
+      { domain: 'examplehq.com', yearly: naira(18_500), bestMatch: false },
     ]);
   });
 
@@ -197,7 +197,7 @@ describe('stand-ins for a new workspace', () => {
   });
 
   it('quote: a domain bought here is due today even during the trial', () => {
-    expect(quoteFor({ ...order, domain: 'northwindstudio.com' }, now)).toMatchObject({ trial: true, domain: { name: 'northwindstudio.com', yearly: naira(18_500) }, dueToday: naira(18_500) });
+    expect(quoteFor({ ...order, domain: 'example.com' }, now)).toMatchObject({ trial: true, domain: { name: 'example.com', yearly: naira(18_500) }, dueToday: naira(18_500) });
   });
 
   it('quote: a yearly trial says what the year will cost', () => {

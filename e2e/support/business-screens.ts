@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
 import { requestId } from './api';
-import { business, card, createWorkspace, createWorkspaceTo, heading, proceed } from './business';
+import { business, card, createWorkspace, createWorkspaceTo, heading, proceed, searchForBoughtDomain } from './business';
 
 /** Answers the request that creates the workspace the way the backend would refuse it. Registered after the mock, so it is asked first. */
 const refuseCreation = (page: Page, status: number, code: string) =>
@@ -23,7 +23,8 @@ export const businessScreens: Screen[] = [
     name: 'business find, one chosen',
     open: async (page) => {
       await createWorkspaceTo(page, 'find', { domain: 'bought' });
-      await page.getByRole('radio', { name: /^harbourlinestudio\.com/ }).check({ force: true });
+      await searchForBoughtDomain(page);
+      await page.getByRole('radio', { name: /^example\.com/ }).check({ force: true });
     },
   },
   { name: 'business registrant', open: (page) => createWorkspaceTo(page, 'registrant', { domain: 'bought' }) },

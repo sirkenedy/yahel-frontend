@@ -50,8 +50,8 @@ const trialQuote: OrderQuote = {
 const paidQuote: OrderQuote = { ...trialQuote, seats: 12, trial: false, planToday: naira(60_000), dueToday: naira(60_000), schedule: [{ from: null, kind: 'first-period', amount: naira(60_000), per: 'month', discount: null, billedYearly: null }] };
 const address = { street: '12 Admiralty Way', street2: '', city: 'Lekki', state: 'Lagos', localArea: '', postalCode: '106104', phoneCountry: 'NG', phone: '803 555 0142' };
 const offers = [
-  { domain: 'northwindstudio.com', yearly: naira(18_500), bestMatch: true },
-  { domain: 'northwindstudio.ng', yearly: naira(9_000), bestMatch: false },
+  { domain: 'example.com', yearly: naira(18_500), bestMatch: true },
+  { domain: 'example.net', yearly: naira(9_000), bestMatch: false },
 ];
 
 type State = BusinessFlowValue['state'];
@@ -258,11 +258,11 @@ describe('FindStep', () => {
 
   it('lists what can be bought with its price, marks the best match, and reports each key typed', async () => {
     const { actions, user } = setup(<FindStep />, { state: { search: 'northwind studio', offers: found } });
-    expect(screen.getByRole('radio', { name: 'northwindstudio.com Best match ₦18,500/yr' })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: 'northwindstudio.ng ₦9,000/yr' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'example.com Best match ₦18,500/yr' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'example.net ₦9,000/yr' })).toBeInTheDocument();
     expect(screen.getByText(m.resultsNote)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('radio', { name: /northwindstudio\.ng/ }));
+    await user.click(screen.getByRole('radio', { name: /example\.net/ }));
     expect(actions.pickDomain).toHaveBeenCalledWith(offers[1]);
     await user.type(field(m.searchLabel), 's');
     expect(actions.typeSearch).toHaveBeenLastCalledWith('northwind studios');
@@ -277,7 +277,7 @@ describe('FindStep', () => {
     first.container.remove();
 
     const { actions } = setup(<FindStep />, { state: { search: 'northwind', offers: found, bought: offers[0]!, domainSource: 'bought' } });
-    expect(screen.getByRole('radio', { name: /northwindstudio\.com/ })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /example\.com/ })).toBeChecked();
     await press(m.continue);
     expect(actions.continueWithDomain).toHaveBeenCalledTimes(1);
   });
@@ -301,12 +301,12 @@ describe('FindStep', () => {
 });
 
 describe('RegistrantStep', () => {
-  const buying: Partial<State> = { ...answered, domainSource: 'bought', bought: offers[0]!, domain: 'northwindstudio.com' };
+  const buying: Partial<State> = { ...answered, domainSource: 'bought', bought: offers[0]!, domain: 'example.com' };
 
   it('takes the registrant’s address for a domain bought here, with privacy protection said plainly', async () => {
     const { actions, user } = setup(<RegistrantStep />, { state: buying });
-    expect(screen.getByRole('heading', { level: 1, name: m.registrantTitle('northwindstudio.com') })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.privacyOn('northwindstudio.com'));
+    expect(screen.getByRole('heading', { level: 1, name: m.registrantTitle('example.com') })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(m.privacyOn('example.com'));
     expect(field(m.phoneCountry)).toHaveValue('NG');
 
     await user.type(field(m.street), '12 Admiralty Way');
@@ -584,11 +584,11 @@ describe('CheckoutStep', () => {
   });
 
   it('adds a domain bought here to the order, to what is due and to what paying agrees to', () => {
-    const domain = { name: 'northwindstudio.com', yearly: naira(18_500) };
+    const domain = { name: 'example.com', yearly: naira(18_500) };
     setup(<CheckoutStep />, { state: { ...ready, domainSource: 'bought', domain: domain.name, quote: { status: 'ready', value: { ...trialQuote, domain, dueToday: naira(18_500) } } } });
 
     const summary = screen.getByRole('group', { name: m.orderSummary });
-    expect(summary).toHaveTextContent('northwindstudio.com');
+    expect(summary).toHaveTextContent('example.com');
     expect(summary).toHaveTextContent('₦18,500 / year');
     expect(screen.getByRole('button', { name: m.payAndStartTrial('₦18,500') })).toBeInTheDocument();
     expect(screen.getByText(new RegExp(m.domainAgreement))).toBeInTheDocument();

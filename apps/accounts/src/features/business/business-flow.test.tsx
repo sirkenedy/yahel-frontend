@@ -114,7 +114,7 @@ describe('BusinessFlowProvider: answering', () => {
     act(() => flow().actions.chooseDomainSource('bought'));
     expect(navigate).toHaveBeenLastCalledWith('find');
     expect(flow().state.search).toBe('northwind studio');
-    act(() => flow().actions.pickDomain({ domain: 'northwindstudio.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true }));
+    act(() => flow().actions.pickDomain({ domain: 'example.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true }));
     act(() => flow().actions.continueWithDomain());
     expect(navigate).toHaveBeenLastCalledWith('registrant');
     act(() => flow().actions.enterAddress(address));
@@ -141,11 +141,11 @@ describe('BusinessFlowProvider: answering', () => {
   it('searches for what is typed once typing pauses, and says what it found', async () => {
     const { flow } = setup({ step: 'find', events: [...answers.slice(0, 2), { type: 'domain-source-chosen', source: 'bought' }] });
     expect(flow().state.offers.status).toBe('loading');
-    await waitFor(() => expect(flow().state.offers).toMatchObject({ status: 'ready', value: [{ domain: 'northwindstudio.com', bestMatch: true }, {}, {}, {}] }));
+    await waitFor(() => expect(flow().state.offers).toMatchObject({ status: 'ready', value: [{ domain: expect.stringMatching(/^northwindstudio\./) as string, bestMatch: true }, {}, {}, {}] }));
 
-    act(() => flow().actions.typeSearch('harbour'));
+    act(() => flow().actions.typeSearch('example'));
     expect(flow().state.offers.status).toBe('loading');
-    await waitFor(() => expect(flow().state.offers.value?.[0]?.domain).toBe('harbour.com'));
+    await waitFor(() => expect(flow().state.offers.value?.[0]?.domain).toBe('example.com'));
     act(() => flow().actions.typeSearch('!'));
     expect(flow().state.offers.status).toBe('idle');
   });
@@ -359,7 +359,7 @@ describe('BusinessFlowProvider: creating the workspace', () => {
   });
 
   it('for a domain bought here, a domain that has gone leads back to the search', async () => {
-    const offer = { domain: 'northwindstudio.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true };
+    const offer = { domain: 'example.com', yearly: { amount: 1_850_000, currency: 'NGN' }, bestMatch: true };
     const { payAndConfirm, session, store, navigate } = setup({ events: [...answers.slice(0, 2), { type: 'domain-source-chosen', source: 'bought' }, { type: 'domain-picked', offer }, ...answers.slice(4)] });
     session.registerBusiness.mockRejectedValueOnce(failure(409, 'DOMAIN_CONFLICT'));
     await payAndConfirm();

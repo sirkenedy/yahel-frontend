@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { armStepFailure, at, failNextStep, signInWithPassword } from './support/accounts';
 import { emailCode, mockApi, strictCountry } from './support/api';
-import { business, card, createWorkspace, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
+import { business, card, createWorkspace, createWorkspaceTo, fillAddress, fillCard, heading, proceed, searchForBoughtDomain } from './support/business';
 
 type Api = Awaited<ReturnType<typeof mockApi>>;
 const registrations = (api: Api) => api.calls.filter((call) => call.path === '/v1/auth/register-business');
@@ -154,15 +154,18 @@ test.describe('accounts: create a workspace with a domain bought here', () => {
     const api = await mockApi(page);
     await createWorkspaceTo(page, 'find', { domain: 'bought' });
 
+    // The first search is for the business's own name; the test then asks for a name reserved for examples.
     await expect(page.getByLabel('Search for a domain')).toHaveValue('harbourline studio');
     const results = page.getByRole('radiogroup', { name: 'Available domains' });
     await expect(results.getByRole('radio')).toHaveCount(4);
-    await expect(results.getByRole('radio', { name: 'harbourlinestudio.com Best match ₦18,500/yr' })).toBeVisible();
-    await expect(results.getByRole('radio', { name: 'harbourlinestudio.ng ₦9,000/yr' })).toBeVisible();
+    await searchForBoughtDomain(page);
+    await expect(results.getByRole('radio')).toHaveCount(4);
+    await expect(results.getByRole('radio', { name: 'example.com Best match ₦18,500/yr' })).toBeVisible();
+    await expect(results.getByRole('radio', { name: 'example.ng ₦9,000/yr' })).toBeVisible();
 
     await proceed(page);
     await expect(page.getByLabel('Search for a domain')).toHaveAccessibleDescription(/Choose a domain from the list\./);
-    await results.getByRole('radio', { name: /^harbourlinestudio\.com/ }).check({ force: true });
+    await results.getByRole('radio', { name: /^example\.com/ }).check({ force: true });
     await proceed(page);
 
     await expect(heading(page, `Register ${business.boughtDomain}`)).toBeVisible();
@@ -524,7 +527,7 @@ test.describe('accounts: the workspace is created once', () => {
     expect(registrations(api)).toHaveLength(2);
   });
 
-  test('when the answer to creating is lost, another try finds the workspace and does not make a second', async ({ page }) => {
+  test('when the answer to creating is lost, another try does not make a second, and Ready neither charges nor promises a workspace no answer named', async ({ page }) => {
     const api = await mockApi(page);
     await createWorkspaceTo(page, 'card-code');
     api.failNext('/v1/auth/register-business', 'lost');
@@ -533,7 +536,10 @@ test.describe('accounts: the workspace is created once', () => {
 
     await expect(alert(page, 'We can’t reach Yahel right now')).toBeVisible();
     await proceed(page, 'Try again');
-    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+    // No answer named the workspace, and the proven password cannot tell it from an unconfirmed personal sign-up (F-72).
+    await expect(heading(page, 'Sign in to check your workspace.')).toBeVisible();
+    await expect(page.getByRole('main')).toContainText(`we can’t tell from here whether ${business.name} was created`);
+    await expect(page.getByRole('main')).toContainText('Nothing has been charged.');
     // The second request was refused because the first had worked; the password just chosen proved the workspace is this person's.
     expect(registrations(api)).toHaveLength(2);
     expect(api.calls.filter((call) => call.path === '/v1/auth/login')).toHaveLength(1);
@@ -746,10 +752,15 @@ test.describe('accounts: moving about in workspace sign-up', () => {
     await page.keyboard.press('Enter');
 
     await expect(heading(page, 'Find your domain.')).toBeVisible();
-    await page.getByRole('radio', { name: /^harbourlinestudio\.com/ }).focus();
+    await page.getByLabel('Search for a domain').focus();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.type(business.boughtSearch);
+    await page.getByRole('radio', { name: /^example\.com/ }).focus();
     await page.keyboard.press('Space');
     await page.keyboard.press('ArrowDown');
-    await expect(page.getByRole('radio', { name: /^harbourlinestudio\.ng/ })).toBeChecked();
+    await expect(page.getByRole('radio', { name: /^example\.ng/ })).toBeChecked();
+    await page.keyboard.press('ArrowUp');
+    await expect(page.getByRole('radio', { name: /^example\.com/ })).toBeChecked();
     await page.keyboard.press('Enter');
 
     await type('Street address', business.street);
