@@ -281,6 +281,23 @@ describe('BusinessFlowProvider: paying', () => {
     await waitFor(() => expect(session.registerBusiness).toHaveBeenCalledTimes(1));
   });
 
+  it('lets go of an earlier payment when the card is handed over again, so no authorisation is left held', async () => {
+    const { flow, store, billing, priced } = setup();
+    const release = vi.spyOn(billing, 'release');
+    const pay = vi.spyOn(billing, 'pay');
+    await priced();
+    act(() => void flow().actions.pay(card));
+    await waitFor(() => expect(store.getState().payment).not.toBeNull());
+    const first = store.getState().payment!.id;
+
+    act(() => void flow().actions.pay(card));
+    await waitFor(() => expect(pay).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(store.getState().payment?.id).not.toBe(first));
+
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(release).toHaveBeenCalledWith(first);
+  });
+
   it('lets go of the payment on "Use a different card" and returns to checkout', async () => {
     const { flow, navigate, store, billing, priced } = setup();
     const release = vi.spyOn(billing, 'release');
@@ -359,6 +376,25 @@ describe('BusinessFlowProvider: creating the workspace', () => {
     expect(session.registerBusiness.mock.calls.map(([details]) => (details as { slug: string }).slug)).toEqual(['northwind-studio', 'northwind-example']);
   });
 
+  it('while creating, holds the flow on creating; a failure lets the person go back again', async () => {
+    const { payAndConfirm, session, flow, store } = setup();
+    let answer: (value: unknown) => void = () => undefined;
+    session.registerBusiness.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    session.registerBusiness.mockRejectedValueOnce(lost());
+    await payAndConfirm();
+    await waitFor(() => expect(store.getState().creation.started).toBe(true));
+    expect(store.getState().creation.created).toBe(false);
+    expect(flow().meta.requests.create.isPending).toBe(true);
+    act(() => answer(made));
+    await waitFor(() => expect(store.getState().creation.finished).toBe(true));
+
+    const again = setup();
+    again.session.registerBusiness.mockRejectedValueOnce(lost());
+    await again.payAndConfirm();
+    await waitFor(() => expect(again.flow().meta.requests.create.feedback).toMatchObject({ place: 'banner' }));
+    expect(again.store.getState().creation).toMatchObject({ started: false, created: false });
+  });
+
   it('stops with the failure when both short names are refused as duplicates', async () => {
     const { payAndConfirm, session, flow, store } = setup();
     session.registerBusiness.mockRejectedValue(failure(409, 'DUPLICATE_RECORD'));
@@ -413,14 +449,23 @@ describe('BusinessFlowProvider: creating the workspace', () => {
     expect(complete).toHaveBeenCalledTimes(2);
   });
 
-  it('keeps no card detail, bank code or password anywhere once the requests have settled', async () => {
-    const { payAndConfirm, flow, navigate, retained, store } = setup();
-    await payAndConfirm('135790');
+  it('keeps no card detail, bank code or password anywhere, while the requests run and once they have settled', async () => {
+    const { flow, navigate, retained, store, priced } = setup();
+    const secrets = [card.number, card.number.replace(/ /g, ''), '4084 0840 8408', card.expiry, card.securityCode, card.name, '135790', password];
+    await priced();
+    act(() => void flow().actions.pay(card));
+    // Looked at while the payment is in flight, when its mutation is in the cache: settled ones are dropped (gcTime 0).
+    expect(retained()).toContain('"status":"pending"');
+    for (const secret of secrets) expect(retained()).not.toContain(secret);
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('card-code'));
+    act(() => void flow().actions.confirmCard('135790'));
+    expect(retained()).toContain('"status":"pending"');
+    for (const secret of secrets) expect(retained()).not.toContain(secret);
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
     await waitFor(() => expect(flow().meta.requests.create.isPending).toBe(false));
 
     const held = `${retained()} ${JSON.stringify(store.getState())} ${JSON.stringify(flow().state)}`;
-    for (const secret of [card.number, card.number.replace(/ /g, ''), '4084 0840 8408', card.expiry, card.securityCode, card.name, '135790', password]) expect(held).not.toContain(secret);
+    for (const secret of secrets) expect(held).not.toContain(secret);
     expect(store.getState().payment?.card).toEqual({ brand: 'Visa', lastFour: '4081' });
   });
 });

@@ -139,10 +139,15 @@ describe('resumeStep', () => {
     const started = after(...toCheckout, { type: 'creation-started' });
     expect(resumeStep('creating', started, all)).toBe('creating');
     expect(resumeStep('ready', started, all)).toBe('creating');
-    expect(resumeStep('checkout', started, all)).toBe('checkout');
+    // While it is being made, Back or Forward cannot reach a checkout whose payment is in use.
+    for (const step of businessSteps) expect(resumeStep(step, started, all)).toBe('creating');
+    const stopped = reduce(started, { type: 'creation-stopped' });
+    expect(stopped.creation.started).toBe(false);
+    expect(resumeStep('checkout', stopped, all)).toBe('checkout');
 
     const created = reduce(started, { type: 'workspace-created', tenantId: 't1' });
     for (const step of businessSteps) expect(resumeStep(step, created, all)).toBe('creating');
+    expect(reduce(created, { type: 'creation-stopped' })).toBe(created);
     const finished = reduce(created, { type: 'creation-finished' });
     for (const step of businessSteps) expect(resumeStep(step, finished, all)).toBe('ready');
   });

@@ -145,6 +145,8 @@ export type BusinessEvent =
   | { type: 'edit-started' }
   | { type: 'edit-finished' }
   | { type: 'creation-started' }
+  /** The attempt ended without an answer that settles it: the person may go back and change things. */
+  | { type: 'creation-stopped' }
   | { type: 'workspace-created'; tenantId: string | null }
   | { type: 'order-settled' }
   | { type: 'creation-finished' }
@@ -200,6 +202,8 @@ export function reduce(state: BusinessState, event: BusinessEvent): BusinessStat
       return { ...state, editing: false };
     case 'creation-started':
       return inCreation(state, { started: true });
+    case 'creation-stopped':
+      return state.creation.created ? state : inCreation(state, { started: false });
     case 'workspace-created':
       // The last thing the password is needed for.
       return { ...inCreation(state, { created: true, tenantId: event.tenantId }), password: null };
@@ -242,8 +246,10 @@ const hasAdmin = (state: BusinessState) => hasDomain(state) && state.adminUser !
  * the Forward button land somewhere that works.
  */
 export function resumeStep(step: BusinessStep, state: BusinessState, facts: BusinessFacts): BusinessStep {
-  // Once the workspace exists the answers are final: only what comes after can be shown.
+  // Once the workspace exists the answers are final: only what comes after can be shown. While it is being
+  // created they are held too, so Back cannot reach a checkout whose payment is already being used.
   if (state.creation.created) return state.creation.finished ? 'ready' : 'creating';
+  if (state.creation.started) return 'creating';
   const domainStart = (): BusinessStep => (aboutYouAnswered(state) ? (facts.domainsForSale ? 'domain-question' : 'domain') : resumeStep('you', state, facts));
   switch (step) {
     case 'start':

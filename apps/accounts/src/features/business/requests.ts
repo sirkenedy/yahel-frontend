@@ -170,6 +170,7 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
       return 'ready';
     },
     onDone: (outcome) => navigate(outcome === 'ready' ? 'ready' : (state().rejection?.step ?? 'start'), { replace: true }),
+    onFailed: () => store.dispatch({ type: 'creation-stopped' }),
   });
 
   const startCreating = (options?: { replace?: boolean }) => {
@@ -188,6 +189,12 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     run: async (card: CardDetails) => {
       const plan = planId();
       if (!billing || !plan) throw new Error('Checkout is not offered');
+      // A card typed again replaces the payment before it: that one is let go, never left held.
+      const previous = state().payment;
+      if (previous) {
+        store.dispatch({ type: 'payment-dropped' });
+        void billing.release(previous.id).catch(() => undefined);
+      }
       const started = await billing.pay(orderOf(state(), plan), card, contactOf(state()));
       if (started.status === 'declined') throw new Refused('card-declined');
       store.dispatch({ type: 'payment-started', payment: { id: started.paymentId, card: { brand: brandOf(card.number), lastFour: cardDigits(card.number).slice(-4) }, sentTo: started.sentTo } });

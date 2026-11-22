@@ -497,6 +497,51 @@ test.describe('accounts: the workspace is created once', () => {
     await expect(page.getByText(/Signed in as/)).toHaveCount(0);
   });
 
+  test('Back and Forward while the workspace is being created stay on creating, and it is created once', async ({ page }) => {
+    const api = await mockApi(page);
+    await createWorkspaceTo(page, 'card-code');
+    let answer: () => void = () => undefined;
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    // Registered after the mock, so it is asked first: the answer to creating waits until the test lets it go.
+    await page.route('**/api/v1/auth/register-business', async (route) => {
+      await answered;
+      await route.fallback();
+    });
+    await page.getByLabel('6-digit code').fill(card.code);
+    await proceed(page, 'Confirm');
+    await expect(heading(page, `Creating ${business.name}…`)).toBeVisible();
+
+    await page.goBack();
+    await expect(heading(page, `Creating ${business.name}…`)).toBeVisible();
+    await expect(page).toHaveURL(at('/business/creating'));
+    await expect(payButton(page)).toHaveCount(0);
+    await page.goForward();
+    await expect(page).toHaveURL(at('/business/creating'));
+
+    answer();
+    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+  });
+
+  test('a double press of Pay starts one payment, and paying again after Back still creates one workspace', async ({ page }) => {
+    const api = await mockApi(page);
+    await createWorkspaceTo(page, 'checkout');
+    await fillCard(page);
+    await payButton(page).dblclick();
+    await expect(heading(page, 'Confirm with your bank.')).toBeVisible();
+
+    await page.goBack();
+    await expect(heading(page, 'Review and check out.')).toBeVisible();
+    await fillCard(page);
+    await payButton(page).click();
+    await expect(heading(page, 'Confirm with your bank.')).toBeVisible();
+    await page.getByLabel('6-digit code').fill(card.code);
+    await proceed(page, 'Confirm');
+
+    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+  });
+
   test('two businesses of the same name get different short names, without the person being asked', async ({ page }) => {
     const api = await mockApi(page);
     await createWorkspace(page, { name: 'Northwind Studio' });
@@ -538,6 +583,33 @@ test.describe('accounts: moving about in workspace sign-up', () => {
     await page.reload();
     await expect(heading(page, 'Tell us about your business.')).toBeVisible();
     await expect(page.getByLabel('Business name')).toHaveValue('');
+  });
+
+  test('no card detail, bank code, password or contact email reaches web storage, cookies or the address, from checkout to Ready', async ({ page }) => {
+    await mockApi(page);
+    const name = 'Amara Q Cardholder';
+    const secrets = [card.number, card.number.replace(/ /g, ''), card.expiry, card.securityCode, name, card.code, business.password, business.contactEmail];
+    const nothingKept = async (where: string) => {
+      // The device id is a random UUID that `@yahel/auth` keeps on purpose; a short code could appear in it by chance.
+      const kept = await page.evaluate(() => JSON.stringify([Object.entries(localStorage).filter(([key]) => key !== 'yahel.device-id'), { ...sessionStorage }, document.cookie]));
+      for (const secret of secrets) expect(kept, `${secret} at ${where}`).not.toContain(secret);
+      for (const secret of secrets) expect(decodeURIComponent(page.url()), `${secret} in the address at ${where}`).not.toContain(secret);
+      expect(page.url()).toBe(at(where));
+    };
+    await createWorkspaceTo(page, 'checkout');
+    await fillCard(page);
+    await page.getByLabel('Name on card').fill(name);
+    await nothingKept('/business/checkout');
+
+    await payButton(page).click();
+    await expect(heading(page, 'Confirm with your bank.')).toBeVisible();
+    await nothingKept('/business/card-code');
+    await page.getByLabel('6-digit code').fill(card.code);
+    await nothingKept('/business/card-code');
+
+    await proceed(page, 'Confirm');
+    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+    await nothingKept('/business/ready');
   });
 
   test('a step asked for out of turn leads to the first one that can be shown', async ({ page }) => {
