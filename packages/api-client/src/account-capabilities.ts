@@ -1,4 +1,4 @@
-import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, AddressAvailability, PasskeyCeremony, PasskeyRegistration, RecoveryChannels, ServiceStatus, SignUpPreferences, StandInName, TextCodeSender, TrustedContacts } from './capabilities';
+import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, AddressAvailability, PasskeyCeremony, PasskeyRegistration, RecoveryChannels, ServiceStatus, ServiceWindow, SignUpPreferences, StandInName, TextCodeSender, TrustedContacts } from './capabilities';
 import type { ApiClient } from './client';
 
 /** The stand-in implementations, as `@yahel/api-client/standins` builds them. */
@@ -28,6 +28,21 @@ const emailRecovery = (api: Pick<ApiClient, 'auth'>): RecoveryChannels => ({
   },
 });
 
+const LONGEST_WINDOW = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * A maintenance window as announced, only when it can be shown to people: two real times, the end after
+ * the start, not over already and not absurdly far off. Anything else is no window at all.
+ */
+export const usableWindow = (window: ServiceWindow | null, now: number = Date.now()): ServiceWindow | null => {
+  if (!window) return null;
+  const from = Date.parse(window.from);
+  const until = Date.parse(window.until);
+  return Number.isFinite(from) && Number.isFinite(until) && until > from && until > now && until - now <= LONGEST_WINDOW ? window : null;
+};
+
+const checked = (status: ServiceStatus): ServiceStatus => ({ window: async () => usableWindow(await status.window()) });
+
 /**
  * The one place that decides what answers each account capability: the real endpoint where the backend
  * has one, otherwise nothing, or a stand-in when stand-ins are passed in (see docs/roadmap.md for the
@@ -51,7 +66,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns
     addresses: standIns.addresses,
     trustedContacts: standIns.trustedContacts,
     preferences: standIns.preferences,
-    serviceStatus: standIns.serviceStatus,
+    serviceStatus: checked(standIns.serviceStatus),
     standIns: Object.keys(standIns) as StandInName[],
   };
 }

@@ -5,7 +5,12 @@ const moment = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle:
 
 export const flowMessages = {
   pageTitle: (heading: string) => `${heading.replace(/[.?…]$/, '')} · Yahel`,
-  timeOf: (at: number | string) => time.format(new Date(at)),
+  /** A time for the person: the hour when it is today, the date with it on any other day, and `null` for a value that is not a time. Never throws. */
+  timeOf: (at: number | string, now: number = Date.now()) => {
+    const date = new Date(at);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toDateString() === new Date(now).toDateString() ? time.format(date) : moment.format(date);
+  },
   momentOf: (at: number) => moment.format(new Date(at)),
   /** Seconds as "0:24", for a wait shown in a control. */
   clock: (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,

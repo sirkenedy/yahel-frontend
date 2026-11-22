@@ -51,9 +51,10 @@ const again = (onRetry: () => void) => (
 );
 
 function draw({ kind, account = null, retryAt, exits, onRetry }: StateScreenProps, window: { from: string; until: string } | null): Drawn {
+  const retryTime = retryAt ? m.timeOf(retryAt) : null;
   switch (kind) {
     case 'locked':
-      return { tone: 'warning', icon: 'clock', title: m.lockedTitle, lede: m.lockedLede, note: retryAt ? m.lockedUntil(m.timeOf(retryAt)) : m.lockedNote, actions: [link(exits.resetPassword, m.resetPassword, 'primary'), link(exits.signIn, m.backToSignIn, exits.resetPassword ? 'quiet' : 'primary')] };
+      return { tone: 'warning', icon: 'clock', title: m.lockedTitle, lede: m.lockedLede, note: retryTime ? m.lockedUntil(retryTime) : m.lockedNote, actions: [link(exits.resetPassword, m.resetPassword, 'primary'), link(exits.signIn, m.backToSignIn, exits.resetPassword ? 'quiet' : 'primary')] };
     case 'suspended':
       return { tone: 'danger', icon: 'pause', title: m.suspendedTitle, lede: m.suspendedLede(account), note: m.suspendedNote, actions: [link(exits.support, m.contactSupport, 'primary'), link(exits.signIn, m.useAnotherAccount, exits.support ? 'quiet' : 'primary')] };
     case 'org-paused':
@@ -66,8 +67,9 @@ function draw({ kind, account = null, retryAt, exits, onRetry }: StateScreenProp
     case 'signed-out-everywhere':
       return { tone: 'danger', icon: 'alert', title: m.signedOutTitle, lede: m.signedOutLede, note: m.signedOutNote, actions: link(exits.signIn, m.signInAgain, 'primary') };
     case 'maintenance': {
-      const until = window?.until ?? retryAt ?? null;
-      return { tone: 'info', icon: 'wrench', title: m.maintenanceTitle, lede: m.maintenanceLede(until ? m.timeOf(until) : null), note: window ? m.maintenanceWindow(m.timeOf(window.from), m.timeOf(window.until)) : null, actions: again(onRetry) };
+      const from = window ? m.timeOf(window.from) : null;
+      const until = window ? m.timeOf(window.until) : null;
+      return { tone: 'info', icon: 'wrench', title: m.maintenanceTitle, lede: m.maintenanceLede(until ?? retryTime), note: from && until ? m.maintenanceWindow(from, until) : null, actions: again(onRetry) };
     }
   }
 }

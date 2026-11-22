@@ -233,7 +233,7 @@ describe('FlowStepFrame', () => {
     render(<FlowStepFrame {...frame} requests={[request({ place: 'screen', screen: 'locked', retryAt })]} />, { wrapper: withQueries });
 
     expect(screen.getByText(m.lockedLede)).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.timeOf(retryAt)));
+    expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.timeOf(retryAt)!));
     expect(screen.getByRole('link', { name: m.resetPassword })).toHaveAttribute('href', '/signin/recover');
     expect(screen.getByRole('link', { name: m.backToSignIn })).toHaveAttribute('href', '/signin/email');
   });

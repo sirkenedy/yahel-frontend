@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAccountCapabilities, maskEmail } from './account-capabilities';
+import { createAccountCapabilities, maskEmail, usableWindow } from './account-capabilities';
 import { createStandIns } from './standins';
 
 const api = () => ({ auth: { forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }) } }) as unknown as Parameters<typeof createAccountCapabilities>[0] & { auth: { forgotPassword: ReturnType<typeof vi.fn> } };
@@ -30,7 +30,7 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.addresses).toBe(standIns.addresses);
     expect(capabilities.trustedContacts).toBe(standIns.trustedContacts);
     expect(capabilities.preferences).toBe(standIns.preferences);
-    expect(capabilities.serviceStatus).toBe(standIns.serviceStatus);
+    await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
     expect([...capabilities.standIns].sort()).toEqual(['addresses', 'directory', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'trustedContacts']);
   });
 
@@ -49,5 +49,32 @@ describe('createAccountCapabilities', () => {
 
   it('masks an address using only what was typed', () => {
     expect(maskEmail(' amara@northwind.example ')).toBe('a•••@northwind.example');
+  });
+});
+
+describe('usableWindow', () => {
+  const now = Date.parse('2026-11-22T10:00:00.000Z');
+  const at = (hours: number) => new Date(now + hours * 3_600_000).toISOString();
+
+  it('passes on a window in progress or still to come', () => {
+    expect(usableWindow({ from: at(-1), until: at(1) }, now)).toEqual({ from: at(-1), until: at(1) });
+    expect(usableWindow({ from: at(2), until: at(4) }, now)).toEqual({ from: at(2), until: at(4) });
+  });
+
+  it.each([
+    ['no window', null],
+    ['times that are not times', { from: 'soon', until: 'later' }],
+    ['an end that is not a time', { from: at(-1), until: '' }],
+    ['an end before its start', { from: at(2), until: at(1) }],
+    ['a window already over', { from: at(-3), until: at(-1) }],
+    ['an end absurdly far off', { from: at(-1), until: at(24 * 400) }],
+  ])('treats %s as no window', (_, window) => {
+    expect(usableWindow(window, now)).toBeNull();
+  });
+
+  it('checks whatever answers the capability, so a bad window never reaches a screen', async () => {
+    const standIns = { ...createStandIns(async () => undefined), serviceStatus: { window: async () => ({ from: 'x', until: 'y' }) } };
+
+    await expect(createAccountCapabilities({ auth: {} as never }, standIns).serviceStatus!.window()).resolves.toBeNull();
   });
 });
