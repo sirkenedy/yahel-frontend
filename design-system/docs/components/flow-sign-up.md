@@ -2,7 +2,7 @@
 
 Status: Specified
 
-Built in `@yahel/ui` as `FlowSelect`, `FlowCheckbox`, `FlowSuggestions`, `FlowCallout`, `FlowFacts`, `FlowLinkCard`, `BrandMoment`, and as additions to `FlowTextField` (`suffix`, `success`, `isSensitive`), `FlowStep` (`Row`, `Note`, `Links align`), `FlowButton` (`chip`), `Receipt` (`label`, row `action`) and `FlowShell` (`isPrivate`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/personal/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-shell.md` apply unless changed here.
+Built in `@yahel/ui` as `AccountAvatar` (see `flow-shell.md`), `FlowSelect`, `FlowCheckbox`, `FlowSuggestions`, `FlowCallout`, `FlowFacts`, `FlowLinkCard`, `BrandMoment`, and as additions to `FlowTextField` (`suffix`, `success`, `isSensitive`), `FlowStep` (`Row`, `Note`, `NoteLink`, `Links align`), `FlowButton` (`chip`), `Receipt` (`label`, row `action`) and `FlowShell` (`isPrivate`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/personal/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-shell.md` apply unless changed here.
 
 ## Purpose
 
@@ -19,7 +19,7 @@ Creating an account asks for more than signing in does: a date, a choice from a 
 - **Facts.** A card listing ticked lines, each led by a few bold words.
 - **Link card.** A card that is a link: icon tile, title, a line under it and an arrow.
 - **Receipt with actions.** The account as answered, one line per answer; at the end of each line a way to change it. Named by a heading, or by a label when no heading is drawn.
-- **Note.** Small print under the fields.
+- **Note.** Small print under the fields. A link inside it (`NoteLink`) opens in a new tab and says so to assistive technology, so reading the terms does not lose what has been answered. A note straight after checkboxes lines up with their labels.
 - **Finishing mark.** The brand's emblem in rings of light, above the last heading.
 - **Private details.** A control in the header that blurs fields marked as personal.
 
@@ -32,7 +32,7 @@ Creating an account asks for more than signing in does: a date, a choice from a 
 | Row, phone | Two to three |
 | Select | `flow.field` high, radius `radius.field` |
 | Chip | `target.touch` high, `radius.full` |
-| Checkbox box | `size.indicator-pointer` square, `radius.xs` |
+| Checkbox box | `size.indicator-pointer` square, `radius.xs`; the line is `target.touch` high on touch and `target.pointer` with a mouse |
 | Receipt line | At least `flow.choice` high; label column `space.40` twice |
 | Finishing mark | `flow.success-mark` plus `space.8`, with rings `space.12` and `space.24` out |
 

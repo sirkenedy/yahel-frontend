@@ -18,6 +18,7 @@ The flow shell is the page frame of every sign-in and sign-up screen ("Daylight"
 - **Progress.** "03 / 07 · About 90 sec" and one pip per step, above the question in multi-step flows.
 - **Receipt.** Rows of label and value; each row is done, current or upcoming, and may end with a way to change it. Built on the review screen (see `flow-sign-up.md`); the designs draw no receipt beside the question, so the summary column is unused.
 - **Demo label.** A small fixed label shown only while the app is serving stand-in data.
+- **Account.** On signed-in screens, the person's initials at the trailing end of the header (`AccountAvatar`), with "Signed in as …" in words for assistive technology. No menu yet.
 
 ## Variants and sizes
 
@@ -56,7 +57,7 @@ Under 600 px the header prompt is hidden (the link stays), the footer stacks, an
 - The page title names the current step.
 - The browser's `theme-color` is the canvas token in force, so it follows the system theme and the in-page switch.
 - The theme control switches between light and dark for the visit; it follows the system until used.
-- The demo label is fixed at the bottom; the footer leaves room for it. It cannot be dismissed.
+- The demo label is a tab fixed at the top edge of the page, in the band the header leaves free above its controls, so it never covers an action. It cannot be dismissed.
 - Right-to-left: the layout mirrors. Reduced motion: receipt rows appear without movement.
 
 ## Accessibility
