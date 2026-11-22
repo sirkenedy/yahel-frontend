@@ -148,12 +148,19 @@ export interface FlowPreviewProps {
   lead?: string;
   /** The part of the value that matters, picked out: "northwind.example". */
   children: string;
+  /** A decorative icon in a tile at the start, such as the key beside a sign-in. */
+  icon?: FlowIconName;
 }
 
 /** A card that shows what something will look like once it exists, such as an address on the person's domain. */
-export function FlowPreview({ label, tag, lead, children }: FlowPreviewProps) {
+export function FlowPreview({ label, tag, lead, icon, children }: FlowPreviewProps) {
   return (
-    <p className="ws-flow-preview">
+    <p className="ws-flow-preview" data-icon={icon ? true : undefined}>
+      {icon ? (
+        <span className="ws-flow-preview__icon">
+          <FlowIcon name={icon} />
+        </span>
+      ) : null}
       <span className="ws-flow-preview__label">{label}</span>
       {tag ? <> <span className="ws-flow-choice__tag">{tag}</span></> : null}{' '}
       <span className="ws-flow-preview__value" translate="no">

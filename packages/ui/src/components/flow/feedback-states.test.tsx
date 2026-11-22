@@ -253,5 +253,18 @@ describe('FlowPreview', () => {
 
     expect(screen.getByText('Your admin sign-in').parentElement!.textContent).toBe('Your admin sign-in amara@northwind.example');
   });
+
+  it('can carry a decorative icon at the start, which adds nothing to what is read', () => {
+    render(
+      <FlowPreview label="Your admin sign-in" icon="key">
+        amara@northwind.example
+      </FlowPreview>,
+    );
+
+    const preview = screen.getByText('Your admin sign-in').parentElement!;
+    expect(preview).toHaveAttribute('data-icon', 'true');
+    expect(preview.querySelector('.ws-flow-preview__icon svg')).toHaveAttribute('aria-hidden', 'true');
+    expect(preview.textContent).toBe('Your admin sign-in amara@northwind.example');
+  });
 });
 

@@ -21,7 +21,7 @@ export function DomainQuestionStep() {
             <Choice value="owned" icon={<FlowIcon name="globe" />} detail={m.ownDomainDetail}>
               {m.ownDomain}
             </Choice>
-            <Choice value="bought" icon={<FlowIcon name="plus" />} detail={m.buyDomainDetail}>
+            <Choice value="bought" icon={<FlowIcon name="cart" />} detail={m.buyDomainDetail}>
               {m.buyDomain}
             </Choice>
           </ChoiceGroup>

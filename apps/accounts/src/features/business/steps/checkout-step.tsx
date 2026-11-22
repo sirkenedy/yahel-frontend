@@ -120,7 +120,7 @@ export function CheckoutStep() {
                 </FlowButton>
               }
             >
-              <OrderSummary.Item title={offer.name} amount={sums.trial ? m.trialBadge(offer.trial.days) : m.billedToday}>
+              <OrderSummary.Item title={offer.name} amount={sums.trial ? undefined : m.billedToday} badge={sums.trial ? m.trialBadge(offer.trial.days) : undefined}>
                 {m.planLine(sums.period, sums.seats)}
               </OrderSummary.Item>
               <OrderSummary.Schedule label={m.schedule}>

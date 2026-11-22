@@ -13,7 +13,7 @@ export function ReadyStep() {
   return (
     <StepFrame title={title} lede={lede} lead={<BrandMoment />}>
       <FlowStep.Body>
-        <FlowPreview label={m.adminSignIn}>{state.adminAddress}</FlowPreview>
+        <FlowPreview label={m.adminSignIn} icon="key">{state.adminAddress}</FlowPreview>
         <FlowNotice title={m.readyCodeTitle}>{m.readyCodeNote(state.adminAddress, state.domain)}</FlowNotice>
       </FlowStep.Body>
       <FlowStep.Actions>

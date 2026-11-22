@@ -79,18 +79,20 @@ interface OrderSummaryItemProps {
   title: string;
   /** What it costs, already formatted, when the line has a price of its own. */
   amount?: string;
+  /** A short mark at the far side in place of a price, such as "Free for 14 days": the green chip. */
+  badge?: string;
   /** A line that explains it: "Monthly plan · 3 people". */
   children?: ReactNode;
 }
 
-function OrderSummaryItem({ title, amount, children }: OrderSummaryItemProps) {
+function OrderSummaryItem({ title, amount, badge, children }: OrderSummaryItemProps) {
   return (
     <div className="ws-flow-order__item">
       <span className="ws-flow-order__what">
         <b>{title}</b>
         {children ? <span>{children}</span> : null}
       </span>
-      {amount ? <span className="ws-flow-order__amount">{amount}</span> : null}
+      {amount ? <span className="ws-flow-order__amount">{amount}</span> : badge ? <span className="ws-flow-badge">{badge}</span> : null}
     </div>
   );
 }

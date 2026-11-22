@@ -349,6 +349,9 @@
 .ws-flow-preview__label { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); }
 .ws-flow-preview__value { grid-column: 1 / -1; font-family: var(--ws-font-display); font-size: var(--ws-type-flow-input-size); line-height: var(--ws-type-flow-input-line); font-weight: var(--ws-weight-bold); overflow-wrap: anywhere; }
 .ws-flow-preview__value strong { color: var(--ws-color-daylight-link); font-weight: inherit; }
+.ws-flow-preview[data-icon] { grid-template-columns: auto 1fr auto; }
+.ws-flow-preview[data-icon] .ws-flow-preview__value { grid-column: 2 / -1; }
+.ws-flow-preview__icon { grid-row: span 2; display: inline-flex; align-items: center; justify-content: center; width: var(--ws-flow-avatar); height: var(--ws-flow-avatar); border-radius: var(--ws-radius-md); background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-accent); }
 .ws-flow-cardchip { align-self: flex-start; display: inline-flex; align-items: center; min-height: var(--ws-target-pointer); padding: 0 var(--ws-space-12); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); color: var(--ws-color-daylight-soft); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); font-variant-numeric: tabular-nums; }
 .ws-flow-cardchip b { color: var(--ws-color-daylight-ink); }
 

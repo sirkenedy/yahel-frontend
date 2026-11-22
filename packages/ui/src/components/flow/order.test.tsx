@@ -47,7 +47,7 @@ describe('OrderSummary', () => {
         </OrderSummary.Charge>
       </OrderSummary.Schedule>
       <OrderSummary.Note>Prices exclude 7.5% VAT.</OrderSummary.Note>
-      <OrderSummary.Item title="northwindstudio.com" amount="₦18,500 / year">
+      <OrderSummary.Item title="example.com" amount="₦18,500 / year">
         Domain registration
       </OrderSummary.Item>
       <OrderSummary.Total label="Due today" suffix="+ VAT">
@@ -75,8 +75,21 @@ describe('OrderSummary', () => {
     render(summary());
 
     expect(screen.getByText('Monthly plan · 3 people')).toBeInTheDocument();
-    expect(screen.getByText('northwindstudio.com').closest('.ws-flow-order__item')).toHaveTextContent('₦18,500 / year');
+    expect(screen.getByText('example.com').closest('.ws-flow-order__item')).toHaveTextContent('₦18,500 / year');
     expect(screen.getByText('Prices exclude 7.5% VAT.')).toBeInTheDocument();
+  });
+
+  it('marks a line that costs nothing yet with a chip in place of a price', () => {
+    render(
+      <OrderSummary title="Order summary">
+        <OrderSummary.Item title="Yahel Business" badge="Free for 14 days">
+          Monthly plan · 3 people
+        </OrderSummary.Item>
+      </OrderSummary>,
+    );
+
+    const line = screen.getByText('Yahel Business').closest('.ws-flow-order__item')!;
+    expect(within(line as HTMLElement).getByText('Free for 14 days')).toHaveClass('ws-flow-badge');
   });
 
   it('announces the amount due, whole, whenever it changes', () => {

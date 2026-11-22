@@ -2,7 +2,7 @@
 
 Status: Specified
 
-Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, `FlowPreview`, and as additions to `Choice` (`tag`, `meta`), `Receipt.Row` (`detail`) and `FlowStep` (`Subheading`, `Split`, `Row layout="halves"`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
+Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, with an `amount` or a green `badge` such as "Free for 14 days", `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, `FlowPreview`, and as additions to `Choice` (`tag`, `meta`), `Receipt.Row` (`detail`) and `FlowStep` (`Subheading`, `Split`, `Row layout="halves"`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
 
 ## Purpose
 

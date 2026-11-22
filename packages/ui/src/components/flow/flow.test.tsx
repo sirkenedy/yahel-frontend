@@ -499,17 +499,17 @@ describe('Choice with a tag and an amount', () => {
   it('reads the tag and the amount as part of the option, between its words and its mark', () => {
     render(
       <ChoiceGroup label="Available domains" value="" onChange={() => undefined}>
-        <Choice value="northwindstudio.com" tag="Best match" meta="₦18,500 a year">
-          northwindstudio.com
+        <Choice value="example.com" tag="Best match" meta="₦18,500 a year">
+          example.com
         </Choice>
-        <Choice value="northwindstudio.ng" meta="₦9,000 a year">
-          northwindstudio.ng
+        <Choice value="example.net" meta="₦9,000 a year">
+          example.net
         </Choice>
       </ChoiceGroup>,
     );
 
-    expect(screen.getByRole('radio', { name: 'northwindstudio.com Best match ₦18,500 a year' })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: 'northwindstudio.ng ₦9,000 a year' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'example.com Best match ₦18,500 a year' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'example.net ₦9,000 a year' })).toBeInTheDocument();
     expect(screen.getAllByText(/a year$/)).toHaveLength(2);
   });
 });
