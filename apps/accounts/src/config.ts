@@ -1,4 +1,5 @@
 import type { ReturnAddressPolicy } from '@yahel/auth';
+import { isMailDomain } from './build/addresses';
 
 const env = import.meta.env;
 
@@ -27,7 +28,8 @@ export const config = {
   /** Where "For my business or team" leads. Unset until that flow exists; the choice then says so. */
   businessSignUpUrl: webAddress(env.VITE_BUSINESS_SIGN_UP_URL),
   /** The domain of a new Yahel address. Must match the backend's `PLATFORM_EMAIL_DOMAIN`. */
-  mailDomain: env.VITE_MAIL_DOMAIN?.trim().toLowerCase() || 'yahel.com',
+  // A value that is not a domain is ignored rather than shown to people as the address they will get.
+  mailDomain: isMailDomain(env.VITE_MAIL_DOMAIN) ? env.VITE_MAIL_DOMAIN!.trim().toLowerCase() : 'yahel.com',
   helpUrl: webAddress(env.VITE_HELP_URL),
   privacyUrl: webAddress(env.VITE_PRIVACY_URL),
   termsUrl: webAddress(env.VITE_TERMS_URL),

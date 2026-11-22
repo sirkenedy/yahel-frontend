@@ -49,4 +49,8 @@ describe('config', () => {
     expect(config.signUpUrl).toBe('/personal');
     expect(config.businessSignUpUrl).toBeNull();
   });
+
+  it.each(['not a domain', 'yahel', 'https://yahel.example', 'yahel.example/path', '-bad.example', '@yahel.example'])('ignores a mail domain that is not one: %s', async (value) => {
+    expect((await load({ VITE_MAIL_DOMAIN: value })).mailDomain).toBe('yahel.com');
+  });
 });

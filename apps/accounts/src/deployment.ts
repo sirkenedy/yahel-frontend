@@ -1,3 +1,5 @@
+import { isSecureAddress } from './build/addresses';
+
 export interface DeploymentFacts {
   /** `import.meta.env.PROD`: the bundle was built, not served by the development server. */
   isProductionBuild: boolean;
@@ -9,14 +11,6 @@ export interface DeploymentFacts {
 }
 
 const LOCAL_HOSTS: readonly string[] = ['localhost', '127.0.0.1', '[::1]'];
-
-const isSecureAddress = (value: string | undefined) => {
-  try {
-    return new URL(value ?? '').protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
 
 /**
  * What is wrong with where this bundle has ended up, or `null`. A built bundle served to people must name
