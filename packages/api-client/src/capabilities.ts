@@ -242,7 +242,13 @@ export interface OrderQuote {
   taxRate: number;
 }
 
-/** A payment card as typed. Handed to `pay` and to nothing else: never stored, logged or put in an error. */
+/**
+ * A payment card as typed. Handed to `pay` and to nothing else: never stored, logged or put in an error.
+ *
+ * **Stand-in only. Card data must never reach Yahel.** This shape exists so the demo checkout can be seen;
+ * it must never be sent to a Yahel endpoint. A real checkout uses the payment provider's hosted fields or a
+ * redirect, and the bank's challenge on the provider's own page; this type then leaves the interface.
+ */
 export interface CardDetails {
   number: string;
   /** MM/YY. */
@@ -286,16 +292,23 @@ export interface CompletedOrder {
   marketing: { productNews: boolean; teamTips: boolean };
 }
 
-/** Plans, prices and paying for a new workspace. */
+/**
+ * Plans, prices and paying for a new workspace.
+ *
+ * **`pay` and `confirm` are for the stand-in only: card data must never reach Yahel.** Do not implement them
+ * against a Yahel endpoint. A real checkout is the payment provider's hosted fields or a redirect, with the
+ * bank's challenge on the provider's page; both methods then leave this interface (`docs/roadmap.md`).
+ */
 export interface WorkspaceBilling {
   plan(country: string): Promise<WorkspacePlan>;
   /** The discount a code gives, or `null` when the code is not valid. */
   promo(code: string): Promise<PromoCode | null>;
   quote(order: OrderRequest): Promise<OrderQuote>;
-  /** Asks the bank to authorise what is due today (or a small hold, for a trial). Nothing is taken yet. */
+  /** Asks the bank to authorise what is due today (or a small hold, for a trial). Nothing is taken yet. Stand-in only: never send a card to Yahel. */
   pay(order: OrderRequest, card: CardDetails, contact: BillingContact): Promise<PaymentStart>;
   /** Asks the bank to send its one-time code again. */
   resendCode(paymentId: string): Promise<void>;
+  /** Passes on the bank's one-time code. Stand-in only: a real checkout takes it on the provider's own page. */
   confirm(paymentId: string, code: string): Promise<PaymentConfirmation>;
   /** Ties an authorised payment to the workspace it paid for, which is when money is taken and a bought domain registered. Safe to repeat. */
   complete(paymentId: string, order: CompletedOrder): Promise<void>;
