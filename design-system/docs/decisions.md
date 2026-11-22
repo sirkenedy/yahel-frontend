@@ -219,3 +219,13 @@ The reasons, and what was rejected, are in `docs/decisions.md` F-70 to F-77. The
 - **The bank's code** is six digits. A declined card, a wrong code, an expired code and a code spent by too many tries have words written for this build; no board draws them.
 - **Ready.** A line says the first sign-in will ask for the code emailed to the administrator's address. "Sign in to Admin" leads to sign-in until the administrator's first sign-in is built.
 - **Without plans or a registrar** (any build that is not a demo) the flow is the business, the person, a domain already owned, the administrator's sign-in, then the workspace: four questions, with "Agree and create workspace".
+
+### Daylight error and feedback states: corrections (2026-11-22)
+
+The reasons are in `docs/decisions.md` F-65 to F-68.
+
+- **A request that gets no answer** is a banner on the step ("We can't reach Yahel right now", with "Try again"), as the code map draws for a lost connection. It no longer takes the step's place; the whole "getting an upgrade" screen is only for a declared outage (503).
+- **Sign-in paused.** The screen names no address and promises nothing about a reset: the pause is the backend's general rate limit. A 403 with no code of its own is a banner, "This account can't sign in right now"; "This account is turned off" is shown only for a suspended-account code, which the backend does not send yet.
+- **"Confirm your email first"** is now a step in sign-in, not a banner: the emailed code is entered there, a new one can be asked for after the usual pause, and a right code finishes signing in.
+- **A time on another day** is shown with its date.
+
