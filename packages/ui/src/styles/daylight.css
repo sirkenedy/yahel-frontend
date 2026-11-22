@@ -231,7 +231,7 @@
 .ws-flow-receipt { border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
 .ws-flow-receipt__title { margin: 0; padding: var(--ws-space-16) var(--ws-space-16) 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
 .ws-flow-receipt__rows { margin: 0; }
-.ws-flow-receipt__row { display: flex; align-items: center; gap: var(--ws-space-16); min-height: var(--ws-flow-choice); padding: var(--ws-space-4) var(--ws-space-16); }
+.ws-flow-receipt__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ws-space-4) var(--ws-space-16); min-height: var(--ws-flow-choice); padding: var(--ws-space-4) var(--ws-space-16); }
 .ws-flow-receipt__row + .ws-flow-receipt__row { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
 .ws-flow-receipt__row dt { flex: 0 0 calc(var(--ws-space-40) * 2); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); }
 .ws-flow-receipt__row dd { flex: 1 1 0; margin: 0; min-width: 0; font-size: var(--ws-type-flow-link-size); line-height: var(--ws-type-flow-link-line); font-weight: var(--ws-weight-semibold); }
@@ -261,7 +261,8 @@
   .ws-flow-step__rest { grid-area: rest; }
   .ws-flow-step__aside { grid-area: aside; position: sticky; inset-block-start: var(--ws-space-24); }
 }
-.ws-flow-field__suffix { flex-shrink: 0; color: var(--ws-color-daylight-mute); }
+/* A long suffix (an address on the person's own domain) gives way before the field does: it is cut short, never the page widened. */
+.ws-flow-field__suffix { flex: 0 1 auto; min-width: 0; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ws-color-daylight-mute); }
 .ws-flow-field__success { display: flex; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-daylight-success); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); }
 .ws-flow-field__success:empty { display: none; }
 .ws-flow-field__success .ws-flow-icon, .ws-flow-facts .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); }
@@ -295,6 +296,10 @@
 /* Workspace sign-up: pills, a plan, an order */
 .ws-flow-choice__tag, .ws-flow-badge { flex-shrink: 0; padding: var(--ws-space-2) var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-link); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); white-space: nowrap; }
 .ws-flow-badge { background: var(--ws-color-daylight-success-tint); color: var(--ws-color-daylight-success); font-weight: var(--ws-weight-bold); }
+/* With an amount, the words keep a line of their own when there is no room beside them (large text on a phone). */
+.ws-flow-choice:has(.ws-flow-choice__meta) { flex-wrap: wrap; }
+.ws-flow-choice:has(.ws-flow-choice__meta) .ws-flow-choice__text { flex-basis: 10em; overflow-wrap: anywhere; }
+.ws-flow-choice:has(.ws-flow-choice__meta) .ws-flow-choice__dot { margin-inline-start: auto; }
 .ws-flow-choice__meta { flex-shrink: 0; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ws-flow-chips { display: flex; flex-direction: column; gap: var(--ws-space-8); min-width: 0; }
 .ws-flow-chips__list { display: flex; flex-wrap: wrap; gap: var(--ws-space-8); }
