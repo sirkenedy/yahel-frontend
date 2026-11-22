@@ -1,9 +1,75 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
-import { emailCode } from './api';
+import { emailCode, phoneCode, requestId } from './api';
 import { heading, person, signUp, signUpTo } from './personal';
 
 const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();
+
+/** Answers requests to `path` the way the backend would refuse them. Registered after the mock, so it is asked first. */
+const refuse = (page: Page, path: string, status: number, code: string, headers?: Record<string, string>) =>
+  page.route(`**/api/v1${path}`, (route) =>
+    route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify({ success: false, error: { code, message: `Server said: ${code}` }, meta: { requestId } }) }),
+  );
+
+const openTextedCode = async (page: Page) => {
+  await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
+  await heading(page, 'Enter the code.').waitFor();
+};
+
+const verifyRefused = (shown: string, status: number, code: string, refresh?: string, headers?: Record<string, string>) => async (page: Page) => {
+  await openTextedCode(page);
+  await refuse(page, '/me/recovery/phone/verify', status, code, headers);
+  if (refresh) await refuse(page, '/auth/refresh', 401, refresh);
+  await page.getByLabel('6-character code').fill(phoneCode);
+  await proceed(page, 'Verify');
+  await page.getByText(shown).first().waitFor();
+};
+
+/** The whole-screen and inline feedback states of personal sign-up, each reached by the server answer that leads to it. */
+const feedbackScreens: Screen[] = [
+  {
+    name: 'personal name, two things to fix',
+    open: async (page) => {
+      await signUpTo(page, 'name');
+      await page.getByLabel('Last name').fill('x'.repeat(51));
+      await proceed(page);
+      await page.getByText('2 things to fix before you continue').waitFor();
+    },
+  },
+  { name: 'personal state: session ended', open: verifyRefused('Your session has ended.', 401, 'SESSION_EXPIRED', 'INVALID_TOKEN') },
+  { name: 'personal state: signed out everywhere', open: verifyRefused('We signed you out everywhere.', 401, 'SESSION_EXPIRED', 'TOKEN_REUSE_DETECTED') },
+  {
+    name: 'personal texted code, too many tries, counting down',
+    open: verifyRefused('Try again in', 429, 'BAD_REQUEST', undefined, { 'Retry-After': '590', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Retry-After' }),
+  },
+  { name: 'personal texted code, refused beside the code', open: verifyRefused('That code didn’t work or has expired.', 401, 'INVALID_TOKEN') },
+  {
+    name: 'personal state: maintenance while creating',
+    open: async (page) => {
+      await refuse(page, '/auth/register', 503, 'SERVICE_UNAVAILABLE');
+      await signUpTo(page, 'done');
+      await page.getByText('Planned maintenance runs from').waitFor();
+    },
+  },
+  {
+    name: 'personal creating, details refused',
+    open: async (page) => {
+      await refuse(page, '/auth/register', 422, 'VALIDATION_ERROR');
+      await signUpTo(page, 'done');
+      await page.getByText('Some of your details weren’t accepted').waitFor();
+    },
+  },
+  {
+    name: 'personal birth, refused by the server beside the year',
+    open: async (page) => {
+      await page.route('**/api/v1/auth/register', (route) =>
+        route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ success: false, error: { code: 'USER_UNDERAGE', message: 'Server said: USER_UNDERAGE' }, meta: { requestId } }) }),
+      );
+      await signUpTo(page, 'done');
+      await page.getByText('You need to be older to have a Yahel account.').waitFor();
+    },
+  },
+];
 
 /** Every state of every personal sign-up screen. */
 export const personalScreens: Screen[] = [
@@ -80,9 +146,9 @@ export const personalScreens: Screen[] = [
     name: 'personal password with an error, revealed',
     open: async (page) => {
       await signUpTo(page, 'password');
-      await page.getByLabel('Password', { exact: true }).fill('too short');
+      await page.getByLabel('Password', { exact: true }).fill('short');
       await proceed(page);
-      await page.getByText('Use 12 characters or more.').waitFor();
+      await page.getByText('Use 8 or more characters, with a capital letter, a number and a symbol.').waitFor();
       await page.getByRole('button', { name: 'Show password' }).click();
     },
   },
@@ -150,7 +216,7 @@ export const personalScreens: Screen[] = [
   {
     name: 'personal creating, failed',
     open: async (page) => {
-      await page.route('**/api/v1/auth/register', (route) => route.abort('internetdisconnected'));
+      await refuse(page, '/auth/register', 500, 'INTERNAL_ERROR');
       await signUpTo(page, 'done');
       await heading(page, 'We couldn’t finish.').waitFor();
     },
@@ -166,10 +232,13 @@ export const personalScreens: Screen[] = [
   {
     name: 'personal emailed code, refused, a new one sent',
     open: async (page) => {
+      await page.clock.install();
       await signUpTo(page, 'done', { address: 'own' });
       await heading(page, 'Check your inbox.').waitFor();
-      await page.getByRole('button', { name: 'Send a new code' }).click();
+      await page.clock.fastForward(31_000);
+      await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
       await page.getByText('If a new code can be sent to this address').waitFor();
+      await page.getByRole('button', { name: 'Dismiss' }).focus();
       await proceed(page, 'Verify');
       await page.getByText('Enter all 6 characters.').waitFor();
     },
@@ -209,4 +278,5 @@ export const personalScreens: Screen[] = [
       await page.getByText('is your trusted contact').waitFor();
     },
   },
+  ...feedbackScreens,
 ];

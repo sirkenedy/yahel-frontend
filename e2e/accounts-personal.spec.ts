@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys } from './support/accounts';
-import { emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, takenAddress } from './support/api';
+import { emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo } from './support/personal';
 
@@ -97,6 +97,7 @@ test.describe('personal account: an email the person already has', () => {
 
   test('a wrong code is refused and the right one still works; a new code can be asked for', async ({ page }) => {
     const api = await mockApi(page);
+    await page.clock.install();
     await signUpTo(page, 'done', { address: 'own' });
     await heading(page, 'Check your inbox.').waitFor();
 
@@ -104,9 +105,13 @@ test.describe('personal account: an email the person already has', () => {
     await expect(page.getByText('Enter all 6 characters.')).toBeVisible();
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+    await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(code(page)).toBeFocused();
 
-    await page.getByRole('button', { name: 'Send a new code' }).click();
+    // A code has just been sent, so another can be asked for only after the pause.
+    await expect(page.getByRole('button', { name: /^Send a new code in 0:\d\d$/ })).toHaveAttribute('aria-disabled', 'true');
+    await page.clock.fastForward(31_000);
+    await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
     await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
     expect(calls(api, '/v1/auth/verify-email/resend')[0]!.body).toEqual({ email: person.ownEmail });
 
@@ -199,17 +204,21 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
   test('a recovery phone is confirmed with a texted code once the account exists', async ({ page }) => {
     const api = await mockApi(page);
+    await page.clock.install();
     await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
 
     await expect(heading(page, 'Enter the code.')).toBeVisible();
-    await expect(page.getByText(`We sent 6 characters to ${person.maskedPhone}.`)).toBeVisible();
+    await expect(page.getByText(`We sent a 6-character code to ${person.maskedPhone}.`)).toBeVisible();
     expect(calls(api, '/v1/me/recovery/phone')[0]!.body).toEqual({ phone: person.internationalPhone });
 
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
-    await page.getByRole('button', { name: 'Send a new code' }).click();
-    await expect(page.getByText('New code sent.')).toBeVisible();
+    await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(code(page)).toBeFocused();
+    await page.clock.fastForward(31_000);
+    await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
+    await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
+    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(2);
 
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -327,12 +336,16 @@ test.describe('personal account: what each question refuses', () => {
     await page.getByLabel('Your email address').fill(person.ownEmail);
     await proceed(page);
     const password = page.getByLabel('Password', { exact: true });
-    await password.fill('too short');
+    await expect(page.getByText('Mix capitals, lowercase, a number and a symbol. A short sentence like Rain on Ikoyi 2026! works well.')).toBeVisible();
+    await expect(page.getByText('At least 8 characters, with a capital letter, a lowercase letter, a number and a symbol.')).toBeVisible();
     await proceed(page);
-    await expect(page.getByText('Use 12 characters or more.')).toBeVisible();
+    await expect(page.getByText('Create a password.', { exact: true }).last()).toBeVisible();
+    await expect(password).toHaveAccessibleDescription(/Create a password\./);
+    await password.fill('short');
+    await expect(page.getByText('Use 8 or more characters, with a capital letter, a number and a symbol.')).toBeVisible();
     await password.fill('sunrise over lekki');
     await proceed(page);
-    await expect(page.getByText('Add upper and lower case letters, a number and a symbol.')).toBeVisible();
+    await expect(page.getByText('Add a capital letter and a number.')).toBeVisible();
     await password.fill(person.password);
     await expect(page.getByText('Strong · 21 characters')).toBeVisible();
     await proceed(page);
@@ -425,11 +438,12 @@ test.describe('personal account: creating', () => {
   test('a failed creation says so, keeps every answer and succeeds on another try', async ({ page }) => {
     const api = await mockApi(page);
     await signUpTo(page, 'review');
-    api.failNext('/v1/auth/register', 503);
+    api.failNext('/v1/auth/register', 500);
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(heading(page, 'We couldn’t finish.')).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText('Something went wrong on our side.');
+    await expect(page.getByRole('alert')).toContainText('Something went wrong on our side');
+    await expect(page.getByRole('alert')).toContainText(`Reference ${requestId}.`);
     await expect(page.getByText('Nothing you entered is lost.')).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to review' }).click();
@@ -446,7 +460,8 @@ test.describe('personal account: creating', () => {
     api.failNext('/v1/auth/register', 'lost');
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    await expect(page.getByRole('alert')).toContainText('Can’t reach Yahel.');
+    // The answer never came while the browser was online: the whole screen for a service that is not answering.
+    await expect(heading(page, 'We can’t reach Yahel right now.')).toBeFocused();
     await page.getByRole('button', { name: 'Try again' }).click();
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
@@ -458,7 +473,7 @@ test.describe('personal account: creating', () => {
   test('when the account is created but signing in fails, another try signs in without creating it again', async ({ page }) => {
     const api = await mockApi(page);
     await signUpTo(page, 'review');
-    api.failNext('/v1/auth/login', 503);
+    api.failNext('/v1/auth/login', 500);
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(page.getByText('Your account was created, but we couldn’t finish setting it up. Try again.')).toBeVisible();
@@ -690,18 +705,22 @@ const answerOwnEmailTo = async (page: Page, email: string) => {
 test.describe('personal account: an address someone else registered first', () => {
   test('the owner’s code is never used to switch on a registration made with someone else’s password', async ({ page }) => {
     const api = await mockApi(page);
+    await page.clock.install();
     // Someone registered this address with their own password and left it unconfirmed. Now its owner signs up.
     await answerOwnEmailTo(page, pendingEmail);
 
     // The code that registration mailed to the owner is right as far as the backend is concerned.
     await code(page).fill(emailCode);
     await proceed(page, 'Verify');
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
-    await page.getByRole('button', { name: 'Send a new code' }).click();
+    await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(code(page)).toBeFocused();
+    await page.clock.fastForward(31_000);
+    await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
     await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
     await code(page).fill(emailCode);
     await proceed(page, 'Verify');
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+    await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(code(page)).toBeFocused();
 
     expect(calls(api, '/v1/auth/verify-email')).toHaveLength(0);
     expect(calls(api, '/v1/auth/verify-email/resend')).toHaveLength(0);
@@ -711,7 +730,7 @@ test.describe('personal account: an address someone else registered first', () =
     await openPasswordStep(page, pendingEmail);
     await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('alert')).toContainText('Confirm your email address before signing in.');
+    await expect(page.getByRole('status').filter({ hasText: 'Confirm your email first' })).toContainText('Look for the message we sent when you created the account');
   });
 
   test('the owner of an unconfirmed registration of their own, whose password opens it, is sent a code and finishes', async ({ page }) => {
@@ -835,7 +854,7 @@ test.describe('personal account: what is forgotten, and when', () => {
   test('"Start again" after a failed creation forgets everything', async ({ page }) => {
     const api = await mockApi(page);
     await signUpTo(page, 'review');
-    api.failNext('/v1/auth/register', 503);
+    api.failNext('/v1/auth/register', 500);
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await heading(page, 'We couldn’t finish.').waitFor();
 
@@ -853,7 +872,7 @@ test.describe('personal account: what is forgotten, and when', () => {
     await failNextStep(page);
     await page.getByRole('button', { name: 'Not now' }).click();
 
-    await expect(heading(page, 'Something went wrong.')).toBeVisible();
+    await expect(heading(page, 'Something went wrong on our side.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Start again' })).toHaveAttribute('href', '/personal');
     await expect(page.getByRole('link', { name: 'Back to sign in' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Try again' }).click();
@@ -871,7 +890,8 @@ test.describe('personal account: fixes from review', () => {
 
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+    await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(code(page)).toBeFocused();
 
     expect(calls(api, '/v1/me/recovery/phone/verify')).toHaveLength(1);
     expect(calls(api, '/v1/auth/refresh')).toHaveLength(0);
@@ -983,7 +1003,7 @@ test.describe('personal account: fixes from review', () => {
     await page.getByRole('button', { name: 'Agree and create account' }).click();
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
-    await expect(page.getByText('We couldn’t add that phone number to your account. Add another in your account.')).toBeVisible();
+    await expect(page.getByText('This number can’t be used. Try another one in your account.')).toBeVisible();
     await expect(page.getByText('isn’t confirmed yet')).toHaveCount(0);
   });
 

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
 import { credentials, resetCode, twoStepCredentials } from './api';
 
 /** The accounts app is served by its own preview server (see playwright.config.ts). */
@@ -119,5 +119,21 @@ export async function openBrokenStep(page: Page) {
   await page.getByLabel('Email').fill(credentials.email);
   await failNextStep(page);
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('heading', { name: 'Something went wrong.' }).waitFor();
+  await page.getByRole('heading', { name: 'Something went wrong on our side.' }).waitFor();
+}
+
+const dropRequest = (route: Route) => route.abort('internetdisconnected');
+
+/**
+ * Takes the device off the network, or puts it back, as the page experiences it: the browser says so,
+ * announces the change, and requests fail at once. Playwright's own offline switch leaves a request that
+ * a route answers waiting for ever, which no real connection does.
+ */
+export async function setConnection(page: Page, online: boolean) {
+  if (online) await page.unroute('**/api/v1/**', dropRequest);
+  else await page.route('**/api/v1/**', dropRequest);
+  await page.evaluate((isOnline) => {
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => isOnline });
+    window.dispatchEvent(new Event(isOnline ? 'online' : 'offline'));
+  }, online);
 }
