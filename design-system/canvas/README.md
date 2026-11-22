@@ -57,6 +57,8 @@ Sign-in, personal sign-up, business sign-up and the first admin sign-in ("Daylig
 | `project/accounts/screens/personal/` | Personal account creation, step by step | 15: Type, Name, Birth, Address, Ownemail, Owncode, Passkey, Password, Addpasskey, Recovery, Code, Review, Creating, Ready, Contact |
 | `project/accounts/screens/business/` | Business (workspace) creation: business details, domain, plan, checkout, administrator | 13: Start, You, Domainq, Domain, Domainok, Find, Registrant, Admin, Plan, Checkout, Cardotp, Creating, Ready |
 | `project/accounts/screens/admin/` | An administrator's first sign-in: passkey, code, phone, welcome | 6: Signin, Phone, Code, Welcome, Addpasskey, Passkey |
+| `project/accounts/screens/states/` | Whole-screen states that can interrupt any flow | 6: Locked, Suspended, Orgpaused, Expired, Error, Maint |
+| `project/accounts/states/` | `FeedbackStates.dc.html`: every inline error, warning and notice state the flows use. `FeedbackCodeMap.dc.html`: which server answer leads to which state and wording | 2 |
 
 ## 6 Decisions
 
