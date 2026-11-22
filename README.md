@@ -26,7 +26,7 @@ Copy `.env.example` to `.env`. The shell uses only `VITE_API_URL`; the accounts 
 | `VITE_BUSINESS_SIGN_UP` | `on` offers workspace sign-up (“For my business or team”) in a release build. Leave it unset until the backend can send the administrator’s confirmation code to a mailbox they already have (`docs/decisions.md` F-78): unset, the choice says it isn’t available yet. A demo build offers it unless this is `off`. Anything else fails the build |
 | `VITE_BUSINESS_SIGN_UP_URL` | Where the business choice leads when it is offered. Unset, `/business` in this app |
 | `VITE_LOCAL_BUILD` | `local` lets a build use the development addresses. `pnpm build` sets it. A release is built with `pnpm --filter @yahel/accounts build:release`, which fails unless `VITE_API_URL` and `VITE_APP_URL` are https addresses |
-| `VITE_STAND_INS` | `on` serves features the backend lacks (passkeys, the account chooser, texted codes, account help) from stand-ins and shows a "Demo data" label. Development only: a build with it on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set |
+| `VITE_STAND_INS` | `on` serves features the backend lacks (passkeys, the account chooser, texted codes, account help) from stand-ins and shows a "Demo data" label. Development only: a build with it on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set. Opening such a build at an address with `?stand-ins=off` runs it without stand-ins, as a release would (`docs/decisions.md` F-79) |
 
 | Read | For |
 |---|---|

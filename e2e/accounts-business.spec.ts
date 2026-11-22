@@ -464,6 +464,49 @@ test.describe('accounts: what the workspace questions refuse', () => {
   });
 });
 
+test.describe('accounts: workspace sign-up as a release build runs it', () => {
+  // The demo build opened with `stand-ins=off` answers nothing from a stand-in: no plans, checkout, domain search or claim check.
+  test('the business, the person, a domain owned and the admin sign-in, then straight to Ready, with no payment and no demo label', async ({ page }) => {
+    const api = await mockApi(page);
+    await page.goto(at('/business?stand-ins=off'));
+    await expect(heading(page, 'Tell us about your business.')).toBeVisible();
+    await expect(page.getByText('Demo data')).toHaveCount(0);
+    await expect(page.getByText('01 / 04 · Your business')).toBeVisible();
+    await page.getByLabel('Business name').fill(business.name);
+    await proceed(page);
+
+    await expect(heading(page, 'And who are you?')).toBeVisible();
+    await expect(page.getByLabel('Current email')).toHaveCount(0);
+    await page.getByLabel('First name').fill(business.firstName);
+    await page.getByLabel('Last name').fill(business.lastName);
+    await page.getByLabel('Day').fill(business.day);
+    await page.getByLabel('Month').selectOption({ label: business.month });
+    await page.getByLabel('Year').fill(business.year);
+    await proceed(page);
+
+    // No domain to buy, so no question about it: straight to the domain the business owns.
+    await expect(heading(page, 'What’s your domain?')).toBeVisible();
+    await page.getByLabel('Your domain', { exact: true }).fill(business.domain);
+    await proceed(page);
+    await expect(heading(page, `Use this domain for ${business.name}?`)).toBeVisible();
+    await proceed(page, 'Use this domain');
+
+    await expect(heading(page, 'Create your admin sign-in.')).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'We’ll email a confirmation code to this new address' })).toBeVisible();
+    await expect(page.getByRole('checkbox')).toHaveCount(0);
+    await page.getByLabel('Password', { exact: true }).fill(business.password);
+    await page.getByLabel('Confirm password').fill(business.password);
+    await proceed(page, 'Agree and create workspace');
+
+    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+    await expect(page).toHaveURL(at('/business/ready'));
+    await expect(page.getByRole('status').filter({ hasText: 'Your confirmation code goes to your new address' })).toContainText(business.adminAddress);
+    expect(registrations(api)).toHaveLength(1);
+    expect(sentBy(api)).toMatchObject({ email: business.adminAddress, domain: business.domain, lastName: business.lastName });
+    await expect(page.getByRole('heading', { name: /check out|Confirm with your bank/ })).toHaveCount(0);
+  });
+});
+
 test.describe('accounts: the workspace is created once', () => {
   test('a creation that fails says so, keeps everything and finishes on another try', async ({ page }) => {
     const api = await mockApi(page);
