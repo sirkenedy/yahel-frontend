@@ -32,7 +32,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 
 - [x] Slice 1: the app, the Daylight tokens and flow components, sign in (email, password, passkey, second-step code from an app, a text or a backup code, account chooser, signed in), recovery (destination, code, new password) and account help
 - [x] Slice 2: personal account creation (15 screens): type, name, date of birth, a new Yahel address or an existing email, password, passkey, ways back in, review, creating, the emailed and texted codes, ready, trusted contact
-- [ ] Slice 3: business workspace creation (13 screens)
+- [x] Slice 3: business workspace creation (13 screens): the business, the person, a domain owned or bought, the administrator’s sign-in, the plan, checkout and the bank’s code (both over stand-ins), creating, ready. Without stand-ins: a domain already owned, then the workspace
 - [ ] Slice 4: an administrator's first sign-in (6 screens)
 - [ ] Hand the shell's sign-in over to the accounts app (needs the refresh token as a cookie on a shared parent domain)
 - [ ] "Trust this device" on the second step, "Keep me signed in", the language menu, the account menu on the signed-in screen (decisions O-10)
@@ -61,6 +61,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Refresh token as an `HttpOnly` cookie
 - [ ] Response bodies declared in the OpenAPI description
 - [ ] A dispatch to this repository when the API changes, so the contract watcher runs immediately
+- [ ] `POST /v1/auth/register-business` and the workspace design brought into line: a reachable address for the confirmation code, date of birth, the short name, an idempotency key, and a way to check a domain before paying (`decisions.md` O-16)
 - [ ] Registration that cannot be used to take over an address: a new registration replaces a pending one, or each emailed code is bound to the registration that issued it; unconfirmed identities expire; the answer does not depend on whether the address has an account, including for domains outside the public-provider list (`decisions.md` O-12, F-50)
 
 ### Stand-ins waiting for an endpoint
@@ -76,8 +77,24 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Passkey creation during sign-up (`passkey-registration.ts`): `POST /v1/auth/passkeys/registration/options` (no session) and `POST /v1/me/passkeys/registration/verify` (session). This replaces the earlier guess that both would be under `/me`: the challenge is needed before there is an account
 - [ ] Trusted contact (`trusted-contacts.ts`): `POST /v1/me/recovery/contact`
 - [ ] The two review choices (`preferences.ts`): `PATCH /v1/me/preferences`, or fields on `RegisterDto`
-- [ ] To add with slice 3: domain search and purchase, plans, checkout and the card code
+- [x] To add with slice 3: domain search and purchase, plans, checkout and the card code (the three below)
+- [ ] Whether a domain can be claimed (`domain-claims.ts`): `POST /v1/tenants/domain-claims/check`, the domain in the body
+- [ ] Domains to buy (`domain-market.ts`): `GET /v1/domains/search?q=`, with yearly prices; the purchase and the registrant’s details go with the workspace order
+- [ ] Plans, prices, promo codes, quotes and checkout (`workspace-billing.ts`): `GET /v1/billing/plans?country=`, `POST /v1/billing/promo-codes/check`, `POST /v1/billing/quotes`, and a checkout session with a payment provider. **This stand-in is not a payment implementation, and the two screens built on it (checkout, the bank’s code) are the design only**
 - [ ] The maintenance window (`service-status.ts`): `GET /v1/status`, answered while the API is down, with the window in progress; or `Retry-After` on the 503
+
+### Placeholders the business must confirm
+
+Everything below is copied from the design boards into the stand-ins (`workspace-billing.ts`, `domain-market.ts`) so the screens can be seen. None of it is a decision.
+
+- [ ] The plan’s name, "Yahel Business", and its six listed features
+- [ ] ₦5,000 a person a month; ₦4,200 a person a month when paid by the year ("Save 16%")
+- [ ] A 14-day free trial for teams of up to 10; larger teams billed from the first day
+- [ ] 7.5% VAT, not included in any price shown
+- [ ] The promo code LAUNCH: 20% off for 3 months
+- [ ] Domain prices a year: .com ₦18,500, .ng ₦9,000, .africa ₦22,000
+- [ ] "Over 300 people? Talk to us about Enterprise" (the link goes to the help address)
+- [ ] The currency for each country (the app sends an ISO 4217 code with the country; prices exist in naira only)
 
 ### Signals the feedback states need
 
@@ -107,4 +124,8 @@ These are requirements on the backend, written down so the stand-ins are not mis
 - **Trusted contact** (`POST /v1/me/recovery/contact`): answer the same way whether or not the invited address has an account, refuse the person’s own addresses, ask the contact’s consent by email before they count, and rate limit.
 - **Review choices** (`PATCH /v1/me/preferences`): record each choice with when it was made; a missing choice is "no".
 - **Register and email confirmation** (`POST /v1/auth/register`, `/auth/verify-email`, `/auth/verify-email/resend`), existing endpoints: today anyone can register someone else’s address with their own password and wait for the owner’s code to switch the account on. A new registration must replace a pending one, or a code must only confirm the registration that issued it; pending registrations must expire; and the answer to register must not depend on whether the address has an account. Until then the personal flow confirms only registrations it made itself or whose password it holds (`decisions.md` F-50). See also O-11 and O-12.
+- **Workspace checkout** (`workspace-billing.ts`): card number, expiry, security code and the bank’s one-time code must never reach this app’s JavaScript or Yahel’s servers. The card form must be the payment provider’s hosted fields or a redirect, and the bank’s challenge the provider’s own page; `pay` and `confirm` then leave the interface. Prices and what is due are computed by the server from the order and never trusted from the client. The payment is authorised first and money is taken only once the workspace exists; creating the workspace and capturing the payment are one server-side operation keyed by the checkout session, so a retry or a lost answer can neither make a second workspace nor charge twice; an authorisation whose workspace was refused is released by the server; and the outcome is read from the server (the provider’s webhook, then a status endpoint), never inferred in the browser.
+- **Whether a domain can be claimed** (`POST /v1/tenants/domain-claims/check`): say no more than `register-business` already does (never who holds the domain or whether it is verified), apply the backend’s own list of public email domains, and rate limit by caller. It is advice: `register-business` remains the one place a domain is claimed.
+- **Domains to buy** (`GET /v1/domains/search`): list only names just checked with the registrar, priced by the server; hold nothing for the asker; register and charge only with the workspace order, with privacy protection on for the registrant’s details.
+- **Register a business** (`POST /v1/auth/register-business`), an existing endpoint: see `decisions.md` O-16. Above all it needs somewhere reachable to send the confirmation code, and an idempotency key.
 - **Second-step code by text** and **account help**: rate limit by challenge or by caller, and answer the same way whether or not anything was sent.

@@ -246,4 +246,17 @@ describe('FlowStepFrame', () => {
     expect(screen.getByRole('heading', { level: 1, name: frame.title })).toBeInTheDocument();
     expect(document.title).toBe(frame.pageTitle);
   });
+
+  it('offers a banner’s second action after its first, and leaves out one the step has nowhere to send people for', () => {
+    const feedback: Feedback = { place: 'banner', tone: 'danger', title: 'Another organisation has claimed this domain', text: 'Ask them to add you.', next: 'reset-password', also: 'support' };
+    const next = { 'reset-password': { label: 'Reset an admin’s password', href: '/signin' }, support: { label: 'Contact support', href: 'https://yahel.example/help' } };
+    const { rerender } = render(<FlowStepFrame {...frame} feedback={feedback} next={next} />, { wrapper: withQueries });
+
+    const offered = () => within(screen.getByRole('alert')).getAllByRole('link').map((link) => link.textContent);
+    expect(offered()).toEqual(['Reset an admin’s password', 'Contact support']);
+    expect(within(screen.getByRole('alert')).getByRole('link', { name: 'Contact support' })).toHaveAttribute('href', 'https://yahel.example/help');
+
+    rerender(<FlowStepFrame {...frame} feedback={feedback} next={{ ...next, support: null }} />);
+    expect(offered()).toEqual(['Reset an admin’s password']);
+  });
 });
