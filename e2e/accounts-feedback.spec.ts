@@ -93,6 +93,9 @@ test.describe('feedback: sign in', () => {
   });
 
   test('a service down for maintenance says until when, and Try again brings the step back', async ({ page }) => {
+    // The window ends two hours after it starts, so the time of day is pinned: run late in the evening it would
+    // end tomorrow, and the screen rightly gives a date rather than a time (F-67).
+    await page.clock.setFixedTime(new Date('2026-06-15T10:00:00'));
     const api = await mockApi(page);
     await openPasswordStep(page);
     api.failNext('/v1/auth/login', 503);
