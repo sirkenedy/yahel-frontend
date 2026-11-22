@@ -5,8 +5,14 @@ interface ImportMetaEnv {
   readonly VITE_APP_URL?: string;
   /** Further origins a `return` address may point to, comma separated. */
   readonly VITE_RETURN_ORIGINS?: string;
-  /** Where "Create an account" leads. The link is hidden while this is unset. */
+  /** Where "Create an account" leads. Unset, it is `/personal` in this app. */
   readonly VITE_SIGN_UP_URL?: string;
+  /** Where "Have an account? Sign in" leads. Unset, it is `/signin` in this app. */
+  readonly VITE_SIGN_IN_URL?: string;
+  /** Where "For my business or team" leads. While unset, that choice says it is coming soon. */
+  readonly VITE_BUSINESS_SIGN_UP_URL?: string;
+  /** The domain of a new Yahel address, without the @. Unset, it is `yahel.com`. */
+  readonly VITE_MAIL_DOMAIN?: string;
   readonly VITE_HELP_URL?: string;
   readonly VITE_PRIVACY_URL?: string;
   readonly VITE_TERMS_URL?: string;

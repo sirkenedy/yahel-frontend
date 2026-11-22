@@ -21,7 +21,13 @@ export const config = {
     fallback: appUrl,
     allowedOrigins: (env.VITE_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
   } satisfies ReturnAddressPolicy,
-  signUpUrl: webAddress(env.VITE_SIGN_UP_URL),
+  // Sign-in and sign-up may be served from different addresses; until they are, each is a path in this app.
+  signInUrl: webAddress(env.VITE_SIGN_IN_URL) ?? '/signin',
+  signUpUrl: webAddress(env.VITE_SIGN_UP_URL) ?? '/personal',
+  /** Where "For my business or team" leads. Unset until that flow exists; the choice then says so. */
+  businessSignUpUrl: webAddress(env.VITE_BUSINESS_SIGN_UP_URL),
+  /** The domain of a new Yahel address. Must match the backend's `PLATFORM_EMAIL_DOMAIN`. */
+  mailDomain: env.VITE_MAIL_DOMAIN?.trim().toLowerCase() || 'yahel.com',
   helpUrl: webAddress(env.VITE_HELP_URL),
   privacyUrl: webAddress(env.VITE_PRIVACY_URL),
   termsUrl: webAddress(env.VITE_TERMS_URL),

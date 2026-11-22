@@ -1,5 +1,5 @@
 import { createAccountCapabilities } from '@yahel/api-client';
-import { browserPasskeyEnvironment, createBrowserSession, createPasskeyClient } from '@yahel/auth';
+import { browserPasskeyEnvironment, createBrowserSession, createPasskeyClient, createPasskeyRegistrar } from '@yahel/auth';
 import { config } from './config';
 
 export const session = createBrowserSession(config.apiUrl);
@@ -10,5 +10,9 @@ const loadStandIns = async () => (import.meta.env.VITE_STAND_INS === 'on' ? (awa
 
 export const loadCapabilities = async () => {
   const capabilities = createAccountCapabilities(session.api, await loadStandIns());
-  return { capabilities, passkeys: capabilities.passkeys ? createPasskeyClient(capabilities.passkeys, browserPasskeyEnvironment()) : null };
+  return {
+    capabilities,
+    passkeys: capabilities.passkeys ? createPasskeyClient(capabilities.passkeys, browserPasskeyEnvironment()) : null,
+    registrar: capabilities.passkeyRegistration ? createPasskeyRegistrar(capabilities.passkeyRegistration, browserPasskeyEnvironment()) : null,
+  };
 };

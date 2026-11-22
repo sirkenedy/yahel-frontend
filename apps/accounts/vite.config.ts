@@ -13,6 +13,23 @@ export default defineConfig(({ command, mode }) => {
     envDir,
     plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react()],
     server: { port: 5175, strictPort: true },
-    build: { sourcemap: true, target: 'es2022' },
+    build: {
+      sourcemap: true,
+      target: 'es2022',
+      // Each flow's screens travel as one file. They are small and shown one after another, so a file per
+      // screen costs more to compress and to fetch than it saves; the entry still contains none of them.
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            // Only the screens themselves: what they share with the entry stays where it is.
+            includeDependenciesRecursively: false,
+            groups: [
+              { name: 'sign-in-steps', test: /features\/sign-in\/steps\/|routes\/signin\/.*tsr-split=component/ },
+              { name: 'personal-steps', test: /features\/personal\/steps\/|routes\/personal\/.*tsr-split=component/ },
+            ],
+          },
+        },
+      },
+    },
   };
 });

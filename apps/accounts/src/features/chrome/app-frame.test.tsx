@@ -54,6 +54,40 @@ describe('AppFrame', () => {
     expect(screen.queryByText(m.newHere)).not.toBeInTheDocument();
   });
 
+  it('offers sign-in to someone who is creating an account', () => {
+    render(<AppFrame links={{ ...links, home: '/personal', homeLabel: m.brandSignUp, signUp: null, signIn: '/signin' }}>q</AppFrame>);
+
+    expect(screen.getByRole('link', { name: m.brandSignUp })).toHaveAttribute('href', '/personal');
+    expect(screen.getByText(m.haveAccount)).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: m.signIn })).toHaveAttribute('href', '/signin');
+  });
+
+  it('offers to hide personal details only on screens that ask for them, and says which way the control will go', async () => {
+    const onToggle = vi.fn();
+    const { container, rerender } = render(
+      <AppFrame links={links} privacy={{ isOn: false, onToggle }}>
+        q
+      </AppFrame>,
+    );
+    const hide = screen.getByRole('button', { name: m.hideDetails });
+    expect(hide).toHaveAttribute('aria-pressed', 'false');
+    expect(container.querySelector('[data-private]')).toBeNull();
+
+    await userEvent.click(hide);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AppFrame links={links} privacy={{ isOn: true, onToggle }}>
+        q
+      </AppFrame>,
+    );
+    expect(screen.getByRole('button', { name: m.showDetails })).toHaveAttribute('aria-pressed', 'true');
+    expect(container.querySelector('[data-private]')).not.toBeNull();
+
+    rerender(<AppFrame links={links}>q</AppFrame>);
+    expect(screen.queryByRole('button', { name: m.showDetails })).not.toBeInTheDocument();
+  });
+
   it('switches between light and dark, naming the control for what it will do', async () => {
     render(<AppFrame links={links}>q</AppFrame>);
 

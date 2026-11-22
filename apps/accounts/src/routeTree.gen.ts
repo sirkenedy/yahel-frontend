@@ -10,7 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PersonalRouteRouteImport } from './routes/personal/route'
 import { Route as SigninRouteRouteImport } from './routes/signin/route'
+import { Route as PersonalIndexRouteImport } from './routes/personal/index'
+import { Route as PersonalAddPasskeyRouteImport } from './routes/personal/add-passkey'
+import { Route as PersonalAddressRouteImport } from './routes/personal/address'
+import { Route as PersonalBirthRouteImport } from './routes/personal/birth'
+import { Route as PersonalCodeRouteImport } from './routes/personal/code'
+import { Route as PersonalContactRouteImport } from './routes/personal/contact'
+import { Route as PersonalCreatingRouteImport } from './routes/personal/creating'
+import { Route as PersonalNameRouteImport } from './routes/personal/name'
+import { Route as PersonalOwnCodeRouteImport } from './routes/personal/own-code'
+import { Route as PersonalOwnEmailRouteImport } from './routes/personal/own-email'
+import { Route as PersonalPasskeyRouteImport } from './routes/personal/passkey'
+import { Route as PersonalPasswordRouteImport } from './routes/personal/password'
+import { Route as PersonalReadyRouteImport } from './routes/personal/ready'
+import { Route as PersonalRecoveryRouteImport } from './routes/personal/recovery'
+import { Route as PersonalReviewRouteImport } from './routes/personal/review'
+import { Route as PersonalTypeRouteImport } from './routes/personal/type'
 import { Route as SigninIndexRouteImport } from './routes/signin/index'
 import { Route as SigninChooseRouteImport } from './routes/signin/choose'
 import { Route as SigninCodeRouteImport } from './routes/signin/code'
@@ -29,10 +46,95 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PersonalRouteRoute = PersonalRouteRouteImport.update({
+  id: '/personal',
+  path: '/personal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SigninRouteRoute = SigninRouteRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PersonalIndexRoute = PersonalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalAddPasskeyRoute = PersonalAddPasskeyRouteImport.update({
+  id: '/add-passkey',
+  path: '/add-passkey',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalAddressRoute = PersonalAddressRouteImport.update({
+  id: '/address',
+  path: '/address',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalBirthRoute = PersonalBirthRouteImport.update({
+  id: '/birth',
+  path: '/birth',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalCodeRoute = PersonalCodeRouteImport.update({
+  id: '/code',
+  path: '/code',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalContactRoute = PersonalContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalCreatingRoute = PersonalCreatingRouteImport.update({
+  id: '/creating',
+  path: '/creating',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalNameRoute = PersonalNameRouteImport.update({
+  id: '/name',
+  path: '/name',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalOwnCodeRoute = PersonalOwnCodeRouteImport.update({
+  id: '/own-code',
+  path: '/own-code',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalOwnEmailRoute = PersonalOwnEmailRouteImport.update({
+  id: '/own-email',
+  path: '/own-email',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalPasskeyRoute = PersonalPasskeyRouteImport.update({
+  id: '/passkey',
+  path: '/passkey',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalPasswordRoute = PersonalPasswordRouteImport.update({
+  id: '/password',
+  path: '/password',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalReadyRoute = PersonalReadyRouteImport.update({
+  id: '/ready',
+  path: '/ready',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalRecoveryRoute = PersonalRecoveryRouteImport.update({
+  id: '/recovery',
+  path: '/recovery',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalReviewRoute = PersonalReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => PersonalRouteRoute,
+} as any)
+const PersonalTypeRoute = PersonalTypeRouteImport.update({
+  id: '/type',
+  path: '/type',
+  getParentRoute: () => PersonalRouteRoute,
 } as any)
 const SigninIndexRoute = SigninIndexRouteImport.update({
   id: '/',
@@ -97,7 +199,23 @@ const SigninRecoverCodeRoute = SigninRecoverCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/personal': typeof PersonalRouteRouteWithChildren
   '/signin': typeof SigninRouteRouteWithChildren
+  '/personal/add-passkey': typeof PersonalAddPasskeyRoute
+  '/personal/address': typeof PersonalAddressRoute
+  '/personal/birth': typeof PersonalBirthRoute
+  '/personal/code': typeof PersonalCodeRoute
+  '/personal/contact': typeof PersonalContactRoute
+  '/personal/creating': typeof PersonalCreatingRoute
+  '/personal/name': typeof PersonalNameRoute
+  '/personal/own-code': typeof PersonalOwnCodeRoute
+  '/personal/own-email': typeof PersonalOwnEmailRoute
+  '/personal/passkey': typeof PersonalPasskeyRoute
+  '/personal/password': typeof PersonalPasswordRoute
+  '/personal/ready': typeof PersonalReadyRoute
+  '/personal/recovery': typeof PersonalRecoveryRoute
+  '/personal/review': typeof PersonalReviewRoute
+  '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
   '/signin/done': typeof SigninDoneRoute
@@ -109,10 +227,26 @@ export interface FileRoutesByFullPath {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/personal/': typeof PersonalIndexRoute
   '/signin/': typeof SigninIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/personal/add-passkey': typeof PersonalAddPasskeyRoute
+  '/personal/address': typeof PersonalAddressRoute
+  '/personal/birth': typeof PersonalBirthRoute
+  '/personal/code': typeof PersonalCodeRoute
+  '/personal/contact': typeof PersonalContactRoute
+  '/personal/creating': typeof PersonalCreatingRoute
+  '/personal/name': typeof PersonalNameRoute
+  '/personal/own-code': typeof PersonalOwnCodeRoute
+  '/personal/own-email': typeof PersonalOwnEmailRoute
+  '/personal/passkey': typeof PersonalPasskeyRoute
+  '/personal/password': typeof PersonalPasswordRoute
+  '/personal/ready': typeof PersonalReadyRoute
+  '/personal/recovery': typeof PersonalRecoveryRoute
+  '/personal/review': typeof PersonalReviewRoute
+  '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
   '/signin/done': typeof SigninDoneRoute
@@ -124,12 +258,29 @@ export interface FileRoutesByTo {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/personal': typeof PersonalIndexRoute
   '/signin': typeof SigninIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/personal': typeof PersonalRouteRouteWithChildren
   '/signin': typeof SigninRouteRouteWithChildren
+  '/personal/add-passkey': typeof PersonalAddPasskeyRoute
+  '/personal/address': typeof PersonalAddressRoute
+  '/personal/birth': typeof PersonalBirthRoute
+  '/personal/code': typeof PersonalCodeRoute
+  '/personal/contact': typeof PersonalContactRoute
+  '/personal/creating': typeof PersonalCreatingRoute
+  '/personal/name': typeof PersonalNameRoute
+  '/personal/own-code': typeof PersonalOwnCodeRoute
+  '/personal/own-email': typeof PersonalOwnEmailRoute
+  '/personal/passkey': typeof PersonalPasskeyRoute
+  '/personal/password': typeof PersonalPasswordRoute
+  '/personal/ready': typeof PersonalReadyRoute
+  '/personal/recovery': typeof PersonalRecoveryRoute
+  '/personal/review': typeof PersonalReviewRoute
+  '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
   '/signin/done': typeof SigninDoneRoute
@@ -141,13 +292,30 @@ export interface FileRoutesById {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/personal/': typeof PersonalIndexRoute
   '/signin/': typeof SigninIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/personal'
     | '/signin'
+    | '/personal/add-passkey'
+    | '/personal/address'
+    | '/personal/birth'
+    | '/personal/code'
+    | '/personal/contact'
+    | '/personal/creating'
+    | '/personal/name'
+    | '/personal/own-code'
+    | '/personal/own-email'
+    | '/personal/passkey'
+    | '/personal/password'
+    | '/personal/ready'
+    | '/personal/recovery'
+    | '/personal/review'
+    | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
     | '/signin/done'
@@ -159,10 +327,26 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/personal/'
     | '/signin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/personal/add-passkey'
+    | '/personal/address'
+    | '/personal/birth'
+    | '/personal/code'
+    | '/personal/contact'
+    | '/personal/creating'
+    | '/personal/name'
+    | '/personal/own-code'
+    | '/personal/own-email'
+    | '/personal/passkey'
+    | '/personal/password'
+    | '/personal/ready'
+    | '/personal/recovery'
+    | '/personal/review'
+    | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
     | '/signin/done'
@@ -174,11 +358,28 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/personal'
     | '/signin'
   id:
     | '__root__'
     | '/'
+    | '/personal'
     | '/signin'
+    | '/personal/add-passkey'
+    | '/personal/address'
+    | '/personal/birth'
+    | '/personal/code'
+    | '/personal/contact'
+    | '/personal/creating'
+    | '/personal/name'
+    | '/personal/own-code'
+    | '/personal/own-email'
+    | '/personal/passkey'
+    | '/personal/password'
+    | '/personal/ready'
+    | '/personal/recovery'
+    | '/personal/review'
+    | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
     | '/signin/done'
@@ -190,11 +391,13 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/personal/'
     | '/signin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PersonalRouteRoute: typeof PersonalRouteRouteWithChildren
   SigninRouteRoute: typeof SigninRouteRouteWithChildren
 }
 
@@ -207,12 +410,131 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/personal': {
+      id: '/personal'
+      path: '/personal'
+      fullPath: '/personal'
+      preLoaderRoute: typeof PersonalRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signin': {
       id: '/signin'
       path: '/signin'
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/personal/': {
+      id: '/personal/'
+      path: '/'
+      fullPath: '/personal/'
+      preLoaderRoute: typeof PersonalIndexRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/add-passkey': {
+      id: '/personal/add-passkey'
+      path: '/add-passkey'
+      fullPath: '/personal/add-passkey'
+      preLoaderRoute: typeof PersonalAddPasskeyRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/address': {
+      id: '/personal/address'
+      path: '/address'
+      fullPath: '/personal/address'
+      preLoaderRoute: typeof PersonalAddressRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/birth': {
+      id: '/personal/birth'
+      path: '/birth'
+      fullPath: '/personal/birth'
+      preLoaderRoute: typeof PersonalBirthRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/code': {
+      id: '/personal/code'
+      path: '/code'
+      fullPath: '/personal/code'
+      preLoaderRoute: typeof PersonalCodeRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/contact': {
+      id: '/personal/contact'
+      path: '/contact'
+      fullPath: '/personal/contact'
+      preLoaderRoute: typeof PersonalContactRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/creating': {
+      id: '/personal/creating'
+      path: '/creating'
+      fullPath: '/personal/creating'
+      preLoaderRoute: typeof PersonalCreatingRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/name': {
+      id: '/personal/name'
+      path: '/name'
+      fullPath: '/personal/name'
+      preLoaderRoute: typeof PersonalNameRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/own-code': {
+      id: '/personal/own-code'
+      path: '/own-code'
+      fullPath: '/personal/own-code'
+      preLoaderRoute: typeof PersonalOwnCodeRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/own-email': {
+      id: '/personal/own-email'
+      path: '/own-email'
+      fullPath: '/personal/own-email'
+      preLoaderRoute: typeof PersonalOwnEmailRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/passkey': {
+      id: '/personal/passkey'
+      path: '/passkey'
+      fullPath: '/personal/passkey'
+      preLoaderRoute: typeof PersonalPasskeyRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/password': {
+      id: '/personal/password'
+      path: '/password'
+      fullPath: '/personal/password'
+      preLoaderRoute: typeof PersonalPasswordRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/ready': {
+      id: '/personal/ready'
+      path: '/ready'
+      fullPath: '/personal/ready'
+      preLoaderRoute: typeof PersonalReadyRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/recovery': {
+      id: '/personal/recovery'
+      path: '/recovery'
+      fullPath: '/personal/recovery'
+      preLoaderRoute: typeof PersonalRecoveryRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/review': {
+      id: '/personal/review'
+      path: '/review'
+      fullPath: '/personal/review'
+      preLoaderRoute: typeof PersonalReviewRouteImport
+      parentRoute: typeof PersonalRouteRoute
+    }
+    '/personal/type': {
+      id: '/personal/type'
+      path: '/type'
+      fullPath: '/personal/type'
+      preLoaderRoute: typeof PersonalTypeRouteImport
+      parentRoute: typeof PersonalRouteRoute
     }
     '/signin/': {
       id: '/signin/'
@@ -301,6 +623,48 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PersonalRouteRouteChildren {
+  PersonalAddPasskeyRoute: typeof PersonalAddPasskeyRoute
+  PersonalAddressRoute: typeof PersonalAddressRoute
+  PersonalBirthRoute: typeof PersonalBirthRoute
+  PersonalCodeRoute: typeof PersonalCodeRoute
+  PersonalContactRoute: typeof PersonalContactRoute
+  PersonalCreatingRoute: typeof PersonalCreatingRoute
+  PersonalNameRoute: typeof PersonalNameRoute
+  PersonalOwnCodeRoute: typeof PersonalOwnCodeRoute
+  PersonalOwnEmailRoute: typeof PersonalOwnEmailRoute
+  PersonalPasskeyRoute: typeof PersonalPasskeyRoute
+  PersonalPasswordRoute: typeof PersonalPasswordRoute
+  PersonalReadyRoute: typeof PersonalReadyRoute
+  PersonalRecoveryRoute: typeof PersonalRecoveryRoute
+  PersonalReviewRoute: typeof PersonalReviewRoute
+  PersonalTypeRoute: typeof PersonalTypeRoute
+  PersonalIndexRoute: typeof PersonalIndexRoute
+}
+
+const PersonalRouteRouteChildren: PersonalRouteRouteChildren = {
+  PersonalAddPasskeyRoute: PersonalAddPasskeyRoute,
+  PersonalAddressRoute: PersonalAddressRoute,
+  PersonalBirthRoute: PersonalBirthRoute,
+  PersonalCodeRoute: PersonalCodeRoute,
+  PersonalContactRoute: PersonalContactRoute,
+  PersonalCreatingRoute: PersonalCreatingRoute,
+  PersonalNameRoute: PersonalNameRoute,
+  PersonalOwnCodeRoute: PersonalOwnCodeRoute,
+  PersonalOwnEmailRoute: PersonalOwnEmailRoute,
+  PersonalPasskeyRoute: PersonalPasskeyRoute,
+  PersonalPasswordRoute: PersonalPasswordRoute,
+  PersonalReadyRoute: PersonalReadyRoute,
+  PersonalRecoveryRoute: PersonalRecoveryRoute,
+  PersonalReviewRoute: PersonalReviewRoute,
+  PersonalTypeRoute: PersonalTypeRoute,
+  PersonalIndexRoute: PersonalIndexRoute,
+}
+
+const PersonalRouteRouteWithChildren = PersonalRouteRoute._addFileChildren(
+  PersonalRouteRouteChildren,
+)
+
 interface SigninRouteRouteChildren {
   SigninChooseRoute: typeof SigninChooseRoute
   SigninCodeRoute: typeof SigninCodeRoute
@@ -337,6 +701,7 @@ const SigninRouteRouteWithChildren = SigninRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PersonalRouteRoute: PersonalRouteRouteWithChildren,
   SigninRouteRoute: SigninRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport

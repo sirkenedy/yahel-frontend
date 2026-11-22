@@ -1,0 +1,35 @@
+import { FlowButton, FlowCallout, FlowIcon, FlowStep } from '@yahel/ui';
+import { personalMessages as m } from '../messages';
+import { usePersonalFlow } from '../personal-flow';
+import { StepFrame } from './step-frame';
+
+export function AddPasskeyStep() {
+  const { state, actions, meta } = usePersonalFlow();
+  const made = state.passkey !== null;
+
+  return (
+    <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede} failure={meta.requests.passkey.failure}>
+      <FlowStep.Body>
+        <FlowCallout icon={<FlowIcon name="passkey" />} title={made ? m.passkeyReady : m.passwordStillWorks}>
+          {made ? m.passkeyReadyDetail : m.passwordStillWorksDetail}
+        </FlowCallout>
+      </FlowStep.Body>
+      <FlowStep.Actions>
+        {made ? (
+          <FlowButton variant="primary" onPress={actions.continueWithoutPasskey}>
+            {m.continue}
+          </FlowButton>
+        ) : (
+          <>
+            <FlowButton variant="primary" onPress={actions.startPasskey}>
+              {m.addPasskey}
+            </FlowButton>
+            <FlowButton variant="quiet" onPress={actions.continueWithoutPasskey}>
+              {m.notNow}
+            </FlowButton>
+          </>
+        )}
+      </FlowStep.Actions>
+    </StepFrame>
+  );
+}
