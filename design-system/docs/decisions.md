@@ -181,6 +181,19 @@ The reasons, and what was rejected, are in `docs/decisions.md` F-39 to F-54.
 - **Address.** A taken address offers the server's free alternatives, not ones made from the birth year; the domain shown is the configured one.
 - **Demo label.** A tab at the top edge of the page, not a pill at the bottom, so it never covers an action.
 
+### Daylight error and feedback states: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-55 to F-64. The component spec is `components/flow-states.md`.
+
+- **Not built because they reveal whether an account exists.** "We couldn't find a Yahel account with that email", "That email already has a Yahel account", and the suspended and paused screens straight from the email step. "Wrong password" keeps the neutral words "That email and password don't match", beside the field as drawn.
+- **Not built because the backend sends nothing to build them from.** "{n} tries left", the warning before the last try, "Send the code again" on sign-in, "Continue to {provider}", the organisation's name, "15 minutes", a message per field for a refused registration.
+- **Dialog.** A session that ended, and "signed out everywhere", are the Expired whole screen, not a dialog.
+- **Whole screens.** Wording that states what the app cannot know is dropped (see F-59). The error screen keeps "Start again" or "Back to sign in" in place of "Contact support", and shows the reference only when there is one.
+- **Toast.** One at a time; the icon takes the text colour rather than the opposite theme's tone; the close control is 44 px.
+- **Banner.** A neutral hairline rather than a 22% mix of the tone (the tone's colour under increased contrast); actions are 44 px pills rather than 36 px.
+- **Countdown.** The 429 banner counts down but the step's button stays pressable.
+- **Tints.** `color.daylight.danger-tint`, `warning-tint` and `success-tint` are solid colours in the dark themes (the boards draw 12% of the tone over the canvas), so their contrast can be checked.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |

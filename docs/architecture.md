@@ -78,14 +78,18 @@ apps/accounts/src/
     store.ts                    the flow state for this page session (memory only)
     requests.ts                 every request the flow makes and where each outcome leads (`useFlowRequest`)
     <flow>-flow.tsx             the provider: joins the store and the requests into `{ state, actions, meta }`
-    failure.ts, validation.ts   failures and field problems in plain words
+    feedback.ts, validation.ts  the flow's rows of the feedback map, and field problems in plain words
     steps/<step>-step.tsx       presentational; reads the provider's context and nothing else
   flow/                         what every flow is built from; no feature's wording or state lives here
     use-flow-request.ts         a request owned by a flow (see below)
-    use-step-field.ts           one field of a step: value, problem, submit, focus on the problem; `submitFields` for several
+    feedback.ts                 the one mapping from a failure to what the person sees (see below)
+    messages.ts                 words every flow shares: connection, server, waits, the whole-screen states
+    state-screen.tsx            the whole-screen states a server answer can lead to
+    resend-link.tsx, use-waits.ts, toasts.ts   the resend cool-down, slow and countdown clocks, the connection, the toast
+    use-step-field.ts           one field of a step: value, problem, a server refusal, submit, focus on the problem; `useStepFields` for several
     use-step-travel.ts          which way the person moved and how many steps they have seen
     flow-store.ts               the in-memory store a flow's `reduce` drives
-    step-frame.tsx              the way back, the question, the page title and a failed request
+    step-frame.tsx              the way back, the question, the page title, and whatever a request has to tell
   features/chrome/              the frame around every flow: brand, theme control, footer
   config.ts                     every outbound address, from `VITE_*` settings; nothing is derived from the host
 ```
@@ -97,12 +101,13 @@ apps/accounts/src/
 - **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
 
 - **A flow that creates something does it in one resumable request.** Personal sign-up collects every answer first and creates the account only on "Agree and create account" (`features/personal/requests.ts`, `create`): register, sign in, set up. Each part is recorded in the flow state as it completes, so a retry skips what is done and the account is created once. What needs the account (the emailed code for an existing address, the texted code, saving the passkey) comes after it, whatever the drawings' order (`decisions.md` F-39, F-43).
-- **A failed screen never shows the router's own error page.** A step that throws is replaced inside the frame by a plain message with a retry (`features/chrome/error-screen.tsx`); a layout or guard that throws gets the same with the frame; a boundary around the router catches the rest.
-- **Each flow's screens are one file** (`vite.config.ts`, `codeSplitting`), loaded when the flow is first shown; the entry contains none.
+- **One mapping from a failure to feedback** (`flow/feedback.ts`, from the designs' `FeedbackCodeMap`). `answerOf(error)` names the answer: the backend's code where the map names one, otherwise the status, and for no answer at all whether the device is offline or the service is not answering. A row describes the feedback: where it shows (`field`, `banner` or `screen`), the tone, the words, the next action. `describeFailure(error, rows)` picks the row and adds only an id to quote and when to try again. A flow's `feedback.ts` holds its rows per thing attempted, spread over `commonRows`; `useFlowRequest` keeps the described feedback, and steps hand their requests to the step frame. The frame shows a banner above the form, replaces the step with a whole-screen state, or leaves a `field` feedback to the field that names it (`forField`, `useStepField({ refusal })`). Nothing the server wrote reaches the screen, and no row says whether an account exists.
+- **A failed screen never shows the router's own error page.** A step that throws is replaced inside the frame by a plain message with a retry (the "Error" whole-screen state, `features/chrome/error-screen.tsx`); a layout or guard that throws gets the same with the frame; a boundary around the router catches the rest.
+- **Each flow's screens are one file** (`vite.config.ts`, `codeSplitting`), loaded when the flow is first shown; the entry contains none. What only steps are built from (fields, the step frame, the whole-screen states) is a third file, `step-kit`.
 
 ### 3.2 Capabilities and stand-ins
 
-Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), the account chooser, a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, and the two choices on the sign-up review. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
+Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), the account chooser, a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, the two choices on the sign-up review, and the window of planned maintenance. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
 
 Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/build-guards.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
 

@@ -77,6 +77,23 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Trusted contact (`trusted-contacts.ts`): `POST /v1/me/recovery/contact`
 - [ ] The two review choices (`preferences.ts`): `PATCH /v1/me/preferences`, or fields on `RegisterDto`
 - [ ] To add with slice 3: domain search and purchase, plans, checkout and the card code
+- [ ] The maintenance window (`service-status.ts`): `GET /v1/status`, answered while the API is down, with the window in progress; or `Retry-After` on the 503
+
+### Signals the feedback states need
+
+The designs' map of answers to messages (`design-system/canvas/project/accounts/states/FeedbackCodeMap.dc.html`) depends on things the backend does not send today. Until each exists the app shows the nearest honest state (`decisions.md` F-57 to F-59).
+
+- [ ] **`Retry-After` readable by browsers.** The rate limiter sends it, but CORS does not expose it (`exposedHeaders`), so the locked screen cannot say "You can try again at 14:32" and a 429 elsewhere cannot count down. The limiter's 429 should also carry `TOO_MANY_REQUESTS` (it arrives as `BAD_REQUEST`; the app goes by the status)
+- [ ] **A code for a suspended account**, `ACCOUNT_SUSPENDED`, answered only after the password has matched. Today it is 403 `FORBIDDEN`, the same as an inactive membership, so the screen cannot say which
+- [ ] **`TENANT_SUSPENDED` at login**, with the organisation's name (`meta.organisationName`). The code exists but login never raises it
+- [ ] **Tries left on a code** (`meta.attemptsLeft` on `MFA_INVALID` and on a wrong emailed, texted or reset code), and whether a reset code was wrong or has expired
+- [ ] **A pause after repeated wrong passwords**, if one is wanted: its length and how many tries are left, answered identically for an address with no account
+- [ ] **Field codes in `VALIDATION_ERROR`** (`meta.fields: { field, code }[]`), so a refused registration can be told beside the right field
+- [ ] **The single sign-on address** on `SSO_REQUIRED` (`meta.ssoUrl`, `meta.provider`)
+- [ ] **A confirm-email path for sign-in**: the answer to `EMAIL_NOT_VERIFIED` should say whether a code or a link was sent, so sign-in can offer to enter it or to send it again
+- [ ] **A way to complete `FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED`** (a short-lived token in the answer); until then the person is sent to reset the password
+- [ ] **A maintenance window** (see the stand-in above), and 503 rather than a dropped connection while the API is down, so "getting an upgrade" can be told from "not answering"
+- [ ] **Error reporting** (already under Foundation): the error screen's reference is only shown when the failure carries a request id
 
 ### What each real endpoint must do
 
