@@ -111,6 +111,18 @@ describe('createApiClient', () => {
     expect(init.headers.Authorization).toBe('Bearer token-1');
   });
 
+  it('me.recovery.get asks for the masked methods as the signed-in person', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: recovery }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(api.me.recovery.get()).resolves.toEqual(recovery);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('http://api.test/api/v1/me/recovery');
+    expect(init.method).toBe('GET');
+    expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
   it('does not refresh or resend when a signed-in request is refused for its own reasons, such as a wrong code', async () => {
     const fetchMock = vi.fn().mockResolvedValue(json(401, { success: false, code: 'INVALID_TOKEN', message: 'Invalid or expired phone verification code' }));
     const refreshSession = vi.fn().mockResolvedValue(true);

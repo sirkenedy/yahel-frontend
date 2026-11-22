@@ -316,7 +316,27 @@ export interface WorkspaceBilling {
   release(paymentId: string): Promise<void>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling';
+/** The workspace a signed-in session is in, as an administrator's first sign-in needs it. */
+export interface WorkspaceMembership {
+  /** The organisation's name. */
+  organisation: string;
+  /** The person administers the workspace (its owner or an admin), so Admin is theirs to set up. */
+  administrator: boolean;
+  /** The person has at least one passkey. Admin is for administrators who have one. */
+  hasPasskey: boolean;
+}
+
+/**
+ * What an administrator's first sign-in asks of the server about the signed-in person. Needs a session.
+ * It informs the interface only: refusing Admin to an administrator without a passkey is the server's
+ * job (docs/roadmap.md, "What each real endpoint must do").
+ */
+export interface AdminAccess {
+  /** The session's workspace, or `null` when the session is a personal one with none. */
+  membership(): Promise<WorkspaceMembership | null>;
+}
+
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -333,6 +353,7 @@ export interface AccountCapabilities {
   domainMarket: DomainMarket | null;
   domainClaims: DomainClaims | null;
   workspaceBilling: WorkspaceBilling | null;
+  adminAccess: AdminAccess | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }

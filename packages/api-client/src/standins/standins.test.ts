@@ -79,6 +79,16 @@ describe('stand-ins', () => {
     await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] })).resolves.toBeUndefined();
   });
 
+  it('admin access: names the demo organisation and its administrator, who has a passkey only once one is saved', async () => {
+    const { adminAccess, passkeyRegistration } = createStandIns(instant);
+
+    await expect(adminAccess.membership()).resolves.toEqual({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false });
+    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] }).catch(() => undefined);
+    await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: false });
+    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });
+    await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: true });
+  });
+
   it('passkey registration: refuses an attestation it could not verify', async () => {
     const { passkeyRegistration } = createStandIns(instant);
 
