@@ -16,7 +16,7 @@ The flow shell is the page frame of every sign-in and sign-up screen ("Daylight"
 - **Summary.** Optional, beside the question on wide screens: the receipt.
 - **Footer.** A lock icon and the data-location line; language, Help, Privacy, Terms.
 - **Progress.** "03 / 07 · About 90 sec" and one pip per step, above the question in multi-step flows.
-- **Receipt.** A title and rows of label and value; each row is done, current or upcoming.
+- **Receipt.** Rows of label and value; each row is done, current or upcoming, and may end with a way to change it. Built on the review screen (see `flow-sign-up.md`); the designs draw no receipt beside the question, so the summary column is unused.
 - **Demo label.** A small fixed label shown only while the app is serving stand-in data.
 
 ## Variants and sizes
@@ -45,10 +45,10 @@ Under 600 px the header prompt is hidden (the link stays), the footer stacks, an
 
 ## Tokens
 
-- Colour: `color.daylight.canvas`, `ink`, `soft`, `mute`, `surface`, `line`, `accent`, `link`, `track`, `mark-pale`, `mark-left`, `mark-right`, `wordmark`; `elevation.daylight` (receipt).
+- Colour: `color.daylight.canvas`, `ink`, `soft`, `mute`, `surface`, `line`, `accent`, `link`, `track`, `mark-pale`, `mark-left`, `mark-right`, `wordmark`; `line` (receipt outline).
 - Type: `font.text`; `type.flow-lede` (page), `type.flow-label` (prompt), `type.flow-note` (footer, progress), `type.flow-action` (receipt title), `type.flow-link` (receipt value).
 - Space and shape: `flow.gutter`, `flow.gutter-compact`, `flow.column`, `flow.wrap`, `flow.summary`, `flow.brand`, `flow.pip`, `space.4` to `space.64`, `radius.xl`, `radius.full`, `target.touch`.
-- Layering and motion: `z.toast` (skip link, demo label); receipt rows rise with `duration.rise` and `easing.standard`.
+- Layering and motion: `z.toast` (skip link, demo label).
 
 ## Behaviour
 

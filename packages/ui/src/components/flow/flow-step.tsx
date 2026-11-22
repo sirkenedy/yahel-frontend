@@ -30,7 +30,7 @@ function FlowStepRoot({ direction = 'forward', children }: FlowStepProps) {
   useEffect(() => {
     const section = ref.current;
     if (!section) return;
-    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]):not([aria-hidden="true"]), select, textarea') : null;
+    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]):not([type="checkbox"]):not([aria-hidden="true"]), select, textarea') : null;
     (field ?? document.getElementById(headingId))?.focus({ preventScroll: true });
   }, [headingId]);
 
@@ -82,14 +82,35 @@ function FlowStepForm({ onSubmit, children }: { onSubmit: FormEventHandler<HTMLF
   );
 }
 
+/** `pair`: two equal fields that stack on a narrow screen. `date`: day, month, year. `phone`: a short field, then a long one. */
+export type FlowRowLayout = 'pair' | 'date' | 'phone';
+
+/** Fields that belong together on one line. Give it a `label` when together they answer one thing, such as a date. */
+function FlowStepRow({ layout = 'pair', label, children }: { layout?: FlowRowLayout; label?: string; children: ReactNode }) {
+  return (
+    <div className={`ws-flow-step__row ws-flow-step__row--${layout}`} role={label ? 'group' : undefined} aria-label={label}>
+      {children}
+    </div>
+  );
+}
+
 /** The primary action first, then at most one quiet action beside it. */
 function FlowStepActions({ children }: { children: ReactNode }) {
   return <div className="ws-flow-step__actions">{children}</div>;
 }
 
-/** Ways out of the step that are not the main path: "Forgot password?", "Use a passkey". */
-function FlowStepLinks({ children }: { children: ReactNode }) {
-  return <div className="ws-flow-step__links">{children}</div>;
+/** Ways out of the step that are not the main path: "Forgot password?", "Use a passkey". `end` puts them at the far side. */
+function FlowStepLinks({ align = 'start', children }: { align?: 'start' | 'end'; children: ReactNode }) {
+  return (
+    <div className="ws-flow-step__links" data-align={align}>
+      {children}
+    </div>
+  );
+}
+
+/** Small print under the fields: what a choice means, or what pressing the button agrees to. */
+function FlowStepNote({ children }: { children: ReactNode }) {
+  return <p className="ws-flow-step__note">{children}</p>;
 }
 
 /**
@@ -103,6 +124,8 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Lede: FlowStepLede,
   Form: FlowStepForm,
   Body: FlowStepBody,
+  Row: FlowStepRow,
   Actions: FlowStepActions,
   Links: FlowStepLinks,
+  Note: FlowStepNote,
 });

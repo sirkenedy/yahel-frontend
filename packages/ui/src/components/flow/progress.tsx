@@ -27,17 +27,19 @@ export function FlowProgress({ current, total, children }: FlowProgressProps) {
 }
 
 interface ReceiptProps {
-  /** What is being built: "Creating your account". */
-  title: string;
+  /** What is being built, as a visible heading: "Creating your account". */
+  title?: string;
+  /** Names the list for assistive technology when there is no visible heading. */
+  label?: string;
   children: ReactNode;
 }
 
-function ReceiptRoot({ title, children }: ReceiptProps) {
+function ReceiptRoot({ title, label, children }: ReceiptProps) {
   return (
-    <section className="ws-flow-receipt">
-      <h2 className="ws-flow-receipt__title">{title}</h2>
+    <div className="ws-flow-receipt" role="group" aria-label={title ?? label}>
+      {title ? <h2 className="ws-flow-receipt__title">{title}</h2> : null}
       <dl className="ws-flow-receipt__rows">{children}</dl>
-    </section>
+    </div>
   );
 }
 
@@ -47,20 +49,23 @@ export type ReceiptRowState = 'done' | 'current' | 'upcoming';
 interface ReceiptRowProps {
   label: string;
   state?: ReceiptRowState;
+  /** A way to change the answer, shown at the end of the line. */
+  action?: ReactNode;
   /** The answer, or what will be asked. */
   children: ReactNode;
 }
 
-function ReceiptRow({ label, state = 'done', children }: ReceiptRowProps) {
+function ReceiptRow({ label, state = 'done', action, children }: ReceiptRowProps) {
   return (
     <div className="ws-flow-receipt__row" data-state={state}>
       <dt>{label}</dt>
       <dd>{children}</dd>
+      {action ? <dd className="ws-flow-receipt__action">{action}</dd> : null}
     </div>
   );
 }
 
-/** The summary that fills in beside the question as the person answers, so nothing at the end is a surprise. */
+/** The account as answered so far, line by line, so nothing at the end is a surprise. Each line can carry a way to change it. */
 export const Receipt = Object.assign(ReceiptRoot, { Row: ReceiptRow });
 
 export type { ReceiptProps, ReceiptRowProps };

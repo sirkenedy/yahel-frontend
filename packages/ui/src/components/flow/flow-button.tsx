@@ -7,8 +7,9 @@ import { FlowIcon } from './flow-icon';
  * `primary`: the one indigo action of the screen. `quiet`: the outlined action beside it.
  * `field`: a full-width outlined action the height of a field. `link`: a text action.
  * `round`: an icon-only control; give it an `aria-label`. `destructive`: a small action that removes something.
+ * `chip`: a small pill that fills in a suggestion.
  */
-export type FlowButtonVariant = 'primary' | 'quiet' | 'field' | 'link' | 'round' | 'destructive';
+export type FlowButtonVariant = 'primary' | 'quiet' | 'field' | 'link' | 'round' | 'destructive' | 'chip';
 
 const className = (variant: FlowButtonVariant) => `ws-flow-button ws-flow-button--${variant}`;
 
@@ -42,6 +43,29 @@ export function FlowLink({ variant = 'link', children, ...props }: FlowLinkProps
     <Link {...props} className={className(variant)}>
       {children}
       {variant === 'primary' ? <FlowIcon name="forward" /> : null}
+    </Link>
+  );
+}
+
+export interface FlowLinkCardProps {
+  href: string;
+  /** A decorative icon in the tile at the start. */
+  icon: ReactNode;
+  title: string;
+  /** A second line that says what the link is for. */
+  children: ReactNode;
+}
+
+/** A link drawn as a card, for one optional next thing: an icon, what it is and why, and an arrow. */
+export function FlowLinkCard({ href, icon, title, children }: FlowLinkCardProps) {
+  return (
+    <Link className="ws-flow-choice ws-flow-choice--link" href={href}>
+      <span className="ws-flow-choice__icon">{icon}</span>
+      <span className="ws-flow-choice__text">
+        <span className="ws-flow-choice__title">{title}</span>
+        <span className="ws-flow-choice__detail">{children}</span>
+      </span>
+      <FlowIcon name="chevron-forward" />
     </Link>
   );
 }

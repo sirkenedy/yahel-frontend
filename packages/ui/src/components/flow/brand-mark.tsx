@@ -15,10 +15,9 @@ const glyphs: readonly (readonly [offset: number, outline: string])[] = [
 ];
 const arch = 'M6 45V24a18 18 0 0 1 36 0v21z';
 
-export function BrandMark({ label }: BrandMarkProps) {
-  const id = useId();
+function Emblem({ id }: { id: string }) {
   return (
-    <svg className="ws-flow-brand" viewBox="6 6 136.74 45.88" role="img" aria-label={label}>
+    <>
       <defs>
         <mask id={`${id}m`} maskUnits="userSpaceOnUse" x="-4" y="-4" width="56" height="56">
           <rect x="-4" y="-4" width="56" height="56" fill="white" />
@@ -35,11 +34,32 @@ export function BrandMark({ label }: BrandMarkProps) {
           <path className="ws-flow-brand__right" d="M24 27.5 62 -20.5 78 60 24 60z" />
         </g>
       </g>
+    </>
+  );
+}
+
+export function BrandMark({ label }: BrandMarkProps) {
+  const id = useId();
+  return (
+    <svg className="ws-flow-brand" viewBox="6 6 136.74 45.88" role="img" aria-label={label}>
+      <Emblem id={id} />
       <g className="ws-flow-brand__word" transform="translate(51.63 45) scale(0.04128 -0.04128)">
         {glyphs.map(([offset, outline]) => (
           <path key={offset} transform={`translate(${offset} 0)`} d={outline} />
         ))}
       </g>
     </svg>
+  );
+}
+
+/** The brand's emblem inside rings of light, for the moment a flow finishes. Decorative: the heading beside it says what happened. */
+export function BrandMoment() {
+  const id = useId();
+  return (
+    <span className="ws-flow-moment" aria-hidden="true">
+      <svg viewBox="4 4 40 43">
+        <Emblem id={id} />
+      </svg>
+    </span>
   );
 }

@@ -6,18 +6,25 @@ import {
   AccountChip,
   AccountList,
   BrandMark,
+  BrandMoment,
   Choice,
   ChoiceGroup,
   CodeInput,
   DemoMarker,
   FlowButton,
+  FlowCallout,
+  FlowCheckbox,
   FlowDivider,
+  FlowFacts,
   FlowLink,
+  FlowLinkCard,
   FlowNotice,
   FlowPasswordField,
   FlowProgress,
+  FlowSelect,
   FlowShell,
   FlowStep,
+  FlowSuggestions,
   FlowTextField,
   FlowWaiting,
   LinkRouter,
@@ -557,5 +564,219 @@ describe('FlowProgress and Receipt', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Creating your account' })).toBeInTheDocument();
     expect(screen.getAllByRole('term').map((term) => term.textContent)).toEqual(['Name', 'Address', 'Security']);
     expect(screen.getByText('Choosing now').closest('[data-state]')).toHaveAttribute('data-state', 'current');
+  });
+});
+
+describe('Receipt on the review screen', () => {
+  it('names itself for assistive technology when it has no heading, and puts a way to change each answer at the end of its line', async () => {
+    const onEdit = vi.fn();
+    render(
+      <Receipt label="Your account">
+        <Receipt.Row
+          label="Name"
+          action={
+            <FlowButton variant="link" onPress={onEdit}>
+              Edit
+            </FlowButton>
+          }
+        >
+          Amara Okafor
+        </Receipt.Row>
+      </Receipt>,
+    );
+
+    const receipt = screen.getByRole('group', { name: 'Your account' });
+    expect(within(receipt).queryByRole('heading')).not.toBeInTheDocument();
+    expect(within(receipt).getAllByRole('definition')[0]).toHaveTextContent('Amara Okafor');
+    await userEvent.click(within(receipt).getByRole('button', { name: 'Edit' }));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('FlowSelect', () => {
+  function Month({ error }: { error?: string }) {
+    const [value, setValue] = useState('');
+    return (
+      <FlowSelect label="Month" value={value} onChange={setValue} error={error} name="month" autoComplete="bday-month" isSensitive>
+        <option value="">Month</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+      </FlowSelect>
+    );
+  }
+
+  it('is a labelled select that reports the chosen value', async () => {
+    render(<Month />);
+    const select = screen.getByRole('combobox', { name: 'Month' });
+
+    await userEvent.selectOptions(select, 'March');
+
+    expect(select).toHaveValue('3');
+    expect(select).toHaveAttribute('autocomplete', 'bday-month');
+    expect(select).not.toHaveAttribute('aria-invalid');
+    expect(select.parentElement).toHaveAttribute('data-sensitive', 'true');
+  });
+
+  it('marks itself invalid and ties the problem to the select', () => {
+    render(<Month error="Choose a month." />);
+
+    const select = screen.getByRole('combobox', { name: 'Month' });
+    expect(select).toHaveAttribute('aria-invalid', 'true');
+    expect(select).toHaveAccessibleDescription('Choose a month.');
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a month.');
+  });
+
+  it('hands out the select element so focus can be moved to it', () => {
+    function Focused() {
+      const ref = useRef<HTMLSelectElement>(null);
+      return (
+        <>
+          <FlowSelect label="Month" value="" onChange={() => undefined} inputRef={ref}>
+            <option value="">Month</option>
+          </FlowSelect>
+          <button onClick={() => ref.current?.focus()}>focus</button>
+        </>
+      );
+    }
+    render(<Focused />);
+
+    screen.getByRole('button', { name: 'focus' }).click();
+
+    expect(screen.getByRole('combobox', { name: 'Month' })).toHaveFocus();
+  });
+});
+
+describe('sign-up field additions', () => {
+  it('shows fixed text after the value and good news beneath it', () => {
+    render(<FlowTextField label="Your Yahel address" value="amara.okafor" onChange={() => undefined} suffix="@yahel.example" success="Available. It’s yours if you want it." />);
+
+    expect(screen.getByText('@yahel.example')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Available. It’s yours if you want it.');
+  });
+
+  it('lets a problem replace the good news', () => {
+    render(<FlowTextField label="Your Yahel address" value="amara" onChange={() => undefined} success="Available." error="That address is taken." />);
+
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(screen.getByText('That address is taken.')).toBeInTheDocument();
+  });
+
+  it('keeps the announcing region ready for a field that may have good news, and has none otherwise', () => {
+    const { rerender } = render(<FlowTextField label="Your Yahel address" value="" onChange={() => undefined} success={null} />);
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+
+    rerender(<FlowTextField label="Email" value="" onChange={() => undefined} />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('marks a personal value so the shell can hide it', () => {
+    const { container } = render(
+      <FlowShell skipLabel="Skip" isPrivate>
+        <FlowTextField label="Day" value="14" onChange={() => undefined} isSensitive />
+        <FlowTextField label="First name" value="Amara" onChange={() => undefined} />
+      </FlowShell>,
+    );
+
+    expect(container.querySelector('.ws-flow')).toHaveAttribute('data-private', 'true');
+    expect(container.querySelectorAll('[data-sensitive]')).toHaveLength(1);
+  });
+
+  it('lays related fields out on one line', () => {
+    const { container } = render(
+      <FlowStep>
+        <FlowStep.Heading>q</FlowStep.Heading>
+        <FlowStep.Row layout="date" label="Date of birth">
+          <FlowTextField label="Day" value="" onChange={() => undefined} />
+          <FlowTextField label="Year" value="" onChange={() => undefined} />
+        </FlowStep.Row>
+      </FlowStep>,
+    );
+
+    expect(container.querySelector('.ws-flow-step__row--date')?.children).toHaveLength(2);
+    expect(within(screen.getByRole('group', { name: 'Date of birth' })).getAllByRole('textbox')).toHaveLength(2);
+  });
+});
+
+describe('FlowSuggestions, FlowCheckbox and FlowLinkCard', () => {
+  it('groups one-tap answers under a label', async () => {
+    const onPick = vi.fn();
+    render(
+      <FlowSuggestions label="Also free">
+        <FlowButton variant="chip" onPress={() => onPick('okafor.amara')}>
+          okafor.amara
+        </FlowButton>
+      </FlowSuggestions>,
+    );
+
+    await userEvent.click(within(screen.getByRole('group', { name: 'Also free' })).getByRole('button', { name: 'okafor.amara' }));
+
+    expect(onPick).toHaveBeenCalledWith('okafor.amara');
+  });
+
+  it('is a checkbox whose whole line turns it on and off', async () => {
+    function Tips() {
+      const [on, setOn] = useState(false);
+      return (
+        <FlowCheckbox isSelected={on} onChange={setOn}>
+          Email me tips and product news
+        </FlowCheckbox>
+      );
+    }
+    render(<Tips />);
+    const box = screen.getByRole('checkbox', { name: 'Email me tips and product news' });
+    expect(box).not.toBeChecked();
+
+    await userEvent.click(screen.getByText('Email me tips and product news'));
+    expect(box).toBeChecked();
+
+    await userEvent.keyboard(' ');
+    expect(box).not.toBeChecked();
+  });
+
+  it('is a link that says what it is for, and goes through the router', async () => {
+    const navigate = vi.fn();
+    render(
+      <LinkRouter navigate={navigate}>
+        <FlowLinkCard href="/personal/contact" icon="i" title="Add someone you trust">
+          A backup way back in.
+        </FlowLinkCard>
+      </LinkRouter>,
+    );
+
+    const link = screen.getByRole('link', { name: /Add someone you trust.*A backup way back in\./ });
+    await userEvent.click(link);
+
+    expect(navigate).toHaveBeenCalledWith('/personal/contact', undefined);
+  });
+});
+
+describe('FlowCallout, FlowFacts and BrandMoment', () => {
+  it('reassures with one fact and its explanation', () => {
+    render(
+      <FlowCallout icon="i" title="Your password still works">
+        The passkey stays on this device.
+      </FlowCallout>,
+    );
+
+    expect(screen.getByText('Your password still works')).toBeInTheDocument();
+    expect(screen.getByText('The passkey stays on this device.')).toBeInTheDocument();
+  });
+
+  it('lists facts, each led by the words that carry it', () => {
+    render(
+      <FlowFacts>
+        <FlowFacts.Item lead="They can see">your name.</FlowFacts.Item>
+        <FlowFacts.Item lead="They can’t see">your mail.</FlowFacts.Item>
+      </FlowFacts>,
+    );
+
+    expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual(['They can see your name.', 'They can’t see your mail.']);
+  });
+
+  it('draws the finishing mark as decoration only', () => {
+    const { container } = render(<BrandMoment />);
+
+    expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 });

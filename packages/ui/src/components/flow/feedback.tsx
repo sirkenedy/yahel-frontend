@@ -39,6 +39,44 @@ export function FlowWaiting({ title, children }: FlowWaitingProps) {
   );
 }
 
+export interface FlowCalloutProps {
+  /** A decorative icon in the tile at the start. */
+  icon: ReactNode;
+  title: string;
+  children: ReactNode;
+}
+
+/** A card that reassures: one fact in bold and a line that explains it. */
+export function FlowCallout({ icon, title, children }: FlowCalloutProps) {
+  return (
+    <div className="ws-flow-waiting">
+      <span className="ws-flow-choice__icon">{icon}</span>
+      <span className="ws-flow-waiting__text">
+        <span className="ws-flow-waiting__title">{title}</span>
+        <span className="ws-flow-waiting__detail">{children}</span>
+      </span>
+    </div>
+  );
+}
+
+function FlowFactsRoot({ children }: { children: ReactNode }) {
+  return <ul className="ws-flow-facts">{children}</ul>;
+}
+
+function FlowFact({ lead, children }: { /** The few words that carry the fact, in bold. */ lead: string; children: ReactNode }) {
+  return (
+    <li>
+      <FlowIcon name="check" />
+      <span>
+        <b>{lead}</b> {children}
+      </span>
+    </li>
+  );
+}
+
+/** A short ticked list of what will and will not happen. */
+export const FlowFacts = Object.assign(FlowFactsRoot, { Item: FlowFact });
+
 /** The tick that pops in when something has been done. Decorative: the heading beside it says what happened. */
 export function SuccessMark() {
   return (
