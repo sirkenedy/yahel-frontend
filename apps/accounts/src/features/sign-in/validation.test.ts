@@ -20,9 +20,21 @@ describe('emailProblem', () => {
 
 describe('newPasswordProblem', () => {
   it('asks for length first, then for the mix the backend requires', () => {
-    expect(newPasswordProblem('Short-1a')).toBe(m.newPasswordTooShort);
-    expect(newPasswordProblem('sunrise over lekki')).toBe(m.newPasswordTooPlain);
+    expect(newPasswordProblem('Sh-1a')).toBe('Use 8 or more characters.');
+    expect(newPasswordProblem('short')).toBe('Use 8 or more characters, with a capital letter, a number and a symbol.');
+    expect(newPasswordProblem('sunrise over lekki')).toBe('Add a capital letter and a number.');
+    expect(newPasswordProblem('Sunrise over lekki')).toBe('Add a number.');
+    expect(newPasswordProblem('Short-1a')).toBeNull();
     expect(newPasswordProblem('Sunrise over Lekki 94!')).toBeNull();
+  });
+
+  it('asks for a password when there is none', () => {
+    expect(newPasswordProblem('')).toBe(m.newPasswordRequired);
+  });
+
+  it('builds its words from the messages', () => {
+    expect(newPasswordProblem('SHORT')).toBe(m.newPasswordTooShort(m.listOf([m.passwordParts.lower, m.passwordParts.digit, m.passwordParts.symbol])));
+    expect(newPasswordProblem('longenough1!')).toBe(m.newPasswordTooPlain(m.passwordParts.upper));
   });
 });
 
@@ -30,15 +42,16 @@ describe('passwordStrength', () => {
   it.each([
     ['', 0],
     ['abc', 1],
-    ['abcdefghijkl', 2],
-    ['abcdefghijk1', 3],
-    ['abcdefghijklmno1', 4],
+    ['abcdefghijklmnop', 1],
+    ['Abcdef1!', 2],
+    ['Abcdefghij1!', 3],
+    ['Abcdefghijkl1!', 4],
   ])('scores %j as %i', (password, score) => {
     expect(passwordStrength(password)).toBe(score);
   });
 
   it('marks down a password that contains the person’s own name', () => {
-    expect(passwordStrength('amara-sunrise-94', 'Amara')).toBe(3);
-    expect(passwordStrength('lekki-sunrise-94', 'Amara')).toBe(4);
+    expect(passwordStrength('Amara-sunrise-94', 'Amara')).toBe(3);
+    expect(passwordStrength('Lekki-sunrise-94', 'Amara')).toBe(4);
   });
 });

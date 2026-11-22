@@ -1,5 +1,9 @@
-import { AccountAvatar, BrandMark, FlowButton, FlowIcon, FlowLink, FlowShell } from '@yahel/ui';
+import { AccountAvatar, BrandMark, FlowButton, FlowConnectionBar, FlowIcon, FlowLink, FlowShell, FlowToast } from '@yahel/ui';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { flowMessages } from '../../flow/messages';
+import { dismissToast, say, useToast } from '../../flow/toasts';
+import { useOnline } from '../../flow/use-waits';
 import { chromeMessages as m } from './messages';
 import { useTheme } from './use-theme';
 
@@ -28,8 +32,28 @@ export interface AppFrameProps {
 /** The frame around every account screen: brand, theme control, the question, and the footer. */
 export function AppFrame({ links, privacy, account, children }: AppFrameProps) {
   const { theme, toggle } = useTheme();
+  const online = useOnline();
+  const toast = useToast();
+
+  useEffect(() => {
+    const backOnline = () => say(flowMessages.backOnline);
+    window.addEventListener('online', backOnline);
+    return () => window.removeEventListener('online', backOnline);
+  }, []);
+
   return (
-    <FlowShell skipLabel={m.skipToQuestion} isPrivate={privacy?.isOn}>
+    <FlowShell
+      skipLabel={m.skipToQuestion}
+      isPrivate={privacy?.isOn}
+      banner={online ? null : <FlowConnectionBar lead={flowMessages.offlineLead}>{flowMessages.offlineBar}</FlowConnectionBar>}
+      toast={
+        toast ? (
+          <FlowToast key={toast.id} tone={toast.tone} closeLabel={flowMessages.dismiss} onClose={dismissToast}>
+            {toast.text}
+          </FlowToast>
+        ) : null
+      }
+    >
       <FlowShell.Header
         brand={
           <FlowShell.BrandLink href={links.home} label={links.homeLabel ?? m.brandHome}>

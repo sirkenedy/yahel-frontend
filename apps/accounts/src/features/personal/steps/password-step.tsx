@@ -13,7 +13,7 @@ export function PasswordStep() {
   const [revealed, setRevealed] = useState(false);
   // The field always starts empty: a password already chosen is never put back on screen. Left empty, it is kept.
   const keeps = (value: string) => state.hasPassword && value === '';
-  const password = useStepField({ problemOf: (value) => (keeps(value) ? null : passwordProblem(value)), onValid: (value) => (keeps(value) ? actions.keepPassword() : actions.choosePassword(value)) });
+  const password = useStepField({ problemOf: (value) => (keeps(value) ? null : passwordProblem(value)), hasFormat: true, onValid: (value) => (keeps(value) ? actions.keepPassword() : actions.choosePassword(value)) });
   const score = passwordStrength(password.value, state.firstName);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -41,6 +41,8 @@ export function PasswordStep() {
             onRevealedChange={setRevealed}
             value={password.value}
             onChange={password.change}
+            onBlur={password.blur}
+            isValid={password.isValid}
             error={password.error}
             inputRef={password.inputRef}
             isRequired={!state.hasPassword}

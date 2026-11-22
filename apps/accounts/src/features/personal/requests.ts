@@ -3,8 +3,10 @@ import type { AccountCapabilities, Schemas } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { internationalNumber } from './countries';
-import { describeFailure, hasCode, isRefusal } from './failure';
-import type { FailureContext } from './failure';
+import { say } from '../../flow/toasts';
+import { describePersonalFailure, hasCode, isRefusal } from './feedback';
+import type { FailureContext } from './feedback';
+import { personalMessages as m } from './messages';
 import { addressOf, fullNameOf } from './machine';
 import type { Creation, PersonalState, PersonalStep, Rejection, SetupPart } from './machine';
 import type { PersonalStore } from './store';
@@ -52,7 +54,7 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
 export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, advance, pause = realPause }: PersonalRequestDeps) {
   const state = () => store.getState();
   const address = () => addressOf(state(), mailDomain);
-  const describe = (context: FailureContext) => (error: unknown) => describeFailure(error, context);
+  const describe = (context: FailureContext) => (error: unknown) => describePersonalFailure(error, context);
   const usesOwnEmail = () => state().addressKind === 'own';
 
   const passkey = useFlowRequest({
@@ -106,7 +108,8 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     } catch (error) {
       if (hasCode(error, 'USER_UNDERAGE')) return reject({ step: 'birth', reason: 'underage' });
       if (hasCode(error, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL') && usesOwnEmail()) return reject({ step: 'own-email', reason: 'not-personal' });
-      if (!hasCode(error, 'EMAIL_ALREADY_EXISTS')) throw error;
+      // A duplicate record is the same answer from a different layer: two registrations met at the database.
+      if (!hasCode(error, 'EMAIL_ALREADY_EXISTS', 'DUPLICATE_RECORD')) throw error;
       // Possibly this person's own account, from an attempt whose answer was lost. Signing in will tell.
       store.dispatch({ type: 'account-conflicted' });
     }
@@ -215,6 +218,8 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
       else await pause();
       return 'sent' as const;
     },
+    // The same words whether or not anything was sent, so the answer says nothing about the address.
+    onDone: () => say(m.emailCodeAskedAgain),
   });
 
   const finish = () => {
@@ -240,6 +245,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
       await session.api.me.recovery.updatePhone({ phone: internationalNumber(country, phone) });
       return 'sent' as const;
     },
+    onDone: () => say(m.newCodeSent),
   });
 
   const inviteContact = useFlowRequest({

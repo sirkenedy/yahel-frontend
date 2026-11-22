@@ -43,7 +43,7 @@ function PersonalLayout() {
         registrar={registrar}
         store={personal}
         mailDomain={config.mailDomain}
-        links={{ signIn: config.signInUrl, terms: config.termsUrl, privacy: config.privacyUrl }}
+        links={{ signIn: config.signInUrl, terms: config.termsUrl, privacy: config.privacyUrl, help: config.helpUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         leaveForBusiness={businessSignUpUrl ? () => window.location.assign(businessSignUpUrl) : null}
         leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}

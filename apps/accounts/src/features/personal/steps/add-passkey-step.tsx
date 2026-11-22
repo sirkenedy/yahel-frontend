@@ -8,7 +8,7 @@ export function AddPasskeyStep() {
   const made = state.passkey !== null;
 
   return (
-    <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede} failure={meta.requests.passkey.failure}>
+    <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede} requests={[meta.requests.passkey]}>
       <FlowStep.Body>
         <FlowCallout icon={<FlowIcon name="passkey" />} title={made ? m.passkeyReady : m.passwordStillWorks}>
           {made ? m.passkeyReadyDetail : m.passwordStillWorksDetail}

@@ -3,8 +3,10 @@ import { isApiError } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
 import { useFlowRequest } from '../../flow/use-flow-request';
-import { describeFailure, isRejectedResetCode } from './failure';
-import type { FailureContext } from './failure';
+import { say } from '../../flow/toasts';
+import { describeSignInFailure, rejectedResetCode } from './feedback';
+import type { FailureContext } from './feedback';
+import { signInMessages as m } from './messages';
 import type { SignInStep } from './machine';
 import { knownAccountsQuery } from './queries';
 import type { SignInStore } from './store';
@@ -32,7 +34,7 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  */
 export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
-  const describe = (context: FailureContext) => (error: unknown) => describeFailure(error, context);
+  const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
 
   const rememberAccount = async (signedOut: boolean) => {
     const who = session.store.getState().profile;
@@ -120,6 +122,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
       await capabilities.recovery.send(email(), store.getState().recovery?.method ?? 'email');
       return 'sent' as const;
     },
+    onDone: () => say(m.newCodeSent),
   });
 
   const newPassword = useFlowRequest({
@@ -137,8 +140,9 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     },
     onDone: (outcome) => (outcome === 'sign-in-failed' ? navigate('password', { replace: true }) : afterSignIn(outcome)),
     onFailed: (error) => {
-      if (!isRejectedResetCode(error)) return;
-      store.dispatch({ type: 'reset-code-rejected' });
+      const rejected = rejectedResetCode(error);
+      if (!rejected) return;
+      store.dispatch({ type: 'reset-code-rejected', spent: rejected === 'spent' });
       navigate('recover-code', { replace: true });
     },
   });

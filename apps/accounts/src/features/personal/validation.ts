@@ -1,4 +1,4 @@
-import { isEmailShaped, newPasswordFault } from '../../flow/credentials';
+import { isEmailShaped, newPasswordProblem } from '../../flow/credentials';
 import type { BirthDate } from './machine';
 import { personalMessages as m } from './messages';
 
@@ -61,12 +61,7 @@ export const addressFromName = (firstName: string, lastName: string) => {
 
 export const ownEmailProblem = (email: string) => (isEmailShaped(email) ? null : m.ownEmailInvalid);
 
-const passwordFaults = { 'too-short': m.passwordTooShort, 'too-plain': m.passwordTooPlain } as const;
-
-export const passwordProblem = (password: string) => {
-  const fault = newPasswordFault(password);
-  return fault ? passwordFaults[fault] : null;
-};
+export const passwordProblem = (password: string) => newPasswordProblem(password, m);
 
 const sameAddress = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 

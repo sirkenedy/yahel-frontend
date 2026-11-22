@@ -29,6 +29,7 @@ function SignInLayout() {
         store={signIn}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}
+        links={{ signUp: config.signUpUrl, help: config.helpUrl }}
       >
         <Outlet />
       </SignInFlowProvider>

@@ -1,9 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { ApiError } from '@yahel/api-client';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PageError, RootErrorBoundary, StepError, errorExitFor } from './error-screen';
-import { chromeMessages as m } from './messages';
+import { flowMessages as m } from '../../flow/messages';
+import { chromeMessages } from './messages';
 
 const failure = new Error('Objects are not valid as a React child (found: object with keys {})');
 const exit = errorExitFor('/signin/password');
@@ -20,6 +22,41 @@ describe('StepError', () => {
     expect(screen.getByText(m.errorLede)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(/Objects are not valid|React/);
     expect(document.title).toBe(m.errorPageTitle);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveAccessibleName('Something went wrong on our side.');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+  });
+
+  it('says when it happened, and gives no reference when the failure has none', () => {
+    quietConsole();
+    render(<StepError error={failure} onRetry={vi.fn()} exit={exit} />);
+
+    expect(screen.getByText(m.quoteThis)).toBeInTheDocument();
+    expect(screen.getAllByRole('term').map((label) => label.textContent)).toEqual([m.timeLabel]);
+    expect(screen.getByRole('definition')).toHaveTextContent(/\d{4}/);
+    expect(screen.queryByRole('button', { name: m.copy })).not.toBeInTheDocument();
+  });
+
+  it('gives the request id to quote, with a way to copy it, and never the server’s words', async () => {
+    quietConsole();
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+    render(<StepError error={new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'MongoServerError: E11000 at users.repository.ts', requestId: 'Y-7F3K-2Q' })} onRetry={vi.fn()} exit={exit} />);
+
+    expect(screen.getAllByRole('term').map((label) => label.textContent)).toEqual([m.referenceLabel, m.timeLabel]);
+    expect(screen.getAllByRole('definition')[0]).toHaveTextContent('Y-7F3K-2Q');
+    expect(document.body).not.toHaveTextContent(/Mongo|E11000|repository|INTERNAL_ERROR/);
+
+    await user.click(screen.getByRole('button', { name: m.copy }));
+    expect(writeText).toHaveBeenCalledWith('Y-7F3K-2Q');
+    expect(await screen.findByRole('button', { name: m.copied })).toBeInTheDocument();
+  });
+
+  it.each(['unknown', '<img src=x onerror=alert(1)>', 'two words', 'ab'])('shows no reference for a request id that is not plainly an id: %s', (requestId) => {
+    quietConsole();
+    render(<StepError error={new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'x', requestId })} onRetry={vi.fn()} exit={exit} />);
+
+    expect(screen.getAllByRole('term').map((label) => label.textContent)).toEqual([m.timeLabel]);
+    expect(within(screen.getByRole('region')).queryByText(requestId)).not.toBeInTheDocument();
   });
 
   it('sends the details to the console for whoever is debugging', () => {
@@ -43,8 +80,8 @@ describe('StepError', () => {
 
 describe('errorExitFor', () => {
   it('leads back to the start of whichever flow the person was in', () => {
-    expect(errorExitFor('/personal/password')).toEqual({ href: '/personal', label: m.startAgain });
-    expect(errorExitFor('/personal')).toEqual({ href: '/personal', label: m.startAgain });
+    expect(errorExitFor('/personal/password')).toEqual({ href: '/personal', label: chromeMessages.startAgain });
+    expect(errorExitFor('/personal')).toEqual({ href: '/personal', label: chromeMessages.startAgain });
     expect(errorExitFor('/signin/password')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/personally')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/')).toEqual({ href: '/signin', label: m.backToSignIn });
@@ -54,7 +91,7 @@ describe('errorExitFor', () => {
     quietConsole();
     render(<StepError error={failure} onRetry={vi.fn()} exit={errorExitFor('/personal/birth')} />);
 
-    expect(screen.getByRole('link', { name: m.startAgain })).toHaveAttribute('href', '/personal');
+    expect(screen.getByRole('link', { name: chromeMessages.startAgain })).toHaveAttribute('href', '/personal');
     expect(screen.queryByRole('link', { name: m.backToSignIn })).not.toBeInTheDocument();
   });
 });
@@ -64,7 +101,7 @@ describe('PageError', () => {
     quietConsole();
     render(<PageError error={failure} onRetry={vi.fn()} exit={exit} />);
 
-    expect(screen.getByRole('img', { name: m.brand })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: chromeMessages.brand })).toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveTextContent(m.errorTitle);
   });
 });

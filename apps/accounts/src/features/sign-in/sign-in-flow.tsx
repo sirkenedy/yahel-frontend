@@ -8,7 +8,9 @@ import { useStore } from 'zustand';
 import { requestStatus as status } from '../../flow/use-flow-request';
 import type { FlowRequest } from '../../flow/use-flow-request';
 import { useStepTravel } from '../../flow/use-step-travel';
-import { describeFailure } from './failure';
+import { describeSignInFailure } from './feedback';
+import type { SignInField, SignInNext } from './feedback';
+import type { ScreenFacts } from '../../flow/step-frame';
 import { backOf, directionOf, stepPath } from './machine';
 import type { SignInState, SignInStep } from './machine';
 import { knownAccountsQuery, passkeyChallengeQuery, recoveryOptionsQuery } from './queries';
@@ -52,7 +54,9 @@ export interface SignInFlowValue {
     /** Address of the step before this one, or `null` on a first step. */
     backHref: string | null;
     offers: { passkey: boolean; textCode: boolean; help: boolean };
-    requests: Record<keyof SignInRequests | 'recoveryOptions', FlowRequest>;
+    requests: Record<keyof SignInRequests | 'recoveryOptions', FlowRequest<SignInField, SignInNext>>;
+    /** What a whole-screen state needs: whose account, and where its ways out lead. */
+    screens: ScreenFacts;
   };
 }
 
@@ -73,6 +77,8 @@ export interface SignInFlowProviderProps {
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
   /** Sends the browser to the validated return address. */
   leave: () => void;
+  /** Addresses outside the flow that a whole-screen state can lead to. */
+  links?: { signUp?: string | null; help?: string | null };
   children: ReactNode;
 }
 
@@ -81,7 +87,7 @@ export interface SignInFlowProviderProps {
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
  * about the session, the API or the router.
  */
-export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, leave, children }: SignInFlowProviderProps) {
+export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, leave, links, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
   const flow = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -149,16 +155,21 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       offers: { passkey: passkeyOffered, textCode: capabilities.textCodes !== null, help: capabilities.helpDesk !== null },
       requests: {
         password: status(requests.password),
-        passkey: status(requests.passkey),
+        passkey: status(requests.passkey, requests.passkey.start),
         code: status(requests.code),
-        textCode: status(requests.textCode),
+        textCode: status(requests.textCode, requests.textCode.start),
         sendResetCode: status(requests.sendResetCode),
-        resendResetCode: status(requests.resendResetCode),
+        resendResetCode: status(requests.resendResetCode, requests.resendResetCode.start),
         newPassword: status(requests.newPassword),
         help: status(requests.help),
         removeAccount: status(requests.removeAccount),
-        signOut: status(requests.signOut),
-        recoveryOptions: { isPending: recoveryOptions.isPending, failure: recoveryOptions.error ? describeFailure(recoveryOptions.error, 'other') : null },
+        signOut: status(requests.signOut, requests.signOut.start),
+        recoveryOptions: { isPending: recoveryOptions.isPending, feedback: recoveryOptions.error ? describeSignInFailure(recoveryOptions.error, 'other') : null, clear: () => void recoveryOptions.refetch(), again: () => void recoveryOptions.refetch() },
+      },
+      screens: {
+        account: flow.email,
+        exits: { signIn: stepPath('email'), signUp: links?.signUp, resetPassword: flow.email ? stepPath('recover') : null, support: links?.help },
+        serviceStatus: capabilities.serviceStatus,
       },
     },
   };

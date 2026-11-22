@@ -2,6 +2,7 @@ import { CodeInput, FlowButton, FlowNotice, FlowStep, FlowTextField } from '@yah
 import { useState } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
+import { forField } from '../../../flow/feedback';
 import { useStepField } from '../../../flow/use-step-field';
 import { StepFrame } from './step-frame';
 
@@ -15,6 +16,7 @@ export function CodeStep() {
   const code = useStepField({
     problemOf: (value) => (usingBackup ? (value.trim() === '' ? m.backupRequired : null) : value.length === CODE_LENGTH ? null : m.codeIncomplete),
     onValid: (value) => actions.verifyCode(value.trim()),
+    refusal: forField(request.feedback, 'code'),
   });
 
   const switchKind = () => {
@@ -23,7 +25,7 @@ export function CodeStep() {
   };
 
   return (
-    <StepFrame title={m.codeTitle} lede={usingBackup ? m.backupLede : m.codeLede} failure={request.failure ?? textCode.failure}>
+    <StepFrame title={m.codeTitle} lede={usingBackup ? m.backupLede : m.codeLede} requests={[request, textCode]}>
       <FlowStep.Form onSubmit={code.submit}>
         <FlowStep.Body>
           {usingBackup ? (

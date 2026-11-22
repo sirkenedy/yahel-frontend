@@ -8,7 +8,7 @@ export function PasskeyStep() {
   const request = meta.requests.passkey;
 
   return (
-    <StepFrame title={m.passkeyTitle} lede={m.passkeyLede} failure={request.failure}>
+    <StepFrame title={m.passkeyTitle} lede={m.passkeyLede} requests={[request]}>
       <FlowStep.Body>
         {request.isPending ? <FlowWaiting title={m.passkeyWaiting}>{m.passkeyWaitingDetail}</FlowWaiting> : null}
         {state.passkeyCancelled && !request.isPending ? <FlowNotice>{m.passkeyCancelled}</FlowNotice> : null}

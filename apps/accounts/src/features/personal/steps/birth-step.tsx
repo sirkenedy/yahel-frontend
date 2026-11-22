@@ -1,6 +1,7 @@
 import { FlowButton, FlowNotice, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
-import { submitFields, useStepField } from '../../../flow/use-step-field';
+import { useStepField, useStepFields } from '../../../flow/use-step-field';
+import { refusals } from '../feedback';
 import { datePartOrder, monthNames } from '../dates';
 import type { Gender } from '../machine';
 import { personalMessages as m } from '../messages';
@@ -18,13 +19,13 @@ export function BirthStep() {
   const [explained, setExplained] = useState(false);
   // Each part's problem is read from the whole date, so "31" is refused for April but not for March.
   const typed = (): Record<'day' | 'month' | 'year', string> => ({ day: day.value, month: month.value, year: year.value });
-  const problemWith = (part: 'day' | 'month' | 'year') => (): string | null => readBirthDate(typed()).problems[part] ?? null;
-  const day = useStepField({ initial: state.birth ? String(state.birth.day) : '', problemOf: problemWith('day') });
-  const month = useStepField<HTMLSelectElement>({ initial: state.birth ? String(state.birth.month) : '', problemOf: problemWith('month') });
-  const year = useStepField({ initial: state.birth ? String(state.birth.year) : '', problemOf: problemWith('year') });
+  const problemWith = (part: 'day' | 'month' | 'year') => (value: string): string | null => readBirthDate({ ...typed(), [part]: value }).problems[part] ?? null;
+  const day = useStepField({ initial: state.birth ? String(state.birth.day) : '', problemOf: problemWith('day'), label: m.day });
+  const month = useStepField<HTMLSelectElement>({ initial: state.birth ? String(state.birth.month) : '', problemOf: problemWith('month'), label: m.month });
+  const year = useStepField({ initial: state.birth ? String(state.birth.year) : '', problemOf: problemWith('year'), label: m.year, refusal: state.rejection?.step === 'birth' ? refusals.underage : null });
 
   const parts = {
-    day: <FlowTextField key="day" label={m.day} name="bday-day" inputMode="numeric" autoComplete="bday-day" maxLength={2} value={day.value} onChange={day.change} error={day.error} inputRef={day.inputRef} isSensitive />,
+    day: <FlowTextField key="day" label={m.day} name="bday-day" inputMode="numeric" autoComplete="bday-day" maxLength={2} value={day.value} onChange={day.change} onBlur={day.blur} error={day.error} inputRef={day.inputRef} isSensitive />,
     month: (
       <FlowSelect key="month" label={m.month} name="bday-month" autoComplete="bday-month" value={month.value} onChange={month.change} error={month.error} inputRef={month.inputRef} isSensitive>
         <option value="">{m.month}</option>
@@ -35,9 +36,10 @@ export function BirthStep() {
         ))}
       </FlowSelect>
     ),
-    year: <FlowTextField key="year" label={m.year} name="bday-year" inputMode="numeric" autoComplete="bday-year" maxLength={4} value={year.value} onChange={year.change} error={year.error} inputRef={year.inputRef} isSensitive />,
+    year: <FlowTextField key="year" label={m.year} name="bday-year" inputMode="numeric" autoComplete="bday-year" maxLength={4} value={year.value} onChange={year.change} onBlur={year.blur} error={year.error} inputRef={year.inputRef} isSensitive />,
   };
   const fields = { day, month, year };
+  const form = useStepFields(order.map((part) => fields[part]));
 
   const submit = () => {
     const { birth } = readBirthDate(typed());
@@ -45,8 +47,8 @@ export function BirthStep() {
   };
 
   return (
-    <StepFrame title={m.birthTitle} lede={m.birthLede} failure={state.rejection?.step === 'birth' ? m.tooYoungForAccount : null}>
-      <FlowStep.Form onSubmit={(event) => submitFields(event, order.map((part) => fields[part]), submit)}>
+    <StepFrame title={m.birthTitle} lede={m.birthLede} toFix={form.toFix}>
+      <FlowStep.Form onSubmit={(event) => form.submit(event, submit)}>
         <FlowStep.Body>
           <FlowStep.Row layout="date" label={m.birthLabel}>
             {order.map((part) => parts[part])}

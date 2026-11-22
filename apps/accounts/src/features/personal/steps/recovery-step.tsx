@@ -1,6 +1,6 @@
 import { FlowButton, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
-import { submitFields, useStepField } from '../../../flow/use-step-field';
+import { useStepFields, useStepField } from '../../../flow/use-step-field';
 import { africanCountries, namedCountries, otherCountries } from '../countries';
 import type { PhoneCountry } from '../countries';
 import { DEFAULT_PHONE_COUNTRY } from '../machine';
@@ -24,13 +24,15 @@ const options = (countries: (PhoneCountry & { name: string })[]) =>
 export function RecoveryStep() {
   const { state, actions } = usePersonalFlow();
   const [country, setCountry] = useState(state.recovery.country);
-  const problems = (): { phone?: string; email?: string } => recoveryProblems({ phone: phone.value, email: email.value }, state.address);
-  const phone = useStepField({ initial: state.recovery.phone, problemOf: (): string | null => problems().phone ?? null });
-  const email = useStepField({ initial: state.recovery.email, problemOf: (): string | null => problems().email ?? null });
+  // Each field is judged with the other as it stands and itself as just typed.
+  const problems = (typed: { phone?: string; email?: string }): { phone?: string; email?: string } => recoveryProblems({ phone: phone.value, email: email.value, ...typed }, state.address);
+  const phone = useStepField({ initial: state.recovery.phone, problemOf: (value): string | null => problems({ phone: value }).phone ?? null, label: m.mobileNumber, hasFormat: true });
+  const email = useStepField({ initial: state.recovery.email, problemOf: (value): string | null => problems({ email: value }).email ?? null, label: m.recoveryEmail, hasFormat: true });
+  const form = useStepFields([phone, email]);
 
   return (
-    <StepFrame title={m.recoveryTitle} lede={m.recoveryLede}>
-      <FlowStep.Form onSubmit={(event) => submitFields(event, [phone, email], () => actions.enterRecovery({ country, phone: phone.value.trim(), email: email.value.trim().toLowerCase() }))}>
+    <StepFrame title={m.recoveryTitle} lede={m.recoveryLede} toFix={form.toFix}>
+      <FlowStep.Form onSubmit={(event) => form.submit(event, () => actions.enterRecovery({ country, phone: phone.value.trim(), email: email.value.trim().toLowerCase() }))}>
         <FlowStep.Body>
           <FlowStep.Row layout="phone">
             <FlowSelect label={m.country} name="tel-country-code" autoComplete="tel-country-code" value={country} onChange={setCountry} isSensitive>
@@ -38,9 +40,9 @@ export function RecoveryStep() {
               <optgroup label={m.countryGroups.africa}>{options(africa.filter((entry) => entry.iso !== DEFAULT_PHONE_COUNTRY))}</optgroup>
               <optgroup label={m.countryGroups.world}>{options(world)}</optgroup>
             </FlowSelect>
-            <FlowTextField label={m.mobileNumber} name="tel-national" type="tel" inputMode="tel" autoComplete="tel-national" value={phone.value} onChange={phone.change} error={phone.error} inputRef={phone.inputRef} isSensitive />
+            <FlowTextField label={m.mobileNumber} name="tel-national" type="tel" inputMode="tel" autoComplete="tel-national" value={phone.value} onChange={phone.change} onBlur={phone.blur} isValid={phone.isValid} error={phone.error} inputRef={phone.inputRef} isSensitive />
           </FlowStep.Row>
-          <FlowTextField label={m.recoveryEmail} name="recovery-email" type="email" inputMode="email" autoComplete="email" spellCheck="false" help={m.recoveryEmailHelp} value={email.value} onChange={email.change} error={email.error} inputRef={email.inputRef} isSensitive />
+          <FlowTextField label={m.recoveryEmail} name="recovery-email" type="email" inputMode="email" autoComplete="email" spellCheck="false" help={m.recoveryEmailHelp} value={email.value} onChange={email.change} onBlur={email.blur} isValid={email.isValid} error={email.error} inputRef={email.inputRef} isSensitive />
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary">

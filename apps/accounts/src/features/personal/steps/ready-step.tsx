@@ -11,10 +11,10 @@ export function ReadyStep() {
     <StepFrame title={m.readyTitle(state.firstName)} lede={m.readyLede(state.address)} lead={<BrandMoment />}>
       <FlowStep.Body>
         {state.creation.unsaved.map((part) => (
-          <FlowNotice key={part}>{m.unsaved[part]}</FlowNotice>
+          <FlowNotice key={part} tone="warning">{m.unsaved[part]}</FlowNotice>
         ))}
         {state.contactInvited ? (
-          <FlowNotice>{m.trustInvited(state.contactInvited)}</FlowNotice>
+          <FlowNotice tone="success">{m.trustInvited(state.contactInvited)}</FlowNotice>
         ) : meta.offers.contact ? (
           <FlowLinkCard href={stepPath('contact')} icon={<FlowIcon name="people" />} title={m.trustTitle}>
             {m.trustDetail}

@@ -23,6 +23,8 @@ export interface SignInState {
   /** The reset code, held until the new password is chosen: the backend checks both together. */
   resetCode: string | null;
   resetCodeRejected: boolean;
+  /** The rejected code can never work again: only a new one will do. */
+  resetCodeSpent: boolean;
   helpRequested: boolean;
   /** Why the person has been brought back to the password step, when it was not their own doing. */
   passwordPrompt: 'challenge-expired' | 'reset-done' | null;
@@ -36,6 +38,7 @@ export const initialSignInState: SignInState = {
   recovery: null,
   resetCode: null,
   resetCodeRejected: false,
+  resetCodeSpent: false,
   helpRequested: false,
   passwordPrompt: null,
 };
@@ -50,7 +53,7 @@ export type SignInEvent =
   | { type: 'password-reset' }
   | { type: 'reset-code-sent'; method: RecoveryMethod; destination: string }
   | { type: 'reset-code-entered'; code: string }
-  | { type: 'reset-code-rejected' }
+  | { type: 'reset-code-rejected'; spent?: boolean }
   | { type: 'help-requested' }
   | { type: 'signed-in' }
   | { type: 'signed-out' };
@@ -70,15 +73,15 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
       return { ...state, challengeToken: null, passwordPrompt: 'challenge-expired' };
     case 'password-reset':
       // The code is spent and the reset cannot be repeated: only signing in remains.
-      return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, passwordPrompt: 'reset-done' };
+      return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, resetCodeSpent: false, passwordPrompt: 'reset-done' };
     case 'passkey-started':
       return { ...state, passkeyStarted: true };
     case 'reset-code-sent':
-      return { ...state, recovery: { method: event.method, destination: event.destination }, resetCode: null, resetCodeRejected: false };
+      return { ...state, recovery: { method: event.method, destination: event.destination }, resetCode: null, resetCodeRejected: false, resetCodeSpent: false };
     case 'reset-code-entered':
-      return { ...state, resetCode: event.code, resetCodeRejected: false };
+      return { ...state, resetCode: event.code, resetCodeRejected: false, resetCodeSpent: false };
     case 'reset-code-rejected':
-      return { ...state, resetCode: null, resetCodeRejected: true };
+      return { ...state, resetCode: null, resetCodeRejected: true, resetCodeSpent: event.spent ?? false };
     case 'help-requested':
       return { ...state, helpRequested: true };
     case 'signed-in':

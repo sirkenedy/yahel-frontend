@@ -23,7 +23,7 @@ export function RecoverStep() {
   };
 
   return (
-    <StepFrame title={m.recoverTitle} lede={m.recoverLede} failure={request.failure ?? loading.failure}>
+    <StepFrame title={m.recoverTitle} lede={m.recoverLede} requests={[request, loading]}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
           {options && method ? (
@@ -34,7 +34,7 @@ export function RecoverStep() {
                 </Choice>
               ))}
             </ChoiceGroup>
-          ) : loading.failure ? null : (
+          ) : loading.feedback ? null : (
             <FlowNotice>{m.recoverLoading}</FlowNotice>
           )}
           <FlowNotice>{m.recoverPromise}</FlowNotice>

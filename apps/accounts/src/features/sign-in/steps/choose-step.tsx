@@ -28,7 +28,7 @@ export function ChooseStep() {
   }, [state.accounts]);
 
   return (
-    <StepFrame title={m.chooseTitle} lede={m.chooseLede} failure={removeAccount.failure}>
+    <StepFrame title={m.chooseTitle} lede={m.chooseLede} requests={[removeAccount]} next={{ retry: null }}>
       <FlowStep.Body>
         <AccountList label={m.accountsLabel}>
           {state.accounts.map((account, index) => (

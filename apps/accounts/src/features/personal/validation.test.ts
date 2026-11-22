@@ -70,10 +70,26 @@ describe('existing email and password', () => {
     expect(ownEmailProblem('amara@mail.example')).toBeNull();
   });
 
-  it('applies the design’s length and the backend’s variety', () => {
-    expect(passwordProblem('Short-1')).toBe(m.passwordTooShort);
-    expect(passwordProblem('sunrise over lekki 94')).toBe(m.passwordTooPlain);
+  it('asks for 8 characters with a capital, a lowercase letter, a number and a symbol, naming exactly what is missing', () => {
+    expect(passwordProblem('')).toBe(m.newPasswordRequired);
+    expect(passwordProblem('Short-1')).toBe('Use 8 or more characters.');
+    expect(passwordProblem('short')).toBe('Use 8 or more characters, with a capital letter, a number and a symbol.');
+    expect(passwordProblem('SHORT1!')).toBe('Use 8 or more characters, with a lowercase letter.');
+    // A space counts as a symbol, as it does for the backend.
+    expect(passwordProblem('sunrise over lekki 94')).toBe('Add a capital letter.');
+    expect(passwordProblem('sunriseoverlekki')).toBe('Add a capital letter, a number and a symbol.');
+    expect(passwordProblem('Sunriseoverlekki9')).toBe('Add a symbol.');
+    expect(passwordProblem('Sunrise1!')).toBeNull();
     expect(passwordProblem('Sunrise over Lekki 94')).toBeNull();
+  });
+
+  it('puts what is missing into the flow’s own words', () => {
+    expect(m.listOf([])).toBe('');
+    expect(m.listOf(['a number'])).toBe('a number');
+    expect(m.listOf(['a number', 'a symbol'])).toBe('a number and a symbol');
+    expect(m.newPasswordTooShort('')).toBe('Use 8 or more characters.');
+    expect(m.newPasswordTooPlain(m.listOf([m.passwordParts.upper, m.passwordParts.digit]))).toBe('Add a capital letter and a number.');
+    expect(m.passwordHelp).toBe('At least 8 characters, with a capital letter, a lowercase letter, a number and a symbol.');
   });
 });
 

@@ -5,6 +5,7 @@ import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import { act, render, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { dismissToast, useToast } from '../../flow/toasts';
 import { createStore } from 'zustand/vanilla';
 import type { SignInStep } from './machine';
 import { signInMessages as m } from './messages';
@@ -34,12 +35,14 @@ const fakeSession = () => {
   };
 };
 
-function Probe({ onValue }: { onValue: (value: SignInFlowValue) => void }) {
+function Probe({ onValue, onToast }: { onValue: (value: SignInFlowValue) => void; onToast: (toast: ReturnType<typeof useToast>) => void }) {
   onValue(useSignInFlow());
+  onToast(useToast());
   return null;
 }
 
 const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null } = {}) => {
+  act(() => dismissToast());
   const session = fakeSession();
   const capabilities: AccountCapabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
   const store = createSignInStore();
@@ -47,17 +50,18 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   const leave = vi.fn();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   let latest: SignInFlowValue | undefined;
+  let said: ReturnType<typeof useToast> = null;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
       <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} leave={leave}>
-        <Probe onValue={(value) => (latest = value)} />
+        <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </SignInFlowProvider>
     </QueryClientProvider>
   );
   const view = render(tree(step));
   /** Everything the query client is holding on to, as text, to search for things that must not be kept. */
   const retained = () => JSON.stringify([queryClient.getMutationCache().getAll().map((mutation) => mutation.state), queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])]);
-  return { session, capabilities, store, navigate, leave, queryClient, retained, flow: () => latest!, goTo: (next: SignInStep) => view.rerender(tree(next)) };
+  return { session, capabilities, store, navigate, leave, queryClient, retained, flow: () => latest!, toast: () => said, goTo: (next: SignInStep) => view.rerender(tree(next)) };
 };
 
 describe('SignInFlowProvider', () => {
@@ -121,7 +125,7 @@ describe('SignInFlowProvider', () => {
     session.signIn.mockRejectedValueOnce(new ApiError({ status: 401, code: 'INVALID_CREDENTIALS', message: 'x' }));
 
     act(() => void flow().actions.signInWithPassword('wrong'));
-    await waitFor(() => expect(flow().meta.requests.password.failure).toBe(m.wrongCredentials));
+    await waitFor(() => expect(flow().meta.requests.password.feedback).toEqual({ place: 'field', field: 'password', text: m.wrongCredentials }));
     act(() => void flow().actions.signInWithPassword('right'));
 
     await waitFor(() => expect(session.signIn).toHaveBeenCalledTimes(2));
@@ -149,11 +153,11 @@ describe('SignInFlowProvider', () => {
 
     act(() => flow().actions.signInWithPassword('wrong'));
 
-    await waitFor(() => expect(flow().meta.requests.password.failure).toBe(m.wrongCredentials));
+    await waitFor(() => expect(flow().meta.requests.password.feedback).toEqual({ place: 'field', field: 'password', text: m.wrongCredentials }));
     expect(navigate).not.toHaveBeenCalled();
 
     goTo('recover');
-    await waitFor(() => expect(flow().meta.requests.password.failure).toBeNull());
+    await waitFor(() => expect(flow().meta.requests.password.feedback).toBeNull());
   });
 
   it('lets the person leave a step while its request is running, come back, and try again', async () => {
@@ -170,7 +174,7 @@ describe('SignInFlowProvider', () => {
 
     await act(async () => fail(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' })));
     await waitFor(() => expect(flow().meta.requests.password.isPending).toBe(false));
-    expect(flow().meta.requests.password.failure).toBeNull();
+    expect(flow().meta.requests.password.feedback).toBeNull();
 
     act(() => void flow().actions.signInWithPassword('second'));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
@@ -258,7 +262,7 @@ describe('SignInFlowProvider', () => {
     act(() => flow().actions.startPasskey());
     await waitFor(() => expect(flow().state.passkeyCancelled).toBe(true));
 
-    expect(flow().meta.requests.passkey.failure).toBeNull();
+    expect(flow().meta.requests.passkey.feedback).toBeNull();
     expect(session.establish).not.toHaveBeenCalled();
     expect(navigate).not.toHaveBeenCalledWith('done', expect.anything());
 
@@ -272,11 +276,11 @@ describe('SignInFlowProvider', () => {
 
     act(() => flow().actions.startPasskey());
 
-    await waitFor(() => expect(flow().meta.requests.passkey.failure).toBe(m.passkeyFailed));
+    await waitFor(() => expect(flow().meta.requests.passkey.feedback).toEqual({ place: 'banner', tone: 'danger', text: m.passkeyFailed }));
   });
 
   it('loads where a reset code can go, sends it, and moves to the code step', async () => {
-    const { flow, session, navigate, store } = setup({ step: 'recover' });
+    const { flow, session, navigate, store, toast } = setup({ step: 'recover' });
     act(() => store.dispatch({ type: 'email-entered', email }));
     await waitFor(() => expect(flow().state.recoveryOptions).toEqual([{ method: 'phone', destination: '+234 ••• ••• ••42' }, { method: 'email', destination: 'a•••@northwind.example' }]));
 
@@ -289,6 +293,8 @@ describe('SignInFlowProvider', () => {
     act(() => flow().actions.resendResetCode());
     await waitFor(() => expect(flow().state.resetCodeResent).toBe(true));
     expect(session.api.auth.forgotPassword).toHaveBeenCalledTimes(2);
+    // The confirmation is a passing toast, not a notice left on the step.
+    expect(toast()).toMatchObject({ text: m.newCodeSent, tone: 'success' });
   });
 
   it('offers only email recovery, and no help or passkeys, without stand-ins', async () => {
@@ -329,8 +335,23 @@ describe('SignInFlowProvider', () => {
     act(() => flow().actions.saveNewPassword('Sunrise over Lekki 94!'));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('recover-code', { replace: true }));
-    expect(store.getState()).toMatchObject({ resetCode: null, resetCodeRejected: true });
+    expect(store.getState()).toMatchObject({ resetCode: null, resetCodeRejected: true, resetCodeSpent: false });
     expect(session.signIn).not.toHaveBeenCalled();
+  });
+
+  it('marks the reset code as spent when the server will take no more tries of it', async () => {
+    const { flow, session, navigate, store } = setup({ step: 'new-password' });
+    act(() => {
+      store.dispatch({ type: 'email-entered', email });
+      store.dispatch({ type: 'reset-code-sent', method: 'email', destination: 'x' });
+      store.dispatch({ type: 'reset-code-entered', code: 'WRONG1' });
+    });
+    session.api.auth.resetPassword.mockRejectedValue(new ApiError({ status: 429, code: 'TOKEN_MAX_ATTEMPTS', message: 'Too many invalid attempts' }));
+
+    act(() => flow().actions.saveNewPassword('Sunrise over Lekki 94!'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('recover-code', { replace: true }));
+    expect(store.getState()).toMatchObject({ resetCode: null, resetCodeRejected: true, resetCodeSpent: true });
   });
 
   it('treats the reset as final when the sign-in after it fails: the code is spent and the password step explains', async () => {
@@ -347,7 +368,7 @@ describe('SignInFlowProvider', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('password', { replace: true }));
     expect(session.api.auth.resetPassword).toHaveBeenCalledTimes(1);
     expect(store.getState()).toMatchObject({ resetCode: null, recovery: null, resetCodeRejected: false, passwordPrompt: 'reset-done' });
-    expect(flow().meta.requests.newPassword.failure).toBeNull();
+    expect(flow().meta.requests.newPassword.feedback).toBeNull();
     expect(navigate).not.toHaveBeenCalledWith('recover-code', expect.anything());
 
     act(() => void flow().actions.signInWithPassword('Sunrise over Lekki 94!'));
@@ -366,7 +387,7 @@ describe('SignInFlowProvider', () => {
 
     act(() => flow().actions.saveNewPassword('Sunrise over Lekki 94!'));
 
-    await waitFor(() => expect(flow().meta.requests.newPassword.failure).toBe(m.passwordRefused));
+    await waitFor(() => expect(flow().meta.requests.newPassword.feedback).toEqual({ place: 'field', field: 'password', text: m.passwordRefused }));
     expect(navigate).not.toHaveBeenCalled();
     expect(store.getState().resetCode).toBe('A7kZq2');
   });
@@ -442,5 +463,49 @@ describe('SignInFlowProvider', () => {
 
     goTo('email');
     expect(flow().meta.direction).toBe('back');
+  });
+
+  it('describes too many sign-in attempts as the paused screen, with when to try again if the server says', async () => {
+    const { flow, session, store } = setup({ step: 'password' });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+    session.signIn.mockRejectedValueOnce(new ApiError({ status: 429, code: 'BAD_REQUEST', message: 'ThrottlerException: Too Many Requests', retryAfter: 120 }));
+    const before = Date.now();
+
+    act(() => flow().actions.signInWithPassword('whatever'));
+
+    await waitFor(() => expect(flow().meta.requests.password.feedback).toMatchObject({ place: 'screen', screen: 'locked' }));
+    const feedback = flow().meta.requests.password.feedback;
+    expect(feedback?.place === 'screen' ? feedback.retryAt : 0).toBeGreaterThanOrEqual(before + 120_000);
+
+    // Putting it away shows the step again as it was.
+    act(() => flow().meta.requests.password.clear());
+    expect(flow().meta.requests.password.feedback).toBeNull();
+  });
+
+  it('gives a whole-screen state what it needs: whose account, and where its ways out lead', () => {
+    const { flow, store } = setup({ step: 'password' });
+    expect(flow().meta.screens).toMatchObject({ account: null, exits: { signIn: '/signin/email', resetPassword: null } });
+
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    expect(flow().meta.screens).toMatchObject({ account: email, exits: { signIn: '/signin/email', resetPassword: '/signin/recover' } });
+    expect(flow().meta.screens.serviceStatus).not.toBeNull();
+  });
+
+  it('can make a request that needs nothing typed once more, and not one that does', async () => {
+    const { flow, session, store } = setup({ step: 'recover-code' });
+    act(() => {
+      store.dispatch({ type: 'email-entered', email });
+      store.dispatch({ type: 'reset-code-sent', method: 'email', destination: 'x' });
+    });
+    session.api.auth.forgotPassword.mockRejectedValueOnce(new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'boom', requestId: 'req-7F3K' }));
+
+    act(() => flow().actions.resendResetCode());
+    await waitFor(() => expect(flow().meta.requests.resendResetCode.feedback).toMatchObject({ place: 'banner', tone: 'danger', next: 'retry', reference: 'req-7F3K' }));
+    expect(flow().meta.requests.password.again).toBeUndefined();
+
+    act(() => flow().meta.requests.resendResetCode.again?.());
+    await waitFor(() => expect(session.api.auth.forgotPassword).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(flow().meta.requests.resendResetCode.feedback).toBeNull());
   });
 });

@@ -1,8 +1,10 @@
-import { FlowButton, FlowLink, FlowStep } from '@yahel/ui';
-import { Component, useEffect } from 'react';
+import { isApiError } from '@yahel/api-client';
+import { FlowButton, FlowLink, FlowReference, FlowState } from '@yahel/ui';
+import { Component, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AppFrame } from './app-frame';
-import { chromeMessages as m } from './messages';
+import { chromeMessages } from './messages';
+import { flowMessages as m } from '../../flow/messages';
 
 const SIGN_IN = '/signin';
 const SIGN_UP = '/personal';
@@ -14,7 +16,7 @@ export interface ErrorExit {
 }
 
 /** The way out that fits where the person was: the start of sign-up from sign-up, the start of sign-in from anywhere else. */
-export const errorExitFor = (pathname: string): ErrorExit => (pathname === SIGN_UP || pathname.startsWith(`${SIGN_UP}/`) ? { href: SIGN_UP, label: m.startAgain } : { href: SIGN_IN, label: m.backToSignIn });
+export const errorExitFor = (pathname: string): ErrorExit => (pathname === SIGN_UP || pathname.startsWith(`${SIGN_UP}/`) ? { href: SIGN_UP, label: chromeMessages.startAgain } : { href: SIGN_IN, label: m.backToSignIn });
 
 export interface ErrorScreenProps {
   /** What went wrong. It goes to the console for whoever is debugging; the person is never shown it. */
@@ -24,28 +26,43 @@ export interface ErrorScreenProps {
   exit: ErrorExit;
 }
 
-/** What a person sees in place of a step that failed to show: a plain apology, a retry and the way back to the start. */
+// An id to quote is only ever letters, digits and dashes; anything else from a failure is not shown.
+const referenceOf = (error: unknown) => (isApiError(error) && error.requestId && /^[\w-]{3,64}$/.test(error.requestId) && error.requestId !== 'unknown' ? error.requestId : null);
+
+/**
+ * The "Error" whole-screen state: what a person sees in place of a step that failed to show. It says what
+ * to quote, offers a retry, and always has the way back to the start. It is part of the first download,
+ * unlike the other whole-screen states, because it is what shows when a download fails.
+ */
 export function StepError({ error, onRetry, exit }: ErrorScreenProps) {
+  const [at] = useState(() => Date.now());
+  const reference = referenceOf(error);
   useEffect(() => {
     console.error(error);
     document.title = m.errorPageTitle;
   }, [error]);
 
   return (
-    <FlowStep>
-      <FlowStep.Intro>
-        <FlowStep.Heading>{m.errorTitle}</FlowStep.Heading>
-        <FlowStep.Lede>{m.errorLede}</FlowStep.Lede>
-      </FlowStep.Intro>
-      <FlowStep.Actions>
-        <FlowButton variant="primary" onPress={onRetry}>
-          {m.tryAgain}
-        </FlowButton>
-        <FlowLink variant="quiet" href={exit.href}>
-          {exit.label}
-        </FlowLink>
-      </FlowStep.Actions>
-    </FlowStep>
+    <FlowState
+      tone="danger"
+      title={m.errorTitle}
+      lede={m.errorLede}
+      actions={
+        <>
+          <FlowButton variant="primary" onPress={onRetry}>
+            {m.tryAgain}
+          </FlowButton>
+          <FlowLink variant="quiet" href={exit.href}>
+            {exit.label}
+          </FlowLink>
+        </>
+      }
+    >
+      <FlowReference title={m.quoteThis}>
+        {reference ? <FlowReference.Row label={m.referenceLabel} value={reference} copy={{ label: m.copy, doneLabel: m.copied }} /> : null}
+        <FlowReference.Row label={m.timeLabel} value={m.momentOf(at)} />
+      </FlowReference>
+    </FlowState>
   );
 }
 

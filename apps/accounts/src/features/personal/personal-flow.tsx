@@ -7,7 +7,9 @@ import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { useDebouncedValue } from '../../flow/use-debounced-value';
 import { requestStatus as status } from '../../flow/use-flow-request';
+import type { ScreenFacts } from '../../flow/step-frame';
 import type { FlowRequest } from '../../flow/use-flow-request';
+import type { PersonalField, PersonalNext } from './feedback';
 import { useStepTravel } from '../../flow/use-step-travel';
 import { addressOf, backOf, directionOf, fullNameOf, nextOf, progressOf, stepPath } from './machine';
 import type { BirthDate, Gender, PersonalFacts, PersonalState, PersonalStep } from './machine';
@@ -82,8 +84,10 @@ export interface PersonalFlowValue {
     /** The domain of a new Yahel address, without the @. */
     mailDomain: string;
     offers: { passkey: boolean; business: boolean; contact: boolean; preferences: boolean };
-    links: { signIn: string; terms: string | null; privacy: string | null };
-    requests: Record<Exclude<keyof PersonalRequests, 'skipPhone'>, FlowRequest>;
+    links: { signIn: string; terms: string | null; privacy: string | null; help?: string | null };
+    /** What a whole-screen state needs: whose account, and where its ways out lead. */
+    screens: ScreenFacts;
+    requests: Record<Exclude<keyof PersonalRequests, 'skipPhone'>, FlowRequest<PersonalField, PersonalNext>>;
   };
 }
 
@@ -236,13 +240,14 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       mailDomain,
       offers: { passkey: facts.passkeysOffered, business: leaveForBusiness !== null, contact: facts.contactOffered, preferences: capabilities.preferences !== null },
       links,
+      screens: { account: flow.creation.created ? addressOf(flow, mailDomain) : null, exits: { signIn: links.signIn, signUp: stepPath('type'), support: links.help }, serviceStatus: capabilities.serviceStatus },
       requests: {
-        passkey: status(requests.passkey),
-        create: status(requests.create),
+        passkey: status(requests.passkey, requests.passkey.start),
+        create: status(requests.create, requests.create.start),
         confirmEmail: status(requests.confirmEmail),
-        resendEmailCode: status(requests.resendEmailCode),
+        resendEmailCode: status(requests.resendEmailCode, requests.resendEmailCode.start),
         verifyPhone: status(requests.verifyPhone),
-        resendPhoneCode: status(requests.resendPhoneCode),
+        resendPhoneCode: status(requests.resendPhoneCode, requests.resendPhoneCode.start),
         inviteContact: status(requests.inviteContact),
       },
     },

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
+import { forField } from '../../../flow/feedback';
 import { useStepField } from '../../../flow/use-step-field';
 import { newPasswordProblem, passwordStrength } from '../validation';
 import { StepFrame } from './step-frame';
@@ -11,7 +12,7 @@ export function NewPasswordStep() {
   const { state, actions, meta } = useSignInFlow();
   const [revealed, setRevealed] = useState(false);
   const request = meta.requests.newPassword;
-  const password = useStepField({ problemOf: newPasswordProblem, onValid: actions.saveNewPassword });
+  const password = useStepField({ problemOf: newPasswordProblem, onValid: actions.saveNewPassword, hasFormat: true, refusal: forField(request.feedback, 'password') });
   const score = passwordStrength(password.value, state.email?.split('@')[0]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -20,7 +21,7 @@ export function NewPasswordStep() {
   };
 
   return (
-    <StepFrame title={m.newPasswordTitle} lede={m.newPasswordLede} failure={request.failure}>
+    <StepFrame title={m.newPasswordTitle} lede={m.newPasswordLede} requests={[request]}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
           <UsernameHint value={state.email ?? ''} />
@@ -37,6 +38,8 @@ export function NewPasswordStep() {
             onRevealedChange={setRevealed}
             value={password.value}
             onChange={password.change}
+            onBlur={password.blur}
+            isValid={password.isValid}
             error={password.error}
             inputRef={password.inputRef}
             isRequired

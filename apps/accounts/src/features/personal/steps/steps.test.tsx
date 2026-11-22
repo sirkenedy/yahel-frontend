@@ -1,9 +1,12 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { flowMessages as shared } from '../../../flow/messages';
 import type { FlowRequest } from '../../../flow/use-flow-request';
+import type { PersonalFeedback, PersonalField, PersonalNext } from '../feedback';
 import { initialPersonalState } from '../machine';
 import { personalMessages as m } from '../messages';
 import { PersonalFlowContext } from '../personal-flow';
@@ -24,9 +27,10 @@ import { RecoveryStep } from './recovery-step';
 import { ReviewStep } from './review-step';
 import { TypeStep } from './type-step';
 
-const idle: FlowRequest = { isPending: false, failure: null };
-const pending: FlowRequest = { isPending: true, failure: null };
-const failing = (failure: string): FlowRequest => ({ isPending: false, failure });
+type Request = FlowRequest<PersonalField, PersonalNext>;
+const idle: Request = { isPending: false, feedback: null, clear: () => undefined };
+const pending: Request = { ...idle, isPending: true };
+const telling = (feedback: PersonalFeedback, rest: Partial<Request> = {}): Request => ({ ...idle, feedback, ...rest });
 const attestation = { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: [] };
 
 type Overrides = {
@@ -95,6 +99,7 @@ const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links
     mailDomain: 'yahel.example',
     offers: { passkey: true, business: false, contact: true, preferences: true, ...offers },
     links: { signIn: '/signin', terms: 'https://yahel.example/terms', privacy: 'https://yahel.example/privacy', ...links },
+    screens: { account: null, exits: { signIn: '/signin', signUp: '/personal' }, serviceStatus: null },
     requests: { passkey: idle, create: idle, confirmEmail: idle, resendEmailCode: idle, verifyPhone: idle, resendPhoneCode: idle, inviteContact: idle, ...requests },
     ...meta,
   },
@@ -102,8 +107,15 @@ const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links
 
 const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
-  const view = render(<PersonalFlowContext value={flowValue(actions, overrides)}>{ui}</PersonalFlowContext>);
-  return { actions, user: userEvent.setup(), rerender: (next: Overrides) => view.rerender(<PersonalFlowContext value={flowValue(actions, next)}>{ui}</PersonalFlowContext>) };
+  // A whole-screen state asks the query client about the service, so every step is given one.
+  const queryClient = new QueryClient();
+  const within = (next: Overrides) => (
+    <QueryClientProvider client={queryClient}>
+      <PersonalFlowContext value={flowValue(actions, next)}>{ui}</PersonalFlowContext>
+    </QueryClientProvider>
+  );
+  const view = render(within(overrides));
+  return { actions, user: userEvent.setup(), rerender: (next: Overrides) => view.rerender(within(next)) };
 };
 
 /** The address step shows what the flow holds for the field, so its tests keep that as the flow would. */
@@ -124,6 +136,14 @@ const setupAddress = (overrides: Overrides = {}) => {
   render(<Held />);
   return { actions, user: userEvent.setup() };
 };
+
+const offline: PersonalFeedback = { place: 'banner', tone: 'offline', title: shared.offlineTitle, text: shared.offlineText, next: 'retry' };
+const wrongCode: PersonalFeedback = { place: 'field', field: 'code', text: m.wrongCode };
+
+/** "Send a new code" rests for half a minute after a code has gone out; this lets that time pass. */
+const waitOutCoolDown = () => act(() => void vi.advanceTimersByTime(30_000));
+
+afterEach(() => void vi.useRealTimers());
 
 const press = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
 
@@ -273,7 +293,10 @@ describe('BirthStep', () => {
   it('says so when the server found the person too young, and starts from the earlier answer', () => {
     setup(<BirthStep />, { state: { ...answered, rejection: { step: 'birth', reason: 'underage' } } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.tooYoungForAccount);
+    expect(screen.getByLabelText(m.year)).toBeInvalid();
+    expect(screen.getByLabelText(m.year)).toHaveAccessibleDescription(m.tooYoungForAccount);
+    expect(screen.getByLabelText(m.year)).toHaveFocus();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByLabelText(m.day)).toHaveValue('14');
     expect(screen.getByLabelText(m.month)).toHaveValue('3');
     expect(screen.getByLabelText(m.gender)).toHaveValue('woman');
@@ -408,11 +431,15 @@ describe('PasswordStep', () => {
     expect(field()).toHaveAttribute('autocomplete', 'new-password');
 
     await user.type(field(), 'short{Enter}');
-    expect(screen.getByText(m.passwordTooShort)).toBeInTheDocument();
+    expect(screen.getByText('Use 8 or more characters, with a capital letter, a number and a symbol.')).toBeInTheDocument();
 
     await user.clear(field());
+    // Once checked, the field is checked again on every key: emptied, it asks for a password (the words are also the step's heading).
+    expect(field()).toBeInvalid();
+    expect(screen.getAllByText(m.newPasswordRequired)).toHaveLength(2);
     await user.type(field(), 'sunrise over lekki 94{Enter}');
-    expect(screen.getByText(m.passwordTooPlain)).toBeInTheDocument();
+    // A space is a symbol, as the backend counts it.
+    expect(screen.getByText('Add a capital letter.')).toBeInTheDocument();
     expect(actions.choosePassword).not.toHaveBeenCalled();
   });
 
@@ -441,7 +468,7 @@ describe('PasswordStep', () => {
     const { actions, user } = setup(<PasswordStep />, { state: { ...answered, hasPassword: true } });
 
     await user.type(field(), 'short{Enter}');
-    expect(screen.getByText(m.passwordTooShort)).toBeInTheDocument();
+    expect(screen.getByText(m.newPasswordTooShort('a capital letter, a number and a symbol'))).toBeInTheDocument();
     await user.clear(field());
     await user.type(field(), 'Harmattan in Jos 2026!{Enter}');
 
@@ -498,7 +525,7 @@ describe('AddPasskeyStep and PasskeyStep', () => {
     const { actions, rerender } = setup(<PasskeyStep />, { state: { passkeyCancelled: true } });
     expect(screen.getByRole('status')).toHaveTextContent(m.passkeyCancelled);
 
-    rerender({ requests: { passkey: failing(m.passkeyFailed) } });
+    rerender({ requests: { passkey: telling({ place: 'banner', tone: 'warning', text: m.passkeyFailed }) } });
     expect(screen.getByRole('alert')).toHaveTextContent(m.passkeyFailed);
     await press(m.tryAgain);
 
@@ -637,30 +664,36 @@ describe('CreatingStep', () => {
   });
 
   it('on failure says nothing is lost, and offers another try or the review', async () => {
-    const { actions } = setup(<CreatingStep />, { state: creating('account'), requests: { create: failing(m.offline) } });
+    const again = vi.fn();
+    const { actions } = setup(<CreatingStep />, { state: creating('account'), requests: { create: telling(offline, { again }) } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.offline);
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent(shared.offlineTitle);
+    expect(banner).toHaveTextContent(shared.offlineText);
     expect(screen.getByText(m.creatingFailedLede)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: m.backToReview })).toHaveAttribute('href', '/personal/review');
-    await press(m.tryAgain);
 
+    // One "Try again", the step's own: the banner does not repeat it.
+    expect(within(banner).queryByRole('button')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: m.tryAgain }));
     expect(actions.createAccount).toHaveBeenCalledTimes(1);
+    expect(again).not.toHaveBeenCalled();
   });
 
   it('once the account exists, offers only another try: the answers are final', () => {
-    setup(<CreatingStep />, { state: creating('signing-in', true), requests: { create: failing(m.offline) } });
+    setup(<CreatingStep />, { state: creating('signing-in', true), requests: { create: telling(offline) } });
 
     expect(screen.getByText(m.createdButUnfinished)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: m.backToReview })).not.toBeInTheDocument();
   });
 
   it('offers to start again from nothing, until the account exists', async () => {
-    const { actions, rerender } = setup(<CreatingStep />, { state: creating('account'), requests: { create: failing(m.offline) } });
+    const { actions, rerender } = setup(<CreatingStep />, { state: creating('account'), requests: { create: telling(offline) } });
 
     await press(m.startAgain);
     expect(actions.startAgain).toHaveBeenCalledTimes(1);
 
-    rerender({ state: creating('signing-in', true), requests: { create: failing(m.offline) } });
+    rerender({ state: creating('signing-in', true), requests: { create: telling(offline) } });
     expect(screen.queryByRole('button', { name: m.startAgain })).not.toBeInTheDocument();
   });
 
@@ -687,16 +720,29 @@ describe('OwnCodeStep and CodeStep', () => {
   });
 
   it('sends a new emailed code on request, and points to sign-in without saying the address has an account', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const { actions, rerender } = setup(<OwnCodeStep />);
 
+    // A code has just been sent, so the link waits, and says for how long.
+    const waiting = screen.getByRole('button', { name: m.sendNewCodeIn('0:30') });
+    expect(waiting).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(waiting);
+    expect(actions.resendEmailCode).not.toHaveBeenCalled();
+
+    waitOutCoolDown();
     await press(m.sendNewCode);
     expect(actions.resendEmailCode).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: m.sendNewCodeIn('0:30') })).toBeInTheDocument();
     expect(screen.getByText(m.ownCodeHint)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: m.signInInstead })).toHaveAttribute('href', '/signin');
 
-    rerender({ state: { emailCodeResent: true }, requests: { confirmEmail: failing(m.wrongCode) } });
-    expect(screen.getByRole('status')).toHaveTextContent(m.emailCodeAskedAgain);
-    expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCode);
+    // A wrong code is told beside the code, with focus on it; the confirmation of a resend is a toast, not part of the step.
+    rerender({ state: { emailCodeResent: true }, requests: { confirmEmail: telling(wrongCode) } });
+    expect(code()).toBeInvalid();
+    expect(code()).toHaveAccessibleDescription(m.wrongCode);
+    expect(code()).toHaveFocus();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByText(m.emailCodeAskedAgain)).not.toBeInTheDocument();
   });
 
   it('offers a way back to a different address, so a mistyped one does not strand the person', async () => {
@@ -717,15 +763,18 @@ describe('OwnCodeStep and CodeStep', () => {
   });
 
   it('sends a new text or skips the phone, and shows progress while verifying', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     const { actions, rerender } = setup(<CodeStep />, { state: answered });
 
+    expect(screen.getByRole('button', { name: m.sendNewCodeIn('0:30') })).toHaveAttribute('aria-disabled', 'true');
+    waitOutCoolDown();
     await press(m.sendNewCode);
     await press(m.skipForNow);
     expect(actions.resendPhoneCode).toHaveBeenCalledTimes(1);
     expect(actions.skipPhone).toHaveBeenCalledTimes(1);
 
     rerender({ state: { ...answered, phoneCodeResent: true }, requests: { verifyPhone: pending } });
-    expect(screen.getByRole('status')).toHaveTextContent(m.newCodeSent);
+    expect(screen.queryByText(m.newCodeSent)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: m.verifying })).toBeInTheDocument();
   });
 });
@@ -749,6 +798,13 @@ describe('ReadyStep and ContactStep', () => {
     expect(screen.queryByText(m.unsaved.phoneSkipped)).not.toBeInTheDocument();
     expect(screen.getByText(m.unsaved.passkey)).toBeInTheDocument();
     expect(screen.getByText(m.trustInvited('chidi.eze@personal.example'))).toBeInTheDocument();
+    // What was not saved is a warning; the invitation is good news.
+    expect(screen.getAllByRole('alert').map((notice) => [notice.getAttribute('data-tone'), notice.textContent])).toEqual([
+      ['warning', m.unsaved.phone],
+      ['warning', m.unsaved.passkey],
+    ]);
+    expect(screen.getByRole('status')).toHaveAttribute('data-tone', 'success');
+    expect(screen.getByRole('status')).toHaveTextContent(m.trustInvited('chidi.eze@personal.example'));
     expect(screen.queryByRole('link', { name: new RegExp(m.trustTitle) })).not.toBeInTheDocument();
   });
 
@@ -786,7 +842,163 @@ describe('ReadyStep and ContactStep', () => {
     expect(screen.getByText(m.contactRequired)).toBeInTheDocument();
     expect(actions.inviteContact).not.toHaveBeenCalled();
 
-    rerender({ state: answered, requests: { inviteContact: failing(m.tooManyAttempts) } });
-    expect(screen.getByRole('alert')).toHaveTextContent(m.tooManyAttempts);
+    rerender({ state: answered, requests: { inviteContact: telling({ place: 'banner', tone: 'warning', title: shared.tooManyTitle, text: shared.tooManyText }) } });
+    expect(screen.getByRole('alert')).toHaveTextContent(shared.tooManyTitle);
+    expect(screen.getByRole('alert')).toHaveTextContent(shared.tooManyText);
+  });
+});
+
+describe('feedback on the steps', () => {
+  // The browser has its own opinion of an email field's value; what matters here is what the step has said.
+  const markedWrong = (field: HTMLElement) => field.getAttribute('aria-invalid') === 'true';
+  const mark = (label: string) => screen.getByLabelText(label).parentElement?.querySelector('svg') ?? null;
+
+  it('sums up two or more problems above the form, and takes the summary away as they are fixed', async () => {
+    const { user } = setup(<NameStep />);
+    await user.type(screen.getByLabelText(m.firstName), 'A'.repeat(51));
+    await user.type(screen.getByLabelText(m.lastName), 'O'.repeat(51));
+    await press(m.continue);
+
+    const summary = screen.getByRole('alert');
+    expect(summary).toHaveTextContent(shared.thingsToFix(2));
+    expect(summary).toHaveTextContent(`${m.firstName} and ${m.lastName}.`);
+    expect(screen.getByLabelText(m.firstName)).toHaveFocus();
+
+    await user.clear(screen.getByLabelText(m.lastName));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(m.firstName)).toBeInvalid();
+  });
+
+  it('shows no summary for a single problem: the field says it', async () => {
+    setup(<NameStep />);
+    await press(m.continue);
+
+    expect(screen.getByLabelText(m.firstName)).toHaveAccessibleDescription(m.firstNameRequired);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('names every part of a date that is wrong, in the order they are shown', async () => {
+    setup(<BirthStep />);
+    await press(m.continue);
+
+    const summary = screen.getByText(shared.thingsToFix(3)).closest<HTMLElement>('[role="alert"]')!;
+    for (const part of [m.day, m.month, m.year]) expect(summary).toHaveTextContent(part);
+  });
+
+  it('sums up a wrong phone number and a wrong recovery email', async () => {
+    const { actions, user } = setup(<RecoveryStep />, { state: answered });
+    await user.clear(screen.getByLabelText(m.mobileNumber));
+    await user.type(screen.getByLabelText(m.mobileNumber), '12');
+    await user.clear(screen.getByLabelText(m.recoveryEmail));
+    await user.type(screen.getByLabelText(m.recoveryEmail), 'amara@');
+    await press(m.continue);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(shared.thingsToFix(2));
+    expect(screen.getByRole('alert')).toHaveTextContent(`${m.mobileNumber} and ${m.recoveryEmail}.`);
+    expect(actions.enterRecovery).not.toHaveBeenCalled();
+  });
+
+  it('never shows a problem while a field is first typed in, checks it on leaving, then on every key', async () => {
+    const { user } = setup(<OwnEmailStep />);
+    const email = screen.getByLabelText(m.ownEmailLabel);
+
+    await user.type(email, 'amara@');
+    expect(markedWrong(email)).toBe(false);
+    expect(mark(m.ownEmailLabel)).toBeNull();
+
+    await user.tab();
+    expect(markedWrong(email)).toBe(true);
+    expect(email).toHaveAccessibleDescription(m.ownEmailInvalid);
+
+    // Fixing it: the problem goes with the key that puts it right, and the tick arrives.
+    await user.type(email, 'mail.example');
+    expect(markedWrong(email)).toBe(false);
+    expect(mark(m.ownEmailLabel)).not.toBeNull();
+
+    await user.type(email, '{Backspace}'.repeat(12));
+    expect(markedWrong(email)).toBe(true);
+  });
+
+  it('leaves a field alone that was only passed through', async () => {
+    const { user } = setup(<OwnEmailStep />);
+    screen.getByLabelText(m.ownEmailLabel).focus();
+    await user.tab();
+
+    expect(markedWrong(screen.getByLabelText(m.ownEmailLabel))).toBe(false);
+  });
+
+  it('ticks only fields with a format to get right, never a name', async () => {
+    const { user } = setup(<NameStep />);
+    await user.type(screen.getByLabelText(m.firstName), 'Amara');
+    await user.tab();
+
+    expect(screen.getByLabelText(m.firstName)).toBeValid();
+    expect(mark(m.firstName)).toBeNull();
+  });
+
+  it('says the server would not take a kind of address beside the field, with focus on it, until the address is edited', async () => {
+    const { user } = setup(<OwnEmailStep />, { state: { ownEmail: 'amara@northwind.example', rejection: { step: 'own-email', reason: 'not-personal' } } });
+    const email = screen.getByLabelText(m.ownEmailLabel);
+
+    expect(markedWrong(email)).toBe(true);
+    expect(email).toHaveAccessibleDescription(m.ownEmailNotPersonal);
+    expect(email).toHaveFocus();
+
+    await user.type(email, 'x');
+    expect(markedWrong(email)).toBe(false);
+    expect(screen.queryByText(m.ownEmailNotPersonal)).not.toBeInTheDocument();
+  });
+
+  it('says a spent code no longer works above the form, and offers a new one there', async () => {
+    const spent: PersonalFeedback = { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'resend' };
+    const { actions } = setup(<CodeStep />, { state: answered, requests: { verifyPhone: telling(spent) } });
+
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent(m.codeDeadTitle);
+    expect(banner).toHaveTextContent(m.tooManyCodes);
+    await userEvent.click(within(banner).getByRole('button', { name: m.sendNewCode }));
+
+    expect(actions.resendPhoneCode).toHaveBeenCalledTimes(1);
+    expect(screen.getByLabelText(m.codeLabel)).toBeValid();
+  });
+
+  it('offers the review from a banner that says the details were refused', () => {
+    const refused: PersonalFeedback = { place: 'banner', tone: 'danger', title: m.detailsRefusedTitle, text: m.detailsRefused, next: 'review' };
+    setup(<CreatingStep />, { state: { ...answered, creation: { ...initialPersonalState.creation, started: true } }, requests: { create: telling(refused) } });
+
+    expect(within(screen.getByRole('alert')).getByRole('link', { name: m.backToReview })).toHaveAttribute('href', '/personal/review');
+  });
+
+  it('gives the whole screen to a state the person cannot continue from, in place of the step', async () => {
+    const again = vi.fn();
+    setup(<CreatingStep />, { state: { ...answered, creation: { ...initialPersonalState.creation, started: true } }, requests: { create: telling({ place: 'screen', screen: 'maintenance' }, { again }) } });
+
+    expect(screen.getByRole('heading', { level: 1, name: shared.maintenanceTitle })).toHaveFocus();
+    expect(screen.queryByRole('heading', { name: m.creatingTitle })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: m.creatingFailedTitle })).not.toBeInTheDocument();
+    expect(document.title).toBe(shared.pageTitle(shared.maintenanceTitle));
+    await press(shared.tryAgain);
+
+    expect(again).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends someone whose session ended to sign in again, from any step', () => {
+    setup(<ContactStep />, { state: answered, requests: { inviteContact: telling({ place: 'screen', screen: 'session-ended' }) } });
+
+    expect(screen.getByRole('heading', { level: 1, name: shared.sessionEndedTitle })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: shared.signInAgain })).toHaveAttribute('href', '/signin');
+    expect(screen.queryByLabelText(m.contactLabel)).not.toBeInTheDocument();
+  });
+
+  it('explains a long wait under the button, and stops when the wait is over', () => {
+    vi.useFakeTimers();
+    const { rerender } = setup(<CodeStep />, { state: answered, requests: { verifyPhone: pending } });
+    expect(screen.queryByText(shared.slow)).not.toBeInTheDocument();
+
+    act(() => void vi.advanceTimersByTime(1200));
+    expect(screen.getByRole('status')).toHaveTextContent(shared.slow);
+
+    rerender({ state: answered });
+    expect(screen.queryByText(shared.slow)).not.toBeInTheDocument();
   });
 });

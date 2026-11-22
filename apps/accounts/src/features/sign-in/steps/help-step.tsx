@@ -10,10 +10,10 @@ export function HelpStep() {
   const contact = useStepField({ problemOf: (value) => (value.trim() === '' ? m.helpRequired : null), onValid: (value) => actions.requestHelp(value.trim()) });
 
   return (
-    <StepFrame title={m.helpTitle} lede={m.helpLede} failure={request.failure}>
+    <StepFrame title={m.helpTitle} lede={m.helpLede} requests={[request]}>
       <FlowStep.Form onSubmit={contact.submit}>
         <FlowStep.Body>
-          <FlowTextField label={m.helpLabel} name="contact" autoComplete="email" spellCheck="false" value={contact.value} onChange={contact.change} error={contact.error} inputRef={contact.inputRef} isRequired />
+          <FlowTextField label={m.helpLabel} name="contact" autoComplete="email" spellCheck="false" value={contact.value} onChange={contact.change} onBlur={contact.blur} error={contact.error} inputRef={contact.inputRef} isRequired />
           <FlowNotice>{m.helpPromise}</FlowNotice>
         </FlowStep.Body>
         <FlowStep.Actions>

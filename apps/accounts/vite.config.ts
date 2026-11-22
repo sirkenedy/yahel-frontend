@@ -26,6 +26,8 @@ export default defineConfig(({ command, mode }) => {
             groups: [
               { name: 'sign-in-steps', test: /features\/sign-in\/steps\/|routes\/signin\/.*tsr-split=component/ },
               { name: 'personal-steps', test: /features\/personal\/steps\/|routes\/personal\/.*tsr-split=component/ },
+              // What only steps are built from, the whole-screen states among them: one file beside the first flow shown, not a dozen.
+              { name: 'step-kit', test: /src\/flow\/(step-frame|state-screen|resend-link|use-step-field|credentials|use-debounced-value)|ui\/src\/components\/flow\/(flow-field|code-input|choice|flow-select|progress|suggestions)\./ },
             ],
           },
         },
