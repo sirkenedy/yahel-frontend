@@ -1,4 +1,4 @@
-import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, AddressAvailability, PasskeyCeremony, PasskeyRegistration, RecoveryChannels, ServiceStatus, ServiceWindow, SignUpPreferences, StandInName, TextCodeSender, TrustedContacts } from './capabilities';
+import type { AccountCapabilities, AccountDirectory, AccountHelpDesk, AddressAvailability, DomainClaims, DomainMarket, PasskeyCeremony, PasskeyRegistration, RecoveryChannels, ServiceStatus, ServiceWindow, SignUpPreferences, StandInName, TextCodeSender, TrustedContacts, WorkspaceBilling } from './capabilities';
 import type { ApiClient } from './client';
 
 /** The stand-in implementations, as `@yahel/api-client/standins` builds them. */
@@ -13,6 +13,9 @@ export interface StandIns {
   trustedContacts: TrustedContacts;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
+  domainMarket: DomainMarket;
+  domainClaims: DomainClaims;
+  workspaceBilling: WorkspaceBilling;
 }
 
 /** `amara@northwind.example` becomes `a•••@northwind.example`: derived from what was typed, so it reveals nothing. */
@@ -50,7 +53,7 @@ const checked = (status: ServiceStatus): ServiceStatus => ({ window: async () =>
  */
 export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, standIns: [] };
+  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -67,6 +70,9 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns
     trustedContacts: standIns.trustedContacts,
     preferences: standIns.preferences,
     serviceStatus: checked(standIns.serviceStatus),
+    domainMarket: standIns.domainMarket,
+    domainClaims: standIns.domainClaims,
+    workspaceBilling: standIns.workspaceBilling,
     standIns: Object.keys(standIns) as StandInName[],
   };
 }

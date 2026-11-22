@@ -2,7 +2,7 @@ export { createApiClient } from './client';
 export type { ApiClient, ApiClientOptions } from './client';
 export { ApiError, isApiError } from './errors';
 export { isMfaRequired } from './types';
-export type { Acknowledgement, AuthTokens, LoginResult, MfaRequired, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
+export type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, MfaRequired, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
 export { createAccountCapabilities, maskEmail } from './account-capabilities';
 export type { StandIns } from './account-capabilities';
 export type {
@@ -11,6 +11,24 @@ export type {
   AddressCheck,
   AccountDirectory,
   AccountHelpDesk,
+  BillingContact,
+  BillingPeriod,
+  CardDetails,
+  CompletedOrder,
+  DomainClaims,
+  DomainMarket,
+  DomainOffer,
+  DomainStanding,
+  Money,
+  OrderQuote,
+  OrderRequest,
+  PaymentConfirmation,
+  PaymentStart,
+  PostalAddress,
+  PromoCode,
+  ScheduledCharge,
+  WorkspaceBilling,
+  WorkspacePlan,
   KnownAccount,
   PasskeyAssertion,
   PasskeyAssertionOptions,

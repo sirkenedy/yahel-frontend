@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -95,6 +95,7 @@ export function createApiClient(options: ApiClientOptions) {
     request,
     auth: {
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
+      registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
       refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
       logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),
