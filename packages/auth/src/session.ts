@@ -1,4 +1,4 @@
-import { createApiClient, isMfaRequired } from '@yahel/api-client';
+import { createApiClient, isApiError, isMfaRequired } from '@yahel/api-client';
 import type { ApiClient, AuthTokens, Profile, SignedIn } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
@@ -61,8 +61,10 @@ export function createSession(options: SessionOptions) {
       try {
         accept(await api.auth.refresh({ refreshToken, deviceId: deviceId() }));
         return true;
-      } catch {
+      } catch (error) {
         clear();
+        // The server ended every session because a spent refresh token was used: the caller is told so.
+        if (isApiError(error) && error.code === 'TOKEN_REUSE_DETECTED') throw error;
         return false;
       }
     })().finally(() => {
@@ -89,7 +91,7 @@ export function createSession(options: SessionOptions) {
 
     /** Restores a session from a stored refresh token. Never throws. */
     async init() {
-      if (!(await refresh())) {
+      if (!(await refresh().catch(() => false))) {
         clear();
         return;
       }

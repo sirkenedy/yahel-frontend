@@ -75,6 +75,19 @@ describe('createSession', () => {
     expect(tokenStorage.data).toEqual({});
   });
 
+  it('tells the caller when the server ended every session, and still starts signed out', async () => {
+    const routes = { '/api/v1/auth/refresh': () => fail(401, 'TOKEN_REUSE_DETECTED'), '/api/v1/me': () => fail(401, 'SESSION_EXPIRED') };
+    const tokenStorage = memoryStorage({ 'yahel.refresh-token': 'spent' });
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage: memoryStorage(), fetch: routeFetch(routes) as typeof fetch });
+
+    await session.init();
+    expect(session.store.getState().status).toBe('signed-out');
+
+    tokenStorage.setItem('yahel.refresh-token', 'spent');
+    await expect(session.api.me.get()).rejects.toMatchObject({ status: 401, code: 'TOKEN_REUSE_DETECTED' });
+    expect(tokenStorage.data).toEqual({});
+  });
+
   it('clears local state on sign-out even when the server call fails', async () => {
     const tokenStorage = memoryStorage();
     const fetchMock = routeFetch({ '/api/v1/auth/login': () => ok(tokens), '/api/v1/me': () => ok(profile), '/api/v1/auth/logout': () => fail(500, 'INTERNAL_ERROR') });

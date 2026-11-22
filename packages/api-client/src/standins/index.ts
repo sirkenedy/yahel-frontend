@@ -8,6 +8,7 @@ import { createPasskeyRegistrationStandIn } from './passkey-registration';
 import { createPasskeyStandIn } from './passkeys';
 import { createPreferencesStandIn } from './preferences';
 import { createRecoveryByPhoneStandIn } from './recovery-by-phone';
+import { createServiceStatusStandIn } from './service-status';
 import { createTextCodeStandIn } from './text-codes';
 import { createTrustedContactsStandIn } from './trusted-contacts';
 import { realDelay } from './timing';
@@ -23,6 +24,7 @@ export const createStandIns = (delay: Delay = realDelay): StandIns => ({
   addresses: createAddressStandIn(delay),
   trustedContacts: createTrustedContactsStandIn(delay),
   preferences: createPreferencesStandIn(delay),
+  serviceStatus: createServiceStatusStandIn(delay),
 });
 
 export { demoAccounts, demoProfile } from './demo-data';

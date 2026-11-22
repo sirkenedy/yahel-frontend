@@ -132,7 +132,19 @@ export interface SignUpPreferences {
   save(choices: { productNews: boolean; activityHistory: boolean }): Promise<void>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences';
+/** A planned interruption, as the server announces it. Times are ISO 8601. */
+export interface ServiceWindow {
+  from: string;
+  until: string;
+}
+
+/** What the service says about itself while it cannot answer, so the wait can be given an end. */
+export interface ServiceStatus {
+  /** The maintenance window in progress, or `null` when none is announced. */
+  window(): Promise<ServiceWindow | null>;
+}
+
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -145,6 +157,7 @@ export interface AccountCapabilities {
   addresses: AddressAvailability | null;
   trustedContacts: TrustedContacts | null;
   preferences: SignUpPreferences | null;
+  serviceStatus: ServiceStatus | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }

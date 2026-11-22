@@ -21,6 +21,8 @@ export type {
   RecoveryChannels,
   RecoveryMethod,
   RecoveryOption,
+  ServiceStatus,
+  ServiceWindow,
   SignedIn,
   SignUpPreferences,
   StandInName,

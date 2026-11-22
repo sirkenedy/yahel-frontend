@@ -8,7 +8,7 @@ type Path = keyof paths;
 export interface ApiClientOptions {
   baseUrl: string;
   getAccessToken?: () => string | null;
-  /** Called once when an authenticated request returns 401. Resolve true if a new token is available. */
+  /** Called once when an authenticated request returns 401. Resolve true if a new token is available. If it rejects, that failure is the answer to the request. */
   refreshSession?: () => Promise<boolean>;
   fetch?: typeof fetch;
 }
@@ -28,6 +28,14 @@ interface Envelope {
   error?: { code?: string; message?: string };
   meta?: { requestId?: string; validationErrors?: string[] };
 }
+
+/** `Retry-After` as seconds from now: the header is either a number of seconds or a date. Readable only when the server exposes it to browsers. */
+const retryAfterOf = (response: Response): number | undefined => {
+  const header = response.headers?.get('Retry-After');
+  if (!header) return undefined;
+  const seconds = /^\d+$/.test(header.trim()) ? Number(header) : Math.ceil((Date.parse(header) - Date.now()) / 1000);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+};
 
 /** What the backend's auth guard answers, with 401, when the access token is missing, expired or revoked. */
 const ACCESS_TOKEN_REFUSED = 'SESSION_EXPIRED';
@@ -74,6 +82,7 @@ export function createApiClient(options: ApiClientOptions) {
       message: envelope.error?.message ?? envelope.message ?? response.statusText,
       requestId: envelope.meta?.requestId,
       validationErrors: envelope.meta?.validationErrors,
+      retryAfter: retryAfterOf(response),
     });
   }
 

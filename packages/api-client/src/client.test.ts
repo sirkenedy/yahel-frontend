@@ -144,4 +144,25 @@ describe('createApiClient', () => {
 
     await expect(api.auth.mfaChallenge({ challengeToken: 'c-1', code: '000000', deviceId: 'd' })).rejects.toMatchObject({ status: 401, code: 'MFA_INVALID' });
   });
+
+  it('says how long to wait when a refusal carries Retry-After, as seconds or as a date', async () => {
+    const refused = (retryAfter: string) => new Response(JSON.stringify({ success: false, error: { code: 'BAD_REQUEST', message: 'ThrottlerException: Too Many Requests' } }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': retryAfter } });
+    const fetchMock = vi.fn().mockResolvedValueOnce(refused('42')).mockResolvedValueOnce(refused(new Date(Date.now() + 90_000).toUTCString())).mockResolvedValueOnce(json(429, { success: false, code: 'TOO_MANY_REQUESTS' }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x', deviceId: 'd' }).catch((error: unknown) => error);
+
+    expect(await login()).toMatchObject({ status: 429, retryAfter: 42 });
+    const dated = (await login()) as { retryAfter: number };
+    expect(dated.retryAfter).toBeGreaterThan(85);
+    expect(dated.retryAfter).toBeLessThanOrEqual(90);
+    expect(await login()).toMatchObject({ status: 429, retryAfter: undefined });
+  });
+
+  it('answers with the refresh failure itself when refreshing the session rejects', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(401, { success: false, code: 'SESSION_EXPIRED' }));
+    const reuse = new ApiError({ status: 401, code: 'TOKEN_REUSE_DETECTED', message: 'revoked' });
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', refreshSession: () => Promise.reject(reuse), fetch: fetchMock });
+
+    await expect(api.me.get()).rejects.toBe(reuse);
+  });
 });

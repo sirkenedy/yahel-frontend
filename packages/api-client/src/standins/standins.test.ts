@@ -116,4 +116,11 @@ describe('stand-ins', () => {
 
     await expect(preferences.save({ productNews: true, activityHistory: false })).resolves.toBeUndefined();
   });
+
+  it('service status: announces a two-hour window that is under way', async () => {
+    const { createServiceStatusStandIn } = await import('./service-status');
+    const now = Date.parse('2026-11-22T01:40:00.000Z');
+
+    await expect(createServiceStatusStandIn(instant, () => now).window()).resolves.toEqual({ from: '2026-11-22T00:00:00.000Z', until: '2026-11-22T02:00:00.000Z' });
+  });
 });
