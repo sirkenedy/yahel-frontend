@@ -87,7 +87,8 @@ describe('stand-ins', () => {
   it('addresses: says only whether a name is free, and offers free names like it', async () => {
     const { addresses } = createStandIns(instant);
 
-    expect(await addresses.check('amara.okafor')).toEqual({ available: false, alternatives: ['okafor.amara', 'amaraokafor', 'amara.okafor1'] });
+    expect(await addresses.check('amara.okafor')).toEqual({ available: true, alternatives: ['okafor.amara', 'amaraokafor', 'amara.okafor1'] });
+    expect(await addresses.check('amara')).toEqual({ available: false, alternatives: ['amara.mail', 'amara1', 'hello.amara'] });
     expect(await addresses.check('chidi.eze')).toMatchObject({ available: true });
     expect(Object.keys(await addresses.check('admin')).sort()).toEqual(['alternatives', 'available']);
     expect((await addresses.check('okafor')).alternatives).not.toContain('okafor');

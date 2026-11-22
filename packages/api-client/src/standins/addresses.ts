@@ -12,7 +12,7 @@ import type { AddressAvailability } from '../capabilities';
 import { createLimiter } from './timing';
 import type { Delay } from './timing';
 
-const TAKEN: readonly string[] = ['amara', 'admin', 'hello', 'info', 'okafor', 'amara.o', 'support', 'amara.okafor'];
+const TAKEN: readonly string[] = ['amara', 'admin', 'hello', 'info', 'okafor', 'amara.o', 'support'];
 
 const alternativesTo = (name: string) => {
   const [first = name, ...rest] = name.split('.');
