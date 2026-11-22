@@ -20,6 +20,8 @@ export interface AdminRequestDeps {
   store: AdminStore;
   queryClient: QueryClient;
   navigate: (step: AdminStep, options?: { replace?: boolean }) => void;
+  /** The address bar shows this step, even while a navigation away from it is still loading. */
+  isShown: (step: AdminStep) => boolean;
 }
 
 export interface PhoneNumber {
@@ -32,7 +34,7 @@ export interface PhoneNumber {
  * the provider turns these into `actions` and `meta.requests`. After signing in, where to go is the step
  * guards' to say: the flow asks for the phone and the guards move on past what is already done.
  */
-export function useAdminRequests({ visit, session, registrar, store, queryClient, navigate }: AdminRequestDeps) {
+export function useAdminRequests({ visit, session, registrar, store, queryClient, navigate, isShown }: AdminRequestDeps) {
   const email = () => store.getState().email ?? '';
   /** Whose account it is once signed in: the session's, which outlives a reload, before the flow's own record. */
   const account = () => session.store.getState().profile ?? null;
@@ -55,8 +57,9 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
       store.dispatch({ type: 'email-entered', email: address });
       const result = await signInOrConfirm(session, email(), value);
       if (result.ok || result.reason === 'mfa-required') return settle(result);
-      // The proof is held only for the confirm step, and only if the person is still where they asked for it.
-      if (!isCurrent()) return 'left' as const;
+      // The proof is held only for the confirm step, and only if the person is still where they asked for it:
+      // not left, and not on the way somewhere else while that page loads.
+      if (!isCurrent() || !isShown('signin')) return 'left' as const;
       store.dispatch({ type: 'email-unconfirmed', password: value });
       return 'confirm-email' as const;
     },

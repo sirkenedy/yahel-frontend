@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@tanstack/react-router';
+import { Outlet, createFileRoute, redirect, useLocation, useNavigate, useRouter } from '@tanstack/react-router';
 import { useState } from 'react';
 import { AdminFlowProvider } from '../../features/admin/admin-flow';
 import { stepOfPath, stepPath } from '../../features/admin/machine';
@@ -29,6 +29,7 @@ export const Route = createFileRoute('/admin')({
 function AdminLayout() {
   const { session, registrar, admin, config, facts } = Route.useRouteContext();
   const navigate = useNavigate();
+  const router = useRouter();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'signin';
   const account = useSignedInAccount(session);
   const [detailsHidden, setDetailsHidden] = useState(false);
@@ -48,6 +49,7 @@ function AdminLayout() {
         organisation={facts.organisation}
         links={{ admin: config.adminUrl, signIn: config.signInUrl, resetPassword: config.signInUrl, help: config.helpUrl, businessTerms: config.businessTermsUrl, privacy: config.privacyUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
+        isShown={(to) => stepOfPath(router.latestLocation.pathname) === to}
         leave={() => window.location.assign(config.adminUrl)}
       >
         <Outlet />

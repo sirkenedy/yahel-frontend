@@ -56,12 +56,13 @@ const setup = ({ step = 'signin' as AdminStep, facts = { signedIn: false, phoneV
   if (handedOver) store.dispatch({ type: 'handed-over', handover: { email, organisation: 'Harbourline Studio' } });
   const navigate = vi.fn();
   const leave = vi.fn();
+  let shown: AdminStep = step;
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   let latest: AdminFlowValue | undefined;
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: AdminStep, currentFacts: AdminFacts) => (
     <QueryClientProvider client={queryClient}>
-      <AdminFlowProvider step={current} session={session as unknown as Session} registrar={registrar as unknown as PasskeyRegistrar} store={store} facts={currentFacts} organisation="Northwind Studio" links={links} navigate={navigate} leave={leave}>
+      <AdminFlowProvider step={current} session={session as unknown as Session} registrar={registrar as unknown as PasskeyRegistrar} store={store} facts={currentFacts} organisation="Northwind Studio" links={links} navigate={navigate} isShown={(at) => at === shown} leave={leave}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </AdminFlowProvider>
     </QueryClientProvider>
@@ -69,7 +70,12 @@ const setup = ({ step = 'signin' as AdminStep, facts = { signedIn: false, phoneV
   const view = render(tree(step, facts));
   /** Everything the query client is holding on to, as text, to search for things that must not be kept. */
   const retained = () => JSON.stringify([queryClient.getMutationCache().getAll().map((mutation) => mutation.state), queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])]);
-  return { session, registrar, store, navigate, leave, queryClient, retained, flow: () => latest!, toast: () => said, goTo: (next: AdminStep, nextFacts: AdminFacts = facts) => view.rerender(tree(next, nextFacts)) };
+  return { session, registrar, store, navigate, leave, queryClient, retained, flow: () => latest!, toast: () => said, goTo: (next: AdminStep, nextFacts: AdminFacts = facts) => {
+      shown = next;
+      view.rerender(tree(next, nextFacts));
+    },
+    /** The address changes while the step is still on screen, as when a navigation away is loading. */
+    leaveFor: (next: AdminStep) => (shown = next) };
 };
 
 const signedInFacts = { signedIn: true, phoneVerified: false, hasPasskey: false };
@@ -113,6 +119,19 @@ describe('AdminFlowProvider: signing in', () => {
 
     act(() => flow().actions.signIn(password));
     goTo('phone', signedInFacts);
+    await act(async () => answer(unconfirmed()));
+
+    expect(store.getState().provenPassword).toBeNull();
+    expect(navigate).not.toHaveBeenCalledWith('confirm-email');
+  });
+
+  it('does not keep the proof, or move, when a navigation away began before the answer came', async () => {
+    const { flow, session, store, navigate, leaveFor } = setup();
+    let answer: (error: unknown) => void = () => undefined;
+    session.signIn.mockImplementationOnce(() => new Promise((_resolve, reject) => (answer = reject)));
+
+    act(() => flow().actions.signIn(password));
+    leaveFor('phone');
     await act(async () => answer(unconfirmed()));
 
     expect(store.getState().provenPassword).toBeNull();

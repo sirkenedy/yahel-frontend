@@ -55,7 +55,7 @@ test.describe('accounts: an administrator’s first sign-in', () => {
     await expect(page.getByText('Waiting for this device')).toBeVisible();
 
     await expect(heading(page, 'Admin is protected.')).toBeVisible();
-    await expect(page.getByRole('status').filter({ hasText: 'Passkey saved. You can sign in to Admin with it now.' })).toBeVisible();
+    await expect(page.getByText('Passkey saved. You can sign in to Admin with it now.')).toBeVisible();
     await page.getByRole('button', { name: 'Continue to Admin' }).click();
     await expect(page).toHaveURL(adminAddress);
     expect(sent(api, '/v1/auth/login')).toHaveLength(2);
@@ -102,7 +102,7 @@ test.describe('accounts: an administrator’s first sign-in', () => {
     const spent = page.getByRole('alert').filter({ hasText: 'This code no longer works' });
     await expect(spent).toBeVisible();
     await spent.getByRole('button', { name: 'Send a new code' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'New code sent.' })).toBeVisible();
+    await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
     expect(sent(api, '/v1/auth/verify-email/resend')).toHaveLength(2);
 
     await codeBoxes(page).fill(emailCode);
@@ -215,11 +215,13 @@ test.describe('accounts: moving about the admin flow', () => {
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(heading(page, 'Enter the code.')).toBeVisible();
 
-    await page.getByRole('link', { name: 'Back' }).click();
+    await page.goBack();
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
     await expect(page.getByLabel('Mobile number')).toHaveValue(adminPhone.number);
     await page.goForward();
     await expect(heading(page, 'Enter the code.')).toBeVisible();
+    await page.getByRole('link', { name: 'Back' }).click();
+    await expect(heading(page, 'Verify it’s you.')).toBeVisible();
   });
 
   test('a reload mid-flow keeps the session and nothing else: nothing typed is in the address or web storage', async ({ page }) => {

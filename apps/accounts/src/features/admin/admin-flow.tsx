@@ -82,6 +82,8 @@ export interface AdminFlowProviderProps {
   organisation: string | null;
   links: AdminLinks;
   navigate: (step: AdminStep, options?: { replace?: boolean }) => void;
+  /** Whether the address bar shows this step: a navigation away may still be loading while the step is on screen. */
+  isShown: (step: AdminStep) => boolean;
   /** Sends the browser to Admin. */
   leave: () => void;
   children: ReactNode;
@@ -91,7 +93,7 @@ export interface AdminFlowProviderProps {
  * Gives the admin steps one thing to read: `{ state, actions, meta }`. The state comes from the store
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them.
  */
-export function AdminFlowProvider({ step, session, registrar, store, facts, organisation, links, navigate, leave, children }: AdminFlowProviderProps) {
+export function AdminFlowProvider({ step, session, registrar, store, facts, organisation, links, navigate, isShown, leave, children }: AdminFlowProviderProps) {
   const queryClient = useQueryClient();
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -100,7 +102,7 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
   useQuery({ ...passkeyChallengeQuery(registrar), enabled: passkeySupported && step === 'add-passkey' });
 
   const travel = useStepTravel(step, directionOf);
-  const requests = useAdminRequests({ visit: travel.visit, session, registrar, store, queryClient, navigate });
+  const requests = useAdminRequests({ visit: travel.visit, session, registrar, store, queryClient, navigate, isShown });
   const back = backOf(step);
   const address = profile?.email ?? flow.email;
   const whole = { ...flow, provenPassword };
