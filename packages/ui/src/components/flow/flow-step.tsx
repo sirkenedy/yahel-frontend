@@ -1,6 +1,6 @@
 import { createContext, use, useEffect, useId, useRef } from 'react';
 import type { FormEventHandler, ReactNode } from 'react';
-import { Link } from 'react-aria-components';
+import { Button as AriaButton, Link } from 'react-aria-components';
 import { FlowIcon } from './flow-icon';
 
 export type FlowDirection = 'forward' | 'back';
@@ -76,9 +76,18 @@ function FlowStepBody({ children }: { children: ReactNode }) {
 /** Wraps the fields and the primary action so Enter in any field submits the step. Validation is the step's own. */
 function FlowStepForm({ onSubmit, children }: { onSubmit: FormEventHandler<HTMLFormElement>; children: ReactNode }) {
   return (
-    <form className="ws-flow-step__form" onSubmit={onSubmit} noValidate>
+    <form id={`${useHeadingId()}form`} className="ws-flow-step__form" onSubmit={onSubmit} noValidate>
       {children}
     </form>
+  );
+}
+
+/** Submits the step's form from outside it, such as from a banner above it: "Try again". */
+function FlowStepResubmit({ children }: { children: ReactNode }) {
+  return (
+    <AriaButton type="submit" form={`${useHeadingId()}form`} className="ws-flow-button ws-flow-button--chip">
+      {children}
+    </AriaButton>
   );
 }
 
@@ -143,6 +152,7 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Heading: FlowStepHeading,
   Lede: FlowStepLede,
   Form: FlowStepForm,
+  Resubmit: FlowStepResubmit,
   Body: FlowStepBody,
   Row: FlowStepRow,
   Actions: FlowStepActions,

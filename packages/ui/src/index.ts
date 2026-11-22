@@ -24,8 +24,10 @@ export { AccountAvatar, AccountChip, AccountList } from './components/flow/accou
 export type { AccountAvatarProps, AccountChipProps, AccountKind, AccountListAccountProps, AccountListProps } from './components/flow/account';
 export { Choice, ChoiceGroup, FlowCheckbox } from './components/flow/choice';
 export type { ChoiceGroupProps, ChoiceProps, FlowCheckboxProps } from './components/flow/choice';
-export { DemoMarker, FlowCallout, FlowDivider, FlowFacts, FlowNotice, FlowWaiting, PasswordStrength, SuccessMark } from './components/flow/feedback';
-export type { FlowCalloutProps, FlowNoticeProps, FlowNoticeTone, FlowWaitingProps, PasswordStrengthProps, PasswordStrengthScore } from './components/flow/feedback';
+export { DemoMarker, FlowCallout, FlowConnectionBar, FlowDivider, FlowFacts, FlowNotice, FlowSlowHint, FlowToast, FlowWaiting, PasswordStrength, SuccessMark } from './components/flow/feedback';
+export type { FlowCalloutProps, FlowConnectionBarProps, FlowNoticeProps, FlowNoticeTone, FlowToastProps, FlowTone, FlowWaitingProps, PasswordStrengthProps, PasswordStrengthScore } from './components/flow/feedback';
+export { FlowReference, FlowState } from './components/flow/flow-state';
+export type { FlowStateProps } from './components/flow/flow-state';
 export { FlowProgress, Receipt } from './components/flow/progress';
 export type { FlowProgressProps, ReceiptProps, ReceiptRowProps, ReceiptRowState } from './components/flow/progress';
 export { FlowSelect } from './components/flow/flow-select';
