@@ -82,6 +82,9 @@ describe('errorExitFor', () => {
   it('leads back to the start of whichever flow the person was in', () => {
     expect(errorExitFor('/personal/password')).toEqual({ href: '/personal', label: chromeMessages.startAgain });
     expect(errorExitFor('/personal')).toEqual({ href: '/personal', label: chromeMessages.startAgain });
+    expect(errorExitFor('/business/checkout')).toEqual({ href: '/business', label: chromeMessages.startAgain });
+    expect(errorExitFor('/business')).toEqual({ href: '/business', label: chromeMessages.startAgain });
+    expect(errorExitFor('/businesses')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/signin/password')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/personally')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/')).toEqual({ href: '/signin', label: m.backToSignIn });

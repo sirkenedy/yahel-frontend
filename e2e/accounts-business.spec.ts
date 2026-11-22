@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, signInWithPassword } from './support/accounts';
+import { armStepFailure, at, failNextStep, signInWithPassword } from './support/accounts';
 import { emailCode, mockApi, strictCountry } from './support/api';
 import { business, card, createWorkspace, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 
@@ -554,6 +554,24 @@ test.describe('accounts: moving about in workspace sign-up', () => {
 
     await page.goto(at('/signin'));
     await page.goto(at('/business/checkout'));
+    await expect(heading(page, 'Tell us about your business.')).toBeVisible();
+    await expect(page.getByLabel('Business name')).toHaveValue('');
+  });
+
+  test('a workspace screen that fails offers "Start again", and trying again does not keep the password', async ({ page }) => {
+    await mockApi(page);
+    await armStepFailure(page);
+    await createWorkspaceTo(page, 'admin');
+    await page.getByLabel('Password', { exact: true }).fill(business.password);
+    await page.getByLabel('Confirm password').fill(business.password);
+    await failNextStep(page);
+    await proceed(page, 'Agree and continue');
+
+    await expect(heading(page, 'Something went wrong on our side.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Start again' })).toHaveAttribute('href', '/business');
+    await expect(page.getByRole('link', { name: 'Back to sign in' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Try again' }).click();
+
     await expect(heading(page, 'Tell us about your business.')).toBeVisible();
     await expect(page.getByLabel('Business name')).toHaveValue('');
   });
