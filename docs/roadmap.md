@@ -61,6 +61,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Refresh token as an `HttpOnly` cookie
 - [ ] Response bodies declared in the OpenAPI description
 - [ ] A dispatch to this repository when the API changes, so the contract watcher runs immediately
+- [ ] Registration that cannot be used to take over an address: a new registration replaces a pending one, or each emailed code is bound to the registration that issued it; unconfirmed identities expire; the answer does not depend on whether the address has an account, including for domains outside the public-provider list (`decisions.md` O-12, F-50)
 
 ### Stand-ins waiting for an endpoint
 
@@ -88,5 +89,5 @@ These are requirements on the backend, written down so the stand-ins are not mis
 - **Passkey creation during sign-up**: `options` runs before the account exists, so it takes nothing that names a person, uses the server’s own relying-party id, returns a fresh random user handle and a single-use challenge that lives about 30 minutes, and is rate limited by caller. `verify` checks the origin and the challenge itself, binds the credential to the signed-in account, and refuses a used or expired challenge, leaving the account without a passkey.
 - **Trusted contact** (`POST /v1/me/recovery/contact`): answer the same way whether or not the invited address has an account, refuse the person’s own addresses, ask the contact’s consent by email before they count, and rate limit.
 - **Review choices** (`PATCH /v1/me/preferences`): record each choice with when it was made; a missing choice is "no".
-- **Register** (`POST /v1/auth/register`), existing endpoint: see `decisions.md` O-11 and O-12 for what the personal flow needs changed.
+- **Register and email confirmation** (`POST /v1/auth/register`, `/auth/verify-email`, `/auth/verify-email/resend`), existing endpoints: today anyone can register someone else’s address with their own password and wait for the owner’s code to switch the account on. A new registration must replace a pending one, or a code must only confirm the registration that issued it; pending registrations must expire; and the answer to register must not depend on whether the address has an account. Until then the personal flow confirms only registrations it made itself or whose password it holds (`decisions.md` F-50). See also O-11 and O-12.
 - **Second-step code by text** and **account help**: rate limit by challenge or by caller, and answer the same way whether or not anything was sent.
