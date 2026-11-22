@@ -41,4 +41,17 @@ export interface Profile {
   timezone?: string | null;
 }
 
+/** A recovery contact that has been asked for but cannot be used yet. Values are masked by the backend. */
+export interface PendingRecoveryContact {
+  value: string | null;
+  requestedAt: string | null;
+  usableAt: string | null;
+}
+
+/** The ways back into an account, as `/me/recovery` returns them (backend: `buildRecoveryResponse`). Values are masked. */
+export interface RecoveryMethods {
+  recoveryEmail: { configured: boolean; value: string | null; lastUpdatedAt: string | null; pending: PendingRecoveryContact | null };
+  phone: { configured: boolean; verified: boolean; value: string | null; lastUpdatedAt: string | null; pending: (PendingRecoveryContact & { verified: boolean }) | null };
+}
+
 export const isMfaRequired = (result: LoginResult): result is MfaRequired => 'mfaRequired' in result && result.mfaRequired === true;

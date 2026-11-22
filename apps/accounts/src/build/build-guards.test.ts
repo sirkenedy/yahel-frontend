@@ -19,7 +19,7 @@ describe('assertStandInsAllowed', () => {
 });
 
 describe('assertReleaseAddresses', () => {
-  const release = { VITE_API_URL: 'https://api.yahel.example/api', VITE_APP_URL: 'https://app.yahel.example/' };
+  const release = { VITE_API_URL: 'https://api.yahel.example/api', VITE_APP_URL: 'https://app.yahel.example/', VITE_MAIL_DOMAIN: 'yahel.example' };
 
   it('allows a build that names the backend and the app over https', () => {
     expect(() => assertReleaseAddresses('build', release)).not.toThrow();
@@ -27,8 +27,12 @@ describe('assertReleaseAddresses', () => {
 
   it.each([
     ['nothing is set', {}, /VITE_API_URL and VITE_APP_URL/],
-    ['the backend is missing', { VITE_APP_URL: release.VITE_APP_URL }, /^VITE_API_URL must/],
-    ['the app is missing', { VITE_API_URL: release.VITE_API_URL }, /^VITE_APP_URL must/],
+    ['the backend is missing', { ...release, VITE_API_URL: undefined }, /^VITE_API_URL must/],
+    ['the app is missing', { ...release, VITE_APP_URL: undefined }, /^VITE_APP_URL must/],
+    ['the mail domain is missing', { ...release, VITE_MAIL_DOMAIN: undefined }, /^VITE_MAIL_DOMAIN must/],
+    ['the mail domain is not a domain', { ...release, VITE_MAIL_DOMAIN: 'https://yahel.example' }, /^VITE_MAIL_DOMAIN must/],
+    ['sign-in is served over plain http', { ...release, VITE_SIGN_IN_URL: 'http://accounts.yahel.example/signin' }, /^VITE_SIGN_IN_URL must be an https address/],
+    ['sign-up and business sign-up are not addresses', { ...release, VITE_SIGN_UP_URL: 'accounts.yahel.example', VITE_BUSINESS_SIGN_UP_URL: 'javascript:alert(1)' }, /^VITE_SIGN_UP_URL and VITE_BUSINESS_SIGN_UP_URL must be an https address/],
     ['the backend is plain http', { ...release, VITE_API_URL: 'http://api.yahel.example/api' }, /^VITE_API_URL must/],
     ['the app is a development address', { ...release, VITE_APP_URL: 'http://localhost:5173/' }, /^VITE_APP_URL must/],
     ['an address is not an address', { ...release, VITE_APP_URL: 'app.yahel.example' }, /^VITE_APP_URL must/],
@@ -36,10 +40,22 @@ describe('assertReleaseAddresses', () => {
     expect(() => assertReleaseAddresses('build', env)).toThrow(message);
   });
 
+  it('allows the three onward addresses over https, and unset', () => {
+    expect(() => assertReleaseAddresses('build', { ...release, VITE_SIGN_IN_URL: 'https://accounts.yahel.example/signin', VITE_SIGN_UP_URL: 'https://accounts.yahel.example/personal', VITE_BUSINESS_SIGN_UP_URL: 'https://accounts.yahel.example/business' })).not.toThrow();
+    expect(() => assertReleaseAddresses('build', { ...release, VITE_SIGN_IN_URL: '' })).not.toThrow();
+  });
+
   it('lets through the demo build, a build that says it is local, and the development server', () => {
-    expect(() => assertReleaseAddresses('build', { VITE_STAND_INS_ALLOW_BUILD: 'demo' })).not.toThrow();
+    expect(() => assertReleaseAddresses('build', { VITE_STAND_INS: 'on', VITE_STAND_INS_ALLOW_BUILD: 'demo' })).not.toThrow();
     expect(() => assertReleaseAddresses('build', { VITE_LOCAL_BUILD: 'local' })).not.toThrow();
     expect(() => assertReleaseAddresses('serve', {})).not.toThrow();
+  });
+
+  it.each([
+    ['alone', { VITE_STAND_INS_ALLOW_BUILD: 'demo' }],
+    ['with stand-ins off', { VITE_STAND_INS: 'off', VITE_STAND_INS_ALLOW_BUILD: 'demo' }],
+  ])('does not exempt a build for the demo opt-in %s', (_name, env) => {
+    expect(() => assertReleaseAddresses('build', env)).toThrow(/VITE_API_URL and VITE_APP_URL/);
   });
 
   it('is not switched off by a mistyped opt-in', () => {

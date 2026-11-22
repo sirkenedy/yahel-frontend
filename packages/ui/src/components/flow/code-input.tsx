@@ -1,5 +1,6 @@
 import { FieldError, Input, Label, Text, TextField as AriaTextField } from 'react-aria-components';
 import type { Ref } from 'react';
+import { FlowIcon } from './flow-icon';
 
 const disallowed = { digits: /\D/g, alphanumeric: /[^a-z0-9]/gi } as const;
 
@@ -48,7 +49,10 @@ export function CodeInput({ label, value, onChange, length = 6, characters = 'di
         ))}
         <Input ref={inputRef} className="ws-flow-code__input" spellCheck={false} autoCapitalize="off" autoCorrect="off" />
       </div>
-      <FieldError className="ws-flow-field__error">{error}</FieldError>
+      <FieldError className="ws-flow-field__error">
+        <FlowIcon name="alert" />
+        <span>{error}</span>
+      </FieldError>
       {help ? (
         <Text slot="description" className="ws-flow-field__help">
           {help}

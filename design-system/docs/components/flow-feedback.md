@@ -2,7 +2,7 @@
 
 Status: Specified
 
-Built in `@yahel/ui` as `FlowNotice`, `FlowWaiting`, `SuccessMark` and `PasswordStrength`. Styles: `daylight.css`. See also `banner.md` and `../patterns/feedback-and-status.md`.
+Built in `@yahel/ui` as `FlowNotice`, `FlowWaiting`, `SuccessMark` and `PasswordStrength`. Styles: `daylight.css`. See also `flow-states.md` (the banner, toast, connection bar and whole-screen states), `banner.md` and `../patterns/feedback-and-status.md`.
 
 ## Purpose
 
@@ -19,8 +19,10 @@ Short feedback inside one step of an account flow: a reassurance or confirmation
 
 | Variant | Use |
 |---|---|
-| Notice, info | Reassurance ("We will never ask for your password"), confirmation ("New code sent.") |
-| Notice, danger | A failed request, above the fields |
+| Notice, info | Reassurance ("We will never ask for your password"), an explanation asked for |
+| Notice, success | Something that worked and stays true ("Chidi is your trusted contact") |
+| Notice, warning | Something left undone that the person should know ("We couldn't save your passkey") |
+| Notice with a title | The banner about a whole step: see `flow-states.md` |
 | Waiting | The passkey prompt, creating an account |
 | Success mark | `flow.success-mark` across |
 | Strength | Scores 1 to 4: Too weak, Fair, Good, Strong |
@@ -30,7 +32,7 @@ Short feedback inside one step of an account flow: a reassurance or confirmation
 | State | Treatment |
 |---|---|
 | Info | `color.daylight.tint` background, icon in `color.daylight.link` |
-| Danger | `color.daylight.surface` with a `border.control` outline in `color.daylight.danger` |
+| Success, warning, danger | The tone's tint (`success-tint`, `warning-tint`, `danger-tint`) with the tone's own icon in its colour |
 | Waiting | Spinner turning: `color.daylight.track` with one arc in `color.daylight.accent` |
 | Success, entering | Pops from 0.6 scale over `duration.rise` with `easing.pop` |
 | Strength 1 and 2 | Bars and verdict in `color.daylight.warning` |
@@ -56,7 +58,7 @@ Short feedback inside one step of an account flow: a reassurance or confirmation
 
 ## Accessibility
 
-- Danger notices are alerts; info notices and the waiting card are statuses.
+- Danger and warning notices are alerts; info and success notices and the waiting card are statuses.
 - The success mark is decorative; the heading beside it says what happened.
 - Strength is always in words, never colour alone, and is announced politely.
 - Icons are hidden from assistive technology.

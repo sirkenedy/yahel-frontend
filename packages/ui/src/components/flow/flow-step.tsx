@@ -1,6 +1,6 @@
 import { createContext, use, useEffect, useId, useRef } from 'react';
 import type { FormEventHandler, ReactNode } from 'react';
-import { Link } from 'react-aria-components';
+import { Button as AriaButton, Link } from 'react-aria-components';
 import { FlowIcon } from './flow-icon';
 
 export type FlowDirection = 'forward' | 'back';
@@ -30,7 +30,7 @@ function FlowStepRoot({ direction = 'forward', children }: FlowStepProps) {
   useEffect(() => {
     const section = ref.current;
     if (!section) return;
-    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]):not([aria-hidden="true"]), select, textarea') : null;
+    const field = prefersFieldFocus() ? section.querySelector<HTMLElement>('input:not([type="hidden"]):not([type="checkbox"]):not([aria-hidden="true"]), select, textarea') : null;
     (field ?? document.getElementById(headingId))?.focus({ preventScroll: true });
   }, [headingId]);
 
@@ -76,9 +76,30 @@ function FlowStepBody({ children }: { children: ReactNode }) {
 /** Wraps the fields and the primary action so Enter in any field submits the step. Validation is the step's own. */
 function FlowStepForm({ onSubmit, children }: { onSubmit: FormEventHandler<HTMLFormElement>; children: ReactNode }) {
   return (
-    <form className="ws-flow-step__form" onSubmit={onSubmit} noValidate>
+    <form id={`${useHeadingId()}form`} className="ws-flow-step__form" onSubmit={onSubmit} noValidate>
       {children}
     </form>
+  );
+}
+
+/** Submits the step's form from outside it, such as from a banner above it: "Try again". */
+function FlowStepResubmit({ children }: { children: ReactNode }) {
+  return (
+    <AriaButton type="submit" form={`${useHeadingId()}form`} className="ws-flow-button ws-flow-button--chip">
+      {children}
+    </AriaButton>
+  );
+}
+
+/** `pair`: two equal fields that stack on a narrow screen. `date`: day, month, year. `phone`: a short field, then a long one. */
+export type FlowRowLayout = 'pair' | 'date' | 'phone';
+
+/** Fields that belong together on one line. Give it a `label` when together they answer one thing, such as a date. */
+function FlowStepRow({ layout = 'pair', label, children }: { layout?: FlowRowLayout; label?: string; children: ReactNode }) {
+  return (
+    <div className={`ws-flow-step__row ws-flow-step__row--${layout}`} role={label ? 'group' : undefined} aria-label={label}>
+      {children}
+    </div>
   );
 }
 
@@ -87,9 +108,38 @@ function FlowStepActions({ children }: { children: ReactNode }) {
   return <div className="ws-flow-step__actions">{children}</div>;
 }
 
-/** Ways out of the step that are not the main path: "Forgot password?", "Use a passkey". */
-function FlowStepLinks({ children }: { children: ReactNode }) {
-  return <div className="ws-flow-step__links">{children}</div>;
+/** Ways out of the step that are not the main path: "Forgot password?", "Use a passkey". `end` puts them at the far side. */
+function FlowStepLinks({ align = 'start', children }: { align?: 'start' | 'end'; children: ReactNode }) {
+  return (
+    <div className="ws-flow-step__links" data-align={align}>
+      {children}
+    </div>
+  );
+}
+
+interface FlowStepNoteLinkProps {
+  href: string;
+  /** Said after the link's name to assistive technology: "opens in a new tab". */
+  newTabLabel: string;
+  children: ReactNode;
+}
+
+/**
+ * A link inside small print to something read alongside the step, such as the terms. It opens in a new
+ * tab, so what has been answered on this page is not lost by reading it.
+ */
+function FlowStepNoteLink({ href, newTabLabel, children }: FlowStepNoteLinkProps) {
+  return (
+    <Link href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+      <span className="ws-flow-hidden"> ({newTabLabel})</span>
+    </Link>
+  );
+}
+
+/** Small print under the fields: what a choice means, or what pressing the button agrees to. */
+function FlowStepNote({ children }: { children: ReactNode }) {
+  return <p className="ws-flow-step__note">{children}</p>;
 }
 
 /**
@@ -102,7 +152,11 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Heading: FlowStepHeading,
   Lede: FlowStepLede,
   Form: FlowStepForm,
+  Resubmit: FlowStepResubmit,
   Body: FlowStepBody,
+  Row: FlowStepRow,
   Actions: FlowStepActions,
   Links: FlowStepLinks,
+  Note: FlowStepNote,
+  NoteLink: FlowStepNoteLink,
 });

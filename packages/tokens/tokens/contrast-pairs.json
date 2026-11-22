@@ -279,6 +279,56 @@
       "color.daylight.control-line",
       "color.daylight.surface",
       3
+    ],
+    [
+      "color.daylight.ink",
+      "color.daylight.danger-tint",
+      4.5
+    ],
+    [
+      "color.daylight.soft",
+      "color.daylight.danger-tint",
+      4.5
+    ],
+    [
+      "color.daylight.danger",
+      "color.daylight.danger-tint",
+      3
+    ],
+    [
+      "color.daylight.ink",
+      "color.daylight.warning-tint",
+      4.5
+    ],
+    [
+      "color.daylight.soft",
+      "color.daylight.warning-tint",
+      4.5
+    ],
+    [
+      "color.daylight.warning",
+      "color.daylight.warning-tint",
+      3
+    ],
+    [
+      "color.daylight.ink",
+      "color.daylight.success-tint",
+      4.5
+    ],
+    [
+      "color.daylight.soft",
+      "color.daylight.success-tint",
+      4.5
+    ],
+    [
+      "color.daylight.success",
+      "color.daylight.success-tint",
+      3
+    ],
+    [
+      "color.daylight.soft",
+      "color.daylight.tint",
+      4.5
     ]
   ]
 }

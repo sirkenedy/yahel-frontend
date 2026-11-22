@@ -166,6 +166,34 @@ The owner decided the product name is **Yahel**. This replaces the name kept und
 - **Reset code and backup codes.** The boards draw every code as six digits. The backend's reset code is six letters and numbers, so the recovery code step takes letters and numbers and its label says "6-character code". Second-step backup codes are ten characters and do not fit the boxes, so "Use a backup code" swaps the boxes for an ordinary field.
 - **Passkeys** are offered wherever the browser supports them, not only on devices with a fingerprint or face reader, so a passkey on a phone or a security key works.
 
+### Daylight personal sign-up: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-39 to F-54.
+
+- **Order of the two code screens.** The boards put the emailed code at question 3 and the texted code at question 5. Both come after "Agree and create account", because neither code can exist before the account does. They show no "0N / 06" count, the existing-email button reads "Continue" rather than "Send code", the emailed code offers "Use a different address" and "Sign in instead", and the texted code offers "Skip for now".
+- **Progress and receipt.** Progress reads "01 / 06 · Your name" as the boards draw. The receipt is the list on the review; no summary is shown beside the question, which the brief describes but no board draws. The receipt lost its shadow and its row-by-row rise to match the review board.
+- **Selects.** Month, gender and phone country are the platform's select, styled as a flow field, not the drawn list with a search box. The closed country field reads "+234 Nigeria".
+- **Codes** are six letters and numbers ("6-character code"), not six digits.
+- **Back link** on every question that has an earlier one, as in sign-in.
+- **Password help** states the backend's rule beside the design's length; a password already chosen is never shown again, so on return the field is empty with a line saying it is saved.
+- **Ready.** "Continue to Yahel" in place of "Open Yahel Mail"; no app tiles, tour or account menu. The header shows the account's initials, as drawn, without a menu. The finishing mark is the emblem in two rings without the animated glow.
+- **Review.** Hidden values are announced as "Hidden"; Terms and Privacy Policy open in a new tab; on a computer the checkboxes are shorter than a touch target so the action is in view at the board's size.
+- **Address.** A taken address offers the server's free alternatives, not ones made from the birth year; the domain shown is the configured one.
+- **Demo label.** A tab at the top edge of the page, not a pill at the bottom, so it never covers an action.
+
+### Daylight error and feedback states: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-55 to F-64. The component spec is `components/flow-states.md`.
+
+- **Not built because they reveal whether an account exists.** "We couldn't find a Yahel account with that email", "That email already has a Yahel account", and the suspended and paused screens straight from the email step. "Wrong password" keeps the neutral words "That email and password don't match", beside the field as drawn.
+- **Not built because the backend sends nothing to build them from.** "{n} tries left", the warning before the last try, "Send the code again" on sign-in, "Continue to {provider}", the organisation's name, "15 minutes", a message per field for a refused registration.
+- **Dialog.** A session that ended, and "signed out everywhere", are the Expired whole screen, not a dialog.
+- **Whole screens.** Wording that states what the app cannot know is dropped (see F-59). The error screen keeps "Start again" or "Back to sign in" in place of "Contact support", and shows the reference only when there is one.
+- **Toast.** One at a time; the icon takes the text colour rather than the opposite theme's tone; the close control is 44 px.
+- **Banner.** A neutral hairline rather than a 22% mix of the tone (the tone's colour under increased contrast); actions are 44 px pills rather than 36 px.
+- **Countdown.** The 429 banner counts down but the step's button stays pressable.
+- **Tints.** `color.daylight.danger-tint`, `warning-tint` and `success-tint` are solid colours in the dark themes (the boards draw 12% of the tone over the canvas), so their contrast can be checked.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |

@@ -1,13 +1,19 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { LinkRouter } from '@yahel/ui';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { flowMessages } from '../../flow/messages';
+import { dismissToast, say } from '../../flow/toasts';
 import { AppFrame } from './app-frame';
 import { chromeMessages as m } from './messages';
 
 const links = { home: '/signin', signUp: 'https://yahel.example/create', help: 'https://yahel.example/help', privacy: 'https://yahel.example/privacy', terms: null };
 
-afterEach(() => delete document.documentElement.dataset.theme);
+afterEach(() => {
+  delete document.documentElement.dataset.theme;
+  act(() => dismissToast());
+  vi.restoreAllMocks();
+});
 
 describe('AppFrame', () => {
   it('shows the brand, the question, the data-location promise and only the links it was given', () => {
@@ -54,6 +60,53 @@ describe('AppFrame', () => {
     expect(screen.queryByText(m.newHere)).not.toBeInTheDocument();
   });
 
+  it('offers sign-in to someone who is creating an account', () => {
+    render(<AppFrame links={{ ...links, home: '/personal', homeLabel: m.brandSignUp, signUp: null, signIn: '/signin' }}>q</AppFrame>);
+
+    expect(screen.getByRole('link', { name: m.brandSignUp })).toHaveAttribute('href', '/personal');
+    expect(screen.getByText(m.haveAccount)).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: m.signIn })).toHaveAttribute('href', '/signin');
+  });
+
+  it('offers to hide personal details only on screens that ask for them, and says which way the control will go', async () => {
+    const onToggle = vi.fn();
+    const { container, rerender } = render(
+      <AppFrame links={links} privacy={{ isOn: false, onToggle }}>
+        q
+      </AppFrame>,
+    );
+    const hide = screen.getByRole('button', { name: m.hideDetails });
+    expect(hide).toHaveAttribute('aria-pressed', 'false');
+    expect(container.querySelector('[data-private]')).toBeNull();
+
+    await userEvent.click(hide);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <AppFrame links={links} privacy={{ isOn: true, onToggle }}>
+        q
+      </AppFrame>,
+    );
+    expect(screen.getByRole('button', { name: m.showDetails })).toHaveAttribute('aria-pressed', 'true');
+    expect(container.querySelector('[data-private]')).not.toBeNull();
+
+    rerender(<AppFrame links={links}>q</AppFrame>);
+    expect(screen.queryByRole('button', { name: m.showDetails })).not.toBeInTheDocument();
+  });
+
+  it('shows whose account is signed in, and nothing when nobody is', () => {
+    const { rerender } = render(
+      <AppFrame links={links} account={{ name: 'Amara Okafor', email: 'amara.okafor@yahel.example' }}>
+        q
+      </AppFrame>,
+    );
+    expect(within(screen.getByRole('banner')).getByText(m.signedInAs('amara.okafor@yahel.example'))).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('AO')).toBeInTheDocument();
+
+    rerender(<AppFrame links={links}>q</AppFrame>);
+    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
+  });
+
   it('switches between light and dark, naming the control for what it will do', async () => {
     render(<AppFrame links={links}>q</AppFrame>);
 
@@ -62,5 +115,57 @@ describe('AppFrame', () => {
 
     await userEvent.click(screen.getByRole('button', { name: m.switchToLight }));
     expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('says across the top when the device is offline, takes it away when the connection is back, and says so', () => {
+    const onLine = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    render(<AppFrame links={links}>q</AppFrame>);
+    expect(document.body).not.toHaveTextContent(flowMessages.offlineLead);
+
+    onLine.mockReturnValue(false);
+    act(() => void window.dispatchEvent(new Event('offline')));
+    const bar = screen.getByText(flowMessages.offlineLead).closest('[aria-live="polite"]');
+    expect(bar).toHaveTextContent(`${flowMessages.offlineLead} ${flowMessages.offlineBar}`);
+    // Above the header, so it pushes the page down instead of covering it.
+    expect(bar!.compareDocumentPosition(screen.getByRole('banner')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.body).not.toHaveTextContent(flowMessages.backOnline);
+
+    onLine.mockReturnValue(true);
+    act(() => void window.dispatchEvent(new Event('online')));
+    expect(document.body).not.toHaveTextContent(flowMessages.offlineLead);
+    expect(screen.getByText(flowMessages.backOnline).closest('[aria-live="polite"]')).not.toBeNull();
+  });
+
+  it('starts with the bar when the page opens without a connection', () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    render(<AppFrame links={links}>q</AppFrame>);
+
+    expect(screen.getByText(flowMessages.offlineLead)).toBeInTheDocument();
+  });
+
+  it('shows a passing confirmation in a region that is already on the page, and puts it away when dismissed', async () => {
+    render(<AppFrame links={links}>q</AppFrame>);
+    const regions = [...document.querySelectorAll('[aria-live="polite"]')];
+    expect(screen.queryByRole('button', { name: flowMessages.dismiss })).not.toBeInTheDocument();
+
+    act(() => say('New code sent. Older codes no longer work.'));
+    const toast = screen.getByText('New code sent. Older codes no longer work.');
+    expect(regions.some((region) => region.contains(toast))).toBe(true);
+
+    await userEvent.click(screen.getByRole('button', { name: flowMessages.dismiss }));
+    expect(screen.queryByText('New code sent. Older codes no longer work.')).not.toBeInTheDocument();
+  });
+
+  it('lets a toast leave by itself when its time is up, and shows the next one said', () => {
+    const { container } = render(<AppFrame links={links}>q</AppFrame>);
+
+    act(() => say('Copied.'));
+    act(() => say('You’re back online.'));
+    expect(screen.queryByText('Copied.')).not.toBeInTheDocument();
+    expect(screen.getByText('You’re back online.')).toBeInTheDocument();
+
+    // jsdom has no animations, so React listens for the prefixed event there; a browser sends the plain one.
+    fireEvent(container.querySelector('.ws-flow-toast__bar')!, new Event('webkitAnimationEnd', { bubbles: true }));
+    expect(screen.queryByText('You’re back online.')).not.toBeInTheDocument();
   });
 });

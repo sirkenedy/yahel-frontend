@@ -12,6 +12,19 @@ export interface FlowTextFieldProps extends Omit<AriaTextFieldProps, 'className'
   error?: string;
   /** The input element, for moving focus to the field when it needs attention. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Fixed text inside the field after what is typed, such as "@yahel.com". */
+  suffix?: string;
+  /**
+   * Good news about the value, such as "Available". Announced politely; an `error` replaces it. A field
+   * that may come to have some passes `null` meanwhile, so the announcing region is there before the news.
+   */
+  success?: string | null;
+  /** The value has a format and meets it: a tick shows inside the field. Never for names. */
+  isValid?: boolean;
+  /** One link under the error when there is a better path than fixing the value. */
+  action?: ReactNode;
+  /** The value is personal: it is blurred, unless focused, while the shell is hiding private details. */
+  isSensitive?: boolean;
 }
 
 interface FieldFrameProps extends FlowTextFieldProps {
@@ -19,18 +32,32 @@ interface FieldFrameProps extends FlowTextFieldProps {
   trailing?: ReactNode;
 }
 
-function FieldFrame({ label, help, error, trailing, inputRef, ...props }: FieldFrameProps) {
+function FieldFrame({ label, help, error, trailing, inputRef, suffix, success, isValid, action, isSensitive, ...props }: FieldFrameProps) {
+  const invalid = props.isInvalid ?? Boolean(error);
   return (
-    <AriaTextField validationBehavior="aria" {...props} isInvalid={props.isInvalid ?? Boolean(error)} className="ws-flow-field">
+    <AriaTextField validationBehavior="aria" {...props} isInvalid={invalid} className="ws-flow-field">
       <Label className="ws-flow-field__label">{label}</Label>
-      <div className="ws-flow-field__control">
+      <div className="ws-flow-field__control" data-sensitive={isSensitive || undefined}>
         <Input ref={inputRef} className="ws-flow-field__input" />
+        {suffix ? <span className="ws-flow-field__suffix">{suffix}</span> : null}
+        {invalid ? <FlowIcon name="alert" /> : isValid ? <FlowIcon name="check-circle" /> : null}
         {trailing}
       </div>
+      {success === undefined ? null : (
+        <span className="ws-flow-field__success" role="status">
+          {success && !error ? (
+            <>
+              <FlowIcon name="check" />
+              {success}
+            </>
+          ) : null}
+        </span>
+      )}
       <FieldError className="ws-flow-field__error">
-        <FlowIcon name="info" />
+        <FlowIcon name="alert" />
         <span>{error}</span>
       </FieldError>
+      {action && invalid ? <span className="ws-flow-field__action">{action}</span> : null}
       {help ? (
         <Text slot="description" className="ws-flow-field__help">
           {help}

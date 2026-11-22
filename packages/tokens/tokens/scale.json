@@ -49,6 +49,7 @@
     "hover-delay": "500ms",
     "loop": "1400ms",
     "toast": "5000ms",
+    "flow-toast": "4000ms",
     "rise": "520ms",
     "stagger": "50ms",
     "field": "160ms",

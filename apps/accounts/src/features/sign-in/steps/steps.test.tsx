@@ -1,13 +1,16 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { flowMessages as fm } from '../../../flow/messages';
+import { carried } from '../feedback';
+import type { SignInFeedback } from '../feedback';
 import { initialSignInState } from '../machine';
 import { signInMessages as m } from '../messages';
 import { SignInFlowContext } from '../sign-in-flow';
 import type { SignInFlowValue } from '../sign-in-flow';
-import type { FlowRequest } from '../use-flow-request';
 import { ChooseStep } from './choose-step';
 import { CodeStep } from './code-step';
 import { DoneStep } from './done-step';
@@ -20,11 +23,13 @@ import { PasswordStep } from './password-step';
 import { RecoverCodeStep } from './recover-code-step';
 import { RecoverStep } from './recover-step';
 
-const idle: FlowRequest = { isPending: false, failure: null };
+type Request = SignInFlowValue['meta']['requests']['password'];
+const clear = () => undefined;
+const idle: Request = { isPending: false, feedback: null, clear };
 const email = 'amara@northwind.example';
 const profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
 
-type Overrides = { state?: Partial<SignInFlowValue['state']>; offers?: Partial<SignInFlowValue['meta']['offers']>; requests?: Partial<SignInFlowValue['meta']['requests']>; backHref?: string | null };
+type Overrides = { state?: Partial<SignInFlowValue['state']>; offers?: Partial<SignInFlowValue['meta']['offers']>; requests?: Partial<SignInFlowValue['meta']['requests']>; backHref?: string | null; screens?: Partial<SignInFlowValue['meta']['screens']> };
 
 const fakeActions = () => ({
     chooseAccount: vi.fn(),
@@ -44,7 +49,7 @@ const fakeActions = () => ({
     continueToApp: vi.fn(),
 });
 
-const flowValue = (actions: SignInFlowValue['actions'], { state, offers, requests, backHref = null }: Overrides = {}): SignInFlowValue => ({
+const flowValue = (actions: SignInFlowValue['actions'], { state, offers, requests, backHref = null, screens }: Overrides = {}): SignInFlowValue => ({
   state: { ...initialSignInState, step: 'email', profile: null, accounts: [], recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, removedAccount: null, ...state },
   actions,
   meta: {
@@ -52,17 +57,35 @@ const flowValue = (actions: SignInFlowValue['actions'], { state, offers, request
     backHref,
       offers: { passkey: true, textCode: true, help: true, ...offers },
       requests: { password: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, removeAccount: idle, signOut: idle, recoveryOptions: idle, ...requests },
+      screens: { account: state?.email ?? null, exits: { signIn: '/signin/email', resetPassword: '/signin/recover' }, serviceStatus: null, ...screens },
     },
 });
 
 const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
-  const { container } = render(<SignInFlowContext value={flowValue(actions, overrides)}>{ui}</SignInFlowContext>);
+  // A whole-screen state asks the query client for a maintenance window, so every step is rendered inside one.
+  const { container } = render(
+    <QueryClientProvider client={new QueryClient()}>
+      <SignInFlowContext value={flowValue(actions, overrides)}>{ui}</SignInFlowContext>
+    </QueryClientProvider>,
+  );
   return { actions, container, user: userEvent.setup() };
 };
 
-const failing = (failure: string): FlowRequest => ({ isPending: false, failure });
-const pending: FlowRequest = { isPending: true, failure: null };
+const failing = (feedback: SignInFeedback, more: Partial<Request> = {}): Request => ({ isPending: false, feedback, clear, ...more });
+const pending: Request = { isPending: true, feedback: null, clear };
+// What the feedback map answers with, as the steps receive it.
+const offline = { place: 'banner', tone: 'offline', title: fm.offlineTitle, text: fm.offlineText, next: 'retry' } as const;
+const rateLimited = { place: 'banner', tone: 'warning', title: fm.tooManyTitle, text: fm.tooManyText } as const;
+const wrongCredentials = { place: 'field', field: 'password', text: m.wrongCredentials } as const;
+const wrongCode = { place: 'field', field: 'code', text: m.wrongCode } as const;
+const refusedPassword = { place: 'field', field: 'password', text: m.passwordRefused } as const;
+const deadCode = { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'sign-in-again' } as const;
+const locked = { place: 'screen', screen: 'locked' } as const;
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 const rowFor = (address: string) => screen.getByRole('button', { name: new RegExp(`^${m.continueAs}.*${address.replaceAll('.', '\\.')}`) });
 
 describe('ChooseStep', () => {
@@ -145,10 +168,11 @@ describe('ChooseStep', () => {
   });
 
   it('confirms a removal and reports one that failed', () => {
-    setup(<ChooseStep />, { state: { step: 'choose', accounts, removedAccount: email }, requests: { removeAccount: failing(m.offline) } });
+    setup(<ChooseStep />, { state: { step: 'choose', accounts, removedAccount: email }, requests: { removeAccount: failing(offline) } });
 
     expect(screen.getByRole('status')).toHaveTextContent(m.removed(email));
-    expect(screen.getByRole('alert')).toHaveTextContent(m.offline);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineTitle);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineText);
   });
 });
 
@@ -175,11 +199,37 @@ describe('EmailStep', () => {
     expect(actions.enterEmail).not.toHaveBeenCalled();
   });
 
-  it('clears the error as soon as the address is edited', async () => {
+  it('re-checks the address on every key once it has been checked, and clears the error the moment it is right', async () => {
     const { user } = setup(<EmailStep />);
+    const field = () => screen.getByLabelText(m.emailLabel);
     await user.click(screen.getByRole('button', { name: m.continue }));
 
-    await user.type(screen.getByLabelText(m.emailLabel), 'a');
+    await user.type(field(), 'a');
+    expect(field()).toHaveAttribute('aria-invalid', 'true');
+    expect(field()).toHaveAccessibleDescription(m.emailInvalid);
+
+    await user.type(field(), 'mara@northwind.example');
+    expect(field()).not.toHaveAttribute('aria-invalid', 'true');
+    expect(field()).not.toHaveAccessibleDescription(m.emailInvalid);
+  });
+
+  it('never shows an error while the address is first being typed, and checks it when the field is left', async () => {
+    const { user } = setup(<EmailStep />);
+    const field = () => screen.getByLabelText(m.emailLabel);
+
+    await user.type(field(), 'amara@');
+    expect(field()).not.toHaveAttribute('aria-invalid', 'true');
+
+    await user.tab();
+    expect(field()).toHaveAttribute('aria-invalid', 'true');
+    expect(field()).toHaveAccessibleDescription(m.emailInvalid);
+  });
+
+  it('leaves a field that was never typed in alone when it is left', async () => {
+    const { user } = setup(<EmailStep />);
+
+    await user.click(screen.getByLabelText(m.emailLabel));
+    await user.tab();
 
     expect(screen.getByLabelText(m.emailLabel)).not.toHaveAttribute('aria-invalid', 'true');
   });
@@ -249,25 +299,90 @@ describe('PasswordStep', () => {
     expect(screen.getByLabelText(m.passwordLabel)).toHaveValue('secret');
   });
 
-  it('says so while signing in and reports a failure as an alert', () => {
-    setup(<PasswordStep />, { state, requests: { password: { isPending: true, failure: m.wrongCredentials } } });
+  it('says so while signing in, and reports wrong credentials beside the password with focus on it', () => {
+    setup(<PasswordStep />, { state, requests: { password: { isPending: true, feedback: wrongCredentials, clear } } });
 
     expect(screen.getByRole('button', { name: m.signingIn })).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCredentials);
+    const field = screen.getByLabelText(m.passwordLabel);
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription(m.wrongCredentials);
+    expect(field).toHaveFocus();
+    // It is the field's own message, not a banner above the form.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('keeps the refusal until the password is edited', async () => {
+    const { user } = setup(<PasswordStep />, { state, requests: { password: failing(wrongCredentials) } });
+
+    await user.type(screen.getByLabelText(m.passwordLabel), 'x');
+
+    expect(screen.getByLabelText(m.passwordLabel)).not.toHaveAccessibleDescription(m.wrongCredentials);
+  });
+
+  it('gives way to the paused screen when there were too many tries, with the way to reset and the way back', () => {
+    setup(<PasswordStep />, { state, requests: { password: failing({ ...locked, retryAt: Date.now() + 600_000 }) } });
+
+    expect(screen.getByRole('heading', { level: 1, name: fm.lockedTitle })).toHaveFocus();
+    expect(screen.queryByLabelText(m.passwordLabel)).not.toBeInTheDocument();
+    expect(screen.getByText(fm.lockedLede(email))).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/^You can try again at \d{2}:\d{2}\. Resetting your password works right away\.$/);
+    expect(screen.getByRole('link', { name: fm.resetPassword })).toHaveAttribute('href', '/signin/recover');
+    expect(screen.getByRole('link', { name: fm.backToSignIn })).toHaveAttribute('href', '/signin/email');
+    expect(document.title).toBe(fm.pageTitle(fm.lockedTitle));
+  });
+
+  it('shows an account that cannot sign in as its own screen, with support only where there is somewhere to send people', () => {
+    const suspended = failing({ place: 'screen', screen: 'suspended' });
+    const { container } = setup(<PasswordStep />, { state, requests: { password: suspended } });
+    expect(screen.getByRole('heading', { level: 1, name: fm.suspendedTitle })).toBeInTheDocument();
+    expect(screen.getByText(fm.suspendedLede(email))).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: fm.contactSupport })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: fm.useAnotherAccount })).toHaveAttribute('href', '/signin/email');
+    container.remove();
+  });
+
+  it('explains a slow wait once signing in has taken a while', () => {
+    vi.useFakeTimers();
+    setup(<PasswordStep />, { state, requests: { password: pending } });
+    expect(screen.queryByText(fm.slow)).not.toBeInTheDocument();
+
+    act(() => void vi.advanceTimersByTime(1200));
+
+    expect(screen.getByRole('status')).toHaveTextContent(fm.slow);
+  });
+
+  it('offers to reset the password when the account needs a new one, and to try again after a server error', async () => {
+    const needsNew = { place: 'banner', tone: 'warning', title: m.newPasswordNeededTitle, text: m.newPasswordNeeded, next: 'reset-password' } as const;
+    const first = setup(<PasswordStep />, { state, requests: { password: failing(needsNew) } });
+    expect(within(screen.getByRole('alert')).getByRole('link', { name: m.resetYourPassword })).toHaveAttribute('href', '/signin/recover');
+    first.container.remove();
+
+    const serverError = { place: 'banner', tone: 'danger', title: fm.serverErrorTitle, text: fm.serverErrorText, next: 'retry', reference: 'req-7F3K' } as const;
+    const { actions, user } = setup(<PasswordStep />, { state, requests: { password: failing(serverError) } });
+    const banner = screen.getAllByRole('alert').at(-1)!;
+    expect(banner).toHaveTextContent(`${fm.serverErrorText} ${fm.reference('req-7F3K')}`);
+
+    // "Try again" submits the step's own form, with what is still typed in it.
+    await user.type(screen.getAllByLabelText(m.passwordLabel).at(-1)!, 'correct horse');
+    await user.click(within(banner).getByRole('button', { name: fm.tryAgain }));
+    expect(actions.signInWithPassword).toHaveBeenCalledWith('correct horse');
   });
 
   it.each([
-    ['challenge-expired', m.challengeExpired],
-    ['reset-done', m.resetDoneSignInFailed],
-  ] as const)('explains why the person is back here (%s), until a new attempt has its own result', (passwordPrompt, message) => {
+    ['challenge-expired', m.challengeExpiredTitle, m.challengeExpired],
+    ['reset-done', m.resetDoneTitle, m.resetDoneSignInFailed],
+  ] as const)('explains why the person is back here (%s), until a new attempt has its own result', (passwordPrompt, title, message) => {
     setup(<PasswordStep />, { state: { ...state, passwordPrompt } });
+    expect(screen.getByRole('alert')).toHaveTextContent(title);
     expect(screen.getByRole('alert')).toHaveTextContent(message);
   });
 
   it('shows the latest attempt\'s failure in place of the earlier explanation', () => {
-    setup(<PasswordStep />, { state: { ...state, passwordPrompt: 'reset-done' }, requests: { password: failing(m.wrongCredentials) } });
+    setup(<PasswordStep />, { state: { ...state, passwordPrompt: 'reset-done' }, requests: { password: failing(wrongCredentials) } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCredentials);
+    expect(screen.getByLabelText(m.passwordLabel)).toHaveAccessibleDescription(m.wrongCredentials);
+    expect(screen.queryByText(m.resetDoneSignInFailed)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('names the step in the page title', () => {
@@ -320,7 +435,7 @@ describe('PasskeyStep', () => {
   });
 
   it('reports a passkey that did not work', () => {
-    setup(<PasskeyStep />, { state: { step: 'passkey' }, requests: { passkey: failing(m.passkeyFailed) } });
+    setup(<PasskeyStep />, { state: { step: 'passkey' }, requests: { passkey: failing({ place: 'banner', tone: 'danger', text: m.passkeyFailed }) } });
 
     expect(screen.getByRole('alert')).toHaveTextContent(m.passkeyFailed);
   });
@@ -385,9 +500,38 @@ describe('CodeStep', () => {
     expect(actions.verifyCode).not.toHaveBeenCalled();
   });
 
-  it('reports a wrong code and a failed text', () => {
-    setup(<CodeStep />, { state, requests: { code: failing(m.wrongCode) } });
-    expect(screen.getByRole('alert')).toHaveTextContent(m.wrongCode);
+  it('reports a wrong code beside the code, and a failed text above the form', () => {
+    const first = setup(<CodeStep />, { state, requests: { code: failing(wrongCode) } });
+    const field = screen.getByLabelText(m.codeLabel);
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription(m.wrongCode);
+    expect(field).toHaveFocus();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    first.container.remove();
+
+    setup(<CodeStep />, { state, requests: { textCode: failing(rateLimited) } });
+    expect(screen.getAllByRole('alert').at(-1)).toHaveTextContent(`${fm.tooManyTitle}${fm.tooManyText}`);
+  });
+
+  it('counts down a wait the server asked for, then says the wait is over', () => {
+    vi.useFakeTimers();
+    setup(<CodeStep />, { state, requests: { textCode: failing({ ...rateLimited, retryAt: Date.now() + 24_000 }) } });
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.tryAgainIn('0:24'));
+
+    act(() => void vi.advanceTimersByTime(4000));
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.tryAgainIn('0:20'));
+
+    act(() => void vi.advanceTimersByTime(20_000));
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.tryAgainNow);
+  });
+
+  it('says when a code can no longer work, and leads back to signing in again', () => {
+    setup(<CodeStep />, { state, requests: { code: failing(deadCode) } });
+
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent(m.codeDeadTitle);
+    expect(banner).toHaveTextContent(m.tooManyCodes);
+    expect(within(banner).getByRole('link', { name: m.signInAgain })).toHaveAttribute('href', '/signin/password');
   });
 });
 
@@ -443,9 +587,10 @@ describe('HelpStep and HelpSentStep', () => {
   });
 
   it('reports a request that could not be sent', () => {
-    setup(<HelpStep />, { state: { step: 'help' }, requests: { help: failing(m.tooManyAttempts) } });
+    setup(<HelpStep />, { state: { step: 'help' }, requests: { help: failing(rateLimited) } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.tooManyAttempts);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.tooManyTitle);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.tooManyText);
   });
 
   it('confirms the request and leads back to sign-in', () => {
@@ -483,10 +628,11 @@ describe('RecoverStep', () => {
   });
 
   it('says the code is being sent, and reports a failure', () => {
-    setup(<RecoverStep />, { state, requests: { sendResetCode: { isPending: true, failure: m.offline } } });
+    setup(<RecoverStep />, { state, requests: { sendResetCode: { isPending: true, feedback: offline, clear } } });
 
     expect(screen.getByRole('button', { name: m.sendingCode })).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(m.offline);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineTitle);
+    expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineText);
   });
 
   it('words the way out for one destination or several, and hides it where help is not offered', () => {
@@ -523,19 +669,63 @@ describe('RecoverCodeStep', () => {
     expect(actions.enterResetCode).not.toHaveBeenCalled();
   });
 
-  it('sends a new code on request and confirms it', async () => {
-    const { actions, user } = setup(<RecoverCodeStep />, { state: { ...state, resetCodeResent: true } });
+  it('sends a new code on request, once the pause after the last one is over, and counts the pause down in the link', () => {
+    vi.useFakeTimers();
+    const { actions } = setup(<RecoverCodeStep />, { state });
+    const link = () => screen.getByRole('button', { name: /^Send a new code/ });
 
-    await user.click(screen.getByRole('button', { name: m.sendNewCode }));
+    // A code has just been sent when the step appears.
+    expect(link()).toHaveAccessibleName(m.sendNewCodeIn('0:30'));
+    expect(link()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(link());
+    expect(actions.resendResetCode).not.toHaveBeenCalled();
 
+    act(() => void vi.advanceTimersByTime(6000));
+    expect(link()).toHaveAccessibleName(m.sendNewCodeIn('0:24'));
+
+    act(() => void vi.advanceTimersByTime(24_000));
+    expect(link()).toHaveAccessibleName(m.sendNewCode);
+    expect(link()).not.toHaveAttribute('aria-disabled');
+    fireEvent.click(link());
     expect(actions.resendResetCode).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('status')).toHaveTextContent(m.newCodeSent);
+
+    // Each press starts the pause again.
+    expect(link()).toHaveAccessibleName(m.sendNewCodeIn('0:30'));
+    // The confirmation is a toast from the request, not a notice left on the step.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
-  it('explains when the code was turned down at the next step', () => {
+  it('explains when the code was turned down at the next step, beside the code', () => {
     setup(<RecoverCodeStep />, { state: { ...state, resetCodeRejected: true } });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(m.recoverCodeRejected);
+    const field = screen.getByLabelText(m.recoverCodeLabel);
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription(m.recoverCodeRejected);
+    expect(field).toHaveFocus();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('says a spent code no longer works and offers a new one, until one has been asked for', async () => {
+    const first = setup(<RecoverCodeStep />, { state: { ...state, resetCodeRejected: true, resetCodeSpent: true } });
+    const banner = screen.getByRole('alert');
+    expect(banner).toHaveTextContent(carried.spent.title);
+    expect(banner).toHaveTextContent(m.tooManyResetCodes);
+
+    await first.user.click(within(banner).getByRole('button', { name: m.sendNewCode }));
+    expect(first.actions.resendResetCode).toHaveBeenCalledTimes(1);
+    first.container.remove();
+
+    setup(<RecoverCodeStep />, { state: { ...state, resetCodeRejected: true, resetCodeSpent: true, resetCodeResent: true } });
+    expect(screen.queryByText(m.tooManyResetCodes)).not.toBeInTheDocument();
+  });
+
+  it('reports a new code that could not be sent, and can ask again', async () => {
+    const again = vi.fn();
+    const { user } = setup(<RecoverCodeStep />, { state, requests: { resendResetCode: failing(offline, { again }) } });
+
+    await user.click(within(screen.getByRole('alert')).getByRole('button', { name: fm.tryAgain }));
+
+    expect(again).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -551,8 +741,9 @@ describe('NewPasswordStep', () => {
   });
 
   it.each([
-    ['Short-1a', m.newPasswordTooShort],
-    ['sunrise over lekki', m.newPasswordTooPlain],
+    ['Sh-1a', 'Use 8 or more characters.'],
+    ['sunrise', 'Use 8 or more characters, with a capital letter, a number and a symbol.'],
+    ['sunrise over lekki', 'Add a capital letter and a number.'],
   ])('turns down %j with the reason and keeps the rule in view', async (typed, problem) => {
     const { actions, user } = setup(<NewPasswordStep />, { state });
     await user.type(screen.getByLabelText(m.newPasswordLabel), typed);
@@ -573,7 +764,31 @@ describe('NewPasswordStep', () => {
     expect(screen.getByText('Too weak · 3 characters')).toBeInTheDocument();
 
     await user.type(screen.getByLabelText(m.newPasswordLabel), 'defghijklmnop1');
-    expect(screen.getByText('Strong · 17 characters')).toBeInTheDocument();
+    expect(screen.getByText('Too weak · 17 characters')).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(m.newPasswordLabel));
+    await user.type(screen.getByLabelText(m.newPasswordLabel), 'Abcdef1!');
+    expect(screen.getByText('Fair · 8 characters')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(m.newPasswordLabel), 'ghij');
+    expect(screen.getByText('Good · 12 characters')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText(m.newPasswordLabel), 'kl');
+    expect(screen.getByText('Strong · 14 characters')).toBeInTheDocument();
+  });
+
+  it('asks for a password before saving nothing, and marks a good one once it has been checked', async () => {
+    const { actions, user } = setup(<NewPasswordStep />, { state });
+    const field = () => screen.getByLabelText(m.newPasswordLabel);
+
+    await user.click(screen.getByRole('button', { name: m.saveAndSignIn }));
+    expect(field()).toHaveAccessibleDescription(expect.stringContaining(m.newPasswordRequired));
+    expect(actions.saveNewPassword).not.toHaveBeenCalled();
+
+    await user.type(field(), 'Sunrise over Lekki 94!');
+    expect(field()).not.toHaveAttribute('aria-invalid', 'true');
+    // The tick inside the field, beside the show control.
+    expect(field().parentElement?.querySelector('svg')).toBeInTheDocument();
   });
 
   it('tells browsers this is a new password', () => {
@@ -583,9 +798,12 @@ describe('NewPasswordStep', () => {
   });
 
   it('says so while saving and reports a refusal', () => {
-    setup(<NewPasswordStep />, { state, requests: { newPassword: { isPending: true, failure: m.passwordRefused } } });
+    setup(<NewPasswordStep />, { state, requests: { newPassword: { isPending: true, feedback: refusedPassword, clear } } });
 
     expect(screen.getByRole('button', { name: m.saving })).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(m.passwordRefused);
+    const field = screen.getByLabelText(m.newPasswordLabel);
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription(expect.stringContaining(m.passwordRefused));
+    expect(field).toHaveFocus();
   });
 });

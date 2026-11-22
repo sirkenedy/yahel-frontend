@@ -1,11 +1,12 @@
-import type { Page } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
 import { credentials, resetCode, twoStepCredentials } from './api';
 
 /** The accounts app is served by its own preview server (see playwright.config.ts). */
 export const accountsUrl = 'http://localhost:4175';
 export const at = (path: string) => `${accountsUrl}${path}`;
 
-export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported';
+/** `waiting`: the prompt stays open, so the waiting screen can be examined. */
+export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported' | 'waiting';
 
 /**
  * Replaces the browser's passkey prompt, which a test cannot operate, with a fixed outcome. Works in every
@@ -26,6 +27,11 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
           await new Promise((resolve) => setTimeout(resolve, 400));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
           return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), authenticatorData: bytes(5), signature: bytes(6), userHandle: null } };
+        },
+        create: async () => {
+          await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
+          if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
+          return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
         },
       },
     });
@@ -81,4 +87,53 @@ export async function openHelpStep(page: Page) {
   await openEmailStep(page);
   await page.getByRole('link', { name: 'Forgot your email?' }).click();
   await page.getByRole('heading', { name: 'Let’s find your account.' }).waitFor();
+}
+
+type Breakable = Window & { failNextStep?: boolean };
+
+/**
+ * Lets a test make the next step fail as it appears, once, the way a defect in a step would: the step asks
+ * the browser what kind of pointer is in use when it mounts, and that question throws. Call before the
+ * first navigation, then `failNextStep` just before the step is opened.
+ */
+export async function armStepFailure(page: Page) {
+  await page.addInitScript(() => {
+    const ask = window.matchMedia.bind(window);
+    window.matchMedia = (query) => {
+      const breakable = window as Breakable;
+      if (breakable.failNextStep && query.includes('pointer')) {
+        breakable.failNextStep = false;
+        throw new Error('A step failed while it was being shown');
+      }
+      return ask(query);
+    };
+  });
+}
+
+export const failNextStep = (page: Page) => page.evaluate(() => void ((window as Breakable).failNextStep = true));
+
+/** Opens the email step and makes the password step fail as it appears. */
+export async function openBrokenStep(page: Page) {
+  await armStepFailure(page);
+  await openEmailStep(page);
+  await page.getByLabel('Email').fill(credentials.email);
+  await failNextStep(page);
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('heading', { name: 'Something went wrong on our side.' }).waitFor();
+}
+
+const dropRequest = (route: Route) => route.abort('internetdisconnected');
+
+/**
+ * Takes the device off the network, or puts it back, as the page experiences it: the browser says so,
+ * announces the change, and requests fail at once. Playwright's own offline switch leaves a request that
+ * a route answers waiting for ever, which no real connection does.
+ */
+export async function setConnection(page: Page, online: boolean) {
+  if (online) await page.unroute('**/api/v1/**', dropRequest);
+  else await page.route('**/api/v1/**', dropRequest);
+  await page.evaluate((isOnline) => {
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => isOnline });
+    window.dispatchEvent(new Event(isOnline ? 'online' : 'offline'));
+  }, online);
 }

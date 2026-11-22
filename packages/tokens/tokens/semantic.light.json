@@ -91,7 +91,10 @@
       "mark-left": "{palette.daylight.indigo-mid}",
       "mark-right": "{palette.daylight.indigo}",
       "wordmark": "{palette.daylight.wordmark}",
-      "control-line": "{palette.daylight.ink-line}"
+      "control-line": "{palette.daylight.ink-line}",
+      "danger-tint": "{palette.daylight.red-tint}",
+      "warning-tint": "{palette.daylight.amber-tint}",
+      "success-tint": "{palette.daylight.green-tint}"
     }
   },
   "elevation": {

@@ -1,9 +1,14 @@
 export const chromeMessages = {
   brand: 'Yahel',
   brandHome: 'Yahel sign in',
+  brandSignUp: 'Yahel account creation',
   skipToQuestion: 'Skip to the question',
   newHere: 'New to Yahel?',
   createAccount: 'Create an account',
+  haveAccount: 'Have an account?',
+  signIn: 'Sign in',
+  hideDetails: 'Hide my details',
+  showDetails: 'Show my details',
   switchToDark: 'Switch to dark mode',
   switchToLight: 'Switch to light mode',
   dataLocation: 'Your data stays in Africa.',
@@ -17,4 +22,6 @@ export const chromeMessages = {
   notFoundTitle: 'That page isn’t here.',
   notFoundLede: 'The address may be mistyped, or the page may have moved.',
   goToSignIn: 'Go to sign in',
+  startAgain: 'Start again',
+  signedInAs: (email: string) => `Signed in as ${email}`,
 } as const;

@@ -7,16 +7,26 @@ const MAIN_ID = 'ws-flow-main';
 interface FlowShellProps {
   /** Text of the link that jumps past the header, for keyboard and screen-reader users. */
   skipLabel: string;
+  /** Blurs fields marked sensitive, unless focused, for screen shares and calls. */
+  isPrivate?: boolean;
+  /** Shown across the top, above the header: the connection bar. */
+  banner?: ReactNode;
+  /** A passing confirmation at the bottom of the page: one `FlowToast` at most. */
+  toast?: ReactNode;
   children: ReactNode;
 }
 
-function FlowShellRoot({ skipLabel, children }: FlowShellProps) {
+function FlowShellRoot({ skipLabel, isPrivate, banner, toast, children }: FlowShellProps) {
   return (
-    <div className="ws-flow">
+    <div className="ws-flow" data-private={isPrivate || undefined}>
       <a className="ws-flow__skip" href={`#${MAIN_ID}`}>
         {skipLabel}
       </a>
+      <div aria-live="polite">{banner}</div>
       {children}
+      <div className="ws-flow__toasts" aria-live="polite">
+        {toast}
+      </div>
     </div>
   );
 }

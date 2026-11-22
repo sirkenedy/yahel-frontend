@@ -1,5 +1,6 @@
 import { createContext, use, useId } from 'react';
 import type { ReactNode } from 'react';
+import { FlowIcon } from './flow-icon';
 
 interface ChoiceGroupState {
   name: string;
@@ -53,6 +54,27 @@ export function Choice({ value, icon, detail, children }: ChoiceProps) {
         {detail ? <span className="ws-flow-choice__detail">{detail}</span> : null}
       </span>
       <span className="ws-flow-choice__dot" aria-hidden="true" />
+    </label>
+  );
+}
+
+export interface FlowCheckboxProps {
+  isSelected: boolean;
+  onChange: (isSelected: boolean) => void;
+  isDisabled?: boolean;
+  /** The label. The whole line is the hit target. */
+  children: ReactNode;
+}
+
+/** A yes-or-no choice that is off unless the person turns it on. */
+export function FlowCheckbox({ isSelected, onChange, isDisabled, children }: FlowCheckboxProps) {
+  return (
+    <label className="ws-flow-check">
+      <input type="checkbox" checked={isSelected} onChange={(event) => onChange(event.target.checked)} disabled={isDisabled} />
+      <span className="ws-flow-check__box" aria-hidden="true">
+        <FlowIcon name="check" />
+      </span>
+      <span>{children}</span>
     </label>
   );
 }

@@ -10,7 +10,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, directory: null, helpDesk: null, standIns: [] });
+    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, directory: null, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, standIns: [] });
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
 
     await capabilities.recovery.send('amara@northwind.example', 'email');
@@ -26,7 +26,12 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.textCodes).toBe(standIns.textCodes);
     expect(capabilities.directory).toBe(standIns.directory);
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
-    expect([...capabilities.standIns].sort()).toEqual(['directory', 'helpDesk', 'passkeys', 'recoveryByPhone', 'textCodes']);
+    expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
+    expect(capabilities.addresses).toBe(standIns.addresses);
+    expect(capabilities.trustedContacts).toBe(standIns.trustedContacts);
+    expect(capabilities.preferences).toBe(standIns.preferences);
+    expect(capabilities.serviceStatus).toBe(standIns.serviceStatus);
+    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'directory', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'trustedContacts']);
   });
 
   it('sends an emailed reset code through the real endpoint even with stand-ins, and a texted one through the stand-in', async () => {

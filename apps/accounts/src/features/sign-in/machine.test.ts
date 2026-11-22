@@ -31,10 +31,15 @@ describe('reduce', () => {
 
   it('clears a rejected reset code and says so, until a new one is sent or entered', () => {
     const rejected = after({ type: 'email-entered', email }, { type: 'reset-code-sent', method: 'email', destination: 'x' }, { type: 'reset-code-entered', code: 'A7kZq2' }, { type: 'reset-code-rejected' });
-    expect(rejected).toMatchObject({ resetCode: null, resetCodeRejected: true });
+    expect(rejected).toMatchObject({ resetCode: null, resetCodeRejected: true, resetCodeSpent: false });
 
     expect(reduce(rejected, { type: 'reset-code-entered', code: 'B8mYr3' })).toMatchObject({ resetCode: 'B8mYr3', resetCodeRejected: false });
     expect(reduce(rejected, { type: 'reset-code-sent', method: 'phone', destination: 'y' })).toMatchObject({ resetCodeRejected: false, recovery: { method: 'phone', destination: 'y' } });
+
+    const spent = reduce(rejected, { type: 'reset-code-rejected', spent: true });
+    expect(spent).toMatchObject({ resetCodeRejected: true, resetCodeSpent: true });
+    expect(reduce(spent, { type: 'reset-code-sent', method: 'email', destination: 'x' })).toMatchObject({ resetCodeRejected: false, resetCodeSpent: false });
+    expect(reduce(spent, { type: 'reset-code-entered', code: 'B8mYr3' })).toMatchObject({ resetCodeRejected: false, resetCodeSpent: false });
   });
 
   it('drops an expired challenge and says why the person is back at the password step', () => {

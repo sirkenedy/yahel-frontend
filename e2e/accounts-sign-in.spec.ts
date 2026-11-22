@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
+import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openBrokenStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
 import { backupCode, credentials, mockApi, resetCode, secondStepCode, twoStepCredentials } from './support/api';
 
 const newPassword = 'Sunrise over Lekki 94!';
@@ -26,8 +26,11 @@ test.describe('accounts: sign in with a password', () => {
       await openPasswordStep(page, email);
       await password(page).fill('not the password');
       await page.getByRole('button', { name: 'Sign in' }).click();
-      await expect(page.getByRole('alert')).toContainText('don’t match');
-      messages.push((await page.getByRole('alert').textContent()) ?? '');
+      // Said beside the field it is about, which is marked invalid and takes focus.
+      await expect(password(page)).toHaveAccessibleDescription(/don’t match/);
+      await expect(password(page)).toHaveAttribute('aria-invalid', 'true');
+      await expect(password(page)).toBeFocused();
+      messages.push((await password(page).evaluate((field) => document.getElementById(field.getAttribute('aria-describedby')?.split(' ')[0] ?? '')?.textContent)) ?? '');
       await expect(password(page)).toHaveValue('not the password');
       await expect(page).toHaveURL(at('/signin/password'));
     }
@@ -57,16 +60,19 @@ test.describe('accounts: sign in with a password', () => {
     await mockApi(page, { offline: true });
     await signInWithPassword(page);
 
-    await expect(page.getByRole('alert')).toContainText('Can’t reach Yahel');
+    // No answer while the browser says it is online: the service is not answering, which is a whole screen.
+    await expect(page.getByRole('heading', { level: 1, name: 'We can’t reach Yahel right now.' })).toBeFocused();
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
-    await expect(password(page)).toHaveValue(credentials.password);
   });
 
   test('too many attempts is reported plainly', async ({ page }) => {
     await mockApi(page, { rateLimited: true });
     await signInWithPassword(page);
 
-    await expect(page.getByRole('alert')).toContainText('Too many attempts. Wait a few minutes');
+    await expect(page.getByRole('heading', { level: 1, name: 'Sign-in is paused for a while.' })).toBeFocused();
+    await expect(page.getByRole('main')).toContainText(`we’ve paused sign-in for ${credentials.email} for a while`);
   });
 
   test('pressing Sign in twice sends one request', async ({ page }) => {
@@ -90,7 +96,7 @@ test.describe('accounts: sign in with a password', () => {
     await expect(page.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
 
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(password(page)).toHaveAccessibleDescription(/don’t match/);
     await expect(password(page)).toHaveAttribute('type', 'password');
     await expect(password(page)).toHaveValue('not the password');
   });
@@ -153,7 +159,8 @@ test.describe('accounts: two-step sign-in', () => {
     await code.fill('000 000');
     await expect(code).toHaveValue('000000');
     await page.getByRole('button', { name: 'Verify' }).click();
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work');
+    await expect(code).toHaveAccessibleDescription(/That code didn’t work/);
+    await expect(code).toBeFocused();
     await expect(page).toHaveURL(at('/signin/code'));
   });
 
@@ -188,11 +195,13 @@ test.describe('accounts: two-step sign-in', () => {
       await page.getByLabel('6-digit code').fill(`00000${attempt}`);
       await page.getByRole('button', { name: 'Verify' }).click();
       await expect(page.getByRole('button', { name: 'Verify' })).toBeEnabled();
-      await expect(page.getByRole('alert')).toBeVisible();
+      await expect(attempt < 4 ? page.getByLabel('6-digit code') : page.getByRole('alert')).toBeVisible();
+      if (attempt < 4) await expect(page.getByLabel('6-digit code')).toHaveAccessibleDescription(/That code didn’t work/);
     }
 
-    await expect(page.getByRole('alert')).toContainText('Too many wrong codes. Go back, sign in again');
-    await page.getByRole('link', { name: 'Back' }).click();
+    await expect(page.getByRole('alert')).toContainText('This code no longer works');
+    await expect(page.getByRole('alert')).toContainText('Sign in again to use a new one.');
+    await page.getByRole('alert').getByRole('link', { name: 'Sign in again' }).click();
     await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
   });
 });
@@ -335,6 +344,7 @@ test.describe('accounts: recovery', () => {
 
   test('a wrong code is caught when the password is saved, and a new one can be sent', async ({ page }) => {
     const api = await mockApi(page);
+    await page.clock.install();
     await openRecoverCodeStep(page);
     await page.getByLabel('6-character code').fill('WRONG1');
     await page.getByRole('button', { name: 'Verify' }).click();
@@ -342,11 +352,15 @@ test.describe('accounts: recovery', () => {
     await page.getByRole('button', { name: 'Save and sign in' }).click();
 
     await expect(page.getByRole('heading', { name: 'Enter the code.' })).toBeVisible();
-    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired');
+    await expect(page.getByLabel('6-character code')).toHaveAccessibleDescription(/That code didn’t work or has expired/);
+    await expect(page.getByLabel('6-character code')).toBeFocused();
     expect(loginCalls(api)).toHaveLength(0);
 
-    await page.getByRole('button', { name: 'Send a new code' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'New code sent.' })).toBeVisible();
+    // A code has just been sent, so another can be asked for only after the pause.
+    await expect(page.getByRole('button', { name: /^Send a new code in 0:\d\d$/ })).toHaveAttribute('aria-disabled', 'true');
+    await page.clock.fastForward(31_000);
+    await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
+    await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
     expect(api.calls.filter((call) => call.path === '/v1/auth/forgot-password')).toHaveLength(2);
   });
 
@@ -354,13 +368,16 @@ test.describe('accounts: recovery', () => {
     const api = await mockApi(page);
     await openNewPasswordStep(page);
 
-    await page.getByLabel('New password', { exact: true }).fill('too short');
+    await expect(page.getByText('At least 8 characters, with a capital letter, a lowercase letter, a number and a symbol.')).toBeVisible();
     await page.getByRole('button', { name: 'Save and sign in' }).click();
-    await expect(page.getByText('Use 12 characters or more.')).toBeVisible();
+    await expect(page.getByText('Create a password.')).toBeVisible();
+
+    await page.getByLabel('New password', { exact: true }).fill('short');
+    await expect(page.getByText('Use 8 or more characters, with a capital letter, a number and a symbol.')).toBeVisible();
 
     await page.getByLabel('New password', { exact: true }).fill('sunrise over lekki');
     await page.getByRole('button', { name: 'Save and sign in' }).click();
-    await expect(page.getByText('Add upper and lower case letters, a number and a symbol.')).toBeVisible();
+    await expect(page.getByText('Add a capital letter and a number.')).toBeVisible();
     expect(api.calls.filter((call) => call.path === '/v1/auth/reset-password')).toHaveLength(0);
   });
 });
@@ -762,5 +779,36 @@ test.describe('accounts: page furniture', () => {
 
     await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(2);
     await expect(page.getByRole('button', { name: `Remove ${credentials.email} from this device` })).toBeFocused();
+  });
+});
+
+test.describe('accounts: when a screen fails', () => {
+  test('a step that fails to show is replaced by a styled message, and Try again brings the step back', async ({ page }) => {
+    await mockApi(page);
+    const logged: string[] = [];
+    page.on('console', (message) => void (message.type() === 'error' ? logged.push(message.text()) : null));
+    await openBrokenStep(page);
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Something went wrong on our side.' })).toBeFocused();
+    await expect(page.getByText('If you contact us, quote this')).toBeVisible();
+    await expect(page.getByRole('term')).toHaveText('Time');
+    await expect(page.getByRole('img', { name: 'Yahel' })).toBeVisible();
+    await expect(page.getByRole('contentinfo')).toContainText('Your data stays in Africa.');
+    await expect(page.getByRole('main')).not.toContainText('A step failed while it was being shown');
+    expect(logged.join(' ')).toContain('A step failed while it was being shown');
+
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByText(credentials.email)).toBeVisible();
+  });
+
+  test('the way back from a failed step leads to the start of sign in', async ({ page }) => {
+    await mockApi(page);
+    await openBrokenStep(page);
+
+    await page.getByRole('link', { name: 'Back to sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
   });
 });

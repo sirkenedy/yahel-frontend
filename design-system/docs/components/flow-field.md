@@ -39,6 +39,20 @@ Field `flow.field` high, radius `radius.field`. Code box `flow.code-box` high, u
 | Disabled | `opacity.disabled` |
 | Hover, pressed, selected, loading | None |
 
+### Checking and marks
+
+| State | Treatment |
+|---|---|
+| Typing for the first time | Never an error |
+| Left after typing, or submitted | Checked once; a problem shows |
+| Being fixed | Checked on every key; the problem goes the moment the value is right |
+| Valid | A ticked circle in `color.daylight.success` inside the field, only on fields with a format to get right (email, phone, password, address), never on names |
+| Invalid | Border and a second inner hairline in `color.daylight.danger`, an alert icon inside the field, the label in the danger colour, and the message with the same icon beneath |
+| Invalid, focused | The danger border stays; the ring is `color.daylight.danger-tint` |
+| Disabled | Dashed border on `color.daylight.canvas`, value in `color.daylight.mute` |
+| Refused by the server | The same as invalid, with the server's refusal in the flow's own words; focus moves to the field, and the message goes when the value is edited |
+| With a better path | One link under the message ("Get a Yahel address instead") |
+
 ## Tokens
 
 - Colour: `color.daylight.field`, `control-line`, `ink`, `mute` (help), `danger`, `accent`, `ring`, `link` (show control).

@@ -4,16 +4,16 @@ import type { FormEvent } from 'react';
 import { stepPath } from '../machine';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
-import { useStepField } from '../use-step-field';
+import { forField } from '../../../flow/feedback';
+import { useStepField } from '../../../flow/use-step-field';
+import { carried } from '../feedback';
 import { StepFrame } from './step-frame';
-
-const prompts = { 'challenge-expired': m.challengeExpired, 'reset-done': m.resetDoneSignInFailed } as const;
 
 export function PasswordStep() {
   const { state, actions, meta } = useSignInFlow();
   const [revealed, setRevealed] = useState(false);
   const request = meta.requests.password;
-  const password = useStepField({ problemOf: (value) => (value === '' ? m.passwordRequired : null), onValid: actions.signInWithPassword });
+  const password = useStepField({ problemOf: (value) => (value === '' ? m.passwordRequired : null), onValid: actions.signInWithPassword, refusal: forField(request.feedback, 'password') });
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     // A revealed password is hidden again before anything else happens, so it is not left on screen.
@@ -22,7 +22,7 @@ export function PasswordStep() {
   };
 
   return (
-    <StepFrame title={m.passwordTitle} failure={request.failure ?? (state.passwordPrompt ? prompts[state.passwordPrompt] : null)}>
+    <StepFrame title={m.passwordTitle} requests={[request]} feedback={state.passwordPrompt ? carried[state.passwordPrompt] : null}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
           <UsernameHint value={state.email ?? ''} />
