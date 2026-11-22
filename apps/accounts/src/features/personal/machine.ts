@@ -311,9 +311,6 @@ export function backOf(step: PersonalStep, state: PersonalState, facts: Personal
 /** The account exists, or may: the answers are final, and visiting the start of the flow does not begin again. */
 export const hasAccountUnderway = (state: PersonalState) => stepAfterCreation(state) !== null;
 
-/** Whose account the signed-in screens of the flow are about. */
-export const accountOf = (state: PersonalState, mailDomain: string) => (state.creation.signedIn ? { name: fullNameOf(state), email: addressOf(state, mailDomain) } : null);
-
 /** The step that follows `step` once it has been answered. An answer changed from the review returns there. */
 export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'add-passkey' | 'passkey' | 'recovery', state: PersonalState, facts: PersonalFacts): PersonalStep {
   const onward = (next: PersonalStep) => (state.editing ? 'review' : next);

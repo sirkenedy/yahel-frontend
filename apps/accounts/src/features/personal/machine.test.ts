@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountOf, addressOf, backOf, directionOf, hasAccountUnderway, initialPersonalState, nextOf, personalSteps, progressOf, reduce, resumeStep, stepOfPath, stepPath } from './machine';
+import { addressOf, backOf, directionOf, hasAccountUnderway, initialPersonalState, nextOf, personalSteps, progressOf, reduce, resumeStep, stepOfPath, stepPath } from './machine';
 import type { PersonalEvent, PersonalFacts, PersonalState, PersonalStep } from './machine';
 
 const facts: PersonalFacts = { passkeysOffered: true, contactOffered: true };
@@ -222,16 +222,11 @@ describe('resumeStep: the review and the passkey prompt', () => {
   });
 });
 
-describe('hasAccountUnderway and accountOf', () => {
+describe('hasAccountUnderway', () => {
   it('says when the answers have become final', () => {
     expect(hasAccountUnderway(after(...started))).toBe(false);
     expect(hasAccountUnderway(after(...started, { type: 'account-created' }))).toBe(true);
     expect(hasAccountUnderway(after(...started, { type: 'account-conflicted' }, { type: 'email-code-needed', obtainable: false }))).toBe(true);
-  });
-
-  it('names the account only once it is signed in to', () => {
-    expect(accountOf(after(...started, { type: 'account-created' }), 'yahel.example')).toBeNull();
-    expect(accountOf(after(...started, { type: 'signed-in' }), 'yahel.example')).toEqual({ name: 'Amara Okafor', email: 'amara.okafor@yahel.example' });
   });
 });
 

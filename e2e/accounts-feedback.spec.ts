@@ -362,6 +362,8 @@ test.describe('feedback: personal sign-up', () => {
     await expect(heading(page, 'Your session has ended.')).toBeFocused();
     await expect(page).toHaveTitle('Your session has ended · Yahel');
     await expect(page.getByRole('main')).toContainText('Sign in again to carry on.');
+    // Nobody is signed in any more, so the header must not say someone is.
+    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
     await page.getByRole('link', { name: 'Sign in again' }).click();
     await expect(page).toHaveURL(/\/signin/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Choose an account\.|Welcome back\./);
@@ -378,6 +380,7 @@ test.describe('feedback: personal sign-up', () => {
 
     await expect(heading(page, 'We signed you out everywhere.')).toBeFocused();
     await expect(page.getByRole('status')).toHaveText('If this wasn’t you, change your password after you sign in.');
+    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Sign in again' })).toBeVisible();
   });
 });
