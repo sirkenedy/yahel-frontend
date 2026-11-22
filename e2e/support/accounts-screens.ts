@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { personalScreens } from './personal-screens';
 import { at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './accounts';
 
 const openPasskeyStep = async (page: Page, outcome: 'success' | 'cancelled') => {
@@ -20,7 +21,7 @@ const settled = async (page: Page) => {
   );
 };
 
-interface Screen {
+export interface Screen {
   name: string;
   open: (page: Page) => Promise<void>;
 }
@@ -153,8 +154,8 @@ const screens: Screen[] = [
   },
 ];
 
-/** Every state of every sign-in screen, for the accessibility and layout checks. */
-export const accountsScreens: Screen[] = screens.map(({ name, open }) => ({
+/** Every state of every screen of the accounts app, for the accessibility and layout checks. */
+export const accountsScreens: Screen[] = [...screens, ...personalScreens].map(({ name, open }) => ({
   name,
   open: async (page) => {
     await open(page);

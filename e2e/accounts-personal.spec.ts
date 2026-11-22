@@ -1,0 +1,678 @@
+import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { accountsUrl, at, signInWithPassword, stubPasskeys } from './support/accounts';
+import { emailCode, mockApi, phoneCode, registeredEmail, takenAddress } from './support/api';
+import type { MockApi } from './support/api';
+import { heading, person, signUp, signUpTo } from './support/personal';
+
+const calls = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
+const registrations = (api: MockApi) => calls(api, '/v1/auth/register');
+const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();
+const code = (page: Page) => page.getByLabel('6-character code');
+
+test.describe('personal account: a new Yahel address', () => {
+  test('the questions in order, the review, then an account that is signed in', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUp(page);
+
+    await expect(page).toHaveURL(at('/personal/ready'));
+    await expect(page.getByText(`${person.address} is ready. Every Yahel app now opens with it.`)).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+    expect(registrations(api)[0]!.body).toEqual({ email: person.address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: person.password });
+    expect(calls(api, '/v1/auth/login')[0]!.body).toMatchObject({ email: person.address, password: person.password });
+    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: person.recoveryEmail });
+    expect(calls(api, '/v1/auth/verify-email')).toHaveLength(0);
+  });
+
+  test('each question says how far along it is', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'name');
+    await expect(page.getByText('01 / 06 · Your name')).toBeVisible();
+
+    await signUpTo(page, 'review');
+    await expect(page.getByText('06 / 06 · Review')).toBeVisible();
+  });
+
+  test('the address is checked as it is typed, and a taken one offers free alternatives one tap away', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'address');
+    const field = page.getByLabel('Your Yahel address');
+
+    await field.fill('Amara');
+    await expect(field).toHaveValue('amara');
+    await expect(page.getByText('That address is taken. Try one of these.')).toBeVisible();
+    await proceed(page);
+    await expect(heading(page, 'Pick your address.')).toBeVisible();
+
+    await page.getByRole('group', { name: 'Also free' }).getByRole('button', { name: 'amara.mail' }).click();
+    await expect(field).toHaveValue('amara.mail');
+    await expect(page.getByText('Available. It’s yours if you want it.')).toBeVisible();
+    await proceed(page);
+
+    await expect(heading(page, 'Create a password.')).toBeVisible();
+  });
+
+  test('before anything is typed, free addresses made from the name are offered', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'address');
+
+    await page.getByRole('group', { name: 'Also free' }).getByRole('button', { name: 'okafor.amara' }).click();
+
+    await expect(page.getByLabel('Your Yahel address')).toHaveValue('okafor.amara');
+  });
+
+  test('an address that turns out to be taken when the account is created sends the person back to choose another, and nothing else is lost', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'done', { username: takenAddress.split('@')[0] });
+
+    await expect(heading(page, 'Pick your address.')).toBeVisible();
+    await expect(page.getByText('That address is taken. Try another.')).toBeVisible();
+    await page.getByLabel('Your Yahel address').fill(person.username);
+    await proceed(page);
+
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByText(person.address)).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api).map((call) => (call.body as { email: string }).email)).toEqual([takenAddress, person.address]);
+  });
+});
+
+test.describe('personal account: an email the person already has', () => {
+  test('the account is created, the emailed code confirms the address, then it is signed in', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'done', { address: 'own' });
+
+    await expect(heading(page, 'Check your inbox.')).toBeVisible();
+    await expect(page.getByText(`Enter the 6-character code we sent to ${person.ownEmail}.`)).toBeVisible();
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await expect(page.getByText(`${person.ownEmail} is ready.`)).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+    expect(calls(api, '/v1/auth/verify-email')[0]!.body).toEqual({ email: person.ownEmail, token: emailCode });
+    expect(calls(api, '/v1/auth/login')).toHaveLength(2);
+  });
+
+  test('a wrong code is refused and the right one still works; a new code can be asked for', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'done', { address: 'own' });
+    await heading(page, 'Check your inbox.').waitFor();
+
+    await proceed(page, 'Verify');
+    await expect(page.getByText('Enter all 6 characters.')).toBeVisible();
+    await code(page).fill('zzzzzz');
+    await proceed(page, 'Verify');
+    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+
+    await page.getByRole('button', { name: 'Send a new code' }).click();
+    await expect(page.getByText('New code sent.')).toBeVisible();
+    expect(calls(api, '/v1/auth/verify-email/resend')[0]!.body).toEqual({ email: person.ownEmail });
+
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+  });
+
+  test('an address that already has an account looks exactly like one that does not', async ({ page }) => {
+    await mockApi(page);
+    const seen: string[] = [];
+    for (const email of [person.ownEmail, registeredEmail]) {
+      await signUpTo(page, 'own-email', { address: 'own' });
+      await page.getByLabel('Your email address').fill(email);
+      await proceed(page);
+      await page.getByLabel('Password', { exact: true }).fill(person.password);
+      await proceed(page);
+      await page.getByRole('button', { name: 'Not now' }).click();
+      await proceed(page, 'Skip');
+      await page.getByRole('button', { name: 'Agree and create account' }).click();
+      await heading(page, 'Check your inbox.').waitFor();
+      seen.push((await page.getByRole('main').innerText()).replaceAll(email, '<address>'));
+      await expect(page.getByRole('alert')).toHaveCount(0);
+    }
+
+    expect(seen[1]).toBe(seen[0]);
+    expect(seen[0]).toContain('If this address already has a Yahel account, sign in instead.');
+  });
+
+  test('an address the backend does not take for a personal account sends the person back to change it', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'own-email', { address: 'own' });
+    await page.getByLabel('Your email address').fill('amara@studio.example');
+    await proceed(page);
+    await page.getByLabel('Password', { exact: true }).fill(person.password);
+    await proceed(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page, 'Skip');
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+
+    await expect(heading(page, 'Use your current email.')).toBeVisible();
+    await expect(page.getByText('Use a personal email address, such as one from Gmail or Outlook')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Get a Yahel address instead' }).click();
+    await expect(heading(page, 'Pick your address.')).toBeVisible();
+  });
+});
+
+test.describe('personal account: sign-in methods and ways back in', () => {
+  test('a passkey is created on the device and saved to the account', async ({ page }) => {
+    await mockApi(page);
+    await stubPasskeys(page, 'success');
+    await signUpTo(page, 'add-passkey');
+
+    await page.getByRole('button', { name: 'Add a passkey' }).click();
+    await expect(heading(page, 'Create your passkey.')).toBeVisible();
+    await expect(page.getByText('Waiting for this device')).toBeVisible();
+
+    await heading(page, 'Ways back in.').waitFor();
+    await proceed(page, 'Skip');
+    await expect(page.getByText('Password and a passkey')).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await expect(page.getByText('We couldn’t save your passkey.')).toHaveCount(0);
+  });
+
+  test('a closed passkey prompt can be tried again or left for the password', async ({ page }) => {
+    await mockApi(page);
+    await stubPasskeys(page, 'cancelled');
+    await signUpTo(page, 'add-passkey');
+
+    await page.getByRole('button', { name: 'Add a passkey' }).click();
+    await expect(page.getByText('The passkey prompt was closed before it finished.')).toBeVisible();
+    await page.getByRole('button', { name: 'Use a password instead' }).click();
+
+    await heading(page, 'Ways back in.').waitFor();
+    await proceed(page, 'Skip');
+    await expect(page.getByRole('definition').filter({ hasText: /^Password$/ })).toBeVisible();
+  });
+
+  test('no passkey is offered in a browser that cannot make one', async ({ page }) => {
+    await mockApi(page);
+    await stubPasskeys(page, 'unsupported');
+    await signUpTo(page, 'password');
+
+    await page.getByLabel('Password', { exact: true }).fill(person.password);
+    await proceed(page);
+
+    await expect(heading(page, 'Ways back in.')).toBeVisible();
+  });
+
+  test('a recovery phone is confirmed with a texted code once the account exists', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
+
+    await expect(heading(page, 'Enter the code.')).toBeVisible();
+    await expect(page.getByText(`We sent 6 characters to ${person.maskedPhone}.`)).toBeVisible();
+    expect(calls(api, '/v1/me/recovery/phone')[0]!.body).toEqual({ phone: person.internationalPhone });
+
+    await code(page).fill('zzzzzz');
+    await proceed(page, 'Verify');
+    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+    await page.getByRole('button', { name: 'Send a new code' }).click();
+    await expect(page.getByText('New code sent.')).toBeVisible();
+
+    await code(page).fill(phoneCode);
+    await proceed(page, 'Verify');
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await expect(page.getByText('Your recovery phone isn’t confirmed yet.')).toHaveCount(0);
+  });
+
+  test('the phone code can be skipped, and the last screen says the phone is not confirmed', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'done', { phone: true });
+    await heading(page, 'Enter the code.').waitFor();
+
+    await page.getByRole('button', { name: 'Skip for now' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await expect(page.getByText('Your recovery phone isn’t confirmed yet. Confirm it in your account.')).toBeVisible();
+  });
+
+  test('every optional step can be skipped: no last name, no passkey, no recovery', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'name');
+    await page.getByLabel('First name').fill('Amara');
+    await proceed(page);
+    await page.getByLabel('Day').fill('14');
+    await page.getByLabel('Month').selectOption({ label: 'March' });
+    await page.getByLabel('Year').fill('1994');
+    await proceed(page);
+    await page.getByLabel('Your Yahel address').fill('amara.only');
+    await proceed(page);
+    await page.getByLabel('Password', { exact: true }).fill(person.password);
+    await proceed(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page, 'Skip');
+    await expect(page.getByRole('definition').filter({ hasText: 'Not added' })).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)[0]!.body).toMatchObject({ firstName: 'Amara', lastName: '', displayName: 'Amara' });
+    expect(calls(api, '/v1/me/recovery/email')).toHaveLength(0);
+    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(0);
+  });
+
+  test('someone the person trusts can be invited from the last screen', async ({ page }) => {
+    await mockApi(page);
+    await signUp(page);
+
+    await page.getByRole('link', { name: /Add someone you trust/ }).click();
+    await page.getByLabel('Their email address').fill(person.recoveryEmail);
+    await proceed(page, 'Send invitation');
+    await expect(page.getByText('Use someone else’s email.')).toBeVisible();
+    await page.getByLabel('Their email address').fill('chidi.eze@personal.example');
+    await proceed(page, 'Send invitation');
+
+    await expect(page.getByText('chidi.eze@personal.example is your trusted contact. We’ve sent them an invitation.')).toBeVisible();
+  });
+});
+
+test.describe('personal account: what each question refuses', () => {
+  test('the name', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'name');
+
+    await proceed(page);
+
+    await expect(page.getByText('Enter your first name.')).toBeVisible();
+    await expect(page.getByLabel('First name')).toBeFocused();
+  });
+
+  test('the date of birth', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'birth');
+
+    await proceed(page);
+    await expect(page.getByText('Check the day.')).toBeVisible();
+    await expect(page.getByText('Choose a month.')).toBeVisible();
+    await expect(page.getByText('Enter a 4-digit year.')).toBeVisible();
+
+    await page.getByLabel('Day').fill('31');
+    await page.getByLabel('Month').selectOption({ label: 'April' });
+    await page.getByLabel('Year').fill('1994');
+    await proceed(page);
+    await expect(page.getByText('Check the day.')).toBeVisible();
+
+    await page.getByLabel('Day').fill('1');
+    await page.getByLabel('Year').fill(String(new Date().getFullYear() - 12));
+    await proceed(page);
+    await expect(page.getByText('You need to be 13 or older.')).toBeVisible();
+    await expect(heading(page, 'A little about you.')).toBeVisible();
+  });
+
+  test('the address', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'address');
+    const field = page.getByLabel('Your Yahel address');
+
+    for (const [typed, problem] of [
+      ['', 'Choose an address.'],
+      ['abc', 'Use at least 4 characters.'],
+      ['amara_okafor', 'Use letters, numbers and full stops only.'],
+      ['amara..okafor', 'Full stops can’t start, end or repeat.'],
+    ] as const) {
+      await field.fill(typed);
+      await proceed(page);
+      await expect(page.getByText(problem)).toBeVisible();
+    }
+  });
+
+  test('the existing email, the password and the ways back in', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'own-email', { address: 'own' });
+    await page.getByLabel('Your email address').fill('amara');
+    await proceed(page);
+    await expect(page.getByText('Enter an email address you can open now.')).toBeVisible();
+
+    await page.getByLabel('Your email address').fill(person.ownEmail);
+    await proceed(page);
+    const password = page.getByLabel('Password', { exact: true });
+    await password.fill('too short');
+    await proceed(page);
+    await expect(page.getByText('Use 12 characters or more.')).toBeVisible();
+    await password.fill('sunrise over lekki');
+    await proceed(page);
+    await expect(page.getByText('Add upper and lower case letters, a number and a symbol.')).toBeVisible();
+    await password.fill(person.password);
+    await expect(page.getByText('Strong · 21 characters')).toBeVisible();
+    await proceed(page);
+
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page);
+    await expect(page.getByText('Add a phone number or an email, or choose Skip.')).toBeVisible();
+    await page.getByLabel('Mobile number').fill('803');
+    await page.getByLabel('Recovery email').fill(person.ownEmail);
+    await proceed(page);
+    await expect(page.getByText('Check the number, or leave it empty.')).toBeVisible();
+    await expect(page.getByText('Use an address that isn’t the one you’ll sign in with.')).toBeVisible();
+  });
+});
+
+test.describe('personal account: the review', () => {
+  test('private lines are hidden until asked for', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review', { phone: true });
+
+    await expect(page.getByText('14 March 1994')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Show private details' }).click();
+    await expect(page.getByText('14 March 1994')).toBeVisible();
+    await expect(page.getByText(`${person.maskedPhone} · ${person.recoveryEmail}`)).toBeVisible();
+  });
+
+  test('every line can be changed, and each change returns to the review', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+
+    await page.getByRole('button', { name: 'Edit name' }).click();
+    await page.getByLabel('First name').fill('Amarachi');
+    await proceed(page);
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByText('Amarachi Okafor')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit address' }).click();
+    await page.getByLabel('Your Yahel address').fill('amarachi.okafor');
+    await proceed(page);
+    await expect(page.getByText(`amarachi.okafor@yahel.example`)).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit birthday' }).click();
+    await page.getByLabel('Year').fill('1990');
+    await proceed(page);
+    await heading(page, 'Everything look right?').waitFor();
+    await page.getByRole('button', { name: 'Show private details' }).click();
+    await expect(page.getByText('14 March 1990')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Edit sign-in' }).click();
+    await page.getByLabel('Password', { exact: true }).fill('Harmattan in Jos 2026!');
+    await proceed(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await heading(page, 'Everything look right?').waitFor();
+
+    await page.getByRole('button', { name: 'Edit recovery' }).click();
+    await page.getByLabel('Recovery email').fill('amarachi@personal.example');
+    await proceed(page);
+    await heading(page, 'Everything look right?').waitFor();
+
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(heading(page, 'You’re in, Amarachi.')).toBeVisible();
+    expect(registrations(api)[0]!.body).toMatchObject({ email: 'amarachi.okafor@yahel.example', firstName: 'Amarachi', dateOfBirth: '1990-03-14T00:00:00.000Z', password: 'Harmattan in Jos 2026!' });
+    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: 'amarachi@personal.example' });
+  });
+
+  test('Back from an answer being changed returns to the review unchanged', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review');
+
+    await page.getByRole('button', { name: 'Edit name' }).click();
+    await page.getByLabel('First name').fill('Someone else');
+    await page.getByRole('link', { name: 'Back' }).click();
+
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByText('Amara Okafor')).toBeVisible();
+  });
+
+  test('the two choices are off unless turned on', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review');
+
+    await expect(page.getByRole('checkbox', { name: 'Email me tips and product news' })).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Keep my activity to improve suggestions in my files' })).not.toBeChecked();
+    await page.getByRole('checkbox', { name: 'Email me tips and product news' }).check();
+    await expect(page.getByRole('checkbox', { name: 'Email me tips and product news' })).toBeChecked();
+  });
+});
+
+test.describe('personal account: creating', () => {
+  test('a failed creation says so, keeps every answer and succeeds on another try', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+    api.failNext('/v1/auth/register', 503);
+
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(heading(page, 'We couldn’t finish.')).toBeVisible();
+    await expect(page.getByRole('alert')).toContainText('Something went wrong on our side.');
+    await expect(page.getByText('Nothing you entered is lost.')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Back to review' }).click();
+    await expect(page.getByText(person.address)).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)).toHaveLength(2);
+  });
+
+  test('when the answer to creating is lost, another try finds the account and does not make a second', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+    api.failNext('/v1/auth/register', 'lost');
+
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(page.getByRole('alert')).toContainText('Can’t reach Yahel.');
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    // The second request was refused as a duplicate: one account exists, and it is the one signed in to.
+    expect(registrations(api)).toHaveLength(2);
+    expect(calls(api, '/v1/auth/login')).toHaveLength(1);
+  });
+
+  test('when the account is created but signing in fails, another try signs in without creating it again', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+    api.failNext('/v1/auth/login', 503);
+
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(page.getByText('Your account was created, but we couldn’t finish setting it up. Try again.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to review' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+  });
+
+  test('two quick presses create one account', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+
+    await page.getByRole('button', { name: 'Agree and create account' }).dblclick();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)).toHaveLength(1);
+  });
+
+  test('progress follows the requests', async ({ page }) => {
+    await mockApi(page);
+    let release: () => void = () => undefined;
+    await page.route('**/api/v1/auth/login', async (route) => {
+      await new Promise<void>((resolve) => (release = resolve));
+      await route.fallback();
+    });
+    await signUpTo(page, 'done');
+
+    await expect(heading(page, 'Creating your account…')).toBeVisible();
+    await expect(page.getByText(`Reserving ${person.address} and setting up your storage.`)).toBeVisible();
+    await expect(page.getByText('Signing you in')).toBeVisible();
+    release();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+  });
+
+  test('once the account exists, Back does not return to the questions', async ({ page }) => {
+    await mockApi(page);
+    await signUp(page);
+
+    await page.goBack();
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await page.goto(at('/personal/name'));
+    await expect(page).toHaveURL(at('/signin/done'));
+  });
+});
+
+test.describe('personal account: addresses, reload and history', () => {
+  test('every step has its own address, and nothing personal is in it or in web storage', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review', { phone: true });
+
+    await expect(page).toHaveURL(at('/personal/review'));
+    const stored = await page.evaluate(() => JSON.stringify([{ ...localStorage }, { ...sessionStorage }]));
+    for (const secret of [person.password, 'Amara', 'amara.okafor', '0142', person.recoveryEmail]) expect(stored).not.toContain(secret);
+  });
+
+  test('Back and Forward move between questions and keep what was answered', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'address');
+
+    await page.goBack();
+    await expect(heading(page, 'A little about you.')).toBeVisible();
+    await expect(page.getByLabel('Day')).toHaveValue('14');
+    await expect(page.getByLabel('Month')).toHaveValue('3');
+    await page.goBack();
+    await expect(page.getByLabel('First name')).toHaveValue('Amara');
+    await page.goForward();
+    await page.goForward();
+    await expect(heading(page, 'Pick your address.')).toBeVisible();
+  });
+
+  test('a reload mid-flow starts again from the first question that can be shown', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'password');
+
+    await page.reload();
+
+    await expect(page).toHaveURL(at('/personal/name'));
+    await expect(page.getByLabel('First name')).toHaveValue('');
+  });
+
+  test('a later step opened directly leads to the first question', async ({ page }) => {
+    await mockApi(page);
+    for (const step of ['review', 'creating', 'own-code', 'code', 'ready', 'contact', 'passkey']) {
+      await page.goto(at(`/personal/${step}`));
+      await expect(page).toHaveURL(at('/personal/name'));
+    }
+    await page.goto(at('/personal'));
+    await expect(page).toHaveURL(at('/personal/type'));
+  });
+
+  test('a reload after the account is signed in to lands on the signed-in screen', async ({ page }) => {
+    await mockApi(page);
+    await signUp(page);
+
+    await page.reload();
+
+    await expect(page).toHaveURL(at('/signin/done'));
+    await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
+  });
+
+  test('someone already signed in is taken to the signed-in screen instead', async ({ page }) => {
+    await mockApi(page);
+    await signInWithPassword(page);
+    await heading(page, 'Welcome back, Amara.').waitFor();
+
+    await page.goto(at('/personal'));
+
+    await expect(page).toHaveURL(at('/signin/done'));
+  });
+
+  test('sign-in and sign-up lead to each other', async ({ page }) => {
+    await mockApi(page);
+    await page.goto(at('/signin'));
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
+
+    await page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`^${accountsUrl}/signin/`));
+  });
+
+  test('the business choice says it is coming soon while it has nowhere to lead', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'type');
+
+    await page.getByRole('radio', { name: /For my business or team/ }).check();
+    await proceed(page);
+
+    await expect(page.getByText('Business and team accounts are coming soon.')).toBeVisible();
+    await expect(page).toHaveURL(at('/personal/type'));
+  });
+
+  test('personal details can be blurred for a screen share, and come back in focus', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'birth');
+    const day = page.getByLabel('Day');
+    await day.fill('14');
+    const blur = () => day.evaluate((field) => getComputedStyle(field).filter);
+
+    await page.getByRole('button', { name: 'Hide my details' }).click();
+    await page.getByLabel('Year').focus();
+    expect(await blur()).toContain('blur');
+    await day.focus();
+    expect(await blur()).toBe('none');
+
+    await page.getByRole('button', { name: 'Show my details' }).click();
+    await page.getByLabel('Year').focus();
+    expect(await blur()).toBe('none');
+  });
+});
+
+test.describe('personal account: keyboard only', () => {
+  test('an account can be created without a pointer', async ({ page }) => {
+    await mockApi(page);
+    await stubPasskeys(page, 'unsupported');
+    await page.goto(at('/personal'));
+    await heading(page, 'Create your Yahel account.').waitFor();
+    const type = async (label: string, text: string) => {
+      await expect(page.getByLabel(label, { exact: true })).toBeFocused();
+      await page.keyboard.type(text);
+    };
+
+    await page.getByRole('radio', { name: /For me/ }).focus();
+    await page.keyboard.press('Enter');
+    await heading(page, 'What should we call you?').waitFor();
+    await page.getByLabel('First name').focus();
+    await type('First name', 'Amara');
+    await page.keyboard.press('Tab');
+    await type('Last name', 'Okafor');
+    await page.keyboard.press('Enter');
+
+    await heading(page, 'A little about you.').waitFor();
+    await page.getByLabel('Day').focus();
+    await type('Day', '14');
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Month')).toBeFocused();
+    await page.keyboard.type('March');
+    await page.keyboard.press('Tab');
+    await type('Year', '1994');
+    await page.keyboard.press('Enter');
+
+    await heading(page, 'Pick your address.').waitFor();
+    await page.getByLabel('Your Yahel address').focus();
+    await page.keyboard.type('amara.keys');
+    await page.keyboard.press('Enter');
+
+    await heading(page, 'Create a password.').waitFor();
+    await page.getByLabel('Password', { exact: true }).focus();
+    await page.keyboard.type(person.password);
+    await page.keyboard.press('Enter');
+
+    await heading(page, 'Ways back in.').waitFor();
+    await page.getByLabel('Recovery email').focus();
+    await page.keyboard.type(person.recoveryEmail);
+    await page.keyboard.press('Enter');
+
+    await heading(page, 'Everything look right?').waitFor();
+    await page.getByRole('button', { name: 'Agree and create account' }).focus();
+    await page.keyboard.press('Enter');
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+  });
+
+  test('each question takes focus: its first field on a computer, its heading on a touch screen', async ({ page, isMobile }) => {
+    await mockApi(page);
+    await signUpTo(page, 'name');
+
+    await expect(isMobile ? heading(page, 'What should we call you?') : page.getByLabel('First name')).toBeFocused();
+    await page.getByLabel('First name').fill('Amara');
+    await proceed(page);
+    await expect(isMobile ? heading(page, 'A little about you.') : page.getByLabel('Day')).toBeFocused();
+  });
+});

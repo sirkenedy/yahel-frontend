@@ -20,7 +20,20 @@ export const backupCode = 'a1b2c3d4e5';
 /** The reset code the mock accepts, in the backend's format: six letters and numbers. */
 export const resetCode = 'A7kZq2';
 
+/** The domain of a new Yahel address in the demo build; accounts on it need no email confirmation. */
+export const mailDomain = 'yahel.example';
+/** Stands for the public providers (Gmail, Outlook and so on) the backend accepts for a personal account. */
+export const publicEmailDomain = 'mail.example';
+/** The codes the mock sends, in the backend's format: six letters and numbers. */
+export const emailCode = 'B4nQ7x';
+export const phoneCode = 'K9mP2r';
+/** A Yahel address that already has an account, with a password nobody signing up will choose. */
+export const takenAddress = `kemi.adeyemi@${mailDomain}`;
+/** An existing email that already has a confirmed Yahel account. */
+export const registeredEmail = `kemi.adeyemi@${publicEmailDomain}`;
+
 const MAX_SECOND_STEP_ATTEMPTS = 5;
+const MIN_AGE = 13;
 // The backend's rule for a new password: at least 8 characters with upper case, lower case, a number and a symbol.
 const meetsPasswordPolicy = (password: string) => password.length >= 8 && [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].every((pattern) => pattern.test(password));
 
@@ -31,7 +44,33 @@ const fail = (route: Route, status: number, code: string) =>
 
 export interface MockApi {
   calls: { method: string; path: string; body: unknown; authorization: string | undefined }[];
+  /**
+   * Makes the next request to `path` go wrong, once. A status answers with that failure and does nothing.
+   * `lost` does what was asked and then drops the answer, as when a connection dies after the server has acted.
+   */
+  failNext(path: string, how: number | 'lost'): void;
 }
+
+interface Account {
+  profile: typeof profile;
+  password: string;
+  twoStep: boolean;
+  emailVerified: boolean;
+}
+
+const emptyRecovery = () => ({
+  recoveryEmail: { configured: false, value: null as string | null, lastUpdatedAt: null, pending: null as { value: string; requestedAt: string; usableAt: string } | null },
+  phone: { configured: false, verified: false, value: null as string | null, lastUpdatedAt: null, pending: null as { value: string; verified: boolean; requestedAt: string; usableAt: string } | null },
+});
+
+/** Whole years between a date of birth and now, counted as the backend counts them. */
+const ageOf = (dateOfBirth: string) => {
+  const born = new Date(dateOfBirth);
+  const now = new Date();
+  const years = now.getUTCFullYear() - born.getUTCFullYear();
+  const months = now.getUTCMonth() - born.getUTCMonth();
+  return months < 0 || (months === 0 && now.getUTCDate() < born.getUTCDate()) ? years - 1 : years;
+};
 
 export interface MockApiOptions {
   /** Every request fails as if the connection had dropped. */
@@ -42,25 +81,35 @@ export interface MockApiOptions {
 
 /** Stands in for the backend. Tokens rotate on every refresh so tests can tell them apart. */
 export async function mockApi(page: Page, options: MockApiOptions = {}): Promise<MockApi> {
-  const state: MockApi = { calls: [] };
+  const failures = new Map<string, number | 'lost'>();
+  const state: MockApi = { calls: [], failNext: (path, how) => void failures.set(path, how) };
   let issued = 0;
   const tokens = () => ({ accessToken: `access-${++issued}`, refreshToken: `refresh-${issued}`, expiresIn: 900, tokenType: 'Bearer' });
   let validRefresh: string | null = null;
   let validAccess: string | null = null;
   let signedIn = profile;
-  const accounts = [
-    { profile, password: credentials.password, twoStep: false },
-    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true },
+  const accounts: Account[] = [
+    { profile, password: credentials.password, twoStep: false, emailVerified: true },
+    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
   ];
+  const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
+  const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
 
-  await page.route('**/api/v1/**', async (route) => {
-    const request = route.request();
+  await page.route('**/api/v1/**', async (incoming) => {
+    const request = incoming.request();
     const path = new URL(request.url()).pathname.replace(/^\/api/, '');
     const body = request.postDataJSON() as Record<string, string> | null;
+    const failure = failures.get(path);
+    failures.delete(path);
+    // A lost answer: everything below still happens, but the browser never hears of it.
+    const route = failure === 'lost' ? ({ fulfill: () => incoming.abort('connectionreset'), abort: (reason?: string) => incoming.abort(reason) } as unknown as Route) : incoming;
     const authorization = request.headers()['authorization'];
     state.calls.push({ method: request.method(), path, body, authorization });
     if (options.offline) return route.abort('internetdisconnected');
+    if (typeof failure === 'number') return fail(route, failure, failure === 429 ? 'TOO_MANY_REQUESTS' : 'INTERNAL_SERVER_ERROR');
 
     const issue = (account: (typeof accounts)[number]) => {
       const next = tokens();
@@ -70,10 +119,38 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return next;
     };
 
+    if (path === '/v1/auth/register') {
+      const email = (body?.email ?? '').toLowerCase();
+      const domain = email.split('@')[1] ?? '';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || /^\.|\.\.|\.@/.test(email) || !body?.firstName || typeof body.lastName !== 'string' || Number.isNaN(Date.parse(body.dateOfBirth ?? '')) || !meetsPasswordPolicy(body.password ?? '')) {
+        return fail(route, 422, 'VALIDATION_ERROR');
+      }
+      if (ageOf(body.dateOfBirth ?? '') < MIN_AGE) return fail(route, 403, 'USER_UNDERAGE');
+      if (accounts.some((known) => known.profile.email === email)) return fail(route, 409, 'EMAIL_ALREADY_EXISTS');
+      if (domain !== mailDomain && domain !== publicEmailDomain) return fail(route, 400, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL');
+      const displayName = body.displayName ?? `${body.firstName} ${body.lastName}`;
+      accounts.push({
+        profile: { id: `64f00000000000000000010${accounts.length}`, globalId: `g-new-${accounts.length}`, email, firstName: body.firstName, lastName: body.lastName, displayName, photo: null },
+        password: body.password ?? '',
+        twoStep: false,
+        // An address on the platform's own domain is the person's by being claimed; any other has to be confirmed.
+        emailVerified: domain === mailDomain,
+      });
+      return ok(route, { message: domain === mailDomain ? 'Registration successful.' : 'Registration successful. Please verify your email.' }, 201);
+    }
+    if (path === '/v1/auth/verify-email') {
+      const account = accounts.find((known) => known.profile.email === body?.email?.toLowerCase());
+      if (!account || account.emailVerified || body?.token !== emailCode) return fail(route, 401, 'INVALID_TOKEN');
+      account.emailVerified = true;
+      return ok(route, { message: 'Email verified successfully' }, 201);
+    }
+    // Answers the same way whether or not the address has an account waiting to be confirmed.
+    if (path === '/v1/auth/verify-email/resend') return ok(route, { message: 'If this email exists and is unverified, a new link has been sent' }, 201);
     if (path === '/v1/auth/login') {
       if (options.rateLimited) return fail(route, 429, 'TOO_MANY_REQUESTS');
-      const account = accounts.find((known) => known.profile.email === body?.email && known.password === body.password);
+      const account = accounts.find((known) => known.profile.email === body?.email?.toLowerCase() && known.password === body.password);
       if (!account) return fail(route, 401, 'INVALID_CREDENTIALS');
+      if (!account.emailVerified) return fail(route, 403, 'EMAIL_NOT_VERIFIED');
       if (!account.twoStep) return ok(route, issue(account), 201);
       const challengeToken = `challenge-${challenges.size + 1}`;
       challenges.set(challengeToken, { account, attempts: 0 });
@@ -110,6 +187,27 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return ok(route, null, 201);
     }
     if (path === '/v1/me') return ok(route, signedIn);
+    const methods = recoveryOf(signedIn.email);
+    const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
+    if (path === '/v1/me/recovery') return ok(route, methods);
+    if (path === '/v1/me/recovery/email') {
+      const [local = '', domain] = (body?.recoveryEmail ?? '').split('@');
+      if (!domain) return fail(route, 422, 'VALIDATION_ERROR');
+      methods.recoveryEmail.pending = staged(`${local.charAt(0)}***@${domain.toLowerCase()}`);
+      return ok(route, methods);
+    }
+    if (path === '/v1/me/recovery/phone') {
+      const digits = (body?.phone ?? '').replace(/\D/g, '');
+      if (!body?.phone?.startsWith('+') || digits.length < 8) return fail(route, 400, 'BAD_REQUEST');
+      methods.phone.pending = { ...staged(`***${digits.slice(-4)}`), verified: false };
+      return ok(route, methods);
+    }
+    if (path === '/v1/me/recovery/phone/verify') {
+      if (!methods.phone.pending) return fail(route, 403, 'FORBIDDEN');
+      if (body?.code !== phoneCode) return fail(route, 401, 'INVALID_TOKEN');
+      methods.phone.pending.verified = true;
+      return ok(route, methods, 201);
+    }
     return fail(route, 404, 'NOT_FOUND');
   });
 

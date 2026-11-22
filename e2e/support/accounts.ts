@@ -5,7 +5,8 @@ import { credentials, resetCode, twoStepCredentials } from './api';
 export const accountsUrl = 'http://localhost:4175';
 export const at = (path: string) => `${accountsUrl}${path}`;
 
-export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported';
+/** `waiting`: the prompt stays open, so the waiting screen can be examined. */
+export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported' | 'waiting';
 
 /**
  * Replaces the browser's passkey prompt, which a test cannot operate, with a fixed outcome. Works in every
@@ -26,6 +27,11 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
           await new Promise((resolve) => setTimeout(resolve, 400));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
           return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), authenticatorData: bytes(5), signature: bytes(6), userHandle: null } };
+        },
+        create: async () => {
+          await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
+          if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
+          return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
         },
       },
     });
