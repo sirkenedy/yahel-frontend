@@ -9,7 +9,7 @@ interface FlowChipsState {
 
 const FlowChipsContext = createContext<FlowChipsState | null>(null);
 
-export type FlowChipsLayout = 'wrap' | 'segmented';
+export type FlowChipsLayout = 'wrap' | 'compact' | 'segmented';
 
 export interface FlowChipsProps<Value extends string> {
   /** The question the chips answer. Shown above them unless `isLabelHidden`. */
@@ -18,7 +18,7 @@ export interface FlowChipsProps<Value extends string> {
   isLabelHidden?: boolean;
   value: Value;
   onChange: (value: Value) => void;
-  /** `wrap`: separate pills that flow onto further lines. `segmented`: two or three joined in one track. */
+  /** `wrap`: separate pills that flow onto further lines. `compact`: the same, closer together, for a run of numbers. `segmented`: two or three joined in one track. */
   layout?: FlowChipsLayout;
   children: ReactNode;
 }
@@ -52,7 +52,7 @@ export function FlowChip({ value, badge, children }: FlowChipProps) {
   const group = use(FlowChipsContext);
   if (!group) throw new Error('<FlowChip> must be rendered inside <FlowChips>.');
   return (
-    <label className="ws-flow-chip">
+    <label className="ws-flow-pill">
       <input type="radio" name={group.name} value={value} checked={group.value === value} onChange={() => group.onChange(value)} />
       <span>{children}</span>
       {badge ? <> <span className="ws-flow-badge">{badge}</span></> : null}

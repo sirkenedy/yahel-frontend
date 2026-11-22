@@ -30,6 +30,7 @@ describe('PlanCard', () => {
 
     expect(screen.getByRole('group', { name: /Yahel Business/ })).toHaveTextContent('Free for 14 days');
     expect(screen.getByRole('button', { name: 'Add a promo code' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add a promo code' }).parentElement).toHaveClass('ws-flow-plan__foot');
   });
 });
 

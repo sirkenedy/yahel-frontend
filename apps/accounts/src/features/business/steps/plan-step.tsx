@@ -80,6 +80,11 @@ export function PlanStep() {
               </FlowButton>
             )}
           </PlanCard>
+          {meta.links.help ? (
+            <FlowStep.Links>
+              <FlowLink href={meta.links.help}>{m.enterprise(offer.enterpriseFrom)}</FlowLink>
+            </FlowStep.Links>
+          ) : null}
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary">
@@ -87,11 +92,6 @@ export function PlanStep() {
           </FlowButton>
         </FlowStep.Actions>
       </FlowStep.Form>
-      {meta.links.help ? (
-        <FlowStep.Links>
-          <FlowLink href={meta.links.help}>{m.enterprise(offer.enterpriseFrom)}</FlowLink>
-        </FlowStep.Links>
-      ) : null}
     </StepFrame>
   );
 }

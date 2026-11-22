@@ -49,7 +49,7 @@ export function PlanCard({ name, price, unit, was, badge, features, children }: 
           </li>
         ))}
       </ul>
-      {children}
+      {children ? <div className="ws-flow-plan__foot">{children}</div> : null}
     </div>
   );
 }

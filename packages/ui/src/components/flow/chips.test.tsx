@@ -71,6 +71,12 @@ describe('FlowChips', () => {
     expect(screen.getByText('How many people?')).toHaveClass('ws-flow-hidden');
   });
 
+  it('can draw a run of numbers closer together', () => {
+    render(<Sizes layout="compact" />);
+
+    expect(screen.getByRole('radiogroup', { name: 'How many people?' })).toHaveAttribute('data-layout', 'compact');
+  });
+
   it('refuses a chip outside a group', () => {
     const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     expect(() => render(<FlowChip value="1">1</FlowChip>)).toThrow(/inside <FlowChips>/);

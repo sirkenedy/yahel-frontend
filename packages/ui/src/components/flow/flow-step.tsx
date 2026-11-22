@@ -92,13 +92,42 @@ function FlowStepResubmit({ children }: { children: ReactNode }) {
 }
 
 /** `pair`: two equal fields that stack on a narrow screen. `date`: day, month, year. `phone`: a short field, then a long one. */
-export type FlowRowLayout = 'pair' | 'date' | 'phone';
+/** `pair` stacks on a narrow screen; `halves` are two short fields that stay side by side on any screen. */
+export type FlowRowLayout = 'pair' | 'halves' | 'date' | 'phone';
 
 /** Fields that belong together on one line. Give it a `label` when together they answer one thing, such as a date. */
 function FlowStepRow({ layout = 'pair', label, children }: { layout?: FlowRowLayout; label?: string; children: ReactNode }) {
   return (
     <div className={`ws-flow-step__row ws-flow-step__row--${layout}`} role={label ? 'group' : undefined} aria-label={label}>
       {children}
+    </div>
+  );
+}
+
+/** Names a group of fields within a step that asks for more than one thing: "Card details". */
+function FlowStepSubheading({ children }: { children: string }) {
+  return <h2 className="ws-flow-step__subheading">{children}</h2>;
+}
+
+interface FlowStepSplitProps {
+  /** What the person works on first, at the top of the main column. */
+  lead: ReactNode;
+  /** What stays in view beside the main column on a wide screen, such as a summary; after `lead` on a narrow one. */
+  aside: ReactNode;
+  /** The rest of the main column. */
+  children: ReactNode;
+}
+
+/**
+ * A step with something to keep in view while it is filled in. On a wide screen the step widens and the
+ * aside stands beside the fields; on a narrow one everything is one column, in the order lead, aside, rest.
+ */
+function FlowStepSplit({ lead, aside, children }: FlowStepSplitProps) {
+  return (
+    <div className="ws-flow-step__split">
+      <div className="ws-flow-step__body ws-flow-step__lead">{lead}</div>
+      <div className="ws-flow-step__aside">{aside}</div>
+      <div className="ws-flow-step__body ws-flow-step__rest">{children}</div>
     </div>
   );
 }
@@ -155,6 +184,8 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Resubmit: FlowStepResubmit,
   Body: FlowStepBody,
   Row: FlowStepRow,
+  Subheading: FlowStepSubheading,
+  Split: FlowStepSplit,
   Actions: FlowStepActions,
   Links: FlowStepLinks,
   Note: FlowStepNote,

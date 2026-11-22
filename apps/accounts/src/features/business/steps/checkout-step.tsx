@@ -1,4 +1,4 @@
-import { FlowButton, FlowChip, FlowChips, FlowDivider, FlowNotice, FlowStep, FlowTextField, OrderSummary, Receipt } from '@yahel/ui';
+import { FlowButton, FlowChip, FlowChips, FlowNotice, FlowStep, FlowTextField, OrderSummary, Receipt } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
@@ -75,62 +75,69 @@ export function CheckoutStep() {
   return (
     <StepFrame title={m.checkoutTitle} lede={sums.trial && firstCharge?.from ? m.checkoutLedeTrial(m.dayOf(firstCharge.from)) : m.checkoutLede(largest)} requests={[request]} toFix={form.toFix}>
       <FlowStep.Form onSubmit={submit}>
-        <FlowStep.Body>
-          <FlowChips label={m.seatsLabel} value={state.seats > largest ? MORE : String(state.seats)} onChange={chooseChip}>
-            {Array.from({ length: largest }, (_, index) => (
-              <FlowChip key={index} value={String(index + 1)}>
-                {index + 1}
-              </FlowChip>
-            ))}
-            <FlowChip value={MORE}>{m.moreSeats(largest + 1)}</FlowChip>
-          </FlowChips>
-          {state.seats > largest ? <FlowTextField label={m.seatsMoreLabel} name="seats" inputMode="numeric" autoComplete="off" value={many.value} onChange={many.change} onBlur={many.blur} error={many.error} inputRef={many.inputRef} /> : null}
-          {sums.trial ? (
-            <FlowStep.Note>{m.seatsHelpTrial}</FlowStep.Note>
-          ) : (
-            <FlowNotice
-              tone="warning"
-              title={m.noTrialTitle(largest)}
-              actions={
-                <FlowButton variant="chip" onPress={() => actions.chooseSeats(largest)}>
-                  {m.tryWith(largest)}
+        <FlowStep.Split
+          lead={
+            <>
+              <FlowChips label={m.seatsLabel} layout="compact" value={state.seats > largest ? MORE : String(state.seats)} onChange={chooseChip}>
+                {Array.from({ length: largest }, (_, index) => (
+                  <FlowChip key={index} value={String(index + 1)}>
+                    {index + 1}
+                  </FlowChip>
+                ))}
+                <FlowChip value={MORE}>{m.moreSeats(largest + 1)}</FlowChip>
+              </FlowChips>
+              {state.seats > largest ? <FlowTextField label={m.seatsMoreLabel} name="seats" inputMode="numeric" autoComplete="off" value={many.value} onChange={many.change} onBlur={many.blur} error={many.error} inputRef={many.inputRef} /> : null}
+              {sums.trial ? (
+                <FlowStep.Note>{m.seatsHelpTrial}</FlowStep.Note>
+              ) : (
+                <FlowNotice
+                  tone="warning"
+                  title={m.noTrialTitle(largest)}
+                  actions={
+                    <FlowButton variant="chip" onPress={() => actions.chooseSeats(largest)}>
+                      {m.tryWith(largest)}
+                    </FlowButton>
+                  }
+                >
+                  {m.noTrialText(sums.seats, m.money(sums.planToday), offer.trial.days)}
+                </FlowNotice>
+              )}
+            </>
+          }
+          aside={
+            <OrderSummary
+              title={m.orderSummary}
+              action={
+                <FlowButton variant="link" onPress={() => actions.edit('plan')}>
+                  {m.changePlan}
                 </FlowButton>
               }
             >
-              {m.noTrialText(sums.seats, m.money(sums.planToday), offer.trial.days)}
-            </FlowNotice>
-          )}
-          <OrderSummary
-            title={m.orderSummary}
-            action={
-              <FlowButton variant="link" onPress={() => actions.edit('plan')}>
-                {m.changePlan}
-              </FlowButton>
-            }
-          >
-            <OrderSummary.Item title={offer.name} amount={sums.trial ? m.trialBadge(offer.trial.days) : m.billedToday}>
-              {m.planLine(sums.period, sums.seats)}
-            </OrderSummary.Item>
-            <OrderSummary.Schedule label={m.schedule}>
-              {sums.schedule.map((charge) => (
-                <OrderSummary.Charge key={`${charge.kind}${charge.from}`} when={charge.from ? m.from(m.dayOf(charge.from)) : m.today} amount={m.chargeAmount(charge)}>
-                  {m.charge(charge, sums.period)}
-                </OrderSummary.Charge>
-              ))}
-            </OrderSummary.Schedule>
-            <OrderSummary.Note>
-              {sums.promo ? `${m.promoApplied(sums.promo.code, sums.promo.percent, sums.promo.months)}. ` : null}
-              {m.seatsNote(sums.seats, sums.taxRate)}
-            </OrderSummary.Note>
-            {sums.domain ? (
-              <OrderSummary.Item title={sums.domain.name} amount={m.perYear(m.money(sums.domain.yearly))}>
-                {m.domainLine}
+              <OrderSummary.Item title={offer.name} amount={sums.trial ? m.trialBadge(offer.trial.days) : m.billedToday}>
+                {m.planLine(sums.period, sums.seats)}
               </OrderSummary.Item>
-            ) : null}
-            <OrderSummary.Total label={m.dueToday} suffix={m.plusVat}>
-              {due}
-            </OrderSummary.Total>
-          </OrderSummary>
+              <OrderSummary.Schedule label={m.schedule}>
+                {sums.schedule.map((charge) => (
+                  <OrderSummary.Charge key={`${charge.kind}${charge.from}`} when={charge.from ? m.from(m.dayOf(charge.from)) : m.today} amount={m.chargeAmount(charge)}>
+                    {m.charge(charge, sums.period)}
+                  </OrderSummary.Charge>
+                ))}
+              </OrderSummary.Schedule>
+              <OrderSummary.Note>
+                {sums.promo ? `${m.promoApplied(sums.promo.code, sums.promo.percent, sums.promo.months)}. ` : null}
+                {m.seatsNote(sums.seats, sums.taxRate)}
+              </OrderSummary.Note>
+              {sums.domain ? (
+                <OrderSummary.Item title={sums.domain.name} amount={m.perYear(m.money(sums.domain.yearly))}>
+                  {m.domainLine}
+                </OrderSummary.Item>
+              ) : null}
+              <OrderSummary.Total label={m.dueToday} suffix={m.plusVat}>
+                {due}
+              </OrderSummary.Total>
+            </OrderSummary>
+          }
+        >
           <Receipt label={m.yourOrder}>
             <Receipt.Row label={m.rowBusiness} detail={m.businessDetail(m.sizeDetails[state.size], countryNames.of(state.country) ?? state.country)} action={edit(m.editBusiness, () => actions.edit('business'))}>
               {state.businessName}
@@ -146,7 +153,7 @@ export function CheckoutStep() {
             </Receipt.Row>
           </Receipt>
           {addressAsked && !address ? <FlowNotice tone="danger">{m.addressRequired}</FlowNotice> : null}
-          <FlowDivider>{m.cardDetails}</FlowDivider>
+          <FlowStep.Subheading>{m.cardDetails}</FlowStep.Subheading>
           <FlowTextField
             label={m.cardNumber}
             name="cc-number"
@@ -163,7 +170,7 @@ export function CheckoutStep() {
             isRequired
             isSensitive
           />
-          <FlowStep.Row>
+          <FlowStep.Row layout="halves">
             <FlowTextField label={m.expiry} name="cc-exp" inputMode="numeric" autoComplete="cc-exp" help={m.expiryHelp} value={expiry.value} onChange={(typed) => expiry.change(formatExpiry(typed))} onBlur={expiry.blur} isValid={expiry.isValid} error={expiry.error} inputRef={expiry.inputRef} isRequired isSensitive />
             <FlowTextField label={m.securityCode} name="cc-csc" inputMode="numeric" autoComplete="cc-csc" help={m.securityCodeHelp} value={securityCode.value} onChange={(typed) => securityCode.change(formatSecurityCode(typed))} onBlur={securityCode.blur} isValid={securityCode.isValid} error={securityCode.error} inputRef={securityCode.inputRef} isRequired isSensitive />
           </FlowStep.Row>
@@ -177,7 +184,7 @@ export function CheckoutStep() {
             {sums.domain ? m.and : null}
             {sums.domain ? named(m.domainAgreement, links.domainTerms) : null}. {sums.trial ? m.renewsAfterTrial : m.renews}
           </FlowStep.Note>
-        </FlowStep.Body>
+        </FlowStep.Split>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary" isPending={request.isPending} pendingLabel={m.checkingCard}>
             {sums.trial ? (sums.domain ? m.payAndStartTrial(due) : m.startTrial) : m.payAndStart(due)}

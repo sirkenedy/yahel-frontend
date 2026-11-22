@@ -450,6 +450,37 @@ describe('AccountChip and AccountList', () => {
   });
 });
 
+describe('FlowStep parts for a step that asks for several things', () => {
+  it('names a group of fields with a second-level heading', () => {
+    render(<FlowStep.Subheading>Card details</FlowStep.Subheading>);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Card details' })).toBeInTheDocument();
+  });
+
+  it('keeps two short fields side by side with the halves layout', () => {
+    render(
+      <FlowStep.Row layout="halves">
+        <span>Expiry</span>
+        <span>Security code</span>
+      </FlowStep.Row>,
+    );
+
+    expect(screen.getByText('Expiry').parentElement).toHaveClass('ws-flow-step__row--halves');
+  });
+
+  it('puts the lead first, then what is kept in view, then the rest, so one column reads in that order', () => {
+    render(
+      <FlowStep.Split lead={<p>How many people?</p>} aside={<p>Order summary</p>}>
+        <p>Card details</p>
+      </FlowStep.Split>,
+    );
+
+    const split = screen.getByText('Order summary').parentElement!.parentElement!;
+    expect(split.textContent).toBe('How many people?Order summaryCard details');
+    expect(Array.from(split.children).map((part) => part.className)).toEqual(['ws-flow-step__body ws-flow-step__lead', 'ws-flow-step__aside', 'ws-flow-step__body ws-flow-step__rest']);
+  });
+});
+
 describe('Receipt row with a detail', () => {
   it('shows a quieter second line under the answer, inside the same description', () => {
     render(

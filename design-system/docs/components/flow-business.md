@@ -2,7 +2,7 @@
 
 Status: Specified
 
-Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, and as additions to `Choice` (`tag`, `meta`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
+Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, and as additions to `Choice` (`tag`, `meta`), `Receipt.Row` (`detail`) and `FlowStep` (`Subheading`, `Split`, `Row layout="halves"`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
 
 ## Purpose
 
@@ -10,10 +10,12 @@ Creating a workspace adds three things the account flows did not have: a few sho
 
 ## Anatomy
 
-- **Chips.** A visible label and a row of pills, exactly one chosen ("Just me", "2–9", "10–99"). A pill can carry a badge ("Save 16%"). Laid out as separate pills that wrap, or `segmented`: two or three in one track, for a switch such as monthly or yearly. The label can be hidden when the control's purpose is plain from where it sits; it is still read out.
+- **Chips.** A visible label and a row of pills, exactly one chosen ("Just me", "2–9", "10–99"): the chosen one has the accent outline and tint of a chosen choice. A pill can carry a badge ("Save 16%"). Laid out as separate pills that wrap, `compact` for a run of numbers, or `segmented`: two or three in one track, for a switch such as monthly or yearly. The label can be hidden when the control's purpose is plain from where it sits; it is still read out.
 - **Choice with a tag and an amount.** A choice card with a short tag after its words ("Best match") and an amount at the far side ("₦18,500 a year"), before the radio mark. Used for a list of things with a price each.
 - **Plan card.** The plan's name (with an optional badge), its price in the display face with what the price is for under it, a struck-through earlier price when discounted, and a two-column ticked list of what is included (one column when narrow). Controls that belong to the plan sit at the foot.
 - **Order summary.** A card with a heading and, beside it, the way to change the order. Then lines: a thing bought with a line of explanation and, when it has one, its price; a schedule of what is charged and when ("Today · Free trial starts · ₦0"); a note in small print; and a total on a tinted band ("Due today ₦18,500 + VAT").
+- **Receipt detail.** A second, quieter line under an answer on the review ("10–99 people · Nigeria").
+- **Subheading and split.** A step that asks for several things names each group with a second-level heading ("Card details"). When something must stay in view while the step is filled in (the order summary), the step is split: on a screen 1024 px wide or more it widens to two columns and the aside stays in view; narrower, it is one column in the order lead, aside, rest. Two short fields that belong together (expiry and security code) stay side by side on any screen (`halves`).
 - **Card chip.** A small pill that names the card being paid with: its network and last four digits ("Visa •• 4081").
 
 ## Behaviour
