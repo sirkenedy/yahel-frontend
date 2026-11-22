@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { accountsScreens } from './support/accounts-screens';
 import { mockApi, signIn } from './support/api';
 
 // Every screen is checked in each theme the design system ships.
@@ -41,6 +42,7 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await page.getByRole('heading', { name: 'Account' }).waitFor();
     },
   },
+  ...accountsScreens,
 ];
 
 for (const screen of screens) {
@@ -100,3 +102,38 @@ test('layout mirrors for right-to-left without overflow', async ({ page }) => {
   const viewport = page.viewportSize()!;
   expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
 });
+
+// The account flows are checked screen by screen: each step lays out differently and none is behind sign-in.
+for (const screen of accountsScreens) {
+  test(`layout holds at 200% text size: ${screen.name}`, async ({ page }) => {
+    await mockApi(page);
+    await screen.open(page);
+    await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
+    await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const clipped = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('main button, main a[href]')]
+        .filter((el) => el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible')
+        .map((el) => el.textContent),
+    );
+    expect(clipped).toEqual([]);
+  });
+
+  test(`layout mirrors for right-to-left without overflow: ${screen.name}`, async ({ page }) => {
+    await mockApi(page);
+    await screen.open(page);
+    await page.evaluate(() => (document.documentElement.dir = 'rtl'));
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const viewport = page.viewportSize()!;
+    const brand = await page.getByRole('img', { name: 'Yahel' }).boundingBox();
+    expect(brand!.x + brand!.width / 2).toBeGreaterThan(viewport.width / 2);
+    const heading = await page.getByRole('heading', { level: 1 }).boundingBox();
+    const question = await page.getByRole('main').locator('section').boundingBox();
+    expect(Math.abs(heading!.x + heading!.width - (question!.x + question!.width))).toBeLessThan(1);
+  });
+}

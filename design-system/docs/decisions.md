@@ -153,6 +153,47 @@ The owner decided the product name is **Yahel**. This replaces the name kept und
 - The icon stroke uses `border.control` until an icon stroke token exists.
 - Rejected: a text button ("Show") beside the field, which wraps and overflows at 200% text on narrow screens; revealing only while pressed, which cannot be used with a keyboard or assistive technology.
 
+### Daylight field outline: stronger than drawn (2026-11-22)
+
+- The account designs draw the field and code-box outline as 22% ink on white, about 1.6:1 against the paper canvas. The owner's direction is that control boundaries meet 3:1 in all four themes.
+- The outline is now its own token, `color.daylight.control-line`: `#8A8C99` in light, `#6F7494` in dark, and the mute text colour in the increased-contrast themes. It is checked at 3:1 against the canvas, the field and the surface by the token build. The same token outlines the radio mark of a choice.
+- It is the lightest neutral that passes, so the look stays as close to the drawing as the rule allows. Quiet buttons, cards and rows keep the drawn hairline: their text, not their edge, identifies them.
+- Rejected: keeping the drawn value in the default themes and strengthening it only with increased contrast (what was first built).
+
+### Daylight sign-in: departures from the boards (2026-11-22)
+
+- **Back link on every step.** The boards show steps without a Back link because each board opens its step directly; the prototype shows one whenever there is a step before. Built: every step that has an earlier step has a Back link, and the first steps have none.
+- **Reset code and backup codes.** The boards draw every code as six digits. The backend's reset code is six letters and numbers, so the recovery code step takes letters and numbers and its label says "6-character code". Second-step backup codes are ten characters and do not fit the boxes, so "Use a backup code" swaps the boxes for an ordinary field.
+- **Passkeys** are offered wherever the browser supports them, not only on devices with a fingerprint or face reader, so a passkey on a phone or a security key works.
+
+### Daylight personal sign-up: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-39 to F-54.
+
+- **Order of the two code screens.** The boards put the emailed code at question 3 and the texted code at question 5. Both come after "Agree and create account", because neither code can exist before the account does. They show no "0N / 06" count, the existing-email button reads "Continue" rather than "Send code", the emailed code offers "Use a different address" and "Sign in instead", and the texted code offers "Skip for now".
+- **Progress and receipt.** Progress reads "01 / 06 · Your name" as the boards draw. The receipt is the list on the review; no summary is shown beside the question, which the brief describes but no board draws. The receipt lost its shadow and its row-by-row rise to match the review board.
+- **Selects.** Month, gender and phone country are the platform's select, styled as a flow field, not the drawn list with a search box. The closed country field reads "+234 Nigeria".
+- **Codes** are six letters and numbers ("6-character code"), not six digits.
+- **Back link** on every question that has an earlier one, as in sign-in.
+- **Password help** states the backend's rule beside the design's length; a password already chosen is never shown again, so on return the field is empty with a line saying it is saved.
+- **Ready.** "Continue to Yahel" in place of "Open Yahel Mail"; no app tiles, tour or account menu. The header shows the account's initials, as drawn, without a menu. The finishing mark is the emblem in two rings without the animated glow.
+- **Review.** Hidden values are announced as "Hidden"; Terms and Privacy Policy open in a new tab; on a computer the checkboxes are shorter than a touch target so the action is in view at the board's size.
+- **Address.** A taken address offers the server's free alternatives, not ones made from the birth year; the domain shown is the configured one.
+- **Demo label.** A tab at the top edge of the page, not a pill at the bottom, so it never covers an action.
+
+### Daylight error and feedback states: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-55 to F-64. The component spec is `components/flow-states.md`.
+
+- **Not built because they reveal whether an account exists.** "We couldn't find a Yahel account with that email", "That email already has a Yahel account", and the suspended and paused screens straight from the email step. "Wrong password" keeps the neutral words "That email and password don't match", beside the field as drawn.
+- **Not built because the backend sends nothing to build them from.** "{n} tries left", the warning before the last try, "Send the code again" on sign-in, "Continue to {provider}", the organisation's name, "15 minutes", a message per field for a refused registration.
+- **Dialog.** A session that ended, and "signed out everywhere", are the Expired whole screen, not a dialog.
+- **Whole screens.** Wording that states what the app cannot know is dropped (see F-59). The error screen keeps "Start again" or "Back to sign in" in place of "Contact support", and shows the reference only when there is one.
+- **Toast.** One at a time; the icon takes the text colour rather than the opposite theme's tone; the close control is 44 px.
+- **Banner.** A neutral hairline rather than a 22% mix of the tone (the tone's colour under increased contrast); actions are 44 px pills rather than 36 px.
+- **Countdown.** The 429 banner counts down but the step's button stays pressable.
+- **Tints.** `color.daylight.danger-tint`, `warning-tint` and `success-tint` are solid colours in the dark themes (the boards draw 12% of the tone over the canvas), so their contrast can be checked.
+
 ## What is still open
 
 | ID | Item | Why it cannot be closed here |

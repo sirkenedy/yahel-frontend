@@ -75,6 +75,19 @@ describe('createSession', () => {
     expect(tokenStorage.data).toEqual({});
   });
 
+  it('tells the caller when the server ended every session, and still starts signed out', async () => {
+    const routes = { '/api/v1/auth/refresh': () => fail(401, 'TOKEN_REUSE_DETECTED'), '/api/v1/me': () => fail(401, 'SESSION_EXPIRED') };
+    const tokenStorage = memoryStorage({ 'yahel.refresh-token': 'spent' });
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage: memoryStorage(), fetch: routeFetch(routes) as typeof fetch });
+
+    await session.init();
+    expect(session.store.getState().status).toBe('signed-out');
+
+    tokenStorage.setItem('yahel.refresh-token', 'spent');
+    await expect(session.api.me.get()).rejects.toMatchObject({ status: 401, code: 'TOKEN_REUSE_DETECTED' });
+    expect(tokenStorage.data).toEqual({});
+  });
+
   it('clears local state on sign-out even when the server call fails', async () => {
     const tokenStorage = memoryStorage();
     const fetchMock = routeFetch({ '/api/v1/auth/login': () => ok(tokens), '/api/v1/me': () => ok(profile), '/api/v1/auth/logout': () => fail(500, 'INTERNAL_ERROR') });
@@ -85,5 +98,48 @@ describe('createSession', () => {
 
     expect(session.store.getState()).toEqual({ status: 'signed-out', profile: null });
     expect(tokenStorage.data).toEqual({});
+  });
+
+  it('finishes a two-step sign-in with the challenge, the code and this device', async () => {
+    const tokenStorage = memoryStorage();
+    const deviceStorage = memoryStorage({ 'yahel.device-id': 'device-1' });
+    const bodies: unknown[] = [];
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const path = new URL(String(url)).pathname;
+      if (path === '/api/v1/auth/mfa/challenge') {
+        bodies.push(JSON.parse(String(init?.body)));
+        return ok(tokens);
+      }
+      if (path === '/api/v1/me') return ok(profile);
+      throw new Error(`Unexpected request to ${path}`);
+    });
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage, fetch: fetchMock as typeof fetch });
+
+    await session.completeSecondStep('challenge-1', '482910', true);
+
+    expect(bodies).toEqual([{ challengeToken: 'challenge-1', code: '482910', deviceId: 'device-1', trustDevice: true }]);
+    expect(session.store.getState()).toEqual({ status: 'signed-in', profile });
+    expect(tokenStorage.data).toEqual({ 'yahel.refresh-token': 'refresh-1' });
+  });
+
+  it('stays signed out when the second-step code is refused', async () => {
+    const tokenStorage = memoryStorage();
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage: memoryStorage(), fetch: routeFetch({ '/api/v1/auth/mfa/challenge': () => fail(401, 'MFA_INVALID') }) as typeof fetch });
+
+    await expect(session.completeSecondStep('challenge-1', '000000')).rejects.toMatchObject({ status: 401, code: 'MFA_INVALID' });
+
+    expect(session.store.getState().status).toBe('unknown');
+    expect(tokenStorage.data).toEqual({});
+  });
+
+  it('establishes a session from a sign-in made another way, without asking the server again', () => {
+    const tokenStorage = memoryStorage();
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage: memoryStorage(), fetch: routeFetch({}) as typeof fetch });
+
+    session.establish({ tokens, profile });
+
+    expect(session.store.getState()).toEqual({ status: 'signed-in', profile });
+    expect(tokenStorage.data).toEqual({ 'yahel.refresh-token': 'refresh-1' });
+    expect(JSON.stringify(tokenStorage.data)).not.toContain('access-1');
   });
 });

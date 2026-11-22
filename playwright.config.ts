@@ -13,10 +13,19 @@ export default defineConfig({
     // WebKit needs a recent macOS or Linux. It always runs in CI; locally, opt in with E2E_WEBKIT=1.
     ...(process.env.CI || process.env.E2E_WEBKIT ? [{ name: 'mobile-safari', use: { ...devices['iPhone 14'] } }] : []),
   ],
-  webServer: {
-    command: 'pnpm --filter @yahel/shell preview',
-    url: 'http://localhost:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
+  webServer: [
+    {
+      command: 'pnpm --filter @yahel/shell preview',
+      url: 'http://localhost:4173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    // The accounts app is tested as a demo build: stand-ins on, so passkeys, the chooser and help can be exercised.
+    {
+      command: 'pnpm --filter @yahel/accounts preview:demo',
+      url: 'http://localhost:4175',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
 });
