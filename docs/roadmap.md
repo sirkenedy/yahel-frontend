@@ -17,7 +17,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 ## Next: foundation (in this order)
 
 - [ ] Two-step sign-in (`POST /v1/auth/mfa/challenge`): code entry, backup code, trust this device
-- [ ] Account creation: personal (`/v1/auth/register`) and email verification
+- [x] Account creation: personal (`/v1/auth/register`) and email verification (in the accounts app)
 - [x] Forgot and reset password (in the accounts app)
 - [ ] Translation and locale formatting; pseudo-locale and Arabic test runs
 - [ ] UI components from specs, in the order features need them: dialog, toast, menu, list, toggle, checkbox, tabs, skeleton, empty state
@@ -31,7 +31,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 ## Accounts app (`apps/accounts`, the Daylight designs)
 
 - [x] Slice 1: the app, the Daylight tokens and flow components, sign in (email, password, passkey, second-step code from an app, a text or a backup code, account chooser, signed in), recovery (destination, code, new password) and account help
-- [ ] Slice 2: personal account creation (15 screens)
+- [x] Slice 2: personal account creation (15 screens): type, name, date of birth, a new Yahel address or an existing email, password, passkey, ways back in, review, creating, the emailed and texted codes, ready, trusted contact
 - [ ] Slice 3: business workspace creation (13 screens)
 - [ ] Slice 4: an administrator's first sign-in (6 screens)
 - [ ] Hand the shell's sign-in over to the accounts app (needs the refresh token as a cookie on a shared parent domain)
@@ -71,7 +71,10 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Accounts known on this device (`directory.ts`): `GET /v1/auth/known-accounts` and `DELETE /v1/auth/known-accounts/{email}`, scoped to the device id
 - [ ] Recovery destinations and a texted reset code (`recovery-by-phone.ts`): `POST /v1/auth/recovery/options` returning masked destinations, identical for unknown addresses, and a `channel` on `POST /v1/auth/forgot-password`
 - [ ] Help finding an account (`help-desk.ts`): `POST /v1/auth/account-help`
-- [ ] To add with slice 2: address availability (`GET /v1/auth/address-availability`) and passkey registration (`/v1/me/passkeys/registration/options` and `/verify`)
+- [ ] Address availability (`addresses.ts`): `POST /v1/auth/address-availability` (the name in the body)
+- [ ] Passkey creation during sign-up (`passkey-registration.ts`): `POST /v1/auth/passkeys/registration/options` (no session) and `POST /v1/me/passkeys/registration/verify` (session). This replaces the earlier guess that both would be under `/me`: the challenge is needed before there is an account
+- [ ] Trusted contact (`trusted-contacts.ts`): `POST /v1/me/recovery/contact`
+- [ ] The two review choices (`preferences.ts`): `PATCH /v1/me/preferences`, or fields on `RegisterDto`
 - [ ] To add with slice 3: domain search and purchase, plans, checkout and the card code
 
 ### What each real endpoint must do
@@ -81,4 +84,9 @@ These are requirements on the backend, written down so the stand-ins are not mis
 - **Recovery destinations** (`POST /v1/auth/recovery/options`): for an address with no account, answer with a decoy of the same shape (the same number and kinds of destination, plausibly masked, stable for that address) and in the same time as for a real one. Otherwise the endpoint tells anyone whether an address has an account, and part of its phone number. Rate limit by address and by caller.
 - **Passkey sign-in** (`/v1/auth/passkeys/assertion/options` and `/verify`): the server uses its own relying-party id and checks the origin itself; it must ignore any id sent by the client (the interface's `rpId` argument exists only so the stand-in can echo it, and leaves when the endpoint arrives). `allowCredentials` must not differ between an address with passkeys, one without, and one with no account: return an empty list for everyone. Challenges are single use and short lived. `verify` carries the device id, as `/auth/login` does, so the session is bound to the device.
 - **Accounts known on this device** (`/v1/auth/known-accounts`): the server records an account against the device when it signs in and marks it when it signs out; the client does not assert names, addresses or kinds, so `remember` leaves the interface when the endpoint exists. The device id is the only key to the list, so it must be treated as a secret: unguessable, never logged, never in an address.
+- **Address availability** (`POST /v1/auth/address-availability`): it is a way to list who has an account. Answer only `available` true or false, with no reason; take the same time either way; rate limit by caller and by device strictly enough that walking a list of names is impractical; take the name in the body, never the address; offer only alternatives the server has itself checked. It is advice: `POST /v1/auth/register` remains the one place a name is claimed.
+- **Passkey creation during sign-up**: `options` runs before the account exists, so it takes nothing that names a person, uses the server’s own relying-party id, returns a fresh random user handle and a single-use challenge that lives about 30 minutes, and is rate limited by caller. `verify` checks the origin and the challenge itself, binds the credential to the signed-in account, and refuses a used or expired challenge, leaving the account without a passkey.
+- **Trusted contact** (`POST /v1/me/recovery/contact`): answer the same way whether or not the invited address has an account, refuse the person’s own addresses, ask the contact’s consent by email before they count, and rate limit.
+- **Review choices** (`PATCH /v1/me/preferences`): record each choice with when it was made; a missing choice is "no".
+- **Register** (`POST /v1/auth/register`), existing endpoint: see `decisions.md` O-11 and O-12 for what the personal flow needs changed.
 - **Second-step code by text** and **account help**: rate limit by challenge or by caller, and answer the same way whether or not anything was sent.

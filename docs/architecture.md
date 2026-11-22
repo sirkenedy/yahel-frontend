@@ -9,7 +9,7 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 ```
 apps/
   shell/            sign-in, home, account. Later: app launcher, account switcher
-  accounts/         sign in, account recovery. Later: personal sign-up, business sign-up, first admin sign-in
+  accounts/         sign in, account recovery, personal sign-up. Later: business sign-up, first admin sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
@@ -96,9 +96,13 @@ apps/accounts/src/
 - **A release build names its addresses.** `apps/accounts/src/build/build-guards.ts` fails a build that would fall back to a development address or ship stand-ins; `pnpm build` opts into local addresses, `build:release` does not. A demo build is exempt only with stand-ins on. And a built bundle checks where it is running before it mounts (`deployment.ts`): served from anywhere but this machine without https addresses for the backend and the app, it logs why and renders nothing.
 - **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
 
+- **A flow that creates something does it in one resumable request.** Personal sign-up collects every answer first and creates the account only on "Agree and create account" (`features/personal/requests.ts`, `create`): register, sign in, set up. Each part is recorded in the flow state as it completes, so a retry skips what is done and the account is created once. What needs the account (the emailed code for an existing address, the texted code, saving the passkey) comes after it, whatever the drawings' order (`decisions.md` F-39, F-43).
+- **A failed screen never shows the router's own error page.** A step that throws is replaced inside the frame by a plain message with a retry (`features/chrome/error-screen.tsx`); a layout or guard that throws gets the same with the frame; a boundary around the router catches the rest.
+- **Each flow's screens are one file** (`vite.config.ts`, `codeSplitting`), loaded when the flow is first shown; the entry contains none.
+
 ### 3.2 Capabilities and stand-ins
 
-Some designed features have no backend endpoint yet: passkeys, the account chooser, a texted code, help finding an account. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
+Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), the account chooser, a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, and the two choices on the sign-up review. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
 
 Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/build-guards.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
 
@@ -139,4 +143,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: personal and business sign-up and the first admin sign-in (slices 2 to 4 of the accounts app), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: business sign-up and the first admin sign-in (slices 3 and 4 of the accounts app), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
