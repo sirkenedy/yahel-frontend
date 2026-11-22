@@ -245,7 +245,7 @@ describe('DomainOkStep', () => {
   it('shows what the team’s addresses will look like and takes a yes', async () => {
     const { actions } = setup(<DomainOkStep />, { state: answered });
     expect(screen.getByRole('heading', { level: 1, name: m.domainOkTitle('Northwind Studio') })).toBeInTheDocument();
-    expect(screen.getByText('you@northwind.example')).toBeInTheDocument();
+    expect(screen.getByText('northwind.example').parentElement).toHaveTextContent('you@northwind.example');
     expect(screen.getByText(m.domainOkLede)).toBeInTheDocument();
 
     await press(m.useThisDomain);

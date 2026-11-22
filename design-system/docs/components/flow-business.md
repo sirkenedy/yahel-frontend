@@ -2,7 +2,7 @@
 
 Status: Specified
 
-Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, and as additions to `Choice` (`tag`, `meta`), `Receipt.Row` (`detail`) and `FlowStep` (`Subheading`, `Split`, `Row layout="halves"`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
+Built in `@yahel/ui` as `FlowChips` and `FlowChip`, `PlanCard`, `OrderSummary` (`Item`, `Schedule`, `Charge`, `Note`, `Total`), `PaymentCardChip`, `FlowPreview`, and as additions to `Choice` (`tag`, `meta`), `Receipt.Row` (`detail`) and `FlowStep` (`Subheading`, `Split`, `Row layout="halves"`). Styles: `daylight.css`. Design source: `canvas/project/accounts/screens/business/`. The rules of `flow-field.md`, `flow-step.md`, `flow-actions.md`, `flow-feedback.md` and `flow-sign-up.md` apply unless changed here.
 
 ## Purpose
 
@@ -16,6 +16,7 @@ Creating a workspace adds three things the account flows did not have: a few sho
 - **Order summary.** A card with a heading and, beside it, the way to change the order. Then lines: a thing bought with a line of explanation and, when it has one, its price; a schedule of what is charged and when ("Today · Free trial starts · ₦0"); a note in small print; and a total on a tinted band ("Due today ₦18,500 + VAT").
 - **Receipt detail.** A second, quieter line under an answer on the review ("10–99 people · Nigeria").
 - **Subheading and split.** A step that asks for several things names each group with a second-level heading ("Card details"). When something must stay in view while the step is filled in (the order summary), the step is split: on a screen 1024 px wide or more it widens to two columns and the aside stays in view; narrower, it is one column in the order lead, aside, rest. Two short fields that belong together (expiry and security code) stay side by side on any screen (`halves`).
+- **Preview.** A card that shows what something will look like once it exists: a small label, an optional tag at the far side ("Your domain"), and the value in the display face with its important part in the link colour ("you@**northwind.example**"). Not translated.
 - **Card chip.** A small pill that names the card being paid with: its network and last four digits ("Visa •• 4081").
 
 ## Behaviour

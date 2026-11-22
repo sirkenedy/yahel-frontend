@@ -139,6 +139,31 @@ export function FlowCallout({ icon, title, children }: FlowCalloutProps) {
   );
 }
 
+export interface FlowPreviewProps {
+  /** What is being shown: "Your team’s addresses will look like". */
+  label: string;
+  /** A short mark at the far side, such as "Your domain". */
+  tag?: string;
+  /** The start of the value, in plain weight: "you@". */
+  lead?: string;
+  /** The part of the value that matters, picked out: "northwind.example". */
+  children: string;
+}
+
+/** A card that shows what something will look like once it exists, such as an address on the person's domain. */
+export function FlowPreview({ label, tag, lead, children }: FlowPreviewProps) {
+  return (
+    <p className="ws-flow-preview">
+      <span className="ws-flow-preview__label">{label}</span>
+      {tag ? <> <span className="ws-flow-choice__tag">{tag}</span></> : null}{' '}
+      <span className="ws-flow-preview__value" translate="no">
+        {lead}
+        <strong>{children}</strong>
+      </span>
+    </p>
+  );
+}
+
 function FlowFactsRoot({ children }: { children: ReactNode }) {
   return <ul className="ws-flow-facts">{children}</ul>;
 }

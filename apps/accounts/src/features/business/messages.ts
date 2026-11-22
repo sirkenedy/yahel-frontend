@@ -86,8 +86,9 @@ export const businessMessages = {
 
   domainOkTitle: (business: string) => `Use this domain for ${business}?`,
   domainOkLede: 'You’ll prove it’s yours in Admin straight after sign-up. It takes about 2 minutes.',
-  teamAddresses: 'Your team’s addresses will look like this.',
-  teamAddress: (domain: string) => `you@${domain}`,
+  teamAddresses: 'Your team’s addresses will look like',
+  yourDomain: 'Your domain',
+  anyone: 'you@',
   useThisDomain: 'Use this domain',
 
   findTitle: 'Find your domain.',

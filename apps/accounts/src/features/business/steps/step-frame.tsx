@@ -17,7 +17,7 @@ interface StepFrameProps {
   toFix?: readonly string[];
   /** What this step's feedback can offer beyond what every step of the flow can. */
   next?: Partial<Record<BusinessNext, FeedbackNext | null>>;
-  /** What sits above the question in place of the progress count. */
+  /** What sits above the question, after the progress count on a step that has one. */
   lead?: ReactNode;
   children: ReactNode;
 }
@@ -50,7 +50,12 @@ export function StepFrame({ title, lede, requests, feedback, toFix, next, lead, 
       screens={meta.screens}
       direction={meta.direction}
       back={meta.backHref ? { href: meta.backHref, label: m.back } : null}
-      lead={lead ?? progress}
+      lead={
+        <>
+          {progress}
+          {lead}
+        </>
+      }
     >
       {children}
     </FlowStepFrame>

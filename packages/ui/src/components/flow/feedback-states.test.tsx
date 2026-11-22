@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CodeInput, FlowButton, FlowConnectionBar, FlowLink, FlowNotice, FlowReference, FlowShell, FlowSlowHint, FlowState, FlowStep, FlowTextField, FlowToast } from '../../index';
+import { CodeInput, FlowButton, FlowConnectionBar, FlowLink, FlowNotice, FlowPreview, FlowReference, FlowShell, FlowSlowHint, FlowState, FlowStep, FlowTextField, FlowToast } from '../../index';
 import type { FlowTone } from '../../index';
 
 describe('FlowNotice as a banner', () => {
@@ -233,3 +233,25 @@ describe('FlowReference', () => {
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 });
+
+describe('FlowPreview', () => {
+  it('shows a label, an optional tag and the value with its important part picked out, read as one phrase', () => {
+    render(
+      <FlowPreview label="Your team’s addresses will look like" tag="Your domain" lead="you@">
+        northwind.example
+      </FlowPreview>,
+    );
+
+    const preview = screen.getByText('Your team’s addresses will look like').parentElement!;
+    expect(preview.textContent).toBe('Your team’s addresses will look like Your domain you@northwind.example');
+    expect(screen.getByText('northwind.example').tagName).toBe('STRONG');
+    expect(screen.getByText('northwind.example').parentElement).toHaveAttribute('translate', 'no');
+  });
+
+  it('needs neither a tag nor a lead', () => {
+    render(<FlowPreview label="Your admin sign-in">amara@northwind.example</FlowPreview>);
+
+    expect(screen.getByText('Your admin sign-in').parentElement!.textContent).toBe('Your admin sign-in amara@northwind.example');
+  });
+});
+
