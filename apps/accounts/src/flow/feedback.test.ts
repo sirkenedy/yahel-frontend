@@ -109,6 +109,11 @@ describe('describeFailure with the rows every flow shares', () => {
     expect(told(failure(503, 'SERVICE_UNAVAILABLE'))).toEqual({ place: 'screen', screen: 'maintenance' });
   });
 
+  it('does not know an account’s or an organisation’s standing: a signed-out request never shows it', () => {
+    expect(told(failure(403, 'ACCOUNT_SUSPENDED'))).toEqual(serverError);
+    expect(told(failure(403, 'TENANT_SUSPENDED'))).toEqual(serverError);
+  });
+
   it('tells too many requests in a warning banner, with when to try again if the server says', () => {
     expect(told(failure(429, 'TOO_MANY_REQUESTS'))).toEqual({ place: 'banner', tone: 'warning', title: m.tooManyTitle, text: m.tooManyText });
     expect(told(failure(429, 'BAD_REQUEST', { retryAfter: 24 }))).toEqual({ place: 'banner', tone: 'warning', title: m.tooManyTitle, text: m.tooManyText, retryAt: NOW + 24_000 });
@@ -117,8 +122,6 @@ describe('describeFailure with the rows every flow shares', () => {
   it.each([
     ['SESSION_EXPIRED', 401, 'session-ended'],
     ['TOKEN_REUSE_DETECTED', 401, 'signed-out-everywhere'],
-    ['ACCOUNT_SUSPENDED', 403, 'suspended'],
-    ['TENANT_SUSPENDED', 403, 'org-paused'],
     ['INVITE_EXPIRED', 410, 'link-expired'],
     ['INVITE_ALREADY_USED', 409, 'link-used'],
     ['INVITE_ALREADY_ACCEPTED', 409, 'link-used'],

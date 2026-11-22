@@ -17,8 +17,15 @@ const wrongCode = { place: 'field', field: 'code', text: m.wrongCode } as const;
 const passkeyFailed = { place: 'banner', tone: 'danger', text: m.passkeyFailed } as const;
 const refusedPassword = { place: 'field', field: 'password', text: m.passwordRefused } as const;
 
+// An account's standing, told only where the password has already matched; a signed-out request never shows these.
+const standing = {
+  ACCOUNT_SUSPENDED: { place: 'screen', screen: 'suspended' },
+  TENANT_SUSPENDED: { place: 'screen', screen: 'org-paused' },
+} as const satisfies Partial<Rows>;
+
 // What the server says only once the password has matched: none of it reveals more than signing in would.
 const afterPassword = {
+  ...standing,
   TOO_MANY_REQUESTS: { place: 'screen', screen: 'locked' },
   // A bare 403 is also an inactive membership, so it says only what is known: this account cannot sign in now.
   FORBIDDEN: { place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' },
@@ -32,6 +39,7 @@ const rows: Record<FailureContext, Rows> = {
   passkey: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: passkeyFailed, REFUSED: passkeyFailed, CLIENT_FAULT: passkeyFailed },
   code: {
     ...commonRows,
+    ...standing,
     MFA_INVALID: wrongCode,
     INVALID_MFA_CODE: wrongCode,
     INVALID_TOKEN: wrongCode,

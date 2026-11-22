@@ -62,8 +62,13 @@ describe('describeSignInFailure: the password', () => {
     expect(describeSignInFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'suspended' });
   });
 
-  it.each(contexts)('shows a paused organisation as its own screen (%s)', (context) => {
+  it.each<FailureContext>(['password', 'passkey', 'code'])('shows a paused organisation as its own screen once the password has matched (%s)', (context) => {
     expect(describeSignInFailure(answer(403, 'TENANT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'org-paused' });
+  });
+
+  it.each<FailureContext>(['reset', 'other'])('never shows an account’s or an organisation’s standing to a signed-out request (%s)', (context) => {
+    expect(describeSignInFailure(answer(403, 'TENANT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
+    expect(describeSignInFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
   });
 });
 

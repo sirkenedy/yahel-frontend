@@ -51,7 +51,10 @@ export type FeedbackMap<Field extends string = string, Next extends string = str
 
 const serverError = { place: 'banner', tone: 'danger', title: m.serverErrorTitle, text: m.serverErrorText, next: 'retry' } as const;
 
-/** The rows that read the same in every flow: the connection, the server, the session, and the states only a whole screen can tell. */
+/**
+ * The rows that read the same in every flow: the connection, the server, the session and a spent link.
+ * An account's or an organisation's standing is not here: it is told only where a password has been proven (sign-in's rows).
+ */
 export const commonRows = {
   OFFLINE: { place: 'banner', tone: 'offline', title: m.offlineTitle, text: m.offlineText, next: 'retry' },
   // A request that got no answer is told on the step, where what was typed still is; only a declared outage takes the step's place.
@@ -63,8 +66,6 @@ export const commonRows = {
   UNKNOWN: serverError,
   SESSION_EXPIRED: { place: 'screen', screen: 'session-ended' },
   TOKEN_REUSE_DETECTED: { place: 'screen', screen: 'signed-out-everywhere' },
-  ACCOUNT_SUSPENDED: { place: 'screen', screen: 'suspended' },
-  TENANT_SUSPENDED: { place: 'screen', screen: 'org-paused' },
   INVITE_EXPIRED: { place: 'screen', screen: 'link-expired' },
   INVITE_ALREADY_USED: { place: 'screen', screen: 'link-used' },
   INVITE_ALREADY_ACCEPTED: { place: 'screen', screen: 'link-used' },
