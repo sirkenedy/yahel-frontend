@@ -1347,7 +1347,7 @@
       "y": 16138
     },
     "accounts/screens/business/BusinessAdminMobile.dc.html": {
-      "h": 1043,
+      "h": 1062,
       "page": "accounts",
       "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Mobile, light",
       "w": 390,
@@ -1451,7 +1451,7 @@
       "y": 18519
     },
     "accounts/screens/business/BusinessAdminMobileDark.dc.html": {
-      "h": 1043,
+      "h": 1062,
       "page": "accounts",
       "title": "Onboarding / 4 Business sign-up / 08 Admin sign-in / Mobile, dark",
       "w": 390,
@@ -1689,6 +1689,214 @@
       "w": 390,
       "x": 2350,
       "y": 24526
+    },
+    "accounts/states/FeedbackStates.dc.html": {
+      "h": 5320,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 00 Patterns",
+      "w": 1440,
+      "x": 0,
+      "y": 26112
+    },
+    "accounts/states/FeedbackCodeMap.dc.html": {
+      "h": 3190,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 00 Backend code map",
+      "w": 1440,
+      "x": 1520,
+      "y": 26112
+    },
+    "accounts/screens/states/StateLocked.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 01 Sign-in paused / Desktop, light",
+      "w": 1440,
+      "x": 3200,
+      "y": 26112
+    },
+    "accounts/screens/states/StateSuspended.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 02 Account suspended / Desktop, light",
+      "w": 1440,
+      "x": 4720,
+      "y": 26112
+    },
+    "accounts/screens/states/StateOrgpaused.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 03 Organisation paused / Desktop, light",
+      "w": 1440,
+      "x": 6240,
+      "y": 26112
+    },
+    "accounts/screens/states/StateExpired.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 04 Link expired / Desktop, light",
+      "w": 1440,
+      "x": 7760,
+      "y": 26112
+    },
+    "accounts/screens/states/StateError.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 05 Something went wrong / Desktop, light",
+      "w": 1440,
+      "x": 9280,
+      "y": 26112
+    },
+    "accounts/screens/states/StateMaint.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 06 Down for maintenance / Desktop, light",
+      "w": 1440,
+      "x": 10800,
+      "y": 26112
+    },
+    "accounts/screens/states/StateLockedDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 01 Sign-in paused / Desktop, dark",
+      "w": 1440,
+      "x": 3200,
+      "y": 27132
+    },
+    "accounts/screens/states/StateSuspendedDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 02 Account suspended / Desktop, dark",
+      "w": 1440,
+      "x": 4720,
+      "y": 27132
+    },
+    "accounts/screens/states/StateOrgpausedDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 03 Organisation paused / Desktop, dark",
+      "w": 1440,
+      "x": 6240,
+      "y": 27132
+    },
+    "accounts/screens/states/StateExpiredDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 04 Link expired / Desktop, dark",
+      "w": 1440,
+      "x": 7760,
+      "y": 27132
+    },
+    "accounts/screens/states/StateErrorDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 05 Something went wrong / Desktop, dark",
+      "w": 1440,
+      "x": 9280,
+      "y": 27132
+    },
+    "accounts/screens/states/StateMaintDark.dc.html": {
+      "h": 900,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 06 Down for maintenance / Desktop, dark",
+      "w": 1440,
+      "x": 10800,
+      "y": 27132
+    },
+    "accounts/screens/states/StateLockedMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 01 Sign-in paused / Mobile, light",
+      "w": 390,
+      "x": 3200,
+      "y": 28152
+    },
+    "accounts/screens/states/StateSuspendedMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 02 Account suspended / Mobile, light",
+      "w": 390,
+      "x": 3670,
+      "y": 28152
+    },
+    "accounts/screens/states/StateOrgpausedMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 03 Organisation paused / Mobile, light",
+      "w": 390,
+      "x": 4140,
+      "y": 28152
+    },
+    "accounts/screens/states/StateExpiredMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 04 Link expired / Mobile, light",
+      "w": 390,
+      "x": 4610,
+      "y": 28152
+    },
+    "accounts/screens/states/StateErrorMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 05 Something went wrong / Mobile, light",
+      "w": 390,
+      "x": 5080,
+      "y": 28152
+    },
+    "accounts/screens/states/StateMaintMobile.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 06 Down for maintenance / Mobile, light",
+      "w": 390,
+      "x": 5550,
+      "y": 28152
+    },
+    "accounts/screens/states/StateLockedMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 01 Sign-in paused / Mobile, dark",
+      "w": 390,
+      "x": 3200,
+      "y": 29218
+    },
+    "accounts/screens/states/StateSuspendedMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 02 Account suspended / Mobile, dark",
+      "w": 390,
+      "x": 3670,
+      "y": 29218
+    },
+    "accounts/screens/states/StateOrgpausedMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 03 Organisation paused / Mobile, dark",
+      "w": 390,
+      "x": 4140,
+      "y": 29218
+    },
+    "accounts/screens/states/StateExpiredMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 04 Link expired / Mobile, dark",
+      "w": 390,
+      "x": 4610,
+      "y": 29218
+    },
+    "accounts/screens/states/StateErrorMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 05 Something went wrong / Mobile, dark",
+      "w": 390,
+      "x": 5080,
+      "y": 29218
+    },
+    "accounts/screens/states/StateMaintMobileDark.dc.html": {
+      "h": 844,
+      "page": "accounts",
+      "title": "Onboarding / 6 Feedback states / 06 Down for maintenance / Mobile, dark",
+      "w": 390,
+      "x": 5550,
+      "y": 29218
     }
   },
   "order": [
@@ -1895,7 +2103,33 @@
     "accounts/screens/admin/AdminCodeMobileDark.dc.html",
     "accounts/screens/admin/AdminWelcomeMobileDark.dc.html",
     "accounts/screens/admin/AdminAddpasskeyMobileDark.dc.html",
-    "accounts/screens/admin/AdminPasskeyMobileDark.dc.html"
+    "accounts/screens/admin/AdminPasskeyMobileDark.dc.html",
+    "accounts/states/FeedbackStates.dc.html",
+    "accounts/states/FeedbackCodeMap.dc.html",
+    "accounts/screens/states/StateLocked.dc.html",
+    "accounts/screens/states/StateSuspended.dc.html",
+    "accounts/screens/states/StateOrgpaused.dc.html",
+    "accounts/screens/states/StateExpired.dc.html",
+    "accounts/screens/states/StateError.dc.html",
+    "accounts/screens/states/StateMaint.dc.html",
+    "accounts/screens/states/StateLockedDark.dc.html",
+    "accounts/screens/states/StateSuspendedDark.dc.html",
+    "accounts/screens/states/StateOrgpausedDark.dc.html",
+    "accounts/screens/states/StateExpiredDark.dc.html",
+    "accounts/screens/states/StateErrorDark.dc.html",
+    "accounts/screens/states/StateMaintDark.dc.html",
+    "accounts/screens/states/StateLockedMobile.dc.html",
+    "accounts/screens/states/StateSuspendedMobile.dc.html",
+    "accounts/screens/states/StateOrgpausedMobile.dc.html",
+    "accounts/screens/states/StateExpiredMobile.dc.html",
+    "accounts/screens/states/StateErrorMobile.dc.html",
+    "accounts/screens/states/StateMaintMobile.dc.html",
+    "accounts/screens/states/StateLockedMobileDark.dc.html",
+    "accounts/screens/states/StateSuspendedMobileDark.dc.html",
+    "accounts/screens/states/StateOrgpausedMobileDark.dc.html",
+    "accounts/screens/states/StateExpiredMobileDark.dc.html",
+    "accounts/screens/states/StateErrorMobileDark.dc.html",
+    "accounts/screens/states/StateMaintMobileDark.dc.html"
   ],
   "notes": {
     "accounts-admin": {
@@ -1920,7 +2154,7 @@
       "fill": "blue",
       "page": "accounts",
       "size": 40,
-      "text": "How this page is organised\n\n1 Clickable prototype: press Play. Every button, field and choice works. Use the moon for dark mode and the eye button to blur personal details while sharing your screen. The dark bar jumps between Sign in, Personal and Business.\n\n2 Every screen, four ways: desktop light, desktop dark, mobile light, mobile dark.\n\n5 Business: after checkout the admin signs in to Admin (password, phone code), accepts a plain-language notice about admin-managed accounts, and is offered a passkey. Admin, domain verification and mail setup move to the Onboarding collection.\n\nPrivacy by design: the progress card never shows what you typed, and the review screen hides birthday and recovery details until you choose Show.",
+      "text": "How this page is organised\n\n1 Clickable prototype: press Play. Every button, field and choice works. Use the moon for dark mode and the eye button to blur personal details while sharing your screen. The dark bar jumps between Sign in, Personal and Business.\n\n2 Every screen, four ways: desktop light, desktop dark, mobile light, mobile dark.\n\n5 Business: after checkout the admin signs in to Admin (password, phone code), accepts a plain-language notice about admin-managed accounts, and is offered a passkey. Admin, domain verification and mail setup move to the Onboarding collection.\n\n6 Feedback states: nine patterns (input states, field message, banner, toast, connection bar, busy button, countdown, dialog, full page), the backend code map, and every full-page state four ways. In the prototype, press States on the dark bar to go offline, slow the network, fail a step, end the session or open any full-page state. Hints under fields show test values, like nobody@example.com or the password wrong.\n\nPrivacy by design: the progress card never shows what you typed, and the review screen hides birthday and recovery details until you choose Show.",
       "w": 1400,
       "x": 1520,
       "y": 0
@@ -1960,6 +2194,15 @@
       "w": 240,
       "x": 0,
       "y": 2900
+    },
+    "accounts-states": {
+      "kind": "title1",
+      "maxW": 8000,
+      "page": "accounts",
+      "text": "Onboarding · 6 Feedback states",
+      "w": 240,
+      "x": 0,
+      "y": 25792
     }
   },
   "designSystems": []
