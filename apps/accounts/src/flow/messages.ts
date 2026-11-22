@@ -35,6 +35,26 @@ export const flowMessages = {
   thingsToFix: (count: number) => `${count} things to fix before you continue`,
   listOf: (names: readonly string[]) => `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}.`,
 
+  // What every flow that signs in with a password says once it has matched, and about the code that confirms an address.
+  wrongCredentials: 'That email and password don’t match. Check both and try again.',
+  cannotSignInTitle: 'This account can’t sign in right now',
+  cannotSignIn: 'If you think this is a mistake, contact support, or sign in with another account.',
+  singleSignOnTitle: 'Your organisation signs you in with its own system',
+  singleSignOnRequired: 'Ask your administrator how to sign in.',
+  newPasswordNeededTitle: 'Choose a new password first',
+  newPasswordNeeded: 'This account needs a new password before it can sign in. Resetting it takes under a minute.',
+  resetYourPassword: 'Reset your password',
+  confirmStepTitle: 'Confirm your email.',
+  confirmStepLede: (email: string) => `Your password is right. Enter the 6-character code we just sent to ${email} to finish signing in.`,
+  emailCodeRefused: 'That code didn’t work or has expired. Check it, or send a new one.',
+  codeDeadTitle: 'This code no longer works',
+  tooManyEmailCodes: 'For your safety, a code stops working after too many wrong tries. Get a new one and try again.',
+  emailConfirmedTitle: 'Your email is confirmed',
+  emailConfirmedSignIn: 'We couldn’t sign you in straight away. Enter your password to finish.',
+  newCodeSent: 'New code sent. Older codes no longer work.',
+  /** The emailed-code form's words (`emailed-code-form.tsx`). */
+  emailedCode: { codeLabel: '6-character code', codeIncomplete: 'Enter all 6 characters.', verify: 'Verify', verifying: 'Verifying…', sendNewCode: 'Send a new code', sendNewCodeIn: (clock: string) => `Send a new code in ${clock}`, sending: 'Sending…' },
+
   lockedTitle: 'Sign-in is paused for a while.',
   lockedLede: 'There were too many sign-in tries, so we’ve paused sign-in for a while. This keeps accounts safe.',
   lockedUntil: (at: string) => `You can try again at ${at}.`,

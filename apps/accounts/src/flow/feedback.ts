@@ -71,6 +71,32 @@ export const commonRows = {
   INVITE_ALREADY_ACCEPTED: { place: 'screen', screen: 'link-used' },
 } as const satisfies FeedbackMap<never, 'retry'>;
 
+/** An account's or an organisation's standing: told only where a password has already matched, never to a signed-out request. */
+export const standingRows = {
+  ACCOUNT_SUSPENDED: { place: 'screen', screen: 'suspended' },
+  TENANT_SUSPENDED: { place: 'screen', screen: 'org-paused' },
+} as const satisfies Partial<FeedbackMap>;
+
+/** What the server says only once a password has matched, in every flow that signs in with one. None of it reveals more than signing in would. */
+export const afterPasswordRows = {
+  ...standingRows,
+  TOO_MANY_REQUESTS: { place: 'screen', screen: 'locked' },
+  // A bare 403 is also an inactive membership, so it says only what is known: this account cannot sign in now.
+  FORBIDDEN: { place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' },
+  SSO_REQUIRED: { place: 'banner', tone: 'info', title: m.singleSignOnTitle, text: m.singleSignOnRequired },
+  FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED: { place: 'banner', tone: 'warning', title: m.newPasswordNeededTitle, text: m.newPasswordNeeded, next: 'reset-password' },
+} as const satisfies Partial<FeedbackMap<never, 'support' | 'reset-password'>>;
+
+const emailCodeRefused = { place: 'field', field: 'code', text: m.emailCodeRefused } as const;
+
+/** Submitting a code we sent, by email or by text. A wrong code and an expired one are the same answer from the backend. */
+export const sentCodeRows = {
+  INVALID_TOKEN: emailCodeRefused,
+  REFUSED: emailCodeRefused,
+  FORBIDDEN: emailCodeRefused,
+  TOKEN_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyEmailCodes, next: 'resend' },
+} as const satisfies Partial<FeedbackMap<'code', 'resend'>>;
+
 // A reference is shown to the person, so it is only ever an id: letters, digits and dashes of a sane length.
 const referenceOf = (error: unknown) => (isApiError(error) && error.requestId && error.requestId !== 'unknown' && /^[\w-]{3,64}$/.test(error.requestId) ? error.requestId : undefined);
 

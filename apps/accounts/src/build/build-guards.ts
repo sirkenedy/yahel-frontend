@@ -29,8 +29,8 @@ export function assertReleaseAddresses(command: 'build' | 'serve', env: Record<s
       `${wrong.join(' and ')} must be set to an https address for a release build. For a build that will only run on this machine (tests, bundle checks), set VITE_LOCAL_BUILD=local; \`pnpm build\` does.`,
     );
   }
-  // These three have a place inside this app when unset; set, they lead people elsewhere and must do so safely.
-  const insecure = ['VITE_SIGN_IN_URL', 'VITE_SIGN_UP_URL', 'VITE_BUSINESS_SIGN_UP_URL', 'VITE_ADMIN_SIGN_IN_URL', 'VITE_BUSINESS_TERMS_URL', 'VITE_TRIAL_TERMS_URL', 'VITE_DOMAIN_TERMS_URL'].filter((name) => env[name] && !isSecureAddress(env[name]));
+  // These have a place inside this app when unset; set, they lead people elsewhere and must do so safely.
+  const insecure = ['VITE_SIGN_IN_URL', 'VITE_SIGN_UP_URL', 'VITE_BUSINESS_SIGN_UP_URL', 'VITE_ADMIN_SIGN_IN_URL', 'VITE_ADMIN_URL', 'VITE_BUSINESS_TERMS_URL', 'VITE_TRIAL_TERMS_URL', 'VITE_DOMAIN_TERMS_URL'].filter((name) => env[name] && !isSecureAddress(env[name]));
   if (insecure.length > 0) throw new Error(`${insecure.join(' and ')} must be an https address in a release build, or left unset.`);
   // The domain of every new Yahel address. A wrong one breaks every sign-up, so a release has to say it.
   if (!isMailDomain(env.VITE_MAIL_DOMAIN)) throw new Error('VITE_MAIL_DOMAIN must be set to the mail domain of new Yahel addresses (for example yahel.com) for a release build. It must match the backend.');

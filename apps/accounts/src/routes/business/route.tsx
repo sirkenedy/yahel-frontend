@@ -1,5 +1,7 @@
 import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { isOffered as isAdminSignInOffered } from '../../features/admin/route-guard';
+import { stepPath as adminStepPath } from '../../features/admin/machine';
 import { BusinessFlowProvider } from '../../features/business/business-flow';
 import { stepOfPath, stepPath } from '../../features/business/machine';
 import { businessFacts, forgetWorkspace, isOffered, isSignedIn } from '../../features/business/route-guard';
@@ -25,6 +27,8 @@ export const Route = createFileRoute('/business')({
 
 function BusinessLayout() {
   const { session, capabilities, business, config, facts } = Route.useRouteContext();
+  // A new administrator signs in where Admin is set up, if this build offers that, and through sign-in otherwise (F-80).
+  const adminSignIn = config.adminSignInUrl ?? (isAdminSignInOffered({ config, capabilities }) ? adminStepPath('signin') : config.signInUrl);
   const navigate = useNavigate();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'start';
   const [detailsHidden, setDetailsHidden] = useState(false);
@@ -40,7 +44,7 @@ function BusinessLayout() {
         capabilities={capabilities}
         store={business}
         facts={facts}
-        links={{ signIn: config.signInUrl, adminSignIn: config.adminSignInUrl, personal: config.signUpUrl, help: config.helpUrl, businessTerms: config.businessTermsUrl, trialTerms: config.trialTermsUrl, domainTerms: config.domainTermsUrl }}
+        links={{ signIn: config.signInUrl, adminSignIn, personal: config.signUpUrl, help: config.helpUrl, businessTerms: config.businessTermsUrl, trialTerms: config.trialTermsUrl, domainTerms: config.domainTermsUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
       >
         <Outlet />

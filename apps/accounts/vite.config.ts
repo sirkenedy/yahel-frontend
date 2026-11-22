@@ -12,7 +12,8 @@ export default defineConfig(({ command, mode }) => {
   assertSwitches(command, env);
   return {
     envDir,
-    plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true }), react()],
+    // A layout's error screen travels with its screens rather than as a file of its own.
+    plugins: [tanstackRouter({ target: 'react', autoCodeSplitting: true, codeSplittingOptions: { defaultBehavior: [['component', 'errorComponent'], ['pendingComponent'], ['notFoundComponent']] } }), react()],
     server: { port: 5175, strictPort: true },
     build: {
       sourcemap: true,
@@ -29,8 +30,10 @@ export default defineConfig(({ command, mode }) => {
               { name: 'personal-steps', test: /features\/personal\/steps\/|routes\/personal\/.*tsr-split=component/ },
               // With what only the workspace flow uses: its provider's pieces, card rules and the parts drawn for an order.
               { name: 'business-steps', test: /features\/business\/steps\/|routes\/business\/.*tsr-split=component|ui\/src\/components\/flow\/(chips|order)\./ },
+              // With the provider and its requests: they are used by nothing else.
+              { name: 'admin-steps', test: /features\/admin\/(steps\/|admin-flow|requests|feedback|messages|validation)|routes\/admin\/.*tsr-split=component/ },
               // What only steps are built from, the whole-screen states among them: one file beside the first flow shown, not a dozen.
-              { name: 'step-kit', test: /src\/flow\/(step-frame|state-screen|resend-link|use-step-field|credentials|use-debounced-value|emailed-code-form|birth-fields|birth-date|countries|dates)|ui\/src\/components\/flow\/(flow-field|code-input|choice|flow-select|progress|suggestions)\./ },
+              { name: 'step-kit', test: /src\/flow\/(email-confirmation|use-signed-in-account|step-frame|state-screen|resend-link|use-step-field|credentials|use-debounced-value|emailed-code-form|phone-country-select|birth-fields|birth-date|countries|dates)|ui\/src\/components\/flow\/(flow-field|code-input|choice|flow-select|progress|suggestions)\./ },
             ],
           },
         },
