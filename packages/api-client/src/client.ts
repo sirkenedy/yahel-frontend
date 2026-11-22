@@ -29,6 +29,9 @@ interface Envelope {
   meta?: { requestId?: string; validationErrors?: string[] };
 }
 
+/** What the backend's auth guard answers, with 401, when the access token is missing, expired or revoked. */
+const ACCESS_TOKEN_REFUSED = 'SESSION_EXPIRED';
+
 export function createApiClient(options: ApiClientOptions) {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Spec paths carry the global "/api" prefix; baseUrl already ends with it.
@@ -58,13 +61,16 @@ export function createApiClient(options: ApiClientOptions) {
 
     if (response.ok) return (envelope.data ?? null) as T;
 
-    if (response.status === 401 && request.auth && !retried && options.refreshSession && (await options.refreshSession())) {
+    const code = envelope.error?.code ?? envelope.code ?? 'UNKNOWN_ERROR';
+    // Only the backend's own "the access token is no longer good" is answered by refreshing and asking again.
+    // Any other 401 (a wrong code, say) is the answer to the request itself; asking again would spend a second attempt.
+    if (response.status === 401 && code === ACCESS_TOKEN_REFUSED && request.auth && !retried && options.refreshSession && (await options.refreshSession())) {
       return send<T>(method, path, request, true);
     }
 
     throw new ApiError({
       status: response.status,
-      code: envelope.error?.code ?? envelope.code ?? 'UNKNOWN_ERROR',
+      code,
       message: envelope.error?.message ?? envelope.message ?? response.statusText,
       requestId: envelope.meta?.requestId,
       validationErrors: envelope.meta?.validationErrors,
@@ -92,7 +98,6 @@ export function createApiClient(options: ApiClientOptions) {
       get: (signal?: AbortSignal) => request<Profile>('GET', '/api/v1/me', { auth: true, signal }),
       update: (body: Schemas['UpdateProfileDto']) => request<Profile>('PATCH', '/api/v1/me', { auth: true, body }),
       recovery: {
-        get: () => request<RecoveryMethods>('GET', '/api/v1/me/recovery', { auth: true }),
         updateEmail: (body: Schemas['UpdateRecoveryEmailDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/email', { auth: true, body }),
         /** Stages the number and texts a code to it; `verifyPhone` confirms it. */
         updatePhone: (body: Schemas['UpdatePhoneDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/phone', { auth: true, body }),

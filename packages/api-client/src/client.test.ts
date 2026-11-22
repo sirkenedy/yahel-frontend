@@ -26,11 +26,11 @@ describe('createApiClient', () => {
     expect(error).toMatchObject({ status: 400, code: 'VALIDATION_ERROR', requestId: 'r-1', validationErrors: ['email must be an email'] });
   });
 
-  it('refreshes once on 401 and retries the request', async () => {
+  it('refreshes once when the access token is refused and retries the request', async () => {
     let token = 'expired';
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(json(401, { success: false, code: 'UNAUTHORIZED', message: 'Unauthorized' }))
+      .mockResolvedValueOnce(json(401, { success: false, code: 'SESSION_EXPIRED', message: 'Your session has expired' }))
       .mockResolvedValueOnce(json(200, { success: true, data: { id: '1' } }));
     const refreshSession = vi.fn().mockImplementation(async () => {
       token = 'fresh';
@@ -44,7 +44,7 @@ describe('createApiClient', () => {
   });
 
   it('does not retry twice and surfaces the 401', async () => {
-    const fetchMock = vi.fn().mockImplementation(async () => json(401, { success: false, code: 'UNAUTHORIZED', message: 'Unauthorized' }));
+    const fetchMock = vi.fn().mockImplementation(async () => json(401, { success: false, code: 'SESSION_EXPIRED', message: 'Your session has expired' }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 't', refreshSession: async () => true, fetch: fetchMock });
 
     await expect(api.me.get()).rejects.toMatchObject({ status: 401 });
@@ -111,13 +111,24 @@ describe('createApiClient', () => {
     expect(init.headers.Authorization).toBe('Bearer token-1');
   });
 
-  it('me.recovery.get reads the masked methods as the signed-in person', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: recovery }));
-    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+  it('does not refresh or resend when a signed-in request is refused for its own reasons, such as a wrong code', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(401, { success: false, code: 'INVALID_TOKEN', message: 'Invalid or expired phone verification code' }));
+    const refreshSession = vi.fn().mockResolvedValue(true);
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', refreshSession, fetch: fetchMock });
 
-    await expect(api.me.recovery.get()).resolves.toEqual(recovery);
-    expect(fetchMock.mock.calls[0]![0]).toBe('http://api.test/api/v1/me/recovery');
-    expect(fetchMock.mock.calls[0]![1].headers.Authorization).toBe('Bearer token-1');
+    await expect(api.me.recovery.verifyPhone({ code: 'wrong1' })).rejects.toMatchObject({ status: 401, code: 'INVALID_TOKEN' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(refreshSession).not.toHaveBeenCalled();
+  });
+
+  it('does not refresh on a 401 that carries no code at all', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('', { status: 401 }));
+    const refreshSession = vi.fn().mockResolvedValue(true);
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', refreshSession, fetch: fetchMock });
+
+    await expect(api.me.get()).rejects.toMatchObject({ status: 401 });
+    expect(refreshSession).not.toHaveBeenCalled();
   });
 
   it('surfaces a taken address from register with its backend code', async () => {
