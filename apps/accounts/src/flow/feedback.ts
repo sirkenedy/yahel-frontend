@@ -2,8 +2,8 @@ import { isApiError } from '@yahel/api-client';
 import type { FlowTone } from '@yahel/ui';
 import { flowMessages as m } from './messages';
 
-/** The whole-screen states. Several share one drawn screen: the two links and the two sessions are "Expired", the two outages "Maintenance". */
-export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' | 'link-used' | 'session-ended' | 'signed-out-everywhere' | 'maintenance' | 'unreachable';
+/** The whole-screen states. Several share one drawn screen: the two links and the two sessions are "Expired". */
+export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' | 'link-used' | 'session-ended' | 'signed-out-everywhere' | 'maintenance';
 
 /**
  * A failure, described for the person: which state shows it, where, in which words, and what they can do
@@ -54,7 +54,8 @@ const serverError = { place: 'banner', tone: 'danger', title: m.serverErrorTitle
 /** The rows that read the same in every flow: the connection, the server, the session, and the states only a whole screen can tell. */
 export const commonRows = {
   OFFLINE: { place: 'banner', tone: 'offline', title: m.offlineTitle, text: m.offlineText, next: 'retry' },
-  UNREACHABLE: { place: 'screen', screen: 'unreachable' },
+  // A request that got no answer is told on the step, where what was typed still is; only a declared outage takes the step's place.
+  UNREACHABLE: { place: 'banner', tone: 'offline', title: m.unreachableTitle, text: m.unreachableText, next: 'retry' },
   SERVICE_UNAVAILABLE: { place: 'screen', screen: 'maintenance' },
   TOO_MANY_REQUESTS: { place: 'banner', tone: 'warning', title: m.tooManyTitle, text: m.tooManyText },
   INTERNAL_ERROR: serverError,

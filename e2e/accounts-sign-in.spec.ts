@@ -57,13 +57,14 @@ test.describe('accounts: sign in with a password', () => {
   });
 
   test('a lost connection is reported plainly and the attempt can be repeated', async ({ page }) => {
-    await mockApi(page, { offline: true });
+    const api = await mockApi(page, { offline: true });
     await signInWithPassword(page);
 
-    // No answer while the browser says it is online: the service is not answering, which is a whole screen.
-    await expect(page.getByRole('heading', { level: 1, name: 'We can’t reach Yahel right now.' })).toBeFocused();
+    // No answer while the browser says it is online: told on the step, which stays as it was.
+    await expect(page.getByRole('alert').filter({ hasText: 'We can’t reach Yahel right now' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Enter your password.' })).toBeVisible();
     await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect.poll(() => loginCalls(api).length).toBe(2);
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
   });
 

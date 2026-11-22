@@ -19,8 +19,8 @@ const ownEmail = 'amara@mail.example';
 const attestation = { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] };
 const failure = (status: number, code: string) => new ApiError({ status, code, message: 'x' });
 const offline = () => failure(0, 'NETWORK_ERROR');
-// No answer while the browser says it is online: the service is not answering, which takes the whole screen.
-const unreachable = { place: 'screen', screen: 'unreachable' };
+// No answer while the browser says it is online: told on the step, which keeps what was typed.
+const unreachable = { place: 'banner', tone: 'offline', title: shared.unreachableTitle, text: shared.unreachableText, next: 'retry' };
 const wrongCode = { place: 'field', field: 'code', text: m.wrongCode };
 
 const answers: PersonalEvent[] = [

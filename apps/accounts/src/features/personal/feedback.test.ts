@@ -23,10 +23,10 @@ describe('describePersonalFailure: the connection and the server, the same at ev
     expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'banner', tone: 'offline', title: shared.offlineTitle, text: shared.offlineText, next: 'retry' });
   });
 
-  it.each(contexts)('gives the whole screen to a service that does not answer while the device is online (%s)', (context) => {
+  it.each(contexts)('keeps the step, with a banner and Try again, when nothing answers while the device is online (%s)', (context) => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
 
-    expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'screen', screen: 'unreachable' });
+    expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'banner', tone: 'offline', title: shared.unreachableTitle, text: shared.unreachableText, next: 'retry' });
   });
 
   it.each(contexts)('shows the maintenance screen for a 503 (%s)', (context) => {

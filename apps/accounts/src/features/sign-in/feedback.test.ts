@@ -123,7 +123,7 @@ describe('describeSignInFailure: what reads the same at every step', () => {
     expect(describeSignInFailure(dropped, context)).toEqual({ place: 'banner', tone: 'offline', title: fm.offlineTitle, text: fm.offlineText, next: 'retry' });
 
     online.mockReturnValue(true);
-    expect(describeSignInFailure(dropped, context)).toEqual({ place: 'screen', screen: 'unreachable' });
+    expect(describeSignInFailure(dropped, context)).toEqual({ place: 'banner', tone: 'offline', title: fm.unreachableTitle, text: fm.unreachableText, next: 'retry' });
   });
 
   it('counts down a rate limit away from sign-in itself, as a warning', () => {

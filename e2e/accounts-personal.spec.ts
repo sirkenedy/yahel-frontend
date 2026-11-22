@@ -460,8 +460,8 @@ test.describe('personal account: creating', () => {
     api.failNext('/v1/auth/register', 'lost');
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    // The answer never came while the browser was online: the whole screen for a service that is not answering.
-    await expect(heading(page, 'We can’t reach Yahel right now.')).toBeFocused();
+    // The answer never came while the browser was online: a banner on the creating screen, with the retry in place.
+    await expect(page.getByRole('alert').filter({ hasText: 'We can’t reach Yahel right now' })).toBeVisible();
     await page.getByRole('button', { name: 'Try again' }).click();
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();

@@ -27,7 +27,7 @@ Everything a sign-in or sign-up step has to tell that is not one field's problem
 | Banner, info | Confirm your email first, single sign-on |
 | Banner, success | Something worked and the result stays on the page |
 | Toast, success or info | A code was sent, the connection came back |
-| State: locked, suspended, organisation paused, expired, error, maintenance | The six whole screens. Expired also words a session that ended and an invitation already used; maintenance also words a service that is not answering |
+| State: locked, suspended, organisation paused, expired, error, maintenance | The six whole screens. Expired also words a session that ended and an invitation already used |
 
 ## States
 

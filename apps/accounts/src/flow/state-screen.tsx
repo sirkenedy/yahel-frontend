@@ -69,8 +69,6 @@ function draw({ kind, account = null, retryAt, exits, onRetry }: StateScreenProp
       const until = window?.until ?? retryAt ?? null;
       return { tone: 'info', icon: 'wrench', title: m.maintenanceTitle, lede: m.maintenanceLede(until ? m.timeOf(until) : null), note: window ? m.maintenanceWindow(m.timeOf(window.from), m.timeOf(window.until)) : null, actions: again(onRetry) };
     }
-    case 'unreachable':
-      return { tone: 'info', icon: 'wrench', title: m.unreachableTitle, lede: m.unreachableLede, actions: again(onRetry) };
   }
 }
 

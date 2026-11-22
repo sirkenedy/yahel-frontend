@@ -203,16 +203,16 @@ describe('FlowStepFrame', () => {
   it('puts a whole-screen state in the step’s place, with its own page title, and “Try again” shows the step again', () => {
     const clear = vi.fn();
     render(
-      <FlowStepFrame {...frame} requests={[request({ place: 'screen', screen: 'unreachable' }, { clear })]}>
+      <FlowStepFrame {...frame} requests={[request({ place: 'screen', screen: 'maintenance' }, { clear })]}>
         <p>fields</p>
       </FlowStepFrame>,
       { wrapper: withQueries },
     );
 
-    expect(screen.getByRole('heading', { level: 1, name: m.unreachableTitle })).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 1, name: m.maintenanceTitle })).toHaveFocus();
     expect(screen.queryByRole('heading', { name: frame.title })).not.toBeInTheDocument();
     expect(screen.queryByText('fields')).not.toBeInTheDocument();
-    expect(document.title).toBe(m.pageTitle(m.unreachableTitle));
+    expect(document.title).toBe(m.pageTitle(m.maintenanceTitle));
 
     fireEvent.click(screen.getByRole('button', { name: m.tryAgain }));
     expect(clear).toHaveBeenCalledTimes(1);
@@ -239,7 +239,7 @@ describe('FlowStepFrame', () => {
   });
 
   it('shows the step and its title again once the state is put away', () => {
-    const { rerender } = render(<FlowStepFrame {...frame} requests={[request({ place: 'screen', screen: 'unreachable' })]} />, { wrapper: withQueries });
+    const { rerender } = render(<FlowStepFrame {...frame} requests={[request({ place: 'screen', screen: 'maintenance' })]} />, { wrapper: withQueries });
     expect(document.title).not.toBe(frame.pageTitle);
 
     rerender(<FlowStepFrame {...frame} requests={[request(null)]} />);

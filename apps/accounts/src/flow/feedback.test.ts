@@ -93,10 +93,10 @@ describe('describeFailure with the rows every flow shares', () => {
     expect(told(network)).toEqual({ place: 'banner', tone: 'offline', title: m.offlineTitle, text: m.offlineText, next: 'retry' });
   });
 
-  it('shows the unavailable screen when nothing answers although the device is online', () => {
+  it('tells a request that got no answer while the device is online in a banner on the step, with Try again', () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
 
-    expect(told(network)).toEqual({ place: 'screen', screen: 'unreachable' });
+    expect(told(network)).toEqual({ place: 'banner', tone: 'offline', title: m.unreachableTitle, text: m.unreachableText, next: 'retry' });
   });
 
   it('tells a server error, an unknown code and a fault of the device in the error banner, with Try again', () => {

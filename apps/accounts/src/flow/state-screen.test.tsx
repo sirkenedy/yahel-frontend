@@ -36,7 +36,6 @@ describe('StateScreen', () => {
     ['session-ended', m.sessionEndedTitle],
     ['signed-out-everywhere', m.signedOutTitle],
     ['maintenance', m.maintenanceTitle],
-    ['unreachable', m.unreachableTitle],
   ])('%s: names the page by its heading, moves focus to it and titles the tab', (kind, title) => {
     show(kind);
 
@@ -185,19 +184,8 @@ describe('StateScreen', () => {
 
   it('asks about a window only for maintenance', () => {
     const serviceStatus: ServiceStatus = { window: vi.fn().mockResolvedValue(null) };
-    show('unreachable', { serviceStatus });
     show('locked', { serviceStatus });
 
     expect(serviceStatus.window).not.toHaveBeenCalled();
-  });
-
-  it('unreachable: does not blame the person’s connection or claim an upgrade, and offers another try', async () => {
-    const { onRetry } = show('unreachable');
-
-    expect(screen.getByText(m.unreachableLede)).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(m.maintenanceTitle);
-
-    await userEvent.click(screen.getByRole('button', { name: m.tryAgain }));
-    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

@@ -56,11 +56,11 @@ const feedbackScreens: Screen[] = [
   { name: 'accounts state: organisation paused', open: signInRefused('Your organisation is paused.', 403, 'TENANT_SUSPENDED') },
   { name: 'accounts state: maintenance, with its window', open: signInRefused('Planned maintenance runs from', 503, 'SERVICE_UNAVAILABLE') },
   {
-    name: 'accounts state: not answering',
+    name: 'accounts banner: not answering, with Try again',
     open: async (page) => {
       await page.route('**/api/v1/auth/login', (route) => route.abort('connectionfailed'));
       await signInWithPassword(page);
-      await page.getByRole('heading', { name: 'We can’t reach Yahel right now.' }).waitFor();
+      await page.getByText('We can’t reach Yahel right now').waitFor();
     },
   },
   { name: 'accounts banner: our side, with the reference and Try again', open: signInRefused('Something went wrong on our side', 500, 'INTERNAL_ERROR') },
