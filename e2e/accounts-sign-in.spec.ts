@@ -737,9 +737,19 @@ test.describe('accounts: page furniture', () => {
 
   test('a passkey is offered wherever the browser supports them, built-in authenticator or not', async ({ page }) => {
     await mockApi(page);
+    // A browser that has WebAuthn but no fingerprint or face reader of its own: the passkey may be on a
+    // phone or a security key. It is described here rather than taken from the test browser, because not
+    // every engine's test build exposes WebAuthn at all.
+    await page.addInitScript(() => {
+      class PublicKeyCredential {
+        static isUserVerifyingPlatformAuthenticatorAvailable = async () => false;
+      }
+      Object.defineProperty(window, 'PublicKeyCredential', { configurable: true, value: PublicKeyCredential });
+      Object.defineProperty(navigator, 'credentials', { configurable: true, value: { get: async () => null } });
+    });
     await openEmailStep(page);
 
-    expect(await page.evaluate(() => Boolean(window.PublicKeyCredential))).toBe(true);
+    expect(await page.evaluate(() => (window.PublicKeyCredential as unknown as { isUserVerifyingPlatformAuthenticatorAvailable(): Promise<boolean> }).isUserVerifyingPlatformAuthenticatorAvailable())).toBe(false);
     await expect(page.getByRole('button', { name: 'Sign in with a passkey' })).toBeVisible();
   });
 
