@@ -127,8 +127,7 @@ export const businessMessages = {
   street2: 'Building, floor or suite',
   localArea: 'Local government area',
   postalCode: 'Postal code',
-  privacyOnTitle: (domain: string) => `Privacy protection is on for ${domain}`,
-  privacyOn: 'Your address and phone stay out of public domain records.',
+  privacyOn: (domain: string) => `Privacy protection is on for ${domain}. Your address and phone stay out of public domain records.`,
   saveAddress: 'Save address',
 
   adminTitle: 'Create your admin sign-in.',

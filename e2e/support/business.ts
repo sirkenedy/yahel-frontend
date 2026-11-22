@@ -122,6 +122,8 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await proceed(page, 'Continue to checkout');
 
   await heading(page, 'Review and check out.').waitFor();
+  // The heading is there while the order is being priced; the screen is ready once the sums are.
+  await page.getByRole('group', { name: 'Order summary' }).waitFor();
   if (seats !== undefined && seats <= 10) await page.getByRole('radio', { name: String(seats), exact: true }).check({ force: true });
   if (seats !== undefined && seats > 10) {
     await page.getByRole('radio', { name: '11+', exact: true }).check({ force: true });
@@ -132,7 +134,7 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
     await heading(page, 'Your business address').waitFor();
     await fillAddress(page);
     await proceed(page, 'Save address');
-    await heading(page, 'Review and check out.').waitFor();
+    await page.getByRole('group', { name: 'Order summary' }).waitFor();
   }
   if (stop === 'checkout') return;
   await fillCard(page, cardNumber);

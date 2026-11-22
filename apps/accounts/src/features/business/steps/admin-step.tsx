@@ -32,7 +32,6 @@ export function AdminStep() {
   const form = useStepFields([username, password, again]);
   const score = passwordStrength(password.value, state.firstName);
   const button = offers.billing ? m.agreeAndContinue : m.agreeAndCreate;
-  const shared = { showText: m.show, hideText: m.hide, showLabel: m.showPassword, hideLabel: m.hidePassword, isRevealed: revealed, onRevealedChange: setRevealed, autoComplete: 'new-password' } as const;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     // A revealed password is hidden again before anything else happens, so it is not left on screen.
@@ -41,7 +40,7 @@ export function AdminStep() {
   };
 
   return (
-    <StepFrame title={m.adminTitle} lede={m.adminLede} toFix={form.toFix} requests={[meta.requests.create]}>
+    <StepFrame title={m.adminTitle} lede={m.adminLede} toFix={form.toFix}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Body>
           <FlowTextField
@@ -60,9 +59,10 @@ export function AdminStep() {
             isRequired
           />
           {state.hasPassword ? <FlowNotice>{m.passwordKept}</FlowNotice> : null}
-          <FlowPasswordField {...shared} label={m.password} name="new-password" help={m.passwordHelp} value={password.value} onChange={password.change} onBlur={password.blur} isValid={password.isValid} error={password.error} inputRef={password.inputRef} isRequired={!state.hasPassword} />
+          <FlowPasswordField showText={m.show} hideText={m.hide} showLabel={m.showPassword} hideLabel={m.hidePassword} isRevealed={revealed} onRevealedChange={setRevealed} autoComplete="new-password" label={m.password} name="new-password" help={m.passwordHelp} value={password.value} onChange={password.change} onBlur={password.blur} isValid={password.isValid} error={password.error} inputRef={password.inputRef} isRequired={!state.hasPassword} />
           <PasswordStrength score={score}>{m.strength(m.strengthVerdicts[score], password.value.length)}</PasswordStrength>
-          <FlowPasswordField {...shared} label={m.confirmPassword} name="confirm-password" value={again.value} onChange={again.change} onBlur={again.blur} isValid={again.isValid} error={again.error} inputRef={again.inputRef} isRequired={!state.hasPassword} />
+          {/* One "Show" serves both fields, as drawn: the second follows the first. */}
+          <FlowTextField label={m.confirmPassword} name="confirm-password" type={revealed ? 'text' : 'password'} autoComplete="new-password" spellCheck="false" value={again.value} onChange={again.change} onBlur={again.blur} isValid={again.isValid} error={again.error} inputRef={again.inputRef} isRequired={!state.hasPassword} />
           {offers.marketing ? (
             <>
               <FlowCheckbox isSelected={marketing.productNews} onChange={(productNews) => setMarketing({ ...marketing, productNews })}>

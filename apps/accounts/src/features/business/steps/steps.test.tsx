@@ -306,7 +306,7 @@ describe('RegistrantStep', () => {
   it('takes the registrant’s address for a domain bought here, with privacy protection said plainly', async () => {
     const { actions, user } = setup(<RegistrantStep />, { state: buying });
     expect(screen.getByRole('heading', { level: 1, name: m.registrantTitle('northwindstudio.com') })).toBeInTheDocument();
-    expect(screen.getByText(m.privacyOnTitle('northwindstudio.com'))).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(m.privacyOn('northwindstudio.com'));
     expect(field(m.phoneCountry)).toHaveValue('NG');
 
     await user.type(field(m.street), '12 Admiralty Way');

@@ -1,4 +1,4 @@
-import { FlowButton, FlowCallout, FlowIcon, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
+import { FlowButton, FlowNotice, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { namedCountries } from '../../../flow/countries';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
@@ -69,11 +69,7 @@ export function RegistrantStep() {
               <FlowTextField label={m.postalCode} name="postal-code" inputMode={inNigeria ? 'numeric' : 'text'} autoComplete="postal-code" help={m.optional} value={postalCode} onChange={setPostalCode} isSensitive />
             </>
           ) : null}
-          {buying ? (
-            <FlowCallout icon={<FlowIcon name="lock" />} title={m.privacyOnTitle(state.domain)}>
-              {m.privacyOn}
-            </FlowCallout>
-          ) : null}
+          {buying ? <FlowNotice tone="success">{m.privacyOn(state.domain)}</FlowNotice> : null}
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary">

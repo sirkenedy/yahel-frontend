@@ -597,15 +597,16 @@ test.describe('personal account: addresses, reload and history', () => {
     await expect(page).toHaveURL(new RegExp(`^${accountsUrl}/signin/`));
   });
 
-  test('the business choice says it is coming soon while it has nowhere to lead', async ({ page }) => {
+  test('the business choice leads to workspace sign-up, and nothing typed here goes with it', async ({ page }) => {
     await mockApi(page);
     await signUpTo(page, 'type');
 
     await page.getByRole('radio', { name: /For my business or team/ }).check();
     await proceed(page);
 
-    await expect(page.getByText('Business and team accounts are coming soon.')).toBeVisible();
-    await expect(page).toHaveURL(at('/personal/type'));
+    await expect(heading(page, 'Tell us about your business.')).toBeVisible();
+    await expect(page).toHaveURL(at('/business/start'));
+    await expect(page.getByLabel('Business name')).toHaveValue('');
   });
 
   test('personal details can be blurred for a screen share, and come back in focus', async ({ page }) => {
