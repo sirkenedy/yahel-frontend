@@ -94,10 +94,11 @@ describe('AppFrame', () => {
         q
       </AppFrame>,
     );
-    expect(within(screen.getByRole('banner')).getByRole('img', { name: m.signedInAs('amara.okafor@yahel.example') })).toHaveTextContent('AO');
+    expect(within(screen.getByRole('banner')).getByText(m.signedInAs('amara.okafor@yahel.example'))).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByText('AO')).toBeInTheDocument();
 
     rerender(<AppFrame links={links}>q</AppFrame>);
-    expect(screen.queryByRole('img', { name: /Signed in as/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
   });
 
   it('switches between light and dark, naming the control for what it will do', async () => {

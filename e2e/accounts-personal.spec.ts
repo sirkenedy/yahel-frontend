@@ -947,18 +947,20 @@ test.describe('personal account: fixes from review', () => {
   test('the signed-in screens say whose account it is', async ({ page }) => {
     await mockApi(page);
     await signUpTo(page, 'review', { phone: true });
-    await expect(page.getByRole('img', { name: /Signed in as/ })).toHaveCount(0);
+    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    const account = page.getByRole('banner').getByRole('img', { name: `Signed in as ${person.address}` });
+    const account = page.getByRole('banner').getByText(`Signed in as ${person.address}`);
 
     await heading(page, 'Enter the code.').waitFor();
-    await expect(account).toHaveText('AO');
+    await expect(account).toBeAttached();
+    await expect(page.getByRole('banner').getByText('AO')).toBeVisible();
     await page.getByRole('button', { name: 'Skip for now' }).click();
     await heading(page, 'You’re in, Amara.').waitFor();
-    await expect(account).toBeVisible();
+    await expect(account).toBeAttached();
     await page.getByRole('link', { name: /Add someone you trust/ }).click();
     await heading(page, 'Add someone you trust.').waitFor();
-    await expect(account).toBeVisible();
+    await expect(account).toBeAttached();
+    await expect(page.getByRole('banner').getByText('AO')).toBeVisible();
   });
 
   test('the review’s action is reachable: in view at once on a computer, and never under the demo label', async ({ page, isMobile }) => {

@@ -803,9 +803,10 @@ describe('FlowStep.NoteLink and AccountAvatar', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('shows whose account is in use as initials with a name for assistive technology', () => {
+  it('shows whose account is in use as initials, with words in their place for assistive technology', () => {
     render(<AccountAvatar name="Amara Okafor" label="Signed in as amara.okafor@yahel.example" />);
 
-    expect(screen.getByRole('img', { name: 'Signed in as amara.okafor@yahel.example' })).toHaveTextContent('AO');
+    expect(screen.getByText('AO')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText('Signed in as amara.okafor@yahel.example')).toBeInTheDocument();
   });
 });
