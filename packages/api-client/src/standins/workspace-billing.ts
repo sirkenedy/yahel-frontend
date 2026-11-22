@@ -97,6 +97,8 @@ export function quoteFor(order: OrderRequest, now: number): OrderQuote {
     seats,
     trial,
     promo,
+    seatPrice: naira(seat),
+    discountedSeatPrice: promo ? naira(reduced) : null,
     planToday: naira(planToday),
     schedule,
     domain: order.domain ? { name: order.domain, yearly: naira(domainYearly) } : null,

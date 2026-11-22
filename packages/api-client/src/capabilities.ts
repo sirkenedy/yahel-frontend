@@ -231,6 +231,9 @@ export interface OrderQuote {
   /** Whether this order starts with the free trial. */
   trial: boolean;
   promo: PromoCode | null;
+  /** What one person costs a month on this order, and what that becomes while a promo code applies. */
+  seatPrice: Money;
+  discountedSeatPrice: Money | null;
   /** What the plan would cost today if there were no trial. */
   planToday: Money;
   schedule: readonly ScheduledCharge[];

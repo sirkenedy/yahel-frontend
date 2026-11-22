@@ -59,7 +59,7 @@ function Probe({ onValue, onToast }: { onValue: (value: PersonalFlowValue) => vo
 
 afterEach(dismissToast);
 
-const setup = ({ step = 'review' as PersonalStep, standIns = true, passkeys = true, events = answers, business = false } = {}) => {
+const setup = ({ step = 'review' as PersonalStep, standIns = true, passkeys = true, events = answers } = {}) => {
   const session = fakeSession();
   const registrar = passkeys ? fakeRegistrar() : null;
   const capabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
@@ -82,7 +82,7 @@ const setup = ({ step = 'review' as PersonalStep, standIns = true, passkeys = tr
         mailDomain="yahel.example"
         links={{ signIn: '/signin', terms: null, privacy: null }}
         navigate={navigate}
-        leaveForBusiness={business ? leaveForBusiness : null}
+        leaveForBusiness={leaveForBusiness}
         leave={leave}
         pause={instant}
       >
@@ -229,7 +229,7 @@ describe('PersonalFlowProvider: the questions', () => {
 
   it('says where the step sits, how to go back and what is offered', () => {
     const { flow, goTo } = setup({ step: 'birth' });
-    expect(flow().meta).toMatchObject({ backHref: '/personal/name', progress: { current: 2, part: 'basics' }, mailDomain: 'yahel.example', offers: { passkey: true, business: false, contact: true, preferences: true } });
+    expect(flow().meta).toMatchObject({ backHref: '/personal/name', progress: { current: 2, part: 'basics' }, mailDomain: 'yahel.example', offers: { passkey: true, contact: true, preferences: true } });
 
     goTo('ready');
     expect(flow().meta).toMatchObject({ backHref: null, progress: null, direction: 'forward' });
@@ -244,13 +244,10 @@ describe('PersonalFlowProvider: the questions', () => {
     expect(flow().state.addressCheck).toEqual({ status: 'unoffered', alternatives: [] });
   });
 
-  it('leaves for the business sign-up only when it has an address', () => {
-    const offered = setup({ step: 'type', business: true });
+  it('leaves for the business sign-up when that is what the person chose', () => {
+    const offered = setup({ step: 'type' });
     act(() => offered.flow().actions.startBusiness());
     expect(offered.leaveForBusiness).toHaveBeenCalledTimes(1);
-    expect(offered.flow().meta.offers.business).toBe(true);
-
-    expect(setup({ step: 'type' }).flow().meta.offers.business).toBe(false);
   });
 });
 

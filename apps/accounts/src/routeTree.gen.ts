@@ -10,8 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BusinessRouteRouteImport } from './routes/business/route'
 import { Route as PersonalRouteRouteImport } from './routes/personal/route'
 import { Route as SigninRouteRouteImport } from './routes/signin/route'
+import { Route as BusinessIndexRouteImport } from './routes/business/index'
+import { Route as BusinessAdminRouteImport } from './routes/business/admin'
+import { Route as BusinessCardCodeRouteImport } from './routes/business/card-code'
+import { Route as BusinessCheckoutRouteImport } from './routes/business/checkout'
+import { Route as BusinessCreatingRouteImport } from './routes/business/creating'
+import { Route as BusinessDomainRouteImport } from './routes/business/domain'
+import { Route as BusinessDomainOkRouteImport } from './routes/business/domain-ok'
+import { Route as BusinessDomainQuestionRouteImport } from './routes/business/domain-question'
+import { Route as BusinessFindRouteImport } from './routes/business/find'
+import { Route as BusinessPlanRouteImport } from './routes/business/plan'
+import { Route as BusinessReadyRouteImport } from './routes/business/ready'
+import { Route as BusinessRegistrantRouteImport } from './routes/business/registrant'
+import { Route as BusinessStartRouteImport } from './routes/business/start'
+import { Route as BusinessYouRouteImport } from './routes/business/you'
 import { Route as PersonalIndexRouteImport } from './routes/personal/index'
 import { Route as PersonalAddPasskeyRouteImport } from './routes/personal/add-passkey'
 import { Route as PersonalAddressRouteImport } from './routes/personal/address'
@@ -47,6 +62,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusinessRouteRoute = BusinessRouteRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PersonalRouteRoute = PersonalRouteRouteImport.update({
   id: '/personal',
   path: '/personal',
@@ -56,6 +76,76 @@ const SigninRouteRoute = SigninRouteRouteImport.update({
   id: '/signin',
   path: '/signin',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessIndexRoute = BusinessIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessAdminRoute = BusinessAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessCardCodeRoute = BusinessCardCodeRouteImport.update({
+  id: '/card-code',
+  path: '/card-code',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessCheckoutRoute = BusinessCheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessCreatingRoute = BusinessCreatingRouteImport.update({
+  id: '/creating',
+  path: '/creating',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessDomainRoute = BusinessDomainRouteImport.update({
+  id: '/domain',
+  path: '/domain',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessDomainOkRoute = BusinessDomainOkRouteImport.update({
+  id: '/domain-ok',
+  path: '/domain-ok',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessDomainQuestionRoute = BusinessDomainQuestionRouteImport.update({
+  id: '/domain-question',
+  path: '/domain-question',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessFindRoute = BusinessFindRouteImport.update({
+  id: '/find',
+  path: '/find',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessPlanRoute = BusinessPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessReadyRoute = BusinessReadyRouteImport.update({
+  id: '/ready',
+  path: '/ready',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessRegistrantRoute = BusinessRegistrantRouteImport.update({
+  id: '/registrant',
+  path: '/registrant',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessStartRoute = BusinessStartRouteImport.update({
+  id: '/start',
+  path: '/start',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessYouRoute = BusinessYouRouteImport.update({
+  id: '/you',
+  path: '/you',
+  getParentRoute: () => BusinessRouteRoute,
 } as any)
 const PersonalIndexRoute = PersonalIndexRouteImport.update({
   id: '/',
@@ -205,8 +295,22 @@ const SigninRecoverCodeRoute = SigninRecoverCodeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/business': typeof BusinessRouteRouteWithChildren
   '/personal': typeof PersonalRouteRouteWithChildren
   '/signin': typeof SigninRouteRouteWithChildren
+  '/business/admin': typeof BusinessAdminRoute
+  '/business/card-code': typeof BusinessCardCodeRoute
+  '/business/checkout': typeof BusinessCheckoutRoute
+  '/business/creating': typeof BusinessCreatingRoute
+  '/business/domain': typeof BusinessDomainRoute
+  '/business/domain-ok': typeof BusinessDomainOkRoute
+  '/business/domain-question': typeof BusinessDomainQuestionRoute
+  '/business/find': typeof BusinessFindRoute
+  '/business/plan': typeof BusinessPlanRoute
+  '/business/ready': typeof BusinessReadyRoute
+  '/business/registrant': typeof BusinessRegistrantRoute
+  '/business/start': typeof BusinessStartRoute
+  '/business/you': typeof BusinessYouRoute
   '/personal/add-passkey': typeof PersonalAddPasskeyRoute
   '/personal/address': typeof PersonalAddressRoute
   '/personal/birth': typeof PersonalBirthRoute
@@ -234,11 +338,25 @@ export interface FileRoutesByFullPath {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/business/': typeof BusinessIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/signin/': typeof SigninIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/business/admin': typeof BusinessAdminRoute
+  '/business/card-code': typeof BusinessCardCodeRoute
+  '/business/checkout': typeof BusinessCheckoutRoute
+  '/business/creating': typeof BusinessCreatingRoute
+  '/business/domain': typeof BusinessDomainRoute
+  '/business/domain-ok': typeof BusinessDomainOkRoute
+  '/business/domain-question': typeof BusinessDomainQuestionRoute
+  '/business/find': typeof BusinessFindRoute
+  '/business/plan': typeof BusinessPlanRoute
+  '/business/ready': typeof BusinessReadyRoute
+  '/business/registrant': typeof BusinessRegistrantRoute
+  '/business/start': typeof BusinessStartRoute
+  '/business/you': typeof BusinessYouRoute
   '/personal/add-passkey': typeof PersonalAddPasskeyRoute
   '/personal/address': typeof PersonalAddressRoute
   '/personal/birth': typeof PersonalBirthRoute
@@ -266,14 +384,29 @@ export interface FileRoutesByTo {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/business': typeof BusinessIndexRoute
   '/personal': typeof PersonalIndexRoute
   '/signin': typeof SigninIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/business': typeof BusinessRouteRouteWithChildren
   '/personal': typeof PersonalRouteRouteWithChildren
   '/signin': typeof SigninRouteRouteWithChildren
+  '/business/admin': typeof BusinessAdminRoute
+  '/business/card-code': typeof BusinessCardCodeRoute
+  '/business/checkout': typeof BusinessCheckoutRoute
+  '/business/creating': typeof BusinessCreatingRoute
+  '/business/domain': typeof BusinessDomainRoute
+  '/business/domain-ok': typeof BusinessDomainOkRoute
+  '/business/domain-question': typeof BusinessDomainQuestionRoute
+  '/business/find': typeof BusinessFindRoute
+  '/business/plan': typeof BusinessPlanRoute
+  '/business/ready': typeof BusinessReadyRoute
+  '/business/registrant': typeof BusinessRegistrantRoute
+  '/business/start': typeof BusinessStartRoute
+  '/business/you': typeof BusinessYouRoute
   '/personal/add-passkey': typeof PersonalAddPasskeyRoute
   '/personal/address': typeof PersonalAddressRoute
   '/personal/birth': typeof PersonalBirthRoute
@@ -301,6 +434,7 @@ export interface FileRoutesById {
   '/signin/password': typeof SigninPasswordRoute
   '/signin/recover': typeof SigninRecoverRoute
   '/signin/recover-code': typeof SigninRecoverCodeRoute
+  '/business/': typeof BusinessIndexRoute
   '/personal/': typeof PersonalIndexRoute
   '/signin/': typeof SigninIndexRoute
 }
@@ -308,8 +442,22 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/business'
     | '/personal'
     | '/signin'
+    | '/business/admin'
+    | '/business/card-code'
+    | '/business/checkout'
+    | '/business/creating'
+    | '/business/domain'
+    | '/business/domain-ok'
+    | '/business/domain-question'
+    | '/business/find'
+    | '/business/plan'
+    | '/business/ready'
+    | '/business/registrant'
+    | '/business/start'
+    | '/business/you'
     | '/personal/add-passkey'
     | '/personal/address'
     | '/personal/birth'
@@ -337,11 +485,25 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/business/'
     | '/personal/'
     | '/signin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/business/admin'
+    | '/business/card-code'
+    | '/business/checkout'
+    | '/business/creating'
+    | '/business/domain'
+    | '/business/domain-ok'
+    | '/business/domain-question'
+    | '/business/find'
+    | '/business/plan'
+    | '/business/ready'
+    | '/business/registrant'
+    | '/business/start'
+    | '/business/you'
     | '/personal/add-passkey'
     | '/personal/address'
     | '/personal/birth'
@@ -369,13 +531,28 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/business'
     | '/personal'
     | '/signin'
   id:
     | '__root__'
     | '/'
+    | '/business'
     | '/personal'
     | '/signin'
+    | '/business/admin'
+    | '/business/card-code'
+    | '/business/checkout'
+    | '/business/creating'
+    | '/business/domain'
+    | '/business/domain-ok'
+    | '/business/domain-question'
+    | '/business/find'
+    | '/business/plan'
+    | '/business/ready'
+    | '/business/registrant'
+    | '/business/start'
+    | '/business/you'
     | '/personal/add-passkey'
     | '/personal/address'
     | '/personal/birth'
@@ -403,12 +580,14 @@ export interface FileRouteTypes {
     | '/signin/password'
     | '/signin/recover'
     | '/signin/recover-code'
+    | '/business/'
     | '/personal/'
     | '/signin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BusinessRouteRoute: typeof BusinessRouteRouteWithChildren
   PersonalRouteRoute: typeof PersonalRouteRouteWithChildren
   SigninRouteRoute: typeof SigninRouteRouteWithChildren
 }
@@ -420,6 +599,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personal': {
@@ -435,6 +621,104 @@ declare module '@tanstack/react-router' {
       fullPath: '/signin'
       preLoaderRoute: typeof SigninRouteRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/business/': {
+      id: '/business/'
+      path: '/'
+      fullPath: '/business/'
+      preLoaderRoute: typeof BusinessIndexRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/admin': {
+      id: '/business/admin'
+      path: '/admin'
+      fullPath: '/business/admin'
+      preLoaderRoute: typeof BusinessAdminRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/card-code': {
+      id: '/business/card-code'
+      path: '/card-code'
+      fullPath: '/business/card-code'
+      preLoaderRoute: typeof BusinessCardCodeRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/checkout': {
+      id: '/business/checkout'
+      path: '/checkout'
+      fullPath: '/business/checkout'
+      preLoaderRoute: typeof BusinessCheckoutRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/creating': {
+      id: '/business/creating'
+      path: '/creating'
+      fullPath: '/business/creating'
+      preLoaderRoute: typeof BusinessCreatingRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/domain': {
+      id: '/business/domain'
+      path: '/domain'
+      fullPath: '/business/domain'
+      preLoaderRoute: typeof BusinessDomainRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/domain-ok': {
+      id: '/business/domain-ok'
+      path: '/domain-ok'
+      fullPath: '/business/domain-ok'
+      preLoaderRoute: typeof BusinessDomainOkRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/domain-question': {
+      id: '/business/domain-question'
+      path: '/domain-question'
+      fullPath: '/business/domain-question'
+      preLoaderRoute: typeof BusinessDomainQuestionRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/find': {
+      id: '/business/find'
+      path: '/find'
+      fullPath: '/business/find'
+      preLoaderRoute: typeof BusinessFindRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/plan': {
+      id: '/business/plan'
+      path: '/plan'
+      fullPath: '/business/plan'
+      preLoaderRoute: typeof BusinessPlanRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/ready': {
+      id: '/business/ready'
+      path: '/ready'
+      fullPath: '/business/ready'
+      preLoaderRoute: typeof BusinessReadyRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/registrant': {
+      id: '/business/registrant'
+      path: '/registrant'
+      fullPath: '/business/registrant'
+      preLoaderRoute: typeof BusinessRegistrantRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/start': {
+      id: '/business/start'
+      path: '/start'
+      fullPath: '/business/start'
+      preLoaderRoute: typeof BusinessStartRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/you': {
+      id: '/business/you'
+      path: '/you'
+      fullPath: '/business/you'
+      preLoaderRoute: typeof BusinessYouRouteImport
+      parentRoute: typeof BusinessRouteRoute
     }
     '/personal/': {
       id: '/personal/'
@@ -642,6 +926,44 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BusinessRouteRouteChildren {
+  BusinessAdminRoute: typeof BusinessAdminRoute
+  BusinessCardCodeRoute: typeof BusinessCardCodeRoute
+  BusinessCheckoutRoute: typeof BusinessCheckoutRoute
+  BusinessCreatingRoute: typeof BusinessCreatingRoute
+  BusinessDomainRoute: typeof BusinessDomainRoute
+  BusinessDomainOkRoute: typeof BusinessDomainOkRoute
+  BusinessDomainQuestionRoute: typeof BusinessDomainQuestionRoute
+  BusinessFindRoute: typeof BusinessFindRoute
+  BusinessPlanRoute: typeof BusinessPlanRoute
+  BusinessReadyRoute: typeof BusinessReadyRoute
+  BusinessRegistrantRoute: typeof BusinessRegistrantRoute
+  BusinessStartRoute: typeof BusinessStartRoute
+  BusinessYouRoute: typeof BusinessYouRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
+}
+
+const BusinessRouteRouteChildren: BusinessRouteRouteChildren = {
+  BusinessAdminRoute: BusinessAdminRoute,
+  BusinessCardCodeRoute: BusinessCardCodeRoute,
+  BusinessCheckoutRoute: BusinessCheckoutRoute,
+  BusinessCreatingRoute: BusinessCreatingRoute,
+  BusinessDomainRoute: BusinessDomainRoute,
+  BusinessDomainOkRoute: BusinessDomainOkRoute,
+  BusinessDomainQuestionRoute: BusinessDomainQuestionRoute,
+  BusinessFindRoute: BusinessFindRoute,
+  BusinessPlanRoute: BusinessPlanRoute,
+  BusinessReadyRoute: BusinessReadyRoute,
+  BusinessRegistrantRoute: BusinessRegistrantRoute,
+  BusinessStartRoute: BusinessStartRoute,
+  BusinessYouRoute: BusinessYouRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
+}
+
+const BusinessRouteRouteWithChildren = BusinessRouteRoute._addFileChildren(
+  BusinessRouteRouteChildren,
+)
+
 interface PersonalRouteRouteChildren {
   PersonalAddPasskeyRoute: typeof PersonalAddPasskeyRoute
   PersonalAddressRoute: typeof PersonalAddressRoute
@@ -722,6 +1044,7 @@ const SigninRouteRouteWithChildren = SigninRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BusinessRouteRoute: BusinessRouteRouteWithChildren,
   PersonalRouteRoute: PersonalRouteRouteWithChildren,
   SigninRouteRoute: SigninRouteRouteWithChildren,
 }

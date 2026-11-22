@@ -19,7 +19,7 @@ describe('config', () => {
   it('keeps sign-in and sign-up inside this app, offers no business sign-up and uses the product’s mail domain until told otherwise', async () => {
     const config = await load({ VITE_SIGN_UP_URL: '', VITE_SIGN_IN_URL: '', VITE_BUSINESS_SIGN_UP_URL: '', VITE_MAIL_DOMAIN: '' });
 
-    expect(config).toMatchObject({ signInUrl: '/signin', signUpUrl: '/personal', businessSignUpUrl: null, mailDomain: 'yahel.com' });
+    expect(config).toMatchObject({ signInUrl: '/signin', signUpUrl: '/personal', businessSignUpUrl: '/business', adminSignInUrl: '/signin', businessTermsUrl: null, trialTermsUrl: null, domainTermsUrl: null, mailDomain: 'yahel.com' });
   });
 
   it('reads the app address, the return origins and the links from settings', async () => {
@@ -47,7 +47,7 @@ describe('config', () => {
     expect(config.returnPolicy.fallback).toBe('http://localhost:5173/');
     expect(config.helpUrl).toBeNull();
     expect(config.signUpUrl).toBe('/personal');
-    expect(config.businessSignUpUrl).toBeNull();
+    expect(config.businessSignUpUrl).toBe('/business');
   });
 
   it.each(['not a domain', 'yahel', 'https://yahel.example', 'yahel.example/path', '-bad.example', '@yahel.example'])('ignores a mail domain that is not one: %s', async (value) => {

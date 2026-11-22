@@ -25,8 +25,13 @@ export const config = {
   // Sign-in and sign-up may be served from different addresses; until they are, each is a path in this app.
   signInUrl: webAddress(env.VITE_SIGN_IN_URL) ?? '/signin',
   signUpUrl: webAddress(env.VITE_SIGN_UP_URL) ?? '/personal',
-  /** Where "For my business or team" leads. Unset until that flow exists; the choice then says so. */
-  businessSignUpUrl: webAddress(env.VITE_BUSINESS_SIGN_UP_URL),
+  /** Where "For my business or team" leads. It will be served from the workspace address; until then it is a path in this app. */
+  businessSignUpUrl: webAddress(env.VITE_BUSINESS_SIGN_UP_URL) ?? '/business',
+  /** Where a new workspace's administrator signs in. Until the Admin sign-in exists it is this app's sign-in. */
+  adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL) ?? webAddress(env.VITE_SIGN_IN_URL) ?? '/signin',
+  businessTermsUrl: webAddress(env.VITE_BUSINESS_TERMS_URL),
+  trialTermsUrl: webAddress(env.VITE_TRIAL_TERMS_URL),
+  domainTermsUrl: webAddress(env.VITE_DOMAIN_TERMS_URL),
   /** The domain of a new Yahel address. Must match the backend's `PLATFORM_EMAIL_DOMAIN`. */
   // A value that is not a domain is ignored rather than shown to people as the address they will get.
   mailDomain: isMailDomain(env.VITE_MAIL_DOMAIN) ? env.VITE_MAIL_DOMAIN!.trim().toLowerCase() : 'yahel.com',

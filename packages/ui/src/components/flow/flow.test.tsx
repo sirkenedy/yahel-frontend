@@ -450,6 +450,20 @@ describe('AccountChip and AccountList', () => {
   });
 });
 
+describe('Receipt row with a detail', () => {
+  it('shows a quieter second line under the answer, inside the same description', () => {
+    render(
+      <Receipt label="Your workspace">
+        <Receipt.Row label="Business" detail="10–99 people · Nigeria">
+          Northwind Studio
+        </Receipt.Row>
+      </Receipt>,
+    );
+
+    expect(screen.getByText('10–99 people · Nigeria').closest('dd')).toHaveTextContent('Northwind Studio10–99 people · Nigeria');
+  });
+});
+
 describe('Choice with a tag and an amount', () => {
   it('reads the tag and the amount as part of the option, between its words and its mark', () => {
     render(

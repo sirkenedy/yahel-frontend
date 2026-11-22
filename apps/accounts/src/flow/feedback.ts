@@ -11,7 +11,7 @@ export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' 
  */
 export type Feedback<Field extends string = string, Next extends string = string> =
   | { place: 'field'; field: Field; text: string; next?: Next }
-  | { place: 'banner'; tone: FlowTone; title?: string; text: string; next?: Next; reference?: string; retryAt?: number }
+  | { place: 'banner'; tone: FlowTone; title?: string; text: string; next?: Next; /** A second thing the person can do, after `next`. */ also?: Next; reference?: string; retryAt?: number }
   | { place: 'screen'; screen: ScreenKind; reference?: string; retryAt?: number };
 
 /** One row of the map: a feedback before the facts of a particular failure are added. */
@@ -89,3 +89,10 @@ export function describeFailure<Field extends string, Next extends string>(error
 
 /** The feedback, when it belongs beside the named field. */
 export const forField = <Field extends string, Next extends string>(feedback: Feedback<Field, Next> | null | undefined, field: Field) => (feedback?.place === 'field' && feedback.field === field ? feedback : null);
+
+/** Whether a failure is the server answering with one of these codes. */
+export const hasCode = (error: unknown, ...codes: string[]) => isApiError(error) && codes.includes(error.code);
+
+/** A refusal the server will repeat however often it is asked, as opposed to a connection that dropped or a server that fell over. */
+export const isRefusal = (error: unknown) => isApiError(error) && error.status >= 400 && error.status < 500 && error.status !== 429 && error.code !== 'SESSION_EXPIRED' && error.code !== 'TOKEN_REUSE_DETECTED';
+

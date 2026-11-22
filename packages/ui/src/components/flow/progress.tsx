@@ -49,17 +49,22 @@ export type ReceiptRowState = 'done' | 'current' | 'upcoming';
 interface ReceiptRowProps {
   label: string;
   state?: ReceiptRowState;
+  /** A second, quieter line under the answer: "10–99 people · Nigeria". */
+  detail?: string;
   /** A way to change the answer, shown at the end of the line. */
   action?: ReactNode;
   /** The answer, or what will be asked. */
   children: ReactNode;
 }
 
-function ReceiptRow({ label, state = 'done', action, children }: ReceiptRowProps) {
+function ReceiptRow({ label, state = 'done', detail, action, children }: ReceiptRowProps) {
   return (
     <div className="ws-flow-receipt__row" data-state={state}>
       <dt>{label}</dt>
-      <dd>{children}</dd>
+      <dd>
+        {children}
+        {detail ? <span className="ws-flow-receipt__detail">{detail}</span> : null}
+      </dd>
       {action ? <dd className="ws-flow-receipt__action">{action}</dd> : null}
     </div>
   );

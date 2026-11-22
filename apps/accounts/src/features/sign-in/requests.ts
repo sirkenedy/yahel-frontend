@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { isApiError } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
+import { hasCode } from '../../flow/feedback';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { say } from '../../flow/toasts';
 import { describeSignInFailure, rejectedResetCode } from './feedback';
@@ -25,8 +26,6 @@ export interface SignInRequestDeps {
 }
 
 type SignInOutcome = 'signed-in' | 'second-step';
-
-const hasCode = (error: unknown, code: string) => isApiError(error) && error.code === code;
 
 const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code === 'INVALID_TOKEN';
 

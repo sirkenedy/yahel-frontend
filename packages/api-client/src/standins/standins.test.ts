@@ -184,6 +184,8 @@ describe('stand-ins for a new workspace', () => {
   it('quote: a small team starts a free trial and pays nothing today', () => {
     expect(quoteFor(order, now)).toMatchObject({
       trial: true,
+      seatPrice: naira(5000),
+      discountedSeatPrice: null,
       dueToday: naira(0),
       planToday: naira(15_000),
       domain: null,
@@ -205,6 +207,8 @@ describe('stand-ins for a new workspace', () => {
   it('quote: a promo code gives the months at a reduced price after the trial, then the plan', () => {
     expect(quoteFor({ ...order, promoCode: 'LAUNCH' }, now)).toMatchObject({
       promo: { code: 'LAUNCH', percent: 20, months: 3 },
+      seatPrice: naira(5000),
+      discountedSeatPrice: naira(4000),
       schedule: [
         { kind: 'trial' },
         { from: '2026-12-05', kind: 'discount', amount: naira(12_000), per: 'month', discount: { percent: 20, months: 3 } },
