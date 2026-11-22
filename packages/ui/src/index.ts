@@ -24,6 +24,10 @@ export { AccountAvatar, AccountChip, AccountList } from './components/flow/accou
 export type { AccountAvatarProps, AccountChipProps, AccountKind, AccountListAccountProps, AccountListProps } from './components/flow/account';
 export { Choice, ChoiceGroup, FlowCheckbox } from './components/flow/choice';
 export type { ChoiceGroupProps, ChoiceProps, FlowCheckboxProps } from './components/flow/choice';
+export { FlowChip, FlowChips } from './components/flow/chips';
+export type { FlowChipProps, FlowChipsLayout, FlowChipsProps } from './components/flow/chips';
+export { OrderSummary, PaymentCardChip, PlanCard } from './components/flow/order';
+export type { OrderSummaryChargeProps, OrderSummaryItemProps, OrderSummaryProps, OrderSummaryTotalProps, PaymentCardChipProps, PlanCardProps } from './components/flow/order';
 export { DemoMarker, FlowCallout, FlowConnectionBar, FlowDivider, FlowFacts, FlowNotice, FlowSlowHint, FlowToast, FlowWaiting, PasswordStrength, SuccessMark } from './components/flow/feedback';
 export type { FlowCalloutProps, FlowConnectionBarProps, FlowNoticeProps, FlowNoticeTone, FlowToastProps, FlowTone, FlowWaitingProps, PasswordStrengthProps, PasswordStrengthScore } from './components/flow/feedback';
 export { FlowReference, FlowState } from './components/flow/flow-state';
