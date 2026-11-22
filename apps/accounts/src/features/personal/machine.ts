@@ -1,16 +1,12 @@
 import type { PasskeyAttestation } from '@yahel/api-client';
+import type { BirthDate } from '../../flow/dates';
+
+export type { BirthDate };
 
 export const personalSteps = ['type', 'name', 'birth', 'address', 'own-email', 'password', 'add-passkey', 'passkey', 'recovery', 'review', 'creating', 'own-code', 'code', 'ready', 'contact'] as const;
 export type PersonalStep = (typeof personalSteps)[number];
 
 export type Gender = 'unspecified' | 'woman' | 'man' | 'another';
-
-export interface BirthDate {
-  day: number;
-  /** 1 for January. */
-  month: number;
-  year: number;
-}
 
 /** The parts of an account that are set up after it exists. Each is settled once: saved, refused by the server, or skipped. */
 export type SetupPart = 'recoveryEmail' | 'preferences' | 'passkey' | 'phone';

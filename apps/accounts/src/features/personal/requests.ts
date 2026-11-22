@@ -2,7 +2,7 @@ import { ApiError } from '@yahel/api-client';
 import type { AccountCapabilities, Schemas } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { useFlowRequest } from '../../flow/use-flow-request';
-import { internationalNumber } from './countries';
+import { internationalNumber } from '../../flow/countries';
 import { say } from '../../flow/toasts';
 import { describePersonalFailure, hasCode, isRefusal } from './feedback';
 import type { FailureContext } from './feedback';

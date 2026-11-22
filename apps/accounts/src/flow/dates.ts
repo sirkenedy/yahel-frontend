@@ -1,4 +1,10 @@
-import type { BirthDate } from './machine';
+/** A calendar date of birth, as answered. */
+export interface BirthDate {
+  day: number;
+  /** 1 for January. */
+  month: number;
+  year: number;
+}
 
 export type DatePart = 'day' | 'month' | 'year';
 
