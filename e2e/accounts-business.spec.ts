@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { armStepFailure, at, failNextStep, signInWithPassword } from './support/accounts';
+import { armStepFailure, at, failNextStep } from './support/accounts';
 import { emailCode, mockApi, strictCountry } from './support/api';
 import { business, card, createWorkspace, createWorkspaceTo, fillAddress, fillCard, heading, proceed, searchForBoughtDomain } from './support/business';
 
@@ -76,19 +76,15 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
     await expect(after).toContainText('Sign in only once that mailbox is one you can open');
   });
 
-  test('the new administrator signs in, confirms the emailed code and is in', async ({ page }) => {
+  test('the new administrator is taken to Admin’s first sign-in, which already knows the address', async ({ page }) => {
     await mockApi(page);
     await createWorkspace(page);
     await expect(page.getByRole('status').filter({ hasText: 'Your confirmation code goes to your new address' })).toContainText(business.adminAddress);
 
     await page.getByRole('link', { name: 'Sign in to Admin' }).click();
-    await expect(page).toHaveURL(/\/signin\//);
-    await signInWithPassword(page, { email: business.adminAddress, password: business.password });
-    await expect(heading(page, 'Confirm your email.')).toBeVisible();
-    await page.getByLabel('6-character code').fill(emailCode);
-    await proceed(page, 'Verify');
-
-    await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
+    await expect(page).toHaveURL(at('/admin/signin'));
+    await expect(heading(page, 'Sign in to Admin.')).toBeVisible();
+    await expect(page.getByRole('main')).toContainText(business.adminAddress);
   });
 
   test('a claimed domain, a public one and one that is not a domain are each told beside the field', async ({ page }) => {
@@ -508,6 +504,38 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
     expect(sentBy(api)).toMatchObject({ email: business.adminAddress, domain: business.domain, lastName: business.lastName });
     await expect(page.getByRole('heading', { name: /check out|Confirm with your bank/ })).toHaveCount(0);
   });
+
+  test('without Admin’s first sign-in, the new administrator signs in through sign-in, confirms the emailed code and is in', async ({ page }) => {
+    await mockApi(page);
+    await page.goto(at('/business?stand-ins=off'));
+    await page.getByLabel('Business name').fill(business.name);
+    await proceed(page);
+    await page.getByLabel('First name').fill(business.firstName);
+    await page.getByLabel('Last name').fill(business.lastName);
+    await page.getByLabel('Day').fill(business.day);
+    await page.getByLabel('Month').selectOption({ label: business.month });
+    await page.getByLabel('Year').fill(business.year);
+    await proceed(page);
+    await page.getByLabel('Your domain', { exact: true }).fill(business.domain);
+    await proceed(page);
+    await proceed(page, 'Use this domain');
+    await page.getByLabel('Password', { exact: true }).fill(business.password);
+    await page.getByLabel('Confirm password').fill(business.password);
+    await proceed(page, 'Agree and create workspace');
+    await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
+
+    await page.getByRole('link', { name: 'Sign in to Admin' }).click();
+    await expect(page).toHaveURL(/\/signin\//);
+    await page.getByLabel('Email').fill(business.adminAddress);
+    await proceed(page);
+    await page.getByLabel('Password', { exact: true }).fill(business.password);
+    await proceed(page, 'Sign in');
+    await expect(heading(page, 'Confirm your email.')).toBeVisible();
+    await page.getByLabel('6-character code').fill(emailCode);
+    await proceed(page, 'Verify');
+
+    await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
+  });
 });
 
 test.describe('accounts: the workspace is created once', () => {
@@ -797,6 +825,6 @@ test.describe('accounts: moving about in workspace sign-up', () => {
     await expect(heading(page, `${business.name} is ready.`)).toBeVisible();
     await page.getByRole('link', { name: 'Sign in to Admin' }).focus();
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/signin/);
+    await expect(page).toHaveURL(at('/admin/signin'));
   });
 });
