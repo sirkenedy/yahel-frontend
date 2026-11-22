@@ -65,7 +65,7 @@ const feedbackScreens: Screen[] = [
     },
   },
   { name: 'accounts banner: our side, with the reference and Try again', open: signInRefused('Something went wrong on our side', 500, 'INTERNAL_ERROR') },
-  { name: 'accounts banner: confirm your email first', open: signInRefused('Confirm your email first', 403, 'EMAIL_NOT_VERIFIED') },
+  { name: 'accounts: confirm your email at sign-in', open: signInRefused('Confirm your email.', 403, 'EMAIL_NOT_VERIFIED') },
   { name: 'accounts banner: choose a new password first, with its action', open: signInRefused('Choose a new password first', 403, 'FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED') },
   {
     name: 'accounts offline: the connection bar and the offline banner',

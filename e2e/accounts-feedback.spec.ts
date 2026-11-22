@@ -113,7 +113,7 @@ test.describe('feedback: sign in', () => {
     await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
   });
 
-  test('an unconfirmed email, single sign-on and a forced password change are banners that say what to do', async ({ page }) => {
+  test('single sign-on and a forced password change are banners that say what to do', async ({ page }) => {
     const api = await mockApi(page);
     await openPasswordStep(page);
     const attempt = async (answer: string) => {
@@ -121,9 +121,6 @@ test.describe('feedback: sign in', () => {
       await password(page).fill(credentials.password);
       await page.getByRole('button', { name: 'Sign in' }).click();
     };
-
-    await attempt('EMAIL_NOT_VERIFIED');
-    await expect(page.getByRole('status').filter({ hasText: 'Confirm your email first' })).toContainText('Look for the message we sent when you created the account, then sign in again.');
 
     await attempt('SSO_REQUIRED');
     await expect(page.getByRole('status').filter({ hasText: 'Your organisation signs you in with its own system' })).toContainText('Ask your administrator how to sign in.');

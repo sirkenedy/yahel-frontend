@@ -143,3 +143,29 @@ describe('addresses and direction', () => {
     expect(directionOf('new-password', 'done')).toBe('forward');
   });
 });
+
+describe('confirming an email', () => {
+  const proven = after({ type: 'email-entered', email }, { type: 'email-unconfirmed', password: 'p' });
+
+  it('holds the proven password only until the address is confirmed or the step is left', () => {
+    expect(proven.provenPassword).toBe('p');
+    expect(reduce(proven, { type: 'email-confirmed' })).toMatchObject({ provenPassword: null, passwordPrompt: 'email-confirmed', email });
+    expect(reduce(proven, { type: 'proof-dropped' }).provenPassword).toBeNull();
+    expect(reduce(proven, { type: 'signed-in' }).provenPassword).toBeNull();
+    expect(reduce(proven, { type: 'another-account-wanted' }).provenPassword).toBeNull();
+    expect(reduce(proven, { type: 'email-entered', email: 'kofi@northwind.example' }).provenPassword).toBeNull();
+  });
+
+  it('leaves the state alone when there is no proof to drop', () => {
+    expect(reduce(initialSignInState, { type: 'proof-dropped' })).toBe(initialSignInState);
+  });
+
+  it('shows the confirm step only while the proof is held, and the password step otherwise', () => {
+    expect(resumeStep('confirm-email', proven, facts())).toBe('confirm-email');
+    expect(resumeStep('confirm-email', reduce(proven, { type: 'proof-dropped' }), facts())).toBe('password');
+    expect(resumeStep('confirm-email', initialSignInState, facts())).toBe('email');
+    expect(resumeStep('confirm-email', proven, facts({ signedIn: true }))).toBe('done');
+    expect(backOf('confirm-email', proven, facts())).toBe('password');
+    expect(stepOfPath('/signin/confirm-email')).toBe('confirm-email');
+  });
+});

@@ -31,6 +31,7 @@ import { Route as PersonalTypeRouteImport } from './routes/personal/type'
 import { Route as SigninIndexRouteImport } from './routes/signin/index'
 import { Route as SigninChooseRouteImport } from './routes/signin/choose'
 import { Route as SigninCodeRouteImport } from './routes/signin/code'
+import { Route as SigninConfirmEmailRouteImport } from './routes/signin/confirm-email'
 import { Route as SigninDoneRouteImport } from './routes/signin/done'
 import { Route as SigninEmailRouteImport } from './routes/signin/email'
 import { Route as SigninHelpRouteImport } from './routes/signin/help'
@@ -151,6 +152,11 @@ const SigninCodeRoute = SigninCodeRouteImport.update({
   path: '/code',
   getParentRoute: () => SigninRouteRoute,
 } as any)
+const SigninConfirmEmailRoute = SigninConfirmEmailRouteImport.update({
+  id: '/confirm-email',
+  path: '/confirm-email',
+  getParentRoute: () => SigninRouteRoute,
+} as any)
 const SigninDoneRoute = SigninDoneRouteImport.update({
   id: '/done',
   path: '/done',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
+  '/signin/confirm-email': typeof SigninConfirmEmailRoute
   '/signin/done': typeof SigninDoneRoute
   '/signin/email': typeof SigninEmailRoute
   '/signin/help': typeof SigninHelpRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
+  '/signin/confirm-email': typeof SigninConfirmEmailRoute
   '/signin/done': typeof SigninDoneRoute
   '/signin/email': typeof SigninEmailRoute
   '/signin/help': typeof SigninHelpRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/personal/type': typeof PersonalTypeRoute
   '/signin/choose': typeof SigninChooseRoute
   '/signin/code': typeof SigninCodeRoute
+  '/signin/confirm-email': typeof SigninConfirmEmailRoute
   '/signin/done': typeof SigninDoneRoute
   '/signin/email': typeof SigninEmailRoute
   '/signin/help': typeof SigninHelpRoute
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
+    | '/signin/confirm-email'
     | '/signin/done'
     | '/signin/email'
     | '/signin/help'
@@ -349,6 +359,7 @@ export interface FileRouteTypes {
     | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
+    | '/signin/confirm-email'
     | '/signin/done'
     | '/signin/email'
     | '/signin/help'
@@ -382,6 +393,7 @@ export interface FileRouteTypes {
     | '/personal/type'
     | '/signin/choose'
     | '/signin/code'
+    | '/signin/confirm-email'
     | '/signin/done'
     | '/signin/email'
     | '/signin/help'
@@ -557,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SigninCodeRouteImport
       parentRoute: typeof SigninRouteRoute
     }
+    '/signin/confirm-email': {
+      id: '/signin/confirm-email'
+      path: '/confirm-email'
+      fullPath: '/signin/confirm-email'
+      preLoaderRoute: typeof SigninConfirmEmailRouteImport
+      parentRoute: typeof SigninRouteRoute
+    }
     '/signin/done': {
       id: '/signin/done'
       path: '/done'
@@ -668,6 +687,7 @@ const PersonalRouteRouteWithChildren = PersonalRouteRoute._addFileChildren(
 interface SigninRouteRouteChildren {
   SigninChooseRoute: typeof SigninChooseRoute
   SigninCodeRoute: typeof SigninCodeRoute
+  SigninConfirmEmailRoute: typeof SigninConfirmEmailRoute
   SigninDoneRoute: typeof SigninDoneRoute
   SigninEmailRoute: typeof SigninEmailRoute
   SigninHelpRoute: typeof SigninHelpRoute
@@ -683,6 +703,7 @@ interface SigninRouteRouteChildren {
 const SigninRouteRouteChildren: SigninRouteRouteChildren = {
   SigninChooseRoute: SigninChooseRoute,
   SigninCodeRoute: SigninCodeRoute,
+  SigninConfirmEmailRoute: SigninConfirmEmailRoute,
   SigninDoneRoute: SigninDoneRoute,
   SigninEmailRoute: SigninEmailRoute,
   SigninHelpRoute: SigninHelpRoute,

@@ -25,3 +25,6 @@ export const stepInsteadOf = (step: SignInStep, store: SignInStore, facts: SignI
   const honest = resumeStep(step, store.getState(), facts);
   return honest === step ? null : honest;
 };
+
+/** Forgets the password held for the confirm step. Called when that step is left, however it is left. */
+export const dropProof = (store: SignInStore) => store.dispatch({ type: 'proof-dropped' });

@@ -1,14 +1,14 @@
 import type { RecoveryMethod } from '@yahel/api-client';
 
-export const signInSteps = ['choose', 'email', 'password', 'passkey', 'code', 'recover', 'recover-code', 'new-password', 'help', 'help-sent', 'done'] as const;
+export const signInSteps = ['choose', 'email', 'password', 'passkey', 'code', 'confirm-email', 'recover', 'recover-code', 'new-password', 'help', 'help-sent', 'done'] as const;
 export type SignInStep = (typeof signInSteps)[number];
 
 /**
  * Everything the flow remembers between steps. It lives in memory only: a reload clears it, and nothing
- * here is ever written to the address bar or to web storage. Passwords and second-step codes are not here
- * at all: they go from the field that collected them straight into the request, and the request keeps no
- * copy (see `flow/use-flow-request.ts`). The two short-lived secrets that must outlive a step, the challenge
- * token and the reset code, are dropped the moment they have been used.
+ * here is ever written to the address bar or to web storage. Passwords and second-step codes go from the
+ * field that collected them straight into the request, and the request keeps no copy (see
+ * `flow/use-flow-request.ts`). Three short-lived secrets must outlive a step, and each is dropped the
+ * moment it has been used: the challenge token, the reset code, and `provenPassword` (below).
  */
 export interface SignInState {
   email: string | null;
@@ -26,8 +26,14 @@ export interface SignInState {
   /** The rejected code can never work again: only a new one will do. */
   resetCodeSpent: boolean;
   helpRequested: boolean;
+  /**
+   * The password this visit proved (sign-in answered that it matches and that the address is still to be
+   * confirmed). It is what allows an emailed code to be submitted at all, and what finishes signing in once
+   * the code is accepted. Held only while the confirm step is on screen; never handed to a step.
+   */
+  provenPassword: string | null;
   /** Why the person has been brought back to the password step, when it was not their own doing. */
-  passwordPrompt: 'challenge-expired' | 'reset-done' | null;
+  passwordPrompt: 'challenge-expired' | 'reset-done' | 'email-confirmed' | null;
 }
 
 export const initialSignInState: SignInState = {
@@ -40,6 +46,7 @@ export const initialSignInState: SignInState = {
   resetCodeRejected: false,
   resetCodeSpent: false,
   helpRequested: false,
+  provenPassword: null,
   passwordPrompt: null,
 };
 
@@ -49,6 +56,9 @@ export type SignInEvent =
   | { type: 'another-account-wanted' }
   | { type: 'second-step-required'; challengeToken: string }
   | { type: 'challenge-expired' }
+  | { type: 'email-unconfirmed'; password: string }
+  | { type: 'email-confirmed' }
+  | { type: 'proof-dropped' }
   | { type: 'passkey-started' }
   | { type: 'password-reset' }
   | { type: 'reset-code-sent'; method: RecoveryMethod; destination: string }
@@ -71,6 +81,13 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
       return { ...state, challengeToken: event.challengeToken, passwordPrompt: null };
     case 'challenge-expired':
       return { ...state, challengeToken: null, passwordPrompt: 'challenge-expired' };
+    case 'email-unconfirmed':
+      return { ...state, provenPassword: event.password, passwordPrompt: null };
+    case 'email-confirmed':
+      // Final, whatever happens to the sign-in that follows: if that fails, the password step says the email is confirmed.
+      return { ...state, provenPassword: null, passwordPrompt: 'email-confirmed' };
+    case 'proof-dropped':
+      return state.provenPassword === null ? state : { ...state, provenPassword: null };
     case 'password-reset':
       // The code is spent and the reset cannot be repeated: only signing in remains.
       return { ...state, recovery: null, resetCode: null, resetCodeRejected: false, resetCodeSpent: false, passwordPrompt: 'reset-done' };
@@ -121,6 +138,9 @@ export function resumeStep(step: SignInStep, state: SignInState, facts: SignInFa
       return facts.passkeysOffered && state.passkeyStarted ? 'passkey' : entry;
     case 'code':
       return state.email && state.challengeToken ? 'code' : resumeStep('password', state, facts);
+    case 'confirm-email':
+      // Only while the password proven in this visit is held: without it no code may be submitted (decisions F-50).
+      return state.email && state.provenPassword ? 'confirm-email' : resumeStep('password', state, facts);
     case 'recover-code':
       return state.email && state.recovery ? 'recover-code' : resumeStep('recover', state, facts);
     case 'new-password':
@@ -145,6 +165,7 @@ export function backOf(step: SignInStep, state: SignInState, facts: SignInFacts)
     case 'passkey':
       return state.fromChooser ? 'choose' : 'email';
     case 'code':
+    case 'confirm-email':
     case 'recover':
       return 'password';
     case 'recover-code':

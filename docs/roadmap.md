@@ -90,7 +90,7 @@ The designs' map of answers to messages (`design-system/canvas/project/accounts/
 - [ ] **A pause after repeated wrong passwords**, if one is wanted: its length and how many tries are left, answered identically for an address with no account
 - [ ] **Field codes in `VALIDATION_ERROR`** (`meta.fields: { field, code }[]`), so a refused registration can be told beside the right field
 - [ ] **The single sign-on address** on `SSO_REQUIRED` (`meta.ssoUrl`, `meta.provider`)
-- [ ] **A confirm-email path for sign-in**: the answer to `EMAIL_NOT_VERIFIED` should say whether a code or a link was sent, so sign-in can offer to enter it or to send it again
+- [ ] **A confirm-email path for sign-in**: built against today’s endpoints (`decisions.md` F-68). Better from the backend: `POST /v1/auth/verify-email` returning tokens when it is called with a proof of the password (a short-lived ticket on the `EMAIL_NOT_VERIFIED` answer), so the app need not hold the password while the code is fetched
 - [ ] **A way to complete `FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED`** (a short-lived token in the answer); until then the person is sent to reset the password
 - [ ] **A maintenance window** (see the stand-in above), and 503 rather than a dropped connection while the API is down, so "getting an upgrade" can be told from "not answering"
 - [ ] **Error reporting** (already under Foundation): the error screen's reference is only shown when the failure carries a request id

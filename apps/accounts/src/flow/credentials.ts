@@ -27,6 +27,9 @@ export function newPasswordProblem(password: string, words: NewPasswordWords): s
   return missing ? words.newPasswordTooPlain(missing) : null;
 }
 
+/** The code the backend emails to confirm an address: six letters and numbers. */
+export const EMAILED_CODE_LENGTH = 6;
+
 export type StrengthScore = 0 | 1 | 2 | 3 | 4;
 
 /** The design's meter: long enough, then every kind of character, then longer still, then not containing the person's own name. */

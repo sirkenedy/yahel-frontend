@@ -31,7 +31,7 @@ const fakeSession = () => {
     completeSecondStep: vi.fn(async () => signedIn()),
     establish: vi.fn(() => signedIn()),
     signOut: vi.fn(async () => void store.setState({ status: 'signed-out', profile: null })),
-    api: { auth: { resetPassword: vi.fn().mockResolvedValue({ message: 'ok' }), forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }) } },
+    api: { auth: { resetPassword: vi.fn().mockResolvedValue({ message: 'ok' }), forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }), verifyEmail: vi.fn().mockResolvedValue({ message: 'ok' }), resendVerification: vi.fn().mockResolvedValue({ message: 'ok' }) } },
   };
 };
 
@@ -507,5 +507,112 @@ describe('SignInFlowProvider', () => {
     act(() => flow().meta.requests.resendResetCode.again?.());
     await waitFor(() => expect(session.api.auth.forgotPassword).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(flow().meta.requests.resendResetCode.feedback).toBeNull());
+  });
+});
+
+describe('confirming an email at sign-in', () => {
+  const unconfirmed = () => new ApiError({ status: 403, code: 'EMAIL_NOT_VERIFIED', message: 'Please verify your email before signing in' });
+  const toConfirmStep = async () => {
+    const context = setup({ step: 'password' });
+    act(() => context.store.dispatch({ type: 'email-entered', email }));
+    context.session.signIn.mockRejectedValueOnce(unconfirmed());
+    act(() => void context.flow().actions.signInWithPassword('password-secret'));
+    await waitFor(() => expect(context.navigate).toHaveBeenCalledWith('confirm-email'));
+    context.goTo('confirm-email');
+    return context;
+  };
+
+  it('goes to the code step when the password is right but the address is unconfirmed, and asks for a fresh code', async () => {
+    const { session, store, flow } = await toConfirmStep();
+
+    expect(session.api.auth.resendVerification).toHaveBeenCalledWith({ email });
+    expect(store.getState().provenPassword).toBe('password-secret');
+    expect(flow().state).not.toHaveProperty('provenPassword');
+    expect(flow().meta.requests.password.feedback).toBeNull();
+  });
+
+  it('still shows the code step when asking for the fresh code fails', async () => {
+    const context = setup({ step: 'password' });
+    act(() => context.store.dispatch({ type: 'email-entered', email }));
+    context.session.signIn.mockRejectedValueOnce(unconfirmed());
+    context.session.api.auth.resendVerification.mockRejectedValueOnce(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' }));
+
+    act(() => void context.flow().actions.signInWithPassword('password-secret'));
+
+    await waitFor(() => expect(context.navigate).toHaveBeenCalledWith('confirm-email'));
+  });
+
+  it('confirms with the code, then signs in with the password it proved and forgets it', async () => {
+    const { session, store, flow, navigate } = await toConfirmStep();
+
+    act(() => void flow().actions.confirmEmail('A1B2C3'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
+    expect(session.api.auth.verifyEmail).toHaveBeenCalledWith({ email, token: 'A1B2C3' });
+    expect(session.signIn).toHaveBeenLastCalledWith(email, 'password-secret');
+    expect(store.getState().provenPassword).toBeNull();
+  });
+
+  it('carries on to the second step when the account has one', async () => {
+    const { session, store, flow, navigate } = await toConfirmStep();
+    session.signIn.mockResolvedValueOnce({ ok: false, reason: 'mfa-required', challengeToken: 'c-9' });
+
+    act(() => void flow().actions.confirmEmail('A1B2C3'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('code'));
+    expect(store.getState()).toMatchObject({ provenPassword: null, challengeToken: 'c-9', passwordPrompt: null });
+  });
+
+  it('shows a wrong code beside the boxes and keeps the proof for another try', async () => {
+    const { session, store, flow, navigate } = await toConfirmStep();
+    session.api.auth.verifyEmail.mockRejectedValueOnce(new ApiError({ status: 401, code: 'INVALID_TOKEN', message: 'x' }));
+
+    act(() => void flow().actions.confirmEmail('WRONG1'));
+
+    await waitFor(() => expect(flow().meta.requests.confirmEmail.feedback).toEqual({ place: 'field', field: 'code', text: m.emailCodeRefused }));
+    expect(store.getState().provenPassword).toBe('password-secret');
+    expect(session.signIn).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalledWith('done', { replace: true });
+  });
+
+  it('once confirmed, a sign-in that then fails returns to the password step saying the email is confirmed', async () => {
+    const { session, store, flow, navigate } = await toConfirmStep();
+    session.signIn.mockRejectedValueOnce(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' }));
+
+    act(() => void flow().actions.confirmEmail('A1B2C3'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('password', { replace: true }));
+    expect(store.getState()).toMatchObject({ provenPassword: null, passwordPrompt: 'email-confirmed' });
+  });
+
+  it('never submits a code, or asks for one, unless the password was proven in this visit', async () => {
+    const { session, store, flow } = setup({ step: 'confirm-email' });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    act(() => void flow().actions.confirmEmail('A1B2C3'));
+    act(() => void flow().actions.resendEmailCode());
+
+    await waitFor(() => expect(flow().meta.requests.confirmEmail.feedback).toMatchObject({ place: 'banner' }));
+    expect(session.api.auth.verifyEmail).not.toHaveBeenCalled();
+    expect(session.api.auth.resendVerification).not.toHaveBeenCalled();
+  });
+
+  it('sends a new code on request and says so', async () => {
+    const { session, flow, toast } = await toConfirmStep();
+
+    act(() => void flow().actions.resendEmailCode());
+
+    await waitFor(() => expect(toast()?.text).toBe(m.newCodeSent));
+    expect(session.api.auth.resendVerification).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps neither the password nor the code in the query client', async () => {
+    const { flow, navigate, retained } = await toConfirmStep();
+    act(() => void flow().actions.confirmEmail('C0D3X9'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
+    await waitFor(() => expect(flow().meta.requests.confirmEmail.isPending).toBe(false));
+
+    expect(retained()).not.toContain('password-secret');
+    expect(retained()).not.toContain('C0D3X9');
   });
 });

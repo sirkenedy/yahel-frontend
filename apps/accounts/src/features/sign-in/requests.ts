@@ -26,6 +26,8 @@ export interface SignInRequestDeps {
 
 type SignInOutcome = 'signed-in' | 'second-step';
 
+const hasCode = (error: unknown, code: string) => isApiError(error) && error.code === code;
+
 const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code === 'INVALID_TOKEN';
 
 /**
@@ -64,8 +66,48 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   const password = useFlowRequest({
     visit,
     describe: describe('password'),
-    run: async (value: string) => settle(await session.signIn(email(), value)),
-    onDone: afterSignIn,
+    run: async (value: string) => {
+      try {
+        return settle(await session.signIn(email(), value));
+      } catch (error) {
+        // The backend says this only once the password has matched, so the registration is this person's
+        // to confirm. A fresh code is asked for: the one sent when the account was made may be long gone.
+        if (!hasCode(error, 'EMAIL_NOT_VERIFIED')) throw error;
+        store.dispatch({ type: 'email-unconfirmed', password: value });
+        await session.api.auth.resendVerification({ email: email() }).catch(() => undefined);
+        return 'confirm-email' as const;
+      }
+    },
+    onDone: (outcome) => (outcome === 'confirm-email' ? navigate('confirm-email') : afterSignIn(outcome)),
+  });
+
+  const confirmEmail = useFlowRequest({
+    visit,
+    describe: describe('email-code'),
+    run: async (value: string) => {
+      const proven = store.getState().provenPassword;
+      // Never reached through the interface: the step is shown only while the proof is held.
+      if (proven === null) throw new Error('No password has been proven in this visit');
+      await session.api.auth.verifyEmail({ email: email(), token: value });
+      // From here the address is confirmed, whatever happens to the sign-in that follows.
+      store.dispatch({ type: 'email-confirmed' });
+      try {
+        return settle(await session.signIn(email(), proven));
+      } catch {
+        return 'sign-in-failed' as const;
+      }
+    },
+    onDone: (outcome) => (outcome === 'sign-in-failed' ? navigate('password', { replace: true }) : afterSignIn(outcome)),
+  });
+
+  const resendEmailCode = useFlowRequest({
+    visit,
+    describe: describe('other'),
+    run: async () => {
+      if (store.getState().provenPassword === null) throw new Error('No password has been proven in this visit');
+      await session.api.auth.resendVerification({ email: email() });
+    },
+    onDone: () => say(m.newCodeSent),
   });
 
   const passkey = useFlowRequest({
@@ -188,7 +230,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     },
   });
 
-  return { password, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, removeAccount, signOut };
+  return { password, confirmEmail, resendEmailCode, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, removeAccount, signOut };
 }
 
 export type SignInRequests = ReturnType<typeof useSignInRequests>;

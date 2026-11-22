@@ -730,7 +730,8 @@ test.describe('personal account: an address someone else registered first', () =
     await openPasswordStep(page, pendingEmail);
     await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Confirm your email first' })).toContainText('Look for the message we sent when you created the account');
+    // Whoever holds that password is asked for the code from the mailbox, which only its owner can read.
+    await expect(heading(page, 'Confirm your email.')).toBeVisible();
   });
 
   test('the owner of an unconfirmed registration of their own, whose password opens it, is sent a code and finishes', async ({ page }) => {

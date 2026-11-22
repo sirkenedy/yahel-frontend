@@ -185,3 +185,17 @@ describe('carried', () => {
     expect(carried.spent).toEqual({ place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyResetCodes, next: 'resend' });
   });
 });
+
+describe('the emailed code at sign-in', () => {
+  it.each([[401, 'INVALID_TOKEN'], [400, 'BAD_REQUEST'], [403, 'FORBIDDEN']])('puts a refused code (%i %s) beside the boxes', (status, code) => {
+    expect(describeSignInFailure(answer(status, code), 'email-code')).toEqual({ place: 'field', field: 'code', text: m.emailCodeRefused });
+  });
+
+  it('says a code that has had too many tries is dead, and offers a new one', () => {
+    expect(describeSignInFailure(answer(429, 'TOKEN_MAX_ATTEMPTS'), 'email-code')).toEqual({ place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyEmailCodes, next: 'resend' });
+  });
+
+  it('carries the news that the email is confirmed back to the password step', () => {
+    expect(carried['email-confirmed']).toEqual({ place: 'banner', tone: 'success', title: m.emailConfirmedTitle, text: m.emailConfirmedSignIn });
+  });
+});
