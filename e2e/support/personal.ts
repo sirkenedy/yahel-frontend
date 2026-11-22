@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { at, stubPasskeys } from './accounts';
+import type { PasskeyOutcome } from './accounts';
 import { mailDomain, publicEmailDomain } from './api';
 
 export const person = {
@@ -24,7 +25,10 @@ export interface PersonalPath {
   /** A new Yahel address, or an email the person already has. */
   address?: 'yahel' | 'own';
   username?: string;
+  /** Whether "Add a passkey" is pressed. */
   passkey?: boolean;
+  /** What this browser does when asked for a passkey. Every engine is told, because not every test build has WebAuthn. */
+  passkeys?: PasskeyOutcome;
   phone?: boolean;
   recoveryEmail?: boolean;
   query?: string;
@@ -35,10 +39,10 @@ export const heading = (page: Page, name: string | RegExp) => page.getByRole('he
 
 /**
  * Answers the questions of personal sign-up in order and stops with `stop` on screen (`done` presses
- * "Agree and create account"). Passkeys are stubbed to succeed unless the test stubbed them first.
+ * "Agree and create account"). The browser's passkey support is always described (`passkeys`), never taken from the engine.
  */
-export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahel', username = person.username, passkey = false, phone = false, recoveryEmail = true, query = '' }: PersonalPath = {}) {
-  if (passkey) await stubPasskeys(page, 'success');
+export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahel', username = person.username, passkey = false, passkeys = 'success', phone = false, recoveryEmail = true, query = '' }: PersonalPath = {}) {
+  await stubPasskeys(page, passkeys);
   await page.goto(at(`/personal${query}`));
   await heading(page, 'Create your Yahel account.').waitFor();
   if (stop === 'type') return;
@@ -75,9 +79,11 @@ export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahe
   await page.getByLabel('Password', { exact: true }).fill(person.password);
 
   await next(page);
-  await heading(page, 'Add a passkey too?').waitFor();
-  if (stop === 'add-passkey') return;
-  await page.getByRole('button', { name: passkey ? 'Add a passkey' : 'Not now' }).click();
+  if (passkeys !== 'unsupported') {
+    await heading(page, 'Add a passkey too?').waitFor();
+    if (stop === 'add-passkey') return;
+    await page.getByRole('button', { name: passkey ? 'Add a passkey' : 'Not now' }).click();
+  }
 
   await heading(page, 'Ways back in.').waitFor();
   if (stop === 'recovery') return;

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, at, signInWithPassword, stubPasskeys } from './support/accounts';
-import { emailCode, mockApi, phoneCode, registeredEmail, takenAddress } from './support/api';
+import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys } from './support/accounts';
+import { emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo } from './support/personal';
 
@@ -107,7 +107,7 @@ test.describe('personal account: an email the person already has', () => {
     await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
 
     await page.getByRole('button', { name: 'Send a new code' }).click();
-    await expect(page.getByText('New code sent.')).toBeVisible();
+    await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
     expect(calls(api, '/v1/auth/verify-email/resend')[0]!.body).toEqual({ email: person.ownEmail });
 
     await code(page).fill(emailCode);
@@ -118,7 +118,7 @@ test.describe('personal account: an email the person already has', () => {
   test('an address that already has an account looks exactly like one that does not', async ({ page }) => {
     await mockApi(page);
     const seen: string[] = [];
-    for (const email of [person.ownEmail, registeredEmail]) {
+    for (const email of [person.ownEmail, registeredEmail, pendingEmail]) {
       await signUpTo(page, 'own-email', { address: 'own' });
       await page.getByLabel('Your email address').fill(email);
       await proceed(page);
@@ -133,7 +133,8 @@ test.describe('personal account: an email the person already has', () => {
     }
 
     expect(seen[1]).toBe(seen[0]);
-    expect(seen[0]).toContain('If this address already has a Yahel account, sign in instead.');
+    expect(seen[2]).toBe(seen[0]);
+    expect(seen[0]).toContain('If this address already has a Yahel account, sign in or reset its password instead.');
   });
 
   test('an address the backend does not take for a personal account sends the person back to change it', async ({ page }) => {
@@ -158,7 +159,6 @@ test.describe('personal account: an email the person already has', () => {
 test.describe('personal account: sign-in methods and ways back in', () => {
   test('a passkey is created on the device and saved to the account', async ({ page }) => {
     await mockApi(page);
-    await stubPasskeys(page, 'success');
     await signUpTo(page, 'add-passkey');
 
     await page.getByRole('button', { name: 'Add a passkey' }).click();
@@ -176,8 +176,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
   test('a closed passkey prompt can be tried again or left for the password', async ({ page }) => {
     await mockApi(page);
-    await stubPasskeys(page, 'cancelled');
-    await signUpTo(page, 'add-passkey');
+    await signUpTo(page, 'add-passkey', { passkeys: 'cancelled' });
 
     await page.getByRole('button', { name: 'Add a passkey' }).click();
     await expect(page.getByText('The passkey prompt was closed before it finished.')).toBeVisible();
@@ -190,8 +189,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
   test('no passkey is offered in a browser that cannot make one', async ({ page }) => {
     await mockApi(page);
-    await stubPasskeys(page, 'unsupported');
-    await signUpTo(page, 'password');
+    await signUpTo(page, 'password', { passkeys: 'unsupported' });
 
     await page.getByLabel('Password', { exact: true }).fill(person.password);
     await proceed(page);
@@ -674,5 +672,331 @@ test.describe('personal account: keyboard only', () => {
     await page.getByLabel('First name').fill('Amara');
     await proceed(page);
     await expect(isMobile ? heading(page, 'A little about you.') : page.getByLabel('Day')).toBeFocused();
+  });
+});
+
+const answerOwnEmailTo = async (page: Page, email: string) => {
+  await signUpTo(page, 'own-email', { address: 'own' });
+  await page.getByLabel('Your email address').fill(email);
+  await proceed(page);
+  await page.getByLabel('Password', { exact: true }).fill(person.password);
+  await proceed(page);
+  await page.getByRole('button', { name: 'Not now' }).click();
+  await proceed(page, 'Skip');
+  await page.getByRole('button', { name: 'Agree and create account' }).click();
+  await heading(page, 'Check your inbox.').waitFor();
+};
+
+test.describe('personal account: an address someone else registered first', () => {
+  test('the owner’s code is never used to switch on a registration made with someone else’s password', async ({ page }) => {
+    const api = await mockApi(page);
+    // Someone registered this address with their own password and left it unconfirmed. Now its owner signs up.
+    await answerOwnEmailTo(page, pendingEmail);
+
+    // The code that registration mailed to the owner is right as far as the backend is concerned.
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+    await page.getByRole('button', { name: 'Send a new code' }).click();
+    await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+
+    expect(calls(api, '/v1/auth/verify-email')).toHaveLength(0);
+    expect(calls(api, '/v1/auth/verify-email/resend')).toHaveLength(0);
+
+    // The other person's password still opens nothing: their registration was not confirmed for them.
+    await page.getByRole('link', { name: 'Sign in instead' }).click();
+    await openPasswordStep(page, pendingEmail);
+    await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('alert')).toContainText('Confirm your email address before signing in.');
+  });
+
+  test('the owner of an unconfirmed registration of their own, whose password opens it, is sent a code and finishes', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'own-email', { address: 'own' });
+    await page.getByLabel('Your email address').fill(pendingEmail);
+    await proceed(page);
+    await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
+    await proceed(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page, 'Skip');
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await heading(page, 'Check your inbox.').waitFor();
+    expect(calls(api, '/v1/auth/verify-email/resend')).toHaveLength(1);
+
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+  });
+
+  test('a mistyped address can be put right from the code screen without answering everything again', async ({ page }) => {
+    const api = await mockApi(page);
+    await answerOwnEmailTo(page, 'amra.okafor@mail.example');
+
+    await page.getByRole('button', { name: 'Use a different address' }).click();
+    await expect(heading(page, 'Use your current email.')).toBeVisible();
+    await page.getByLabel('Your email address').fill(person.ownEmail);
+    await proceed(page);
+
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByText(person.ownEmail)).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await heading(page, 'Check your inbox.').waitFor();
+    await code(page).fill(emailCode);
+    await proceed(page, 'Verify');
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api).map((call) => (call.body as { email: string }).email)).toEqual(['amra.okafor@mail.example', person.ownEmail]);
+  });
+
+  test('creating an account for an existing email is not described as reserving it', async ({ page }) => {
+    await mockApi(page);
+    await page.route('**/api/v1/auth/register', () => undefined);
+    await signUpTo(page, 'done', { address: 'own' });
+
+    await expect(page.getByText(`Creating your account for ${person.ownEmail} and setting up your storage.`)).toBeVisible();
+  });
+});
+
+test.describe('personal account: what is forgotten, and when', () => {
+  const passwordField = (page: Page) => page.getByLabel('Password', { exact: true });
+
+  test('a password already chosen is never put back in its field, and leaving the field empty keeps it', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'recovery');
+
+    await page.getByRole('link', { name: 'Back' }).click();
+    await page.getByRole('link', { name: 'Back' }).click();
+    await expect(heading(page, 'Create a password.')).toBeVisible();
+    await expect(passwordField(page)).toHaveValue('');
+    await expect(page.getByText('Your password is saved. Leave this empty to keep it, or type a new one.')).toBeVisible();
+    expect(await page.content()).not.toContain(person.password);
+
+    await proceed(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page, 'Skip');
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)[0]!.body).toMatchObject({ password: person.password });
+  });
+
+  test('leaving sign-up for sign-in forgets every answer, the password and the passkey', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'recovery', { passkey: true });
+    await page.evaluate(() => ((window as unknown as { stillHere: boolean }).stillHere = true));
+
+    // Out through the first screen's own link, and back in through sign-in's, without the page reloading.
+    for (const question of ['Add a passkey too?', 'Create a password.', 'Pick your address.', 'A little about you.', 'What should we call you?', 'Create your Yahel account.']) {
+      await page.getByRole('link', { name: 'Back' }).click();
+      await heading(page, question).waitFor();
+    }
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
+    await page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true }).click();
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await heading(page, 'Create your Yahel account.').waitFor();
+    expect(await page.evaluate(() => (window as unknown as { stillHere?: boolean }).stillHere)).toBe(true);
+
+    await proceed(page);
+    await expect(page.getByLabel('First name')).toHaveValue('');
+    await page.getByLabel('First name').fill('Chidi');
+    await proceed(page);
+    await page.getByLabel('Day').fill('2');
+    await page.getByLabel('Month').selectOption({ label: 'May' });
+    await page.getByLabel('Year').fill('1990');
+    await proceed(page);
+    await page.getByLabel('Your Yahel address').fill('chidi.eze');
+    await proceed(page);
+    await expect(passwordField(page)).toHaveValue('');
+    await expect(page.getByText('Your password is saved.')).toHaveCount(0);
+    await passwordField(page).fill('Harmattan in Jos 2026!');
+    await proceed(page);
+    // The last person's passkey is gone too, so one is offered again.
+    await expect(heading(page, 'Add a passkey too?')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeVisible();
+  });
+
+  test('the brand link starts sign-up again from nothing', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'password');
+
+    await page.getByRole('link', { name: 'Yahel account creation' }).click();
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
+    await proceed(page);
+
+    await expect(page.getByLabel('First name')).toHaveValue('');
+    await page.goto(at('/personal/password'));
+    await expect(page).toHaveURL(at('/personal/name'));
+  });
+
+  test('"Start again" after a failed creation forgets everything', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+    api.failNext('/v1/auth/register', 503);
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await heading(page, 'We couldn’t finish.').waitFor();
+
+    await page.getByRole('button', { name: 'Start again' }).click();
+
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
+    await proceed(page);
+    await expect(page.getByLabel('First name')).toHaveValue('');
+  });
+
+  test('a sign-up screen that fails offers "Start again", and trying again does not keep the password', async ({ page }) => {
+    await mockApi(page);
+    await armStepFailure(page);
+    await signUpTo(page, 'add-passkey');
+    await failNextStep(page);
+    await page.getByRole('button', { name: 'Not now' }).click();
+
+    await expect(heading(page, 'Something went wrong.')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Start again' })).toHaveAttribute('href', '/personal');
+    await expect(page.getByRole('link', { name: 'Back to sign in' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Try again' }).click();
+
+    await expect(heading(page, 'What should we call you?')).toBeVisible();
+    await expect(page.getByLabel('First name')).toHaveValue('');
+  });
+});
+
+test.describe('personal account: fixes from review', () => {
+  test('a wrong texted code is sent once, not replayed, and the session is left alone', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
+    await heading(page, 'Enter the code.').waitFor();
+
+    await code(page).fill('zzzzzz');
+    await proceed(page, 'Verify');
+    await expect(page.getByRole('alert')).toContainText('That code didn’t work or has expired.');
+
+    expect(calls(api, '/v1/me/recovery/phone/verify')).toHaveLength(1);
+    expect(calls(api, '/v1/auth/refresh')).toHaveLength(0);
+    await code(page).fill(phoneCode);
+    await proceed(page, 'Verify');
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+  });
+
+  test('looking at the other kind of address from the review and going back leaves the address as it was', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review');
+
+    await page.getByRole('button', { name: 'Edit address' }).click();
+    await page.getByRole('button', { name: 'Use an email I already have' }).click();
+    await heading(page, 'Use your current email.').waitFor();
+    await page.getByRole('link', { name: 'Back' }).click();
+
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByRole('definition').filter({ hasText: person.address })).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    expect(registrations(api)[0]!.body).toMatchObject({ email: person.address });
+  });
+
+  test('the same holds from an existing email towards a Yahel address', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review', { address: 'own' });
+
+    await page.getByRole('button', { name: 'Edit address' }).click();
+    await page.getByRole('button', { name: 'Get a Yahel address instead' }).click();
+    await heading(page, 'Pick your address.').waitFor();
+    await page.getByRole('link', { name: 'Back' }).click();
+
+    await expect(heading(page, 'Everything look right?')).toBeVisible();
+    await expect(page.getByRole('definition').filter({ hasText: person.ownEmail })).toBeVisible();
+  });
+
+  test('after an edit is left with Back, the Back links walk back through the questions again', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review');
+    await page.getByRole('button', { name: 'Edit name' }).click();
+    await page.getByRole('link', { name: 'Back' }).click();
+    await heading(page, 'Everything look right?').waitFor();
+
+    await page.getByRole('link', { name: 'Back' }).click();
+    await expect(heading(page, 'Ways back in.')).toBeVisible();
+    await page.getByRole('link', { name: 'Back' }).click();
+    await expect(heading(page, 'Add a passkey too?')).toBeVisible();
+  });
+
+  test('the browser’s Back to the passkey prompt after a passkey was made shows the offer, which says one is ready', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'recovery', { passkey: true });
+
+    await page.goBack();
+
+    await expect(page).toHaveURL(at('/personal/add-passkey'));
+    await expect(page.getByText('A passkey is ready on this device')).toBeVisible();
+  });
+
+  test('the terms and the privacy policy open in a new tab, so the answers are not lost by reading them', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review');
+
+    for (const name of ['Terms', 'Privacy Policy']) {
+      const link = page.getByRole('main').getByRole('link', { name: new RegExp(`^${name}`) });
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      await expect(link).toHaveAccessibleName(new RegExp('opens in a new tab'));
+    }
+  });
+
+  test('the signed-in screens say whose account it is', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review', { phone: true });
+    await expect(page.getByRole('img', { name: /Signed in as/ })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    const account = page.getByRole('banner').getByRole('img', { name: `Signed in as ${person.address}` });
+
+    await heading(page, 'Enter the code.').waitFor();
+    await expect(account).toHaveText('AO');
+    await page.getByRole('button', { name: 'Skip for now' }).click();
+    await heading(page, 'You’re in, Amara.').waitFor();
+    await expect(account).toBeVisible();
+    await page.getByRole('link', { name: /Add someone you trust/ }).click();
+    await heading(page, 'Add someone you trust.').waitFor();
+    await expect(account).toBeVisible();
+  });
+
+  test('the review’s action is reachable: in view at once on a computer, and never under the demo label', async ({ page, isMobile }) => {
+    await mockApi(page);
+    await signUpTo(page, 'review', { passkey: true, phone: true });
+    const action = page.getByRole('button', { name: 'Agree and create account' });
+
+    if (isMobile) await action.scrollIntoViewIfNeeded();
+    await expect(action).toBeInViewport({ ratio: 1 });
+    const [button, label] = await Promise.all([action.boundingBox(), page.getByRole('note').boundingBox()]);
+    const overlap = button!.x < label!.x + label!.width && label!.x < button!.x + button!.width && button!.y < label!.y + label!.height && label!.y < button!.y + button!.height;
+    expect(overlap).toBe(false);
+  });
+
+  test('a phone the server will not take is said to be refused, not unconfirmed', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'review', { phone: true, recoveryEmail: false });
+    api.failNext('/v1/me/recovery/phone', 409, 'PHONE_ALREADY_IN_USE');
+
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+
+    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
+    await expect(page.getByText('We couldn’t add that phone number to your account. Add another in your account.')).toBeVisible();
+    await expect(page.getByText('isn’t confirmed yet')).toHaveCount(0);
+  });
+
+  test('a taken name that was typed and left is still in the field on return, with what is known about it', async ({ page }) => {
+    await mockApi(page);
+    await signUpTo(page, 'address');
+    await page.getByLabel('Your Yahel address').fill('amara');
+    await page.getByText('That address is taken. Try one of these.').waitFor();
+
+    await page.getByRole('link', { name: 'Back' }).click();
+    await proceed(page);
+
+    await expect(page.getByLabel('Your Yahel address')).toHaveValue('amara');
+    await expect(page.getByText('That address is taken. Try one of these.')).toBeVisible();
+    await page.getByLabel('Your Yahel address').fill('');
+    await expect(page.getByText('That address is taken.')).toHaveCount(0);
   });
 });

@@ -29,6 +29,13 @@ export const emailCode = 'B4nQ7x';
 export const phoneCode = 'K9mP2r';
 /** A Yahel address that already has an account, with a password nobody signing up will choose. */
 export const takenAddress = `kemi.adeyemi@${mailDomain}`;
+/**
+ * An existing email that someone else registered first, with their own password, and never confirmed. The
+ * backend keeps such a registration: registering again answers "already exists", its password is checked
+ * before sign-in says it is unconfirmed, anyone may ask for a new code for it, and a right code switches it on.
+ */
+export const pendingEmail = `ngozi.eze@${publicEmailDomain}`;
+export const pendingPassword = 'Set-by-someone-else-77';
 /** An existing email that already has a confirmed Yahel account. */
 export const registeredEmail = `kemi.adeyemi@${publicEmailDomain}`;
 
@@ -48,7 +55,7 @@ export interface MockApi {
    * Makes the next request to `path` go wrong, once. A status answers with that failure and does nothing.
    * `lost` does what was asked and then drops the answer, as when a connection dies after the server has acted.
    */
-  failNext(path: string, how: number | 'lost'): void;
+  failNext(path: string, how: number | 'lost', code?: string): void;
 }
 
 interface Account {
@@ -81,8 +88,8 @@ export interface MockApiOptions {
 
 /** Stands in for the backend. Tokens rotate on every refresh so tests can tell them apart. */
 export async function mockApi(page: Page, options: MockApiOptions = {}): Promise<MockApi> {
-  const failures = new Map<string, number | 'lost'>();
-  const state: MockApi = { calls: [], failNext: (path, how) => void failures.set(path, how) };
+  const failures = new Map<string, { how: number | 'lost'; code?: string }>();
+  const state: MockApi = { calls: [], failNext: (path, how, code) => void failures.set(path, { how, code }) };
   let issued = 0;
   const tokens = () => ({ accessToken: `access-${++issued}`, refreshToken: `refresh-${issued}`, expiresIn: 900, tokenType: 'Bearer' });
   let validRefresh: string | null = null;
@@ -93,6 +100,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true },
     { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
     { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
@@ -102,14 +110,14 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     const request = incoming.request();
     const path = new URL(request.url()).pathname.replace(/^\/api/, '');
     const body = request.postDataJSON() as Record<string, string> | null;
-    const failure = failures.get(path);
+    const { how: failure, code: failureCode } = failures.get(path) ?? { how: undefined };
     failures.delete(path);
     // A lost answer: everything below still happens, but the browser never hears of it.
     const route = failure === 'lost' ? ({ fulfill: () => incoming.abort('connectionreset'), abort: (reason?: string) => incoming.abort(reason) } as unknown as Route) : incoming;
     const authorization = request.headers()['authorization'];
     state.calls.push({ method: request.method(), path, body, authorization });
     if (options.offline) return route.abort('internetdisconnected');
-    if (typeof failure === 'number') return fail(route, failure, failure === 429 ? 'TOO_MANY_REQUESTS' : 'INTERNAL_SERVER_ERROR');
+    if (typeof failure === 'number') return fail(route, failure, failureCode ?? (failure === 429 ? 'TOO_MANY_REQUESTS' : 'INTERNAL_SERVER_ERROR'));
 
     const issue = (account: (typeof accounts)[number]) => {
       const next = tokens();
@@ -180,7 +188,8 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     if (path === '/v1/auth/refresh') {
       return body?.refreshToken && body.refreshToken === validRefresh ? ok(route, issue(accounts.find((known) => known.profile === signedIn)!), 201) : fail(route, 401, 'INVALID_REFRESH_TOKEN');
     }
-    if (authorization !== `Bearer ${validAccess}`) return fail(route, 401, 'UNAUTHORIZED');
+    // What the backend's auth guard answers for a missing, expired or revoked access token.
+    if (authorization !== `Bearer ${validAccess}`) return fail(route, 401, 'SESSION_EXPIRED');
     if (path === '/v1/auth/logout') {
       validRefresh = null;
       validAccess = null;

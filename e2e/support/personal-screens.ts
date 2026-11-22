@@ -1,6 +1,5 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
-import { stubPasskeys } from './accounts';
 import { emailCode } from './api';
 import { heading, person, signUp, signUpTo } from './personal';
 
@@ -91,8 +90,7 @@ export const personalScreens: Screen[] = [
   {
     name: 'personal passkey, waiting',
     open: async (page) => {
-      await stubPasskeys(page, 'waiting');
-      await signUpTo(page, 'add-passkey');
+      await signUpTo(page, 'add-passkey', { passkeys: 'waiting' });
       await page.getByRole('button', { name: 'Add a passkey' }).click();
       await page.getByText('Waiting for this device').waitFor();
     },
@@ -100,8 +98,7 @@ export const personalScreens: Screen[] = [
   {
     name: 'personal passkey, prompt closed',
     open: async (page) => {
-      await stubPasskeys(page, 'cancelled');
-      await signUpTo(page, 'add-passkey');
+      await signUpTo(page, 'add-passkey', { passkeys: 'cancelled' });
       await page.getByRole('button', { name: 'Add a passkey' }).click();
       await page.getByText('The passkey prompt was closed').waitFor();
     },
@@ -172,7 +169,7 @@ export const personalScreens: Screen[] = [
       await signUpTo(page, 'done', { address: 'own' });
       await heading(page, 'Check your inbox.').waitFor();
       await page.getByRole('button', { name: 'Send a new code' }).click();
-      await page.getByText('New code sent.').waitFor();
+      await page.getByText('If a new code can be sent to this address').waitFor();
       await proceed(page, 'Verify');
       await page.getByText('Enter all 6 characters.').waitFor();
     },
