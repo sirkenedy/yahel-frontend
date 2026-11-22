@@ -48,6 +48,10 @@ export function useFlowRequest<Input = void, Outcome = void, Field extends strin
   const latestVisit = useRef(visit);
   useEffect(() => {
     latestVisit.current = visit;
+    // Once the flow has left the screen altogether, no request that began in it is current any more.
+    return () => {
+      latestVisit.current = -1;
+    };
   }, [visit]);
   const [startedIn, setStartedIn] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback<Field, Next> | null>(null);

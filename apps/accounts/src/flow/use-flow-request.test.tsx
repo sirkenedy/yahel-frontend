@@ -131,6 +131,23 @@ describe('useFlowRequest', () => {
     expect(seen).toEqual([true, false]);
   });
 
+  it('tells a running request its step is gone once the flow has left the screen altogether', async () => {
+    const pending = deferred<string>();
+    const seen: boolean[] = [];
+    const { result, unmount } = setup(async (_input, during) => {
+      await pending.promise;
+      seen.push(during.isCurrent());
+      return 'done';
+    });
+
+    act(() => void result.current.start('x'));
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    unmount();
+    await act(async () => pending.resolve('go'));
+
+    expect(seen).toEqual([false]);
+  });
+
   it('never leaves its input in the query client', async () => {
     const pending = deferred<string>();
     const { result, queryClient } = setup(() => pending.promise);
