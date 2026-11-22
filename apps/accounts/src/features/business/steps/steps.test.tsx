@@ -714,6 +714,14 @@ describe('CreatingStep', () => {
 });
 
 describe('ReadyStep', () => {
+  it('promises no workspace when no answer named one, and says nothing was charged', () => {
+    setup(<ReadyStep />, { state: { ...answered, payment: { id: 'p1', card: { brand: 'Visa', lastFour: '4081' }, sentTo: null, authorised: true }, creation: { started: true, created: true, tenantId: null, settled: true, finished: true } } });
+
+    expect(screen.getByRole('heading', { level: 1, name: m.unsureTitle })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: m.readyTitle('Northwind Studio') })).not.toBeInTheDocument();
+    expect(screen.getByText(`${m.unsureLede('Northwind Studio')} ${m.unsureNotCharged}`)).toBeInTheDocument();
+  });
+
   it('names the workspace and the administrator’s sign-in, says a code will be asked for, and leads to signing in', () => {
     setup(<ReadyStep />, { state: { ...answered, creation: { started: true, created: true, tenantId: 't1', settled: true, finished: true } } });
 

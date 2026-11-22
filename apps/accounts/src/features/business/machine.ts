@@ -44,7 +44,7 @@ export interface Creation {
   created: boolean;
   /** The workspace's id, when the answer that created it was received. */
   tenantId: string | null;
-  /** The payment has been tied to the workspace. */
+  /** The payment has been tied to the workspace, or let go when no workspace was named (`tenantId` is `null`). */
   settled: boolean;
   finished: boolean;
 }

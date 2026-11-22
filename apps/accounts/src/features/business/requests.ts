@@ -111,15 +111,20 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
    * on an earlier visit. Anything else is someone's existing account, and the username is refused.
    */
   const ownsExisting = async () => {
+    // Only these two answers are certain to have opened no session. After anything else, a sign-in may have
+    // stored tokens before failing (loading the profile, say), so the session is closed whatever happened.
+    let opened = true;
     try {
-      const result = await session.signIn(adminAddressOf(state()), state().password ?? '');
+      await session.signIn(adminAddressOf(state()), state().password ?? '');
       // A confirmed account that the password opens was not made here. This flow signs nobody in.
-      if (result.ok) await session.signOut().catch(() => undefined);
       return false;
     } catch (error) {
+      if (hasCode(error, 'EMAIL_NOT_VERIFIED', 'INVALID_CREDENTIALS')) opened = false;
       if (hasCode(error, 'EMAIL_NOT_VERIFIED')) return true;
       if (hasCode(error, 'INVALID_CREDENTIALS')) return false;
       throw error;
+    } finally {
+      if (opened) await session.signOut().catch(() => undefined);
     }
   };
 
@@ -146,10 +151,19 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     return null;
   };
 
-  /** Ties the authorised payment to the workspace, once. This is when a real checkout would take money. */
+  /**
+   * Ties the authorised payment to the workspace, once. This is when a real checkout would take money. With no
+   * workspace named (a sign-in proven this person's, which may be a personal one never confirmed, F-72) nothing
+   * is taken: the authorisation is let go.
+   */
   const settleOrder = async () => {
     const { payment, creation, marketing } = state();
     if (!billing || !payment?.authorised || creation.settled) return;
+    if (creation.tenantId === null) {
+      await billing.release(payment.id);
+      store.dispatch({ type: 'order-settled' });
+      return;
+    }
     await billing.complete(payment.id, { tenantId: creation.tenantId, domain: domainOf(state()), marketing });
     store.dispatch({ type: 'order-settled' });
   };

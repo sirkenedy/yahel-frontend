@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError, createAccountCapabilities } from '@yahel/api-client';
 import type { WorkspaceBilling } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
-import type { Session } from '@yahel/auth';
+import { createSession } from '@yahel/auth';
+import type { KeyValueStorage, Session } from '@yahel/auth';
 import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createStore } from 'zustand/vanilla';
@@ -48,9 +49,9 @@ function Probe({ onValue, onToast }: { onValue: (value: BusinessFlowValue) => vo
   return null;
 }
 
-const setup = ({ step = 'checkout' as BusinessStep, standIns = true, events = answers, before = undefined as ((billing: WorkspaceBilling) => unknown) | undefined } = {}) => {
+const setup = ({ step = 'checkout' as BusinessStep, standIns = true, events = answers, before = undefined as ((billing: WorkspaceBilling) => unknown) | undefined, session: given = undefined as Session | undefined } = {}) => {
   act(() => dismissToast());
-  const session = fakeSession();
+  const session = (given ?? fakeSession()) as ReturnType<typeof fakeSession>;
   const capabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
   if (capabilities.workspaceBilling) before?.(capabilities.workspaceBilling);
   const store = createBusinessStore();
@@ -423,7 +424,8 @@ describe('BusinessFlowProvider: creating the workspace', () => {
   it.each([
     ['whose password is someone else’s', () => Promise.reject(failure(401, 'INVALID_CREDENTIALS')), 0],
     ['that is already confirmed and opens', () => Promise.resolve({ ok: true } as const), 1],
-    ['that asks for a second step', () => Promise.resolve({ ok: false, reason: 'mfa-required', challengeToken: 'c' } as const), 0],
+    // Nothing was stored for a second step, but only a refusal is certain to have opened nothing: the session is closed anyway.
+    ['that asks for a second step', () => Promise.resolve({ ok: false, reason: 'mfa-required', challengeToken: 'c' } as const), 1],
   ])('refuses the username for an address that already has an account %s, and signs nobody in', async (_, answer, signOuts) => {
     const { payAndConfirm, session, navigate, store } = setup();
     session.registerBusiness.mockRejectedValueOnce(failure(409, 'EMAIL_ALREADY_EXISTS'));
@@ -433,6 +435,54 @@ describe('BusinessFlowProvider: creating the workspace', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('admin', { replace: true }));
     expect(store.getState()).toMatchObject({ rejection: { step: 'admin', reason: 'taken' }, creation: { created: false } });
     expect(session.signOut).toHaveBeenCalledTimes(signOuts);
+  });
+
+  it('takes no money when no answer named the workspace: the payment is let go, never completed', async () => {
+    const { payAndConfirm, session, navigate, billing, store } = setup();
+    const complete = vi.spyOn(billing, 'complete');
+    const release = vi.spyOn(billing, 'release');
+    session.registerBusiness.mockRejectedValueOnce(failure(409, 'EMAIL_ALREADY_EXISTS'));
+    await payAndConfirm();
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
+    expect(store.getState().creation).toMatchObject({ created: true, tenantId: null, finished: true });
+    expect(complete).not.toHaveBeenCalled();
+    expect(release).toHaveBeenCalledWith(store.getState().payment!.id);
+  });
+
+  it.each([
+    ['the profile cannot be loaded after the tokens were accepted', { login: 'tokens', me: 500 }, 'failed'],
+    ['the account is confirmed and opens', { login: 'tokens', me: 200 }, 'refused'],
+    ['the password is someone else’s', { login: 'INVALID_CREDENTIALS' }, 'refused'],
+    ['the address is still to be confirmed', { login: 'EMAIL_NOT_VERIFIED' }, 'ready'],
+    ['sign-in cannot be reached', { login: 'lost' }, 'failed'],
+  ] as const)('leaves no session and no refresh token behind when checking an existing address and %s', async (_, replies, outcome) => {
+    const kept = new Map<string, string>();
+    const memory: KeyValueStorage = { getItem: (key) => kept.get(key) ?? null, setItem: (key, value) => void kept.set(key, value), removeItem: (key) => void kept.delete(key) };
+    const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    const fetch = vi.fn(async (url: string | URL | Request) => {
+      const path = new URL(String(url)).pathname;
+      if (path.endsWith('/auth/register-business')) return reply(409, { error: { code: 'EMAIL_ALREADY_EXISTS' } });
+      if (path.endsWith('/auth/login')) {
+        if (replies.login === 'lost') throw new TypeError('Failed to fetch');
+        return replies.login === 'tokens' ? reply(201, { data: { accessToken: 'a-1', refreshToken: 'r-1', expiresIn: 900, tokenType: 'Bearer' } }) : reply(replies.login === 'INVALID_CREDENTIALS' ? 401 : 403, { error: { code: replies.login } });
+      }
+      if (path.endsWith('/me')) return 'me' in replies && replies.me === 200 ? reply(200, { data: { id: 'u', email: 'amara@northwind.example' } }) : reply(500, { error: { code: 'INTERNAL_ERROR' } });
+      if (path.endsWith('/auth/logout')) return reply(201, { data: null });
+      return reply(404, { error: { code: 'NOT_FOUND' } });
+    });
+    const real = createSession({ baseUrl: 'https://api.yahel.example', tokenStorage: memory, deviceStorage: memory, fetch: fetch as typeof globalThis.fetch });
+    const { flow, navigate, store } = setup({ standIns: false, step: 'admin', events: answers.slice(0, 5), session: real });
+
+    act(() => flow().actions.createWorkspace());
+
+    if (outcome === 'ready') await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
+    if (outcome === 'refused') await waitFor(() => expect(store.getState().rejection).toEqual({ step: 'admin', reason: 'taken' }));
+    if (outcome === 'failed') await waitFor(() => expect(flow().meta.requests.create.feedback).not.toBeNull());
+    await waitFor(() => expect(flow().meta.requests.create.isPending).toBe(false));
+    expect(kept.get('yahel.refresh-token')).toBeUndefined();
+    expect(real.store.getState()).toMatchObject({ profile: null });
+    expect(real.store.getState().status).not.toBe('signed-in');
   });
 
   it('once the workspace exists, another try only finishes what is left and never creates it again', async () => {
