@@ -34,6 +34,21 @@ export function AccountChip({ email }: AccountChipProps) {
   );
 }
 
+export interface AccountAvatarProps {
+  name: string;
+  /** Says whose account is in use, for assistive technology: "Signed in as amara@yahel.com". */
+  label: string;
+}
+
+/** The signed-in person's initials in the header, so every signed-in screen shows whose account it is. */
+export function AccountAvatar({ name, label }: AccountAvatarProps) {
+  return (
+    <span className="ws-flow-avatar" role="img" aria-label={label} translate="no">
+      {personInitials(name)}
+    </span>
+  );
+}
+
 interface AccountListProps {
   /** Names the list, for example "Accounts on this device". */
   label: string;

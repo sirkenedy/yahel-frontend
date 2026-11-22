@@ -108,6 +108,26 @@ function FlowStepLinks({ align = 'start', children }: { align?: 'start' | 'end';
   );
 }
 
+interface FlowStepNoteLinkProps {
+  href: string;
+  /** Said after the link's name to assistive technology: "opens in a new tab". */
+  newTabLabel: string;
+  children: ReactNode;
+}
+
+/**
+ * A link inside small print to something read alongside the step, such as the terms. It opens in a new
+ * tab, so what has been answered on this page is not lost by reading it.
+ */
+function FlowStepNoteLink({ href, newTabLabel, children }: FlowStepNoteLinkProps) {
+  return (
+    <Link href={href} target="_blank" rel="noopener noreferrer">
+      {children}
+      <span className="ws-flow-hidden"> ({newTabLabel})</span>
+    </Link>
+  );
+}
+
 /** Small print under the fields: what a choice means, or what pressing the button agrees to. */
 function FlowStepNote({ children }: { children: ReactNode }) {
   return <p className="ws-flow-step__note">{children}</p>;
@@ -128,4 +148,5 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Actions: FlowStepActions,
   Links: FlowStepLinks,
   Note: FlowStepNote,
+  NoteLink: FlowStepNoteLink,
 });

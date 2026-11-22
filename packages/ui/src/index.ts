@@ -20,8 +20,8 @@ export { FlowPasswordField, FlowTextField, UsernameHint } from './components/flo
 export type { FlowPasswordFieldProps, FlowTextFieldProps, UsernameHintProps } from './components/flow/flow-field';
 export { CodeInput } from './components/flow/code-input';
 export type { CodeInputProps } from './components/flow/code-input';
-export { AccountChip, AccountList } from './components/flow/account';
-export type { AccountChipProps, AccountKind, AccountListAccountProps, AccountListProps } from './components/flow/account';
+export { AccountAvatar, AccountChip, AccountList } from './components/flow/account';
+export type { AccountAvatarProps, AccountChipProps, AccountKind, AccountListAccountProps, AccountListProps } from './components/flow/account';
 export { Choice, ChoiceGroup, FlowCheckbox } from './components/flow/choice';
 export type { ChoiceGroupProps, ChoiceProps, FlowCheckboxProps } from './components/flow/choice';
 export { DemoMarker, FlowCallout, FlowDivider, FlowFacts, FlowNotice, FlowWaiting, PasswordStrength, SuccessMark } from './components/flow/feedback';

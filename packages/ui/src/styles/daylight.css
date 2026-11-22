@@ -171,7 +171,8 @@
 @keyframes ws-flow-pop { from { opacity: 0; transform: scale(0.6); } }
 .ws-flow-divider { display: flex; align-items: center; gap: var(--ws-space-12); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); }
 .ws-flow-divider::before, .ws-flow-divider::after { content: ''; flex: 1; height: var(--ws-border-hairline); background: var(--ws-color-daylight-line); }
-.ws-flow-demo { position: fixed; inset-block-end: max(var(--ws-space-8), env(safe-area-inset-bottom)); inset-inline-start: 50%; z-index: var(--ws-z-toast); transform: translateX(-50%); padding: var(--ws-space-4) var(--ws-space-12); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-ink); color: var(--ws-color-daylight-canvas); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); pointer-events: none; }
+/* A tab at the very top of the page, in the band the header leaves free above its controls, so it never covers an action. */
+.ws-flow-demo { position: fixed; inset-block-start: 0; inset-inline-start: 50%; z-index: var(--ws-z-toast); transform: translateX(-50%); padding: env(safe-area-inset-top) var(--ws-space-12) var(--ws-space-2); border-radius: 0 0 var(--ws-radius-sm) var(--ws-radius-sm); background: var(--ws-color-daylight-ink); color: var(--ws-color-daylight-canvas); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); pointer-events: none; }
 [dir='rtl'] .ws-flow-demo { transform: translateX(50%); }
 .ws-flow-strength { display: flex; flex-direction: column; gap: var(--ws-space-8); }
 .ws-flow-strength:empty { display: none; }
@@ -226,6 +227,9 @@
 .ws-flow-check__box { flex-shrink: 0; display: flex; box-sizing: border-box; width: var(--ws-size-indicator-pointer); height: var(--ws-size-indicator-pointer); border: var(--ws-border-control) solid var(--ws-color-daylight-control-line); border-radius: var(--ws-radius-xs); color: transparent; }
 .ws-flow-check__box .ws-flow-icon { width: 100%; height: 100%; stroke-width: calc(var(--ws-border-focus) * 1.5); }
 .ws-flow-check:has(:checked) .ws-flow-check__box { border-color: var(--ws-color-daylight-accent); background: var(--ws-color-daylight-accent); color: var(--ws-color-daylight-on-accent); }
+/* With a mouse the line can be shorter; on touch it keeps the full target. A note under checkboxes lines up with their labels. */
+@media (hover: hover) and (pointer: fine) { .ws-flow-check { min-height: var(--ws-target-pointer); } }
+.ws-flow-check + .ws-flow-step__note { padding-inline-start: calc(var(--ws-size-indicator-pointer) + var(--ws-space-12)); }
 .ws-flow-facts { display: flex; flex-direction: column; gap: var(--ws-space-12); margin: 0; padding: var(--ws-space-16); list-style: none; border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); color: var(--ws-color-daylight-soft); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); }
 .ws-flow-facts li { display: flex; align-items: flex-start; gap: var(--ws-space-12); }
 .ws-flow-facts .ws-flow-icon { margin-block-start: var(--ws-space-2); color: var(--ws-color-daylight-accent); }
@@ -261,9 +265,6 @@
 
 /* Focus is moved to these by script so the next Tab starts in the right place; they are not controls and show no ring. */
 .ws-flow .ws-flow-step__heading:focus-visible, .ws-flow .ws-flow__main:focus-visible { outline: 0; }
-
-/* The fixed demo label must not sit on top of the footer links. */
-:root:has(.ws-flow-demo) .ws-flow__footer { padding-block-end: calc(var(--ws-space-48) + env(safe-area-inset-bottom)); }
 
 /* A theme chosen in the page overrides the system's for native parts too: scrollbars, autofill, the caret. */
 :root[data-theme='light'] { color-scheme: light; }

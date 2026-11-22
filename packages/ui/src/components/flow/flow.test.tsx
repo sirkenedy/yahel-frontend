@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useRef, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  AccountAvatar,
   AccountChip,
   AccountList,
   BrandMark,
@@ -778,5 +779,33 @@ describe('FlowCallout, FlowFacts and BrandMoment', () => {
 
     expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true');
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+});
+
+describe('FlowStep.NoteLink and AccountAvatar', () => {
+  it('opens what it links to in a new tab, safely, and says so to assistive technology', () => {
+    render(
+      <FlowStep>
+        <FlowStep.Heading>q</FlowStep.Heading>
+        <FlowStep.Note>
+          By creating an account you agree to the{' '}
+          <FlowStep.NoteLink href="https://yahel.example/terms" newTabLabel="opens in a new tab">
+            Terms
+          </FlowStep.NoteLink>
+          .
+        </FlowStep.Note>
+      </FlowStep>,
+    );
+
+    const link = screen.getByRole('link', { name: /^Terms ?\(opens in a new tab\)$/ });
+    expect(link).toHaveAttribute('href', 'https://yahel.example/terms');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('shows whose account is in use as initials with a name for assistive technology', () => {
+    render(<AccountAvatar name="Amara Okafor" label="Signed in as amara.okafor@yahel.example" />);
+
+    expect(screen.getByRole('img', { name: 'Signed in as amara.okafor@yahel.example' })).toHaveTextContent('AO');
   });
 });
