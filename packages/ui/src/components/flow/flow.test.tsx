@@ -827,6 +827,29 @@ describe('FlowCallout, FlowFacts and BrandMoment', () => {
     expect(screen.getByText('The passkey stays on this device.')).toBeInTheDocument();
   });
 
+  it('reads a tag as part of the title', () => {
+    const { container } = render(
+      <FlowCallout icon="i" title="Passkey on this device" tag="Required for admins">
+        Fingerprint, face or screen lock.
+      </FlowCallout>,
+    );
+
+    expect(container.textContent).toContain('Passkey on this device Required for admins');
+  });
+
+  it('lists facts with a drawn icon in place of the tick, still read only as the words', () => {
+    render(
+      <FlowFacts>
+        <FlowFacts.Item icon="building" lead="amara@northwind.example belongs to Northwind Studio.">
+          As an admin, you decide which apps your team can use.
+        </FlowFacts.Item>
+      </FlowFacts>,
+    );
+
+    expect(screen.getByRole('listitem')).toHaveTextContent('amara@northwind.example belongs to Northwind Studio. As an admin, you decide which apps your team can use.');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
   it('lists facts, each led by the words that carry it', () => {
     render(
       <FlowFacts>
