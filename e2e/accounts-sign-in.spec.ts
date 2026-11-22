@@ -74,7 +74,8 @@ test.describe('accounts: sign in with a password', () => {
     await signInWithPassword(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Sign-in is paused for a while.' })).toBeFocused();
-    await expect(page.getByRole('main')).toContainText(`we’ve paused sign-in for ${credentials.email} for a while`);
+    await expect(page.getByRole('main')).toContainText('we’ve paused sign-in for a while');
+    await expect(page.getByRole('main')).not.toContainText(`for ${credentials.email}`);
   });
 
   test('pressing Sign in twice sends one request', async ({ page }) => {

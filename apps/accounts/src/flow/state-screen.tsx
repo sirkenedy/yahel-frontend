@@ -53,7 +53,7 @@ const again = (onRetry: () => void) => (
 function draw({ kind, account = null, retryAt, exits, onRetry }: StateScreenProps, window: { from: string; until: string } | null): Drawn {
   switch (kind) {
     case 'locked':
-      return { tone: 'warning', icon: 'clock', title: m.lockedTitle, lede: m.lockedLede(account), note: retryAt ? m.lockedUntil(m.timeOf(retryAt)) : m.lockedNote, actions: [link(exits.resetPassword, m.resetPassword, 'primary'), link(exits.signIn, m.backToSignIn, exits.resetPassword ? 'quiet' : 'primary')] };
+      return { tone: 'warning', icon: 'clock', title: m.lockedTitle, lede: m.lockedLede, note: retryAt ? m.lockedUntil(m.timeOf(retryAt)) : m.lockedNote, actions: [link(exits.resetPassword, m.resetPassword, 'primary'), link(exits.signIn, m.backToSignIn, exits.resetPassword ? 'quiet' : 'primary')] };
     case 'suspended':
       return { tone: 'danger', icon: 'pause', title: m.suspendedTitle, lede: m.suspendedLede(account), note: m.suspendedNote, actions: [link(exits.support, m.contactSupport, 'primary'), link(exits.signIn, m.useAnotherAccount, exits.support ? 'quiet' : 'primary')] };
     case 'org-paused':

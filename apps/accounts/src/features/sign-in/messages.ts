@@ -113,6 +113,9 @@ export const signInMessages = {
   saving: 'Saving…',
 
   wrongCredentials: 'That email and password don’t match. Check both and try again.',
+  cannotSignInTitle: 'This account can’t sign in right now',
+  cannotSignIn: 'If you think this is a mistake, contact support, or sign in with another account.',
+  contactSupport: 'Contact support',
   confirmEmailTitle: 'Confirm your email first',
   emailNotConfirmed: 'Look for the message we sent when you created the account, then sign in again.',
   singleSignOnTitle: 'Your organisation signs you in with its own system',

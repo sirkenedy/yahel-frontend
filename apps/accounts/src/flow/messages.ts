@@ -31,9 +31,9 @@ export const flowMessages = {
   listOf: (names: readonly string[]) => `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}.`,
 
   lockedTitle: 'Sign-in is paused for a while.',
-  lockedLede: (email: string | null) => `There were too many tries, so we’ve paused sign-in${email ? ` for ${email}` : ''} for a while. This keeps your account safe.`,
-  lockedUntil: (at: string) => `You can try again at ${at}. Resetting your password works right away.`,
-  lockedNote: 'Resetting your password works right away.',
+  lockedLede: 'There were too many sign-in tries, so we’ve paused sign-in for a while. This keeps accounts safe.',
+  lockedUntil: (at: string) => `You can try again at ${at}.`,
+  lockedNote: 'Wait a few minutes, then try again.',
   resetPassword: 'Reset your password',
   backToSignIn: 'Back to sign in',
   suspendedTitle: 'This account is turned off.',

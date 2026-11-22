@@ -324,8 +324,8 @@ describe('PasswordStep', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: fm.lockedTitle })).toHaveFocus();
     expect(screen.queryByLabelText(m.passwordLabel)).not.toBeInTheDocument();
-    expect(screen.getByText(fm.lockedLede(email))).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/^You can try again at \d{2}:\d{2}\. Resetting your password works right away\.$/);
+    expect(screen.getByText(fm.lockedLede)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/^You can try again at \d{2}:\d{2}\.$/);
     expect(screen.getByRole('link', { name: fm.resetPassword })).toHaveAttribute('href', '/signin/recover');
     expect(screen.getByRole('link', { name: fm.backToSignIn })).toHaveAttribute('href', '/signin/email');
     expect(document.title).toBe(fm.pageTitle(fm.lockedTitle));

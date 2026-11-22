@@ -26,8 +26,10 @@ test.describe('feedback: sign in', () => {
     await expect(heading(page, 'Sign-in is paused for a while.')).toBeFocused();
     await expect(page).toHaveTitle('Sign-in is paused for a while · Yahel');
     await expect(page).toHaveURL(at('/signin/password'));
-    await expect(page.getByRole('main')).toContainText(`we’ve paused sign-in for ${credentials.email} for a while`);
-    await expect(page.getByRole('status')).toContainText(/You can try again at \d{2}:\d{2}\. Resetting your password works right away\./);
+    // The limit is on requests, not on one account: no address is named, and nothing is promised about a reset.
+    await expect(page.getByRole('main')).toContainText('we’ve paused sign-in for a while');
+    await expect(page.getByRole('main')).not.toContainText(credentials.email);
+    await expect(page.getByRole('status')).toHaveText(/^You can try again at \d{2}:\d{2}\.$/);
 
     await page.getByRole('link', { name: 'Reset your password' }).click();
     await expect(page.getByRole('radiogroup', { name: 'Where to send the code' })).toBeVisible();
@@ -38,21 +40,34 @@ test.describe('feedback: sign in', () => {
     await signInWithPassword(page);
 
     await expect(heading(page, 'Sign-in is paused for a while.')).toBeFocused();
-    await expect(page.getByRole('status')).toHaveText('Resetting your password works right away.');
+    await expect(page.getByRole('status')).toHaveText('Wait a few minutes, then try again.');
     await expect(page.getByRole('main')).not.toContainText('You can try again at');
 
     await page.getByRole('link', { name: 'Back to sign in' }).click();
     await expect(heading(page, 'Welcome back.')).toBeVisible();
   });
 
-  test('a suspended account is told so only after its password matched, with a way to another account', async ({ page }) => {
+  test('a bare 403 after the password matched says only that the account cannot sign in, on the step', async ({ page }) => {
     await mockApi(page);
+    await signInWithPassword(page, suspendedCredentials);
+
+    const banner = page.getByRole('alert').filter({ hasText: 'This account can’t sign in right now' });
+    await expect(banner).toBeVisible();
+    await expect(page.getByRole('main')).not.toContainText('turned off');
+    await expect(heading(page, 'Enter your password.')).toBeVisible();
+    await expect(banner.getByRole('link', { name: 'Contact support' })).toHaveAttribute('href', 'https://yahel.example/help');
+  });
+
+  test('a suspended account is told so only after its password matched, with a way to another account', async ({ page }) => {
+    const api = await mockApi(page);
     await openPasswordStep(page, suspendedCredentials.email);
     await password(page).fill('not its password');
     await page.getByRole('button', { name: 'Sign in' }).click();
     // Without the password the answer is the same as for any address.
     await expect(password(page)).toHaveAccessibleDescription(/don’t match/);
 
+    // The backend has no code for a suspended account yet (roadmap); the screen is shown only for that code.
+    api.failNext('/v1/auth/login', 403, 'ACCOUNT_SUSPENDED');
     await password(page).fill(suspendedCredentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(heading(page, 'This account is turned off.')).toBeFocused();

@@ -47,12 +47,13 @@ const feedbackScreens: Screen[] = [
     open: signInRefused('You can try again at', 429, 'BAD_REQUEST', { 'Retry-After': '600', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Retry-After' }),
   },
   {
-    name: 'accounts state: account turned off',
+    name: 'accounts banner: this account cannot sign in',
     open: async (page) => {
       await signInWithPassword(page, suspendedCredentials);
-      await page.getByRole('heading', { name: 'This account is turned off.' }).waitFor();
+      await page.getByText('This account can’t sign in right now').waitFor();
     },
   },
+  { name: 'accounts state: account turned off', open: signInRefused('This account is turned off.', 403, 'ACCOUNT_SUSPENDED') },
   { name: 'accounts state: organisation paused', open: signInRefused('Your organisation is paused.', 403, 'TENANT_SUSPENDED') },
   { name: 'accounts state: maintenance, with its window', open: signInRefused('Planned maintenance runs from', 503, 'SERVICE_UNAVAILABLE') },
   {

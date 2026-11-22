@@ -33,7 +33,7 @@ export function StepFrame({ title, lede, requests, feedback, toFix, next, childr
       requests={requests}
       feedback={feedback}
       toFix={toFix}
-      next={{ 'reset-password': { label: m.resetYourPassword, href: stepPath('recover') }, 'sign-in-again': { label: m.signInAgain, href: stepPath('password') }, ...next }}
+      next={{ 'reset-password': { label: m.resetYourPassword, href: stepPath('recover') }, 'sign-in-again': { label: m.signInAgain, href: stepPath('password') }, support: meta.screens.exits.support ? { label: m.contactSupport, href: meta.screens.exits.support } : null, ...next }}
       screens={meta.screens}
       direction={meta.direction}
       back={meta.backHref ? { href: meta.backHref, label: m.back } : null}

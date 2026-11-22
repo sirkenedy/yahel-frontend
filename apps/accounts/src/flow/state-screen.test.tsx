@@ -46,12 +46,13 @@ describe('StateScreen', () => {
     expect(document.title).toMatch(/ · Yahel$/);
   });
 
-  it('locked: says whose sign-in is paused, when it can be tried again, and offers a reset before the way back', () => {
+  it('locked: names nobody (the pause is not one account’s), says when to try again, and offers a reset before the way back', () => {
     const retryAt = Date.now() + 15 * 60_000;
     show('locked', { account: EMAIL, retryAt });
 
-    expect(screen.getByText(m.lockedLede(EMAIL))).toHaveTextContent(EMAIL);
+    expect(screen.getByText(m.lockedLede)).not.toHaveTextContent(EMAIL);
     expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.timeOf(retryAt)));
+    expect(document.body).not.toHaveTextContent(/right away/);
     expect(link(m.resetPassword)).toHaveAttribute('href', '/signin/recover');
     expect(isPrimary(link(m.resetPassword))).toBe(true);
     expect(link(m.backToSignIn)).toHaveAttribute('href', '/signin/email');
@@ -59,11 +60,12 @@ describe('StateScreen', () => {
     expect(actions()).toEqual([m.resetPassword, m.backToSignIn]);
   });
 
-  it('locked: names no address and no time when it knows neither, and still says a reset works', () => {
+  it('locked: gives no time when it knows none, and promises nothing about a reset', () => {
     show('locked');
 
-    expect(screen.getByText(m.lockedLede(null))).not.toHaveTextContent('@');
+    expect(screen.getByText(m.lockedLede)).not.toHaveTextContent('@');
     expect(screen.getByRole('status')).toHaveTextContent(m.lockedNote);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/reset/i);
     expect(screen.getByRole('status')).not.toHaveTextContent(/try again at/);
   });
 

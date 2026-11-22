@@ -57,8 +57,8 @@ describe('describeSignInFailure: the password', () => {
     expect(timed.place === 'screen' ? timed.retryAt : Infinity).toBeLessThanOrEqual(Date.now() + 900_000);
   });
 
-  it.each<FailureContext>(['password', 'passkey'])('shows an account that may not sign in (by %s) as the turned-off screen, by today’s 403 or by its own code', (context) => {
-    expect(describeSignInFailure(answer(403, 'FORBIDDEN'), context)).toEqual({ place: 'screen', screen: 'suspended' });
+  it.each<FailureContext>(['password', 'passkey'])('says an account is turned off only when the answer says so (by %s); a bare 403 is told neutrally', (context) => {
+    expect(describeSignInFailure(answer(403, 'FORBIDDEN'), context)).toEqual({ place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' });
     expect(describeSignInFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'suspended' });
   });
 

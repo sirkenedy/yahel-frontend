@@ -7,7 +7,7 @@ import { signInMessages as m } from './messages';
 export type FailureContext = 'password' | 'passkey' | 'code' | 'reset' | 'other';
 export type SignInField = 'password' | 'code';
 /** What sign-in can offer after a failure. `retry` is the frame's own. */
-export type SignInNext = 'retry' | 'reset-password' | 'sign-in-again' | 'resend';
+export type SignInNext = 'retry' | 'reset-password' | 'sign-in-again' | 'resend' | 'support';
 export type SignInFeedback = Feedback<SignInField, SignInNext>;
 type Rows = FeedbackMap<SignInField, SignInNext>;
 
@@ -20,7 +20,8 @@ const refusedPassword = { place: 'field', field: 'password', text: m.passwordRef
 // What the server says only once the password has matched: none of it reveals more than signing in would.
 const afterPassword = {
   TOO_MANY_REQUESTS: { place: 'screen', screen: 'locked' },
-  FORBIDDEN: { place: 'screen', screen: 'suspended' },
+  // A bare 403 is also an inactive membership, so it says only what is known: this account cannot sign in now.
+  FORBIDDEN: { place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' },
   EMAIL_NOT_VERIFIED: { place: 'banner', tone: 'info', title: m.confirmEmailTitle, text: m.emailNotConfirmed },
   SSO_REQUIRED: { place: 'banner', tone: 'info', title: m.singleSignOnTitle, text: m.singleSignOnRequired },
   FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED: { place: 'banner', tone: 'warning', title: m.newPasswordNeededTitle, text: m.newPasswordNeeded, next: 'reset-password' },
