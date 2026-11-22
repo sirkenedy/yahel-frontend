@@ -27,6 +27,9 @@ import { RecoveryStep } from './recovery-step';
 import { ReviewStep } from './review-step';
 import { TypeStep } from './type-step';
 
+/** A pattern that matches this text exactly as written, whatever characters it holds. */
+const literally = (text: string) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
 type Request = FlowRequest<PersonalField, PersonalNext>;
 const idle: Request = { isPending: false, feedback: null, clear: () => undefined };
 const pending: Request = { ...idle, isPending: true };
@@ -168,7 +171,7 @@ describe('TypeStep', () => {
   it('starts a personal account by default', async () => {
     const { actions } = setup(<TypeStep />);
 
-    expect(screen.getByRole('radio', { name: new RegExp(m.typePersonal) })).toBeChecked();
+    expect(screen.getByRole('radio', { name: literally(m.typePersonal) })).toBeChecked();
     await press(m.continue);
 
     expect(actions.startPersonal).toHaveBeenCalledTimes(1);
@@ -177,7 +180,7 @@ describe('TypeStep', () => {
   it('leaves for the business sign-up when it has an address', async () => {
     const { actions, user } = setup(<TypeStep />, { offers: { business: true } });
 
-    await user.click(screen.getByRole('radio', { name: new RegExp(m.typeBusiness) }));
+    await user.click(screen.getByRole('radio', { name: literally(m.typeBusiness) }));
     await press(m.continue);
 
     expect(actions.startBusiness).toHaveBeenCalledTimes(1);
@@ -187,12 +190,12 @@ describe('TypeStep', () => {
   it('says business sign-up is not available yet where it is not offered, until they choose again', async () => {
     const { actions, user } = setup(<TypeStep />);
 
-    await user.click(screen.getByRole('radio', { name: new RegExp(m.typeBusiness) }));
+    await user.click(screen.getByRole('radio', { name: literally(m.typeBusiness) }));
     await press(m.continue);
     expect(screen.getByRole('status')).toHaveTextContent(m.businessUnavailable);
     expect(actions.startBusiness).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole('radio', { name: new RegExp(m.typePersonal) }));
+    await user.click(screen.getByRole('radio', { name: literally(m.typePersonal) }));
     expect(screen.queryByText(m.businessUnavailable)).not.toBeInTheDocument();
   });
 });
@@ -785,7 +788,7 @@ describe('ReadyStep and ContactStep', () => {
 
     expect(screen.getByRole('heading', { name: m.readyTitle('Amara') })).toBeInTheDocument();
     expect(screen.getByText(m.readyLede('amara.okafor@yahel.example'))).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: new RegExp(m.trustTitle) })).toHaveAttribute('href', '/personal/contact');
+    expect(screen.getByRole('link', { name: literally(m.trustTitle) })).toHaveAttribute('href', '/personal/contact');
     await press(m.openYahel);
 
     expect(actions.continueToApp).toHaveBeenCalledTimes(1);
@@ -805,7 +808,7 @@ describe('ReadyStep and ContactStep', () => {
     ]);
     expect(screen.getByRole('status')).toHaveAttribute('data-tone', 'success');
     expect(screen.getByRole('status')).toHaveTextContent(m.trustInvited('chidi.eze@personal.example'));
-    expect(screen.queryByRole('link', { name: new RegExp(m.trustTitle) })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: literally(m.trustTitle) })).not.toBeInTheDocument();
   });
 
   it('tells a phone whose code was skipped from one the server would not take', () => {
@@ -818,7 +821,7 @@ describe('ReadyStep and ContactStep', () => {
   it('does not offer a trusted contact where there is nowhere to send the invitation', () => {
     setup(<ReadyStep />, { state: answered, offers: { contact: false } });
 
-    expect(screen.queryByRole('link', { name: new RegExp(m.trustTitle) })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: literally(m.trustTitle) })).not.toBeInTheDocument();
   });
 
   it('invites someone else, and says what they will and will not see', async () => {

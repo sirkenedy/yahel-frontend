@@ -235,7 +235,7 @@
 .ws-flow-receipt__row + .ws-flow-receipt__row { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
 .ws-flow-receipt__row dt { flex: 0 0 calc(var(--ws-space-40) * 2); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); }
 .ws-flow-receipt__row dd { flex: 1 1 0; margin: 0; min-width: 0; font-size: var(--ws-type-flow-link-size); line-height: var(--ws-type-flow-link-line); font-weight: var(--ws-weight-semibold); }
-.ws-flow-receipt__row .ws-flow-receipt__action { flex: none; }
+.ws-flow-receipt__row .ws-flow-receipt__action { flex: 0 1 auto; min-width: 0; }
 .ws-flow-receipt__detail { display: block; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-medium); }
 .ws-flow-receipt__row:has(.ws-flow-receipt__detail) { padding-block: var(--ws-space-12); }
 .ws-flow-receipt__row dd { overflow-wrap: anywhere; }

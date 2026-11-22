@@ -24,6 +24,9 @@ import { RegistrantStep } from './registrant-step';
 import { StartStep } from './start-step';
 import { YouStep } from './you-step';
 
+/** A pattern that matches this text exactly as written, whatever characters it holds. */
+const literally = (text: string) => new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
 type Request = BusinessFlowValue['meta']['requests']['pay'];
 const idle: Request = { isPending: false, feedback: null, clear: () => undefined };
 const failing = (feedback: BusinessFeedback, more: Partial<Request> = {}): Request => ({ ...idle, feedback, ...more });
@@ -153,7 +156,7 @@ describe('YouStep', () => {
 
     expect(screen.getByText(fm.thingsToFix(5))).toBeInTheDocument();
     expect(field(m.firstName)).toHaveAccessibleDescription(m.firstNameRequired);
-    expect(field(m.contactEmail)).toHaveAccessibleDescription(new RegExp(m.contactEmailInvalid.replace(/[.]/g, '\\.')));
+    expect(field(m.contactEmail)).toHaveAccessibleDescription(literally(m.contactEmailInvalid));
     expect(field(m.firstName)).toHaveFocus();
     expect(actions.enterYou).not.toHaveBeenCalled();
   });
@@ -182,9 +185,9 @@ describe('YouStep', () => {
 describe('DomainQuestionStep', () => {
   it('offers a domain already owned or one bought here, and goes on with the one chosen', async () => {
     const { actions, user } = setup(<DomainQuestionStep />);
-    expect(screen.getByRole('radio', { name: new RegExp(m.ownDomain) })).toBeChecked();
+    expect(screen.getByRole('radio', { name: literally(m.ownDomain) })).toBeChecked();
 
-    await user.click(screen.getByRole('radio', { name: new RegExp(m.buyDomain) }));
+    await user.click(screen.getByRole('radio', { name: literally(m.buyDomain) }));
     await press(m.continue);
     expect(actions.chooseDomainSource).toHaveBeenCalledWith('bought');
   });
@@ -351,8 +354,8 @@ describe('AdminStep', () => {
     const { actions, user } = setup(<AdminStep />, { state: { ...answered, adminUser: '', hasPassword: false } });
     expect(field(m.username)).toHaveValue('amara');
     expect(screen.getByText('@northwind.example')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: new RegExp(m.businessAgreement) })).toHaveAttribute('href', 'https://yahel.example/business-terms');
-    expect(screen.getByText(new RegExp(m.trialTerms))).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: literally(m.businessAgreement) })).toHaveAttribute('href', 'https://yahel.example/business-terms');
+    expect(screen.getByText(literally(m.trialTerms))).toBeInTheDocument();
     for (const label of [m.password, m.confirmPassword]) expect(field(label)).toHaveAttribute('autocomplete', 'new-password');
 
     await user.type(field(m.password), password);
@@ -382,7 +385,7 @@ describe('AdminStep', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent(fm.thingsToFix(3));
     expect(field(m.username)).toHaveAccessibleDescription(m.usernameInvalid);
-    expect(field(m.password)).toHaveAccessibleDescription(new RegExp('Use 8 or more characters'));
+    expect(field(m.password)).toHaveAccessibleDescription(literally('Use 8 or more characters'));
     expect(field(m.confirmPassword)).toHaveAccessibleDescription(m.confirmMismatch);
     expect(actions.enterAdmin).not.toHaveBeenCalled();
   });
@@ -403,7 +406,7 @@ describe('AdminStep', () => {
   it('says an address is taken beside the username, with the way to sign in, and never whose it is', () => {
     setup(<AdminStep />, { state: { ...answered, rejection: { step: 'admin', reason: 'taken' } } });
 
-    expect(field(m.username)).toHaveAccessibleDescription(new RegExp(m.usernameTaken.replace(/[.]/g, '\\.')));
+    expect(field(m.username)).toHaveAccessibleDescription(literally(m.usernameTaken));
     expect(screen.getByRole('link', { name: m.signInInstead })).toHaveAttribute('href', '/signin');
   });
 
@@ -412,8 +415,8 @@ describe('AdminStep', () => {
 
     expect(screen.getByRole('button', { name: m.agreeAndCreate })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByText(new RegExp(m.trialTerms))).not.toBeInTheDocument();
-    expect(screen.getByText(new RegExp(m.businessAgreement)).closest('a')).toBeNull();
+    expect(screen.queryByText(literally(m.trialTerms))).not.toBeInTheDocument();
+    expect(screen.getByText(literally(m.businessAgreement)).closest('a')).toBeNull();
   });
 });
 
@@ -533,9 +536,9 @@ describe('CheckoutStep', () => {
     await user.clear(field(m.nameOnCard));
     await press(m.startTrial);
 
-    expect(field(m.cardNumber)).toHaveAccessibleDescription(new RegExp(m.cardNumberInvalid.replace('.', '\\.')));
-    expect(field(m.expiry)).toHaveAccessibleDescription(new RegExp(m.expired.replace('.', '\\.')));
-    expect(field(m.securityCode)).toHaveAccessibleDescription(new RegExp(m.securityCodeInvalid.replace('.', '\\.')));
+    expect(field(m.cardNumber)).toHaveAccessibleDescription(literally(m.cardNumberInvalid));
+    expect(field(m.expiry)).toHaveAccessibleDescription(literally(m.expired));
+    expect(field(m.securityCode)).toHaveAccessibleDescription(literally(m.securityCodeInvalid));
     expect(field(m.nameOnCard)).toHaveAccessibleDescription(m.nameOnCardRequired);
     expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual(expect.arrayContaining([expect.stringContaining(m.addressRequired) as string]));
     expect(actions.pay).not.toHaveBeenCalled();
@@ -610,7 +613,7 @@ describe('CheckoutStep', () => {
     expect(summary).toHaveTextContent('example.com');
     expect(summary).toHaveTextContent('₦18,500 / year');
     expect(screen.getByRole('button', { name: m.payAndStartTrial('₦18,500') })).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(m.domainAgreement))).toBeInTheDocument();
+    expect(screen.getByText(literally(m.domainAgreement))).toBeInTheDocument();
     expect(screen.getByRole('group', { name: m.yourOrder })).toHaveTextContent(m.domainBought);
   });
 
