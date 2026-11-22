@@ -63,10 +63,23 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
     expect(api.calls.filter((call) => call.path.includes('/tenants'))).toHaveLength(0);
   });
 
+  test('the administrator step and Ready say plainly that the code goes to the new address, which must be a mailbox that opens now', async ({ page }) => {
+    await mockApi(page);
+    await createWorkspaceTo(page, 'admin');
+    const before = page.getByRole('status').filter({ hasText: 'We’ll email a confirmation code to this new address' });
+    await expect(before).toContainText(`this must be a mailbox on ${business.domain} that you can open now`);
+    await expect(before).toContainText('don’t continue yet');
+
+    await createWorkspace(page);
+    const after = page.getByRole('status').filter({ hasText: 'Your confirmation code goes to your new address' });
+    await expect(after).toContainText(`We’ve emailed a code to ${business.adminAddress}`);
+    await expect(after).toContainText('Sign in only once that mailbox is one you can open');
+  });
+
   test('the new administrator signs in, confirms the emailed code and is in', async ({ page }) => {
     await mockApi(page);
     await createWorkspace(page);
-    await expect(page.getByRole('status').filter({ hasText: 'The first time you sign in' })).toContainText(business.adminAddress);
+    await expect(page.getByRole('status').filter({ hasText: 'Your confirmation code goes to your new address' })).toContainText(business.adminAddress);
 
     await page.getByRole('link', { name: 'Sign in to Admin' }).click();
     await expect(page).toHaveURL(/\/signin\//);

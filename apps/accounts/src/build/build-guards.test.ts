@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertReleaseAddresses, assertStandInsAllowed } from './build-guards';
+import { assertReleaseAddresses, assertStandInsAllowed, assertSwitches } from './build-guards';
 
 describe('assertStandInsAllowed', () => {
   it('refuses a build with stand-ins on', () => {
@@ -60,5 +60,19 @@ describe('assertReleaseAddresses', () => {
 
   it('is not switched off by a mistyped opt-in', () => {
     expect(() => assertReleaseAddresses('build', { VITE_LOCAL_BUILD: 'true' })).toThrow();
+  });
+});
+
+describe('assertSwitches', () => {
+  it.each([undefined, '', 'on', 'off'])('accepts business sign-up switched %s', (value) => {
+    expect(() => assertSwitches('build', { VITE_BUSINESS_SIGN_UP: value })).not.toThrow();
+  });
+
+  it.each(['yes', 'true', 'ON', '1'])('refuses a build with business sign-up set to %s', (value) => {
+    expect(() => assertSwitches('build', { VITE_BUSINESS_SIGN_UP: value })).toThrow(/^VITE_BUSINESS_SIGN_UP must be on, off or unset/);
+  });
+
+  it('leaves the development server alone', () => {
+    expect(() => assertSwitches('serve', { VITE_BUSINESS_SIGN_UP: 'yes' })).not.toThrow();
   });
 });

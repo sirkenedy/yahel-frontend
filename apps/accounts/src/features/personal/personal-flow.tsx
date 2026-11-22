@@ -42,7 +42,7 @@ export interface PersonalFlowValue {
   };
   actions: {
     startPersonal: () => void;
-    /** Leaves for the business sign-up. */
+    /** Leaves for the business sign-up. Only offered when `meta.offers.business`. */
     startBusiness: () => void;
     enterName: (firstName: string, lastName: string) => void;
     enterBirth: (birth: BirthDate, gender: Gender) => void;
@@ -83,7 +83,7 @@ export interface PersonalFlowValue {
     progress: ReturnType<typeof progressOf>;
     /** The domain of a new Yahel address, without the @. */
     mailDomain: string;
-    offers: { passkey: boolean; contact: boolean; preferences: boolean };
+    offers: { passkey: boolean; business: boolean; contact: boolean; preferences: boolean };
     links: { signIn: string; terms: string | null; privacy: string | null; help?: string | null };
     /** What a whole-screen state needs: whose account, and where its ways out lead. */
     screens: ScreenFacts;
@@ -109,8 +109,8 @@ export interface PersonalFlowProviderProps {
   mailDomain: string;
   links: PersonalFlowValue['meta']['links'];
   navigate: (step: PersonalStep, options?: { replace?: boolean }) => void;
-  /** Sends the browser to the business sign-up. */
-  leaveForBusiness: () => void;
+  /** Sends the browser to the business sign-up, or `null` when it has no address yet. */
+  leaveForBusiness: (() => void) | null;
   /** Sends the browser to the validated return address. */
   leave: () => void;
   /** Passed to the requests; see `PersonalRequestDeps`. */
@@ -167,7 +167,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
     },
     actions: {
       startPersonal: () => advance('type'),
-      startBusiness: leaveForBusiness,
+      startBusiness: () => leaveForBusiness?.(),
       enterName: (firstName, lastName) => {
         store.dispatch({ type: 'name-entered', firstName, lastName });
         advance('name');
@@ -238,7 +238,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       backHref: back ? stepPath(back) : null,
       progress: progressOf(step),
       mailDomain,
-      offers: { passkey: facts.passkeysOffered, contact: facts.contactOffered, preferences: capabilities.preferences !== null },
+      offers: { passkey: facts.passkeysOffered, business: leaveForBusiness !== null, contact: facts.contactOffered, preferences: capabilities.preferences !== null },
       links,
       screens: { account: flow.creation.created ? addressOf(flow, mailDomain) : null, exits: { signIn: links.signIn, signUp: stepPath('type'), support: links.help }, serviceStatus: capabilities.serviceStatus },
       requests: {

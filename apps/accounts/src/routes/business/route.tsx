@@ -2,7 +2,7 @@ import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@ta
 import { useState } from 'react';
 import { BusinessFlowProvider } from '../../features/business/business-flow';
 import { stepOfPath, stepPath } from '../../features/business/machine';
-import { businessFacts, forgetWorkspace, isSignedIn } from '../../features/business/route-guard';
+import { businessFacts, forgetWorkspace, isOffered, isSignedIn } from '../../features/business/route-guard';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
 import { PageRouteError } from '../../route-error';
@@ -12,6 +12,8 @@ const withoutDetails = ['domain-question', 'plan', 'creating', 'ready'];
 
 export const Route = createFileRoute('/business')({
   beforeLoad: ({ context }) => {
+    // Not offered in this build (F-78): the personal sign-up's first question says so.
+    if (!isOffered(context)) throw redirect({ to: '/personal', replace: true });
     if (isSignedIn(context)) throw redirect({ to: '/signin', replace: true });
     return { facts: businessFacts(context) };
   },

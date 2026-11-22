@@ -46,7 +46,7 @@ function PersonalLayout() {
         links={{ signIn: config.signInUrl, terms: config.termsUrl, privacy: config.privacyUrl, help: config.helpUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         // A path is a step of this app; an address is the workspace sign-up served somewhere else.
-        leaveForBusiness={() => (businessSignUpUrl.startsWith('/') ? void navigate({ href: businessSignUpUrl }) : window.location.assign(businessSignUpUrl))}
+        leaveForBusiness={businessSignUpUrl === null ? null : () => (businessSignUpUrl.startsWith('/') ? void navigate({ href: businessSignUpUrl }) : window.location.assign(businessSignUpUrl))}
         leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}
       >
         <Outlet />

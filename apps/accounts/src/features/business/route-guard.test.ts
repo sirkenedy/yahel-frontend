@@ -2,7 +2,7 @@ import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { Session } from '@yahel/auth';
 import { describe, expect, it } from 'vitest';
-import { arriveAtCheckout, businessFacts, forgetWorkspace, isSignedIn, stepInsteadOf } from './route-guard';
+import { arriveAtCheckout, businessFacts, forgetWorkspace, isOffered, isSignedIn, stepInsteadOf } from './route-guard';
 import { createBusinessStore } from './store';
 
 const api = { auth: {} } as never;
@@ -24,6 +24,11 @@ describe('businessFacts', () => {
 });
 
 describe('the guards', () => {
+  it('lets the flow be shown only where this build offers it', () => {
+    expect(isOffered({ config: { businessSignUp: true } })).toBe(true);
+    expect(isOffered({ config: { businessSignUp: false } })).toBe(false);
+  });
+
   it('knows when someone is already signed in', () => {
     expect(isSignedIn(sessionIn('signed-in'))).toBe(true);
     expect(isSignedIn(sessionIn('signed-out'))).toBe(false);

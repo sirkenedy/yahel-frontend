@@ -9,7 +9,9 @@ interface ImportMetaEnv {
   readonly VITE_SIGN_UP_URL?: string;
   /** Where "Have an account? Sign in" leads. Unset, it is `/signin` in this app. */
   readonly VITE_SIGN_IN_URL?: string;
-  /** Where "For my business or team" leads. Unset, it is `/business` in this app. */
+  /** `on` offers workspace sign-up in a release build; `off` withholds it from a demo build. Unset, only a demo build offers it. */
+  readonly VITE_BUSINESS_SIGN_UP?: string;
+  /** Where "For my business or team" leads, when workspace sign-up is offered. Unset, it is `/business` in this app. */
   readonly VITE_BUSINESS_SIGN_UP_URL?: string;
   /** Where a new workspace's administrator signs in. Unset, it is the sign-in address. */
   readonly VITE_ADMIN_SIGN_IN_URL?: string;

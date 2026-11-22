@@ -58,6 +58,7 @@ export function AdminStep() {
             inputRef={username.inputRef}
             isRequired
           />
+          <FlowNotice title={m.codeMailboxTitle}>{m.codeMailbox(state.domain)}</FlowNotice>
           {state.hasPassword ? <FlowNotice>{m.passwordKept}</FlowNotice> : null}
           <FlowPasswordField showText={m.show} hideText={m.hide} showLabel={m.showPassword} hideLabel={m.hidePassword} isRevealed={revealed} onRevealedChange={setRevealed} autoComplete="new-password" label={m.password} name="new-password" help={m.passwordHelp} value={password.value} onChange={password.change} onBlur={password.blur} isValid={password.isValid} error={password.error} inputRef={password.inputRef} isRequired={!state.hasPassword} />
           <PasswordStrength score={score}>{m.strength(m.strengthVerdicts[score], password.value.length)}</PasswordStrength>

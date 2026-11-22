@@ -217,7 +217,8 @@ The reasons, and what was rejected, are in `docs/decisions.md` F-70 to F-77. The
 - **Plan.** The card names the plan on one line ("Yahel Business"), not "Yahel" above "Business".
 - **Claimed domain.** The banner drops "Unfinished claims are released after 14 days".
 - **The bank's code** is six digits. A declined card, a wrong code, an expired code and a code spent by too many tries have words written for this build; no board draws them.
-- **Ready.** A line says the first sign-in will ask for the code emailed to the administrator's address. "Sign in to Admin" leads to sign-in until the administrator's first sign-in is built.
+- **Where the code goes.** The administrator step and Ready each carry a note, not drawn on the boards, saying plainly that the confirmation code is emailed to the new address on the business's domain and that it must be a mailbox the person can open now: on the administrator step, if it is not, don't continue yet; on Ready, sign in only once it is. The backend sends the code nowhere else (`docs/decisions.md` F-78, O-16). "Sign in to Admin" leads to sign-in until the administrator's first sign-in is built.
+- **Not offered in a release build** unless its deployment switches it on (`VITE_BUSINESS_SIGN_UP=on`, F-78): until the backend can send the code to a mailbox the person already has, the type screen's business choice says it isn't available yet, as it did before this flow existed.
 - **Without plans or a registrar** (any build that is not a demo) the flow is the business, the person, a domain already owned, the administrator's sign-in, then the workspace: four questions, with "Agree and create workspace".
 
 ### Daylight error and feedback states: corrections (2026-11-22)

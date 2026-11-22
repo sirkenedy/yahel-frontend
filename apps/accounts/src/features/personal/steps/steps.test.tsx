@@ -97,7 +97,7 @@ const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links
     backHref: null,
     progress: null,
     mailDomain: 'yahel.example',
-    offers: { passkey: true, contact: true, preferences: true, ...offers },
+    offers: { passkey: true, business: false, contact: true, preferences: true, ...offers },
     links: { signIn: '/signin', terms: 'https://yahel.example/terms', privacy: 'https://yahel.example/privacy', ...links },
     screens: { account: null, exits: { signIn: '/signin', signUp: '/personal' }, serviceStatus: null },
     requests: { passkey: idle, create: idle, confirmEmail: idle, resendEmailCode: idle, verifyPhone: idle, resendPhoneCode: idle, inviteContact: idle, ...requests },
@@ -174,8 +174,8 @@ describe('TypeStep', () => {
     expect(actions.startPersonal).toHaveBeenCalledTimes(1);
   });
 
-  it('leaves for the business sign-up when that is chosen', async () => {
-    const { actions, user } = setup(<TypeStep />);
+  it('leaves for the business sign-up when it has an address', async () => {
+    const { actions, user } = setup(<TypeStep />, { offers: { business: true } });
 
     await user.click(screen.getByRole('radio', { name: new RegExp(m.typeBusiness) }));
     await press(m.continue);
@@ -184,6 +184,17 @@ describe('TypeStep', () => {
     expect(actions.startPersonal).not.toHaveBeenCalled();
   });
 
+  it('says business sign-up is not available yet where it is not offered, until they choose again', async () => {
+    const { actions, user } = setup(<TypeStep />);
+
+    await user.click(screen.getByRole('radio', { name: new RegExp(m.typeBusiness) }));
+    await press(m.continue);
+    expect(screen.getByRole('status')).toHaveTextContent(m.businessUnavailable);
+    expect(actions.startBusiness).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('radio', { name: new RegExp(m.typePersonal) }));
+    expect(screen.queryByText(m.businessUnavailable)).not.toBeInTheDocument();
+  });
 });
 
 describe('NameStep', () => {

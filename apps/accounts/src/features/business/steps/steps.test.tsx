@@ -364,6 +364,14 @@ describe('AdminStep', () => {
     expect(actions.enterAdmin).toHaveBeenCalledWith({ adminUser: 'amara', password, marketing: { productNews: true, teamTips: false } });
   });
 
+  it('says plainly that the confirmation code goes to the new address, which must be a mailbox that can be opened now', () => {
+    setup(<AdminStep />, { state: { ...answered, hasPassword: false } });
+    const note = screen.getByRole('status');
+    expect(note).toHaveTextContent(m.codeMailboxTitle);
+    expect(note).toHaveTextContent(m.codeMailbox('northwind.example'));
+    expect(note).toHaveTextContent(/don’t continue yet/);
+  });
+
   it('refuses a username that is not one, a weak password and a different second password', async () => {
     const { actions, user } = setup(<AdminStep />, { state: { ...answered, hasPassword: false } });
     await user.clear(field(m.username));
@@ -382,7 +390,7 @@ describe('AdminStep', () => {
   it('never shows a password already chosen: empty fields keep it, a new one replaces it', async () => {
     const { actions, user } = setup(<AdminStep />, { state: answered });
     expect(field(m.password)).toHaveValue('');
-    expect(screen.getByRole('status')).toHaveTextContent(m.passwordKept);
+    expect(screen.getByText(m.passwordKept)).toBeInTheDocument();
     await press(m.agreeAndContinue);
     expect(actions.enterAdmin).toHaveBeenLastCalledWith({ adminUser: 'amara', password: null, marketing: { productNews: false, teamTips: false } });
 
@@ -712,7 +720,9 @@ describe('ReadyStep', () => {
     expect(screen.getByRole('heading', { level: 1, name: m.readyTitle('Northwind Studio') })).toBeInTheDocument();
     expect(screen.getByText(m.readyLede)).toBeInTheDocument();
     expect(screen.getByText('amara@northwind.example')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.readyCodeNote('amara@northwind.example'));
+    expect(screen.getByRole('status')).toHaveTextContent(m.readyCodeTitle);
+    expect(screen.getByRole('status')).toHaveTextContent(m.readyCodeNote('amara@northwind.example', 'northwind.example'));
+    expect(screen.getByRole('status')).toHaveTextContent(/Sign in only once that mailbox is one you can open/);
     expect(screen.getByRole('link', { name: m.signInToAdmin })).toHaveAttribute('href', '/admin/signin');
     expect(screen.queryByRole('link', { name: m.back })).not.toBeInTheDocument();
   });

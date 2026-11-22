@@ -35,3 +35,10 @@ export function assertReleaseAddresses(command: 'build' | 'serve', env: Record<s
   // The domain of every new Yahel address. A wrong one breaks every sign-up, so a release has to say it.
   if (!isMailDomain(env.VITE_MAIL_DOMAIN)) throw new Error('VITE_MAIL_DOMAIN must be set to the mail domain of new Yahel addresses (for example yahel.com) for a release build. It must match the backend.');
 }
+
+/** A mistyped switch would quietly hide or offer a whole flow, so a build accepts only `on`, `off` or nothing. */
+export function assertSwitches(command: 'build' | 'serve', env: Record<string, string | undefined>) {
+  const value = env.VITE_BUSINESS_SIGN_UP;
+  if (command !== 'build' || !value || value === 'on' || value === 'off') return;
+  throw new Error(`VITE_BUSINESS_SIGN_UP must be on, off or unset, not "${value}".`);
+}
