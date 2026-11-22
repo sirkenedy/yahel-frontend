@@ -66,6 +66,7 @@ test.describe('accounts: sign in with a password', () => {
     await page.getByRole('button', { name: 'Try again' }).click();
     await expect.poll(() => loginCalls(api).length).toBe(2);
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+    await expect(password(page)).toHaveValue(credentials.password);
   });
 
   test('too many attempts is reported plainly', async ({ page }) => {
