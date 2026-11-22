@@ -249,7 +249,7 @@
 .ws-flow-step__links[data-align='end'] { justify-content: flex-end; }
 .ws-flow-step__note { margin: 0; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); }
 /* Block padding on an inline link enlarges its target without moving the lines of the sentence it sits in. */
-.ws-flow-step__note a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
+.ws-flow-step__note a, .ws-flow-facts a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
 .ws-flow-step__row--phone { grid-template-columns: 2fr 3fr; }
 .ws-flow-step__subheading { margin: var(--ws-space-8) 0 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
 .ws-flow-step__split { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); }
