@@ -56,10 +56,10 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
     run: async ({ address, password: value }: { address: string; password: string }, { isCurrent }) => {
       store.dispatch({ type: 'email-entered', email: address });
       const result = await signInOrConfirm(session, email(), value);
-      if (result.ok || result.reason === 'mfa-required') return settle(result);
-      // The proof is held only for the confirm step, and only if the person is still where they asked for it:
-      // not left, and not on the way somewhere else while that page loads.
+      // Whatever the answer, it moves the person, and the proof is held, only if they are still where they
+      // asked: not left, and not on the way somewhere else while that page loads.
       if (!isCurrent() || !isShown('signin')) return 'left' as const;
+      if (result.ok || result.reason === 'mfa-required') return settle(result);
       store.dispatch({ type: 'email-unconfirmed', password: value });
       return 'confirm-email' as const;
     },

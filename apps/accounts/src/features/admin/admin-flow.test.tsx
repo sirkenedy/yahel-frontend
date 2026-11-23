@@ -138,6 +138,19 @@ describe('AdminFlowProvider: signing in', () => {
     expect(navigate).not.toHaveBeenCalledWith('confirm-email');
   });
 
+  it('does not move to the phone when a navigation away began before a successful sign-in answered', async () => {
+    const { flow, session, store, navigate, leaveFor } = setup();
+    let answer: () => void = () => undefined;
+    session.signIn.mockImplementationOnce(() => new Promise((resolve) => (answer = () => resolve({ ok: true } as Awaited<ReturnType<Session['signIn']>>))));
+
+    act(() => flow().actions.signIn(password));
+    leaveFor('phone');
+    await act(async () => answer());
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(store.getState().signInPrompt).toBeNull();
+  });
+
   it('a wrong password is told beside the field and asks for no code', async () => {
     const { flow, session } = setup();
     session.signIn.mockRejectedValueOnce(new ApiError({ status: 401, code: 'INVALID_CREDENTIALS', message: 'x' }));
