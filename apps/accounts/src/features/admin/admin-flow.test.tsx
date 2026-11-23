@@ -35,9 +35,9 @@ const fakeSession = () => {
   };
 };
 
-const fakeRegistrar = (supported = true) => ({
+const fakeRegistrar = (supported = true, prepare: () => Promise<void> = async () => undefined) => ({
   isSupported: vi.fn(() => supported),
-  prepare: vi.fn(),
+  prepare: vi.fn((_account?: boolean) => prepare()),
   create: vi.fn().mockResolvedValue({ status: 'created', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] } }),
   save: vi.fn().mockResolvedValue(undefined),
 });
@@ -48,10 +48,10 @@ function Probe({ onValue, onToast }: { onValue: (value: AdminFlowValue) => void;
   return null;
 }
 
-const setup = ({ step = 'signin' as AdminStep, facts = { signedIn: false, phoneVerified: false, hasPasskey: false } as AdminFacts, supported = true, handedOver = true } = {}) => {
+const setup = ({ step = 'signin' as AdminStep, facts = { signedIn: false, phoneVerified: false, hasPasskey: false } as AdminFacts, supported = true, handedOver = true, prepare = undefined as (() => Promise<void>) | undefined } = {}) => {
   act(() => dismissToast());
   const session = fakeSession();
-  const registrar = fakeRegistrar(supported);
+  const registrar = fakeRegistrar(supported, prepare);
   const store = createAdminStore();
   if (handedOver) store.dispatch({ type: 'handed-over', handover: { email, organisation: 'Harbourline Studio' } });
   const navigate = vi.fn();
@@ -312,6 +312,47 @@ describe('AdminFlowProvider: the welcome and the passkey', () => {
     await waitFor(() => expect(flow().state.passkeyCancelled).toBe(true));
     expect(registrar.save).not.toHaveBeenCalled();
     expect(store.getState().passkeySaved).toBe(false);
+  });
+
+  it('fetches the signed-in account’s challenge on the step, and says it is preparing until one is ready', async () => {
+    let answer: () => void = () => undefined;
+    const { flow, registrar } = setup({ step: 'add-passkey', facts: ready, prepare: () => new Promise<void>((resolve) => (answer = resolve)) });
+
+    await waitFor(() => expect(flow().meta.passkeyPreparing).toBe(true));
+    expect(registrar.prepare).toHaveBeenCalledWith(true);
+    await act(async () => answer());
+    await waitFor(() => expect(flow().meta.passkeyPreparing).toBe(false));
+  });
+
+  it('a press that found no challenge ready says so, and is not told as a closed prompt', async () => {
+    const { flow, session, registrar, goTo } = setup({ step: 'add-passkey', facts: ready });
+    session.store.setState({ status: 'signed-in', profile });
+    registrar.create.mockResolvedValueOnce({ status: 'unprepared' });
+
+    act(() => flow().actions.startPasskey());
+    goTo('passkey', ready);
+
+    await waitFor(() => expect(flow().state.passkeyUnprepared).toBe(true));
+    expect(flow().state.passkeyCancelled).toBe(false);
+    expect(registrar.save).not.toHaveBeenCalled();
+  });
+
+  it('back on the step while the prompt is still open, the request shows as running and a second press does nothing', async () => {
+    const { flow, session, registrar, navigate, goTo } = setup({ step: 'add-passkey', facts: ready });
+    session.store.setState({ status: 'signed-in', profile });
+    registrar.create.mockReturnValueOnce(new Promise(() => undefined));
+
+    act(() => flow().actions.startPasskey());
+    goTo('passkey', ready);
+    await waitFor(() => expect(registrar.create).toHaveBeenCalledTimes(1));
+    goTo('add-passkey', ready);
+    navigate.mockClear();
+    act(() => flow().actions.startPasskey());
+
+    expect(flow().meta.requests.passkey.isPending).toBe(true);
+    await act(async () => undefined);
+    expect(registrar.create).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('a passkey the server would not save is a warning with another try', async () => {

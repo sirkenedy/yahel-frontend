@@ -37,6 +37,8 @@ export interface AdminFlowValue {
     organisation: string | null;
     hasPasskey: boolean;
     passkeyCancelled: boolean;
+    /** The last press found no challenge ready, so no prompt opened. */
+    passkeyUnprepared: boolean;
   };
   actions: {
     /** `address` is what the person typed; a handed-over address is used without asking. */
@@ -58,6 +60,8 @@ export interface AdminFlowValue {
     backHref: string | null;
     /** This device can make a passkey. */
     passkeySupported: boolean;
+    /** The challenge the passkey prompt needs is still being fetched: pressing now would open nothing. */
+    passkeyPreparing: boolean;
     links: AdminLinks;
     requests: Record<keyof AdminRequests, FlowRequest<AdminField, AdminNext>>;
     screens: ScreenFacts;
@@ -99,7 +103,7 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
   const passkeySupported = registrar?.isSupported() ?? false;
   // Fetched before the press so the browser's prompt can open inside it.
-  useQuery({ ...passkeyChallengeQuery(registrar), enabled: passkeySupported && step === 'add-passkey' });
+  const challenge = useQuery({ ...passkeyChallengeQuery(registrar), enabled: passkeySupported && step === 'add-passkey' });
 
   const travel = useStepTravel(step, directionOf);
   const requests = useAdminRequests({ visit: travel.visit, session, registrar, store, queryClient, navigate, isShown });
@@ -118,6 +122,7 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
       organisation: flow.handedOver && flow.email === address ? flow.organisation : organisation,
       hasPasskey: passkeyDone,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
+      passkeyUnprepared: requests.passkey.outcome === 'unprepared',
     },
     actions: {
       signIn: (password, typed) => requests.password.start({ address: typed ?? flow.email ?? '', password }),
@@ -144,6 +149,7 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
       direction: travel.direction,
       backHref: back ? stepPath(back) : null,
       passkeySupported,
+      passkeyPreparing: challenge.isFetching,
       links,
       requests: {
         password: status(requests.password),

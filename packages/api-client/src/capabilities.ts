@@ -84,11 +84,13 @@ export interface AccountHelpDesk {
 export interface PasskeyCreationOptions {
   challenge: string;
   rp: { id: string; name: string };
-  /** A random handle for the account-to-be. It says nothing about the person. */
+  /** A random handle for the account-to-be, or the signed-in account's own. It says nothing about the person. */
   userHandle: string;
   timeoutMs: number;
   /** COSE algorithm identifiers the server accepts, most preferred first. */
   algorithms: number[];
+  /** The account's passkeys already made, so a device does not make a second; only for a signed-in account. */
+  excludeCredentials?: string[];
 }
 
 /** The new passkey's public half, as the device describes it. Binary values are base64url text. */
@@ -100,12 +102,14 @@ export interface PasskeyAttestation {
 }
 
 /**
- * The server half of creating a passkey during sign-up. `begin` runs before the account exists, so it
- * takes and reveals nothing about a person; `finish` runs once they are signed in and attaches the
+ * The server half of creating a passkey. `begin` runs during sign-up, before the account exists, so it
+ * takes and reveals nothing about a person; `beginForAccount` is for someone already signed in, and the
+ * server binds its challenge to the session. `finish` runs once they are signed in and attaches the
  * passkey to the account. See docs/roadmap.md, "What each real endpoint must do".
  */
 export interface PasskeyRegistration {
   begin(input: { rpId: string }): Promise<PasskeyCreationOptions>;
+  beginForAccount(input: { rpId: string }): Promise<PasskeyCreationOptions>;
   finish(attestation: PasskeyAttestation): Promise<void>;
 }
 

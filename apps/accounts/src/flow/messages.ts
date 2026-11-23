@@ -15,6 +15,9 @@ export const flowMessages = {
   /** Seconds as "0:24", for a wait shown in a control. */
   clock: (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
 
+  passkeyPreparing: 'Getting ready…',
+  passkeyUnprepared: 'We weren’t quite ready for your passkey. Try again.',
+
   offlineLead: 'You’re offline.',
   offlineBar: 'What you’ve typed is safe on this device. We’ll carry on when you’re back.',
   offlineTitle: 'You’re offline',

@@ -89,6 +89,15 @@ describe('stand-ins', () => {
     await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: true });
   });
 
+  it('passkey registration for someone signed in: lists the passkey already saved so the device does not make a second', async () => {
+    const { passkeyRegistration } = createStandIns(instant);
+
+    await expect(passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' })).resolves.toMatchObject({ excludeCredentials: [] });
+    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });
+    const options = await passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' });
+    expect(options.excludeCredentials).toHaveLength(1);
+  });
+
   it('passkey registration: refuses an attestation it could not verify', async () => {
     const { passkeyRegistration } = createStandIns(instant);
 

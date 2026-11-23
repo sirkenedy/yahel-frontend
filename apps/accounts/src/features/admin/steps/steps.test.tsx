@@ -29,12 +29,13 @@ type Overrides = { state?: Partial<AdminFlowValue['state']>; requests?: Partial<
 const fakeActions = () => ({ signIn: vi.fn(), confirmEmail: vi.fn(), resendEmailCode: vi.fn(), sendPhoneCode: vi.fn(), resendPhoneCode: vi.fn(), verifyPhone: vi.fn(), understand: vi.fn(), startPasskey: vi.fn(), signOut: vi.fn(), openAdmin: vi.fn() });
 
 const flowValue = (actions: AdminFlowValue['actions'], { state, requests, meta }: Overrides = {}): AdminFlowValue => ({
-  state: { ...initialAdminState, step: 'signin', address: null, domain: null, organisation: null, hasPasskey: false, passkeyCancelled: false, ...state },
+  state: { ...initialAdminState, step: 'signin', address: null, domain: null, organisation: null, hasPasskey: false, passkeyCancelled: false, passkeyUnprepared: false, ...state },
   actions,
   meta: {
     direction: 'forward',
     backHref: null,
     passkeySupported: true,
+    passkeyPreparing: false,
     links: { admin: 'https://admin.yahel.example/', signIn: '/signin', resetPassword: '/signin', help: 'https://yahel.example/help', businessTerms: 'https://yahel.example/business-terms', privacy: 'https://yahel.example/privacy' },
     requests: { password: idle, confirmEmail: idle, resendEmailCode: idle, sendPhoneCode: idle, resendPhoneCode: idle, verifyPhone: idle, passkey: idle, signOut: idle, ...requests },
     screens: { account: state?.address ?? null, exits: { signIn: '/admin/signin', resetPassword: '/signin', support: 'https://yahel.example/help' } },
@@ -219,6 +220,23 @@ describe('AddPasskeyStep', () => {
     expect(actions.startPasskey).toHaveBeenCalledTimes(1);
   });
 
+  it('holds the button while the challenge is fetched, so a press always opens the prompt', async () => {
+    const { actions, user } = setup(<AddPasskeyStep />, { state: handedOver, meta: { passkeyPreparing: true } });
+
+    await user.click(screen.getByRole('button', { name: fm.passkeyPreparing }));
+
+    expect(actions.startPasskey).not.toHaveBeenCalled();
+  });
+
+  it('while a prompt left with Back is still open, says it is waiting for the device and takes no second press', async () => {
+    const { actions, user } = setup(<AddPasskeyStep />, { state: handedOver, requests: { passkey: pending } });
+
+    await user.click(screen.getByRole('button', { name: m.passkeyWaiting }));
+
+    expect(actions.startPasskey).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: m.addPasskey })).not.toBeInTheDocument();
+  });
+
   it('on a device that cannot make one, says so and offers only to sign out', async () => {
     const { actions, user } = setup(<AddPasskeyStep />, { state: handedOver, meta: { passkeySupported: false } });
 
@@ -251,6 +269,15 @@ describe('PasskeyStep', () => {
     const { actions, user } = setup(<PasskeyStep />, { state: { ...handedOver, passkeyCancelled: true } });
 
     expect(screen.getByText(m.passkeyCancelled)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: m.tryAgain }));
+    expect(actions.startPasskey).toHaveBeenCalledTimes(1);
+  });
+
+  it('says plainly when a press found no challenge ready, rather than that the prompt was closed', async () => {
+    const { actions, user } = setup(<PasskeyStep />, { state: { ...handedOver, passkeyUnprepared: true } });
+
+    expect(screen.getByText(fm.passkeyUnprepared)).toBeInTheDocument();
+    expect(screen.queryByText(m.passkeyCancelled)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: m.tryAgain }));
     expect(actions.startPasskey).toHaveBeenCalledTimes(1);
   });

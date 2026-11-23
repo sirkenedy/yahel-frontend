@@ -1,4 +1,5 @@
 import { FlowButton, FlowCallout, FlowIcon, FlowNotice, FlowStep } from '@yahel/ui';
+import { flowMessages as shared } from '../../../flow/messages';
 import { useAdminFlow } from '../admin-flow';
 import { adminMessages as m } from '../messages';
 import { StepFrame } from './step-frame';
@@ -43,7 +44,8 @@ export function AddPasskeyStep() {
             {m.continueToAdmin}
           </FlowButton>
         ) : (
-          <FlowButton variant="primary" onPress={actions.startPasskey}>
+          // Pending while an earlier prompt is still open (left with Back) or the challenge is on its way: a press then would open nothing.
+          <FlowButton variant="primary" onPress={actions.startPasskey} isPending={request.isPending || meta.passkeyPreparing} pendingLabel={request.isPending ? m.passkeyWaiting : shared.passkeyPreparing}>
             {m.addPasskey}
           </FlowButton>
         )}

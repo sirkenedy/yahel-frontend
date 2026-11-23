@@ -9,24 +9,36 @@
 // use the server's own relying-party id, ignoring the `rpId` this stand-in echoes; return a fresh random
 // user handle and a single-use challenge that lives long enough to finish sign-up (about 30 minutes);
 // and be rate limited by caller. The real `verify` endpoint checks the origin and the challenge itself,
-// binds the credential and its user handle to the signed-in account, and refuses a challenge that has
-// been used or has expired, in which case the account simply has no passkey yet.
+// binds the credential and its user handle to the signed-in account, refuses a challenge that has
+// been used or has expired, in which case the account simply has no passkey yet, and refuses an attestation
+// whose authenticator data lacks the user-verified (UV) flag. The account is emailed whenever a passkey is
+// added.
+//
+// Missing too: POST /v1/me/passkeys/registration/options (session), `beginForAccount`, for someone already
+// signed in. It answers with the account's own stable user handle, its existing passkeys in
+// `excludeCredentials`, and a challenge bound to the session; it is never the session-less endpoint with a
+// fresh handle. For an administrator it registers only what the rules in admin-access.ts allow.
 import type { PasskeyRegistration } from '../capabilities';
 import { ApiError } from '../errors';
 import type { Delay } from './timing';
 
 const CHALLENGE = 'c3RhbmQtaW4tcmVnaXN0cmF0aW9uLTAwMDE';
 const USER_HANDLE = 'c3RhbmQtaW4tdXNlci1oYW5kbGU';
+const CREDENTIAL = 'c3RhbmQtaW4tY3JlZGVudGlhbA';
 const ES256 = -7;
 const RS256 = -257;
 
 /** `hasSaved` lets the admin-access stand-in say whether the person now has a passkey, as the real server would know. */
 export const createPasskeyRegistrationStandIn = (delay: Delay): PasskeyRegistration & { hasSaved(): boolean } => {
   let saved = false;
+  const begin = async ({ rpId }: { rpId: string }) => {
+    await delay(350);
+    return { challenge: CHALLENGE, rp: { id: rpId, name: 'Yahel' }, userHandle: USER_HANDLE, timeoutMs: 60_000, algorithms: [ES256, RS256] };
+  };
   return {
-    async begin({ rpId }) {
-      await delay(350);
-      return { challenge: CHALLENGE, rp: { id: rpId, name: 'Yahel' }, userHandle: USER_HANDLE, timeoutMs: 60_000, algorithms: [ES256, RS256] };
+    begin,
+    async beginForAccount(input) {
+      return { ...(await begin(input)), excludeCredentials: saved ? [CREDENTIAL] : [] };
     },
     async finish(attestation) {
       await delay(500);

@@ -125,7 +125,7 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
       const who = account();
       if (!registrar || !who) throw new Error('A passkey cannot be made here');
       const made = await registrar.create({ address: who.email, name: who.displayName?.trim() || who.email });
-      if (made.status !== 'created') return 'cancelled' as const;
+      if (made.status !== 'created') return made.status;
       await registrar.save(made.attestation);
       store.dispatch({ type: 'passkey-saved' });
       return 'saved' as const;

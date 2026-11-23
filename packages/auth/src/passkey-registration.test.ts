@@ -8,7 +8,7 @@ const credential = { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4)
 const owner = { address: 'amara.okafor@yahel.example', name: 'Amara Okafor' };
 
 const setup = ({ create = vi.fn().mockResolvedValue(credential), supported = true } = {}) => {
-  const registration = { begin: vi.fn().mockResolvedValue(options), finish: vi.fn().mockResolvedValue(undefined) } satisfies PasskeyRegistration;
+  const registration = { begin: vi.fn().mockResolvedValue(options), beginForAccount: vi.fn().mockResolvedValue({ ...options, excludeCredentials: ['AQID'] }), finish: vi.fn().mockResolvedValue(undefined) } satisfies PasskeyRegistration;
   const registrar = createPasskeyRegistrar(registration, { credentials: { create }, supported, rpId: 'accounts.yahel.example' });
   return { registration, registrar, create };
 };
@@ -17,12 +17,13 @@ describe('createPasskeyRegistrar', () => {
   it('is supported only where the browser has WebAuthn', () => {
     expect(setup().registrar.isSupported()).toBe(true);
     expect(setup({ supported: false }).registrar.isSupported()).toBe(false);
-    expect(createPasskeyRegistrar({ begin: vi.fn(), finish: vi.fn() }, { credentials: undefined, supported: true, rpId: 'x' }).isSupported()).toBe(false);
+    expect(createPasskeyRegistrar({ begin: vi.fn(), beginForAccount: vi.fn(), finish: vi.fn() }, { credentials: undefined, supported: true, rpId: 'x' }).isSupported()).toBe(false);
   });
 
   it('asks the device for a passkey that verifies the person, labelled with their address, and describes it as text', async () => {
     const { registrar, registration, create } = setup();
 
+    await registrar.prepare();
     const result = await registrar.create(owner);
 
     expect(registration.begin).toHaveBeenCalledWith({ rpId: 'accounts.yahel.example' });
@@ -45,30 +46,64 @@ describe('createPasskeyRegistrar', () => {
   it('tells the server nothing about the person before the account exists', async () => {
     const { registrar, registration } = setup();
 
+    await registrar.prepare();
     await registrar.create(owner);
 
     expect(JSON.stringify(registration.begin.mock.calls)).not.toMatch(/amara|Okafor/i);
   });
 
-  it('uses the challenge fetched ahead of the press, once', async () => {
-    const { registrar, registration } = setup();
+  it('uses the challenge fetched ahead of the press once, and fetches the next as soon as it is taken', async () => {
+    const { registrar, registration, create } = setup();
 
-    registrar.prepare();
+    await registrar.prepare();
     await registrar.create(owner);
-    expect(registration.begin).toHaveBeenCalledTimes(1);
+    expect(registration.begin).toHaveBeenCalledTimes(2);
 
-    await registrar.create(owner);
+    // A retry opens the prompt straight away with the challenge fetched after the first was taken.
+    await Promise.resolve();
+    await expect(registrar.create(owner)).resolves.toMatchObject({ status: 'created' });
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(registration.begin).toHaveBeenCalledTimes(3);
+  });
+
+  it('opens no prompt when no challenge is ready at the press, says so, and fetches one for the next press', async () => {
+    const { registrar, registration, create } = setup();
+    let answer: (value: typeof options) => void = () => undefined;
+    registration.begin.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+
+    void registrar.prepare();
+    await expect(registrar.create(owner)).resolves.toEqual({ status: 'unprepared' });
+    expect(create).not.toHaveBeenCalled();
+    answer(options);
+
+    await vi.waitFor(() => expect(registration.begin).toHaveBeenCalledTimes(2));
+    await Promise.resolve();
+    await expect(registrar.create(owner)).resolves.toMatchObject({ status: 'created' });
+  });
+
+  it('says it is unprepared when the challenge fetched ahead could not be had, and asks again', async () => {
+    const { registrar, registration, create } = setup();
+    registration.begin.mockRejectedValueOnce(new Error('offline'));
+
+    await registrar.prepare();
+
+    await expect(registrar.create(owner)).resolves.toEqual({ status: 'unprepared' });
+    expect(create).not.toHaveBeenCalled();
     expect(registration.begin).toHaveBeenCalledTimes(2);
   });
 
-  it('asks again when the challenge fetched ahead could not be had', async () => {
-    const { registrar, registration } = setup();
-    registration.begin.mockRejectedValueOnce(new Error('offline'));
+  it('asks for a signed-in account’s challenge from the session endpoint, keeps asking that way, and hands its passkeys to the device to exclude', async () => {
+    const { registrar, registration, create } = setup();
 
-    registrar.prepare();
+    await registrar.prepare(true);
+    await registrar.create(owner);
 
-    await expect(registrar.create(owner)).resolves.toMatchObject({ status: 'created' });
-    expect(registration.begin).toHaveBeenCalledTimes(2);
+    expect(registration.begin).not.toHaveBeenCalled();
+    expect(registration.beginForAccount).toHaveBeenCalledTimes(2);
+    const { publicKey } = create.mock.calls[0]![0];
+    expect(publicKey.excludeCredentials).toHaveLength(1);
+    expect(publicKey.excludeCredentials[0].type).toBe('public-key');
+    expect([...new Uint8Array(publicKey.excludeCredentials[0].id)]).toEqual([1, 2, 3]);
   });
 
   it('does not prepare where passkeys are not supported', () => {
@@ -81,17 +116,23 @@ describe('createPasskeyRegistrar', () => {
 
   it.each(['NotAllowedError', 'AbortError'])('treats a closed prompt (%s) as cancelled, not as a failure', async (name) => {
     const { registrar } = setup({ create: vi.fn().mockRejectedValue(new DOMException('dismissed', name)) });
+    await registrar.prepare();
 
     await expect(registrar.create(owner)).resolves.toEqual({ status: 'cancelled' });
   });
 
   it('treats a device that returns nothing as cancelled, and lets a real failure through', async () => {
-    await expect(setup({ create: vi.fn().mockResolvedValue(null) }).registrar.create(owner)).resolves.toEqual({ status: 'cancelled' });
-    await expect(setup({ create: vi.fn().mockRejectedValue(new DOMException('broken', 'InvalidStateError')) }).registrar.create(owner)).rejects.toMatchObject({ name: 'InvalidStateError' });
+    const nothing = setup({ create: vi.fn().mockResolvedValue(null) }).registrar;
+    await nothing.prepare();
+    await expect(nothing.create(owner)).resolves.toEqual({ status: 'cancelled' });
+    const broken = setup({ create: vi.fn().mockRejectedValue(new DOMException('broken', 'InvalidStateError')) }).registrar;
+    await broken.prepare();
+    await expect(broken.create(owner)).rejects.toMatchObject({ name: 'InvalidStateError' });
   });
 
   it('copes with a browser that cannot say how the passkey travels', async () => {
     const { registrar } = setup({ create: vi.fn().mockResolvedValue({ ...credential, response: { ...credential.response, getTransports: undefined } }) });
+    await registrar.prepare();
 
     await expect(registrar.create(owner)).resolves.toMatchObject({ attestation: { transports: [] } });
   });

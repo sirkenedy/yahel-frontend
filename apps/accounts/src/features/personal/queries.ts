@@ -17,12 +17,12 @@ export const addressCheckQuery = (addresses: AddressAvailability | null, name: s
 
 const CHALLENGE_LIFETIME = 4 * 60_000;
 
-/** Asks the server for a passkey challenge ahead of the press. The challenge itself stays inside the registrar. */
+/** Asks the server for a passkey challenge ahead of the press, and is fetching until one is ready. The challenge itself stays inside the registrar. */
 export const passkeyChallengeQuery = (registrar: PasskeyRegistrar | null) =>
   queryOptions({
     queryKey: ['personal', 'passkey-challenge'],
-    queryFn: () => {
-      registrar?.prepare();
+    queryFn: async () => {
+      await registrar?.prepare(false);
       return true;
     },
     staleTime: CHALLENGE_LIFETIME,

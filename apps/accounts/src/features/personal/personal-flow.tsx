@@ -37,6 +37,8 @@ export interface PersonalFlowValue {
     /** What is known about the address being typed, and free ones like it. */
     addressCheck: { status: AddressCheckStatus; alternatives: readonly string[] };
     passkeyCancelled: boolean;
+    /** The last press found no challenge ready, so no prompt opened. */
+    passkeyUnprepared: boolean;
     emailCodeResent: boolean;
     phoneCodeResent: boolean;
   };
@@ -84,6 +86,8 @@ export interface PersonalFlowValue {
     /** The domain of a new Yahel address, without the @. */
     mailDomain: string;
     offers: { passkey: boolean; business: boolean; contact: boolean; preferences: boolean };
+    /** The challenge the passkey prompt needs is still being fetched: pressing now would open nothing. */
+    passkeyPreparing: boolean;
     links: { signIn: string; terms: string | null; privacy: string | null; help?: string | null };
     /** What a whole-screen state needs: whose account, and where its ways out lead. */
     screens: ScreenFacts;
@@ -131,7 +135,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
   const travel = useStepTravel(step, directionOf);
 
   // Fetched before the press so the browser's prompt can open inside it.
-  useQuery({ ...passkeyChallengeQuery(registrar), enabled: facts.passkeysOffered && step === 'add-passkey' });
+  const challenge = useQuery({ ...passkeyChallengeQuery(registrar), enabled: facts.passkeysOffered && step === 'add-passkey' });
 
   // What is in the address field, asked about once typing pauses. Before anything is typed, the person's name is.
   const typed = flow.addressDraft;
@@ -162,6 +166,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       fullName: fullNameOf(flow),
       addressCheck,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
+      passkeyUnprepared: requests.passkey.outcome === 'unprepared',
       emailCodeResent: requests.resendEmailCode.outcome === 'sent',
       phoneCodeResent: requests.resendPhoneCode.outcome === 'sent',
     },
@@ -239,6 +244,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       progress: progressOf(step),
       mailDomain,
       offers: { passkey: facts.passkeysOffered, business: leaveForBusiness !== null, contact: facts.contactOffered, preferences: capabilities.preferences !== null },
+      passkeyPreparing: challenge.isFetching,
       links,
       screens: { account: flow.creation.created ? addressOf(flow, mailDomain) : null, exits: { signIn: links.signIn, signUp: stepPath('type'), support: links.help }, serviceStatus: capabilities.serviceStatus },
       requests: {
