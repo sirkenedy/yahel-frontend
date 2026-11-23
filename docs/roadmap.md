@@ -75,7 +75,7 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Help finding an account (`help-desk.ts`): `POST /v1/auth/account-help`
 - [ ] Address availability (`addresses.ts`): `POST /v1/auth/address-availability` (the name in the body)
 - [ ] Passkey creation during sign-up (`passkey-registration.ts`): `POST /v1/auth/passkeys/registration/options` (no session) and `POST /v1/me/passkeys/registration/verify` (session). This replaces the earlier guess that both would be under `/me`: the challenge is needed before there is an account; and, for someone already signed in (an administrator adding a passkey), `POST /v1/me/passkeys/registration/options` (session), which the app asks with `beginForAccount`
-- [ ] Trusted contact (`trusted-contacts.ts`): `POST /v1/me/recovery/contact`
+- [x] Trusted contact: now real, `PATCH /v1/me/recovery/trusted-contact` (the stand-in is removed)
 - [ ] The two review choices (`preferences.ts`): `PATCH /v1/me/preferences`, or fields on `RegisterDto`
 - [x] To add with slice 3: domain search and purchase, plans, checkout and the card code (the three below)
 - [ ] Whether a domain can be claimed (`domain-claims.ts`): `POST /v1/tenants/domain-claims/check`, the domain in the body

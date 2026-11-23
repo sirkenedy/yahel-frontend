@@ -311,6 +311,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/trusted-contact/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public — accept a trusted-contact invitation using the token from the invite email */
+        post: operations["AuthController_acceptTrustedContactInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/trusted-contact/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public — decline a trusted-contact invitation using the token from the invite email */
+        post: operations["AuthController_declineTrustedContactInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/upgrade-to-business": {
         parameters: {
             query?: never;
@@ -545,6 +579,41 @@ export interface paths {
         put?: never;
         /** Verify the pending recovery phone number with the OTP sent by SMS */
         post: operations["MeController_verifyRecoveryPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/recovery/trusted-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Request removal of the trusted contact — takes effect after a 7-day cool-off */
+        delete: operations["MeController_requestRemoveTrustedContact"];
+        options?: never;
+        head?: never;
+        /** Add or change the trusted-recovery contact — sends an invite; cool-off applies on change */
+        patch: operations["MeController_updateTrustedContact"];
+        trace?: never;
+    };
+    "/api/v1/me/recovery/trusted-contact/cancel-removal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a pending trusted-contact removal before the cool-off elapses */
+        post: operations["MeController_cancelRemoveTrustedContact"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1307,7 +1376,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
             /** @description Recipient query — any supported type; no tenant scope enforced */
             recipientQuery: Record<string, never>;
             /** @description Tag the broadcast with a tenantId for audit + ownership scoping (optional) */
@@ -1369,6 +1438,14 @@ export interface components {
             startTime?: string;
             /** @example America/New_York */
             timezone?: string;
+        };
+        RecoveryResponseDto: {
+            /** @description Current recovery phone configuration with any pending change */
+            phone: Record<string, never>;
+            /** @description Current recovery email configuration with any pending change */
+            recoveryEmail: Record<string, never>;
+            /** @description Current trusted-recovery-contact configuration with any pending change or removal */
+            trustedContact: Record<string, never>;
         };
         RefreshTokenDto: {
             /**
@@ -1454,6 +1531,16 @@ export interface components {
             password: string;
             /** @example +2348012345678 */
             phone?: string;
+            /**
+             * @description Optional recovery email captured at signup — stored unverified; can be changed later via PATCH /me/recovery/email which runs the full cool-off + alert flow
+             * @example jane.backup@gmail.com
+             */
+            recoveryEmail?: string;
+            /**
+             * @description Optional trusted contact (someone else you trust) captured at signup — an invitation is sent; status stays pending-consent until they accept. Can be changed later via PATCH /me/recovery/trusted-contact
+             * @example parent.jane@gmail.com
+             */
+            trustedContactEmail?: string;
         };
         ResendVerificationDto: {
             /** @example jane@gmail.com */
@@ -1485,7 +1572,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
             /** @description Recipient query — { type: "tenantMembers" | "userIds" | ... }. Scope is enforced to the caller tenant. */
             recipientQuery: Record<string, never>;
         };
@@ -1502,6 +1589,17 @@ export interface components {
              * @example Secure@123
              */
             newPassword: string;
+        };
+        TrustedContactConsentDto: {
+            /**
+             * @description Token embedded in the invitation link sent to the trusted contact
+             * @example a3f8c2d1b4e5f7...
+             */
+            token: string;
+        };
+        TrustedContactConsentResponseDto: {
+            /** @example Thanks — you have been added as a trusted recovery contact. */
+            message: string;
         };
         UpdateMemberDto: {
             /** @example Engineering */
@@ -1583,6 +1681,10 @@ export interface components {
             enforceSSO?: boolean;
             mfaRequired?: boolean;
             sessionTtlHours?: number;
+        };
+        UpdateTrustedContactDto: {
+            /** @example parent.jane@gmail.com */
+            trustedContactEmail: string;
         };
         UpgradeToBusinessDto: {
             /** @example Acme Corp */
@@ -2014,6 +2116,52 @@ export interface operations {
             };
         };
     };
+    AuthController_acceptTrustedContactInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactConsentResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_declineTrustedContactInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactConsentResponseDto"];
+                };
+            };
+        };
+    };
     AuthController_upgradeToBusiness: {
         parameters: {
             query?: never;
@@ -2327,6 +2475,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MeController_requestRemoveTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
+            };
+        };
+    };
+    MeController_updateTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTrustedContactDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
+            };
+        };
+    };
+    MeController_cancelRemoveTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
             };
         };
     };
@@ -2683,7 +2892,7 @@ export interface operations {
                 /** @description Filter by recipient user ID */
                 userId?: string;
                 /** @description Filter by notification event */
-                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
                 /** @description Filter by delivery channel */
                 channel?: "in_app" | "email" | "sms" | "push";
                 /** @description Filter by delivery status */

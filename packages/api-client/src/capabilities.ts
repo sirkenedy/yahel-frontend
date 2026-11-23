@@ -345,7 +345,7 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -356,7 +356,7 @@ export interface AccountCapabilities {
   helpDesk: AccountHelpDesk | null;
   passkeyRegistration: PasskeyRegistration | null;
   addresses: AddressAvailability | null;
-  trustedContacts: TrustedContacts | null;
+  trustedContacts: TrustedContacts;
   preferences: SignUpPreferences | null;
   serviceStatus: ServiceStatus | null;
   domainMarket: DomainMarket | null;

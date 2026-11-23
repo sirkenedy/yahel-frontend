@@ -13,7 +13,6 @@ import { createPreferencesStandIn } from './preferences';
 import { createRecoveryByPhoneStandIn } from './recovery-by-phone';
 import { createServiceStatusStandIn } from './service-status';
 import { createTextCodeStandIn } from './text-codes';
-import { createTrustedContactsStandIn } from './trusted-contacts';
 import { createWorkspaceBillingStandIn } from './workspace-billing';
 import { realDelay } from './timing';
 import type { Delay } from './timing';
@@ -28,7 +27,6 @@ export const createStandIns = (delay: Delay = realDelay): StandIns => {
     helpDesk: createHelpDeskStandIn(delay),
     passkeyRegistration,
     addresses: createAddressStandIn(delay),
-    trustedContacts: createTrustedContactsStandIn(delay),
     preferences: createPreferencesStandIn(delay),
     serviceStatus: createServiceStatusStandIn(delay),
     domainMarket: createDomainMarketStandIn(delay),

@@ -117,6 +117,8 @@ export function createApiClient(options: ApiClientOptions) {
         /** Stages the number and texts a code to it; `verifyPhone` confirms it. */
         updatePhone: (body: Schemas['UpdatePhoneDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/phone', { auth: true, body }),
         verifyPhone: (body: Schemas['VerifyRecoveryPhoneDto']) => request<RecoveryMethods>('POST', '/api/v1/me/recovery/phone/verify', { auth: true, body }),
+        /** Invites someone the person trusts; they count once they accept from the email. */
+        updateTrustedContact: (body: Schemas['UpdateTrustedContactDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/trusted-contact', { auth: true, body }),
       },
     },
   };

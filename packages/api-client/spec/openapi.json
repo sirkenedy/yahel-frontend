@@ -365,6 +365,11 @@
               "auth.phone_otp",
               "user.recovery_email_added",
               "user.recovery_email_added_alert",
+              "user.trusted_contact_invited",
+              "user.trusted_contact_accepted",
+              "user.trusted_contact_declined",
+              "user.trusted_contact_pending_change_alert",
+              "user.trusted_contact_pending_removal_alert",
               "auth.new_location_login",
               "auth.new_device_login",
               "tenant.setup_expired",
@@ -526,6 +531,28 @@
         },
         "type": "object"
       },
+      "RecoveryResponseDto": {
+        "properties": {
+          "phone": {
+            "description": "Current recovery phone configuration with any pending change",
+            "type": "object"
+          },
+          "recoveryEmail": {
+            "description": "Current recovery email configuration with any pending change",
+            "type": "object"
+          },
+          "trustedContact": {
+            "description": "Current trusted-recovery-contact configuration with any pending change or removal",
+            "type": "object"
+          }
+        },
+        "required": [
+          "recoveryEmail",
+          "phone",
+          "trustedContact"
+        ],
+        "type": "object"
+      },
       "RefreshTokenDto": {
         "properties": {
           "deviceId": {
@@ -659,6 +686,16 @@
           "phone": {
             "example": "+2348012345678",
             "type": "string"
+          },
+          "recoveryEmail": {
+            "description": "Optional recovery email captured at signup — stored unverified; can be changed later via PATCH /me/recovery/email which runs the full cool-off + alert flow",
+            "example": "jane.backup@gmail.com",
+            "type": "string"
+          },
+          "trustedContactEmail": {
+            "description": "Optional trusted contact (someone else you trust) captured at signup — an invitation is sent; status stays pending-consent until they accept. Can be changed later via PATCH /me/recovery/trusted-contact",
+            "example": "parent.jane@gmail.com",
+            "type": "string"
           }
         },
         "required": [
@@ -735,6 +772,11 @@
               "auth.phone_otp",
               "user.recovery_email_added",
               "user.recovery_email_added_alert",
+              "user.trusted_contact_invited",
+              "user.trusted_contact_accepted",
+              "user.trusted_contact_declined",
+              "user.trusted_contact_pending_change_alert",
+              "user.trusted_contact_pending_removal_alert",
               "auth.new_location_login",
               "auth.new_device_login",
               "tenant.setup_expired",
@@ -781,6 +823,31 @@
         },
         "required": [
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "TrustedContactConsentDto": {
+        "properties": {
+          "token": {
+            "description": "Token embedded in the invitation link sent to the trusted contact",
+            "example": "a3f8c2d1b4e5f7...",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "TrustedContactConsentResponseDto": {
+        "properties": {
+          "message": {
+            "example": "Thanks — you have been added as a trusted recovery contact.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
         ],
         "type": "object"
       },
@@ -981,6 +1048,18 @@
             "type": "number"
           }
         },
+        "type": "object"
+      },
+      "UpdateTrustedContactDto": {
+        "properties": {
+          "trustedContactEmail": {
+            "example": "parent.jane@gmail.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trustedContactEmail"
+        ],
         "type": "object"
       },
       "UpgradeToBusinessDto": {
@@ -1579,6 +1658,70 @@
         ]
       }
     },
+    "/api/v1/auth/trusted-contact/accept": {
+      "post": {
+        "operationId": "AuthController_acceptTrustedContactInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustedContactConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustedContactConsentResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Public — accept a trusted-contact invitation using the token from the invite email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/trusted-contact/decline": {
+      "post": {
+        "operationId": "AuthController_declineTrustedContactInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustedContactConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustedContactConsentResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Public — decline a trusted-contact invitation using the token from the invite email",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/upgrade-to-business": {
       "post": {
         "operationId": "AuthController_upgradeToBusiness",
@@ -1990,6 +2133,95 @@
           }
         ],
         "summary": "Verify the pending recovery phone number with the OTP sent by SMS",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery/trusted-contact": {
+      "delete": {
+        "operationId": "MeController_requestRemoveTrustedContact",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request removal of the trusted contact — takes effect after a 7-day cool-off",
+        "tags": [
+          "Me"
+        ]
+      },
+      "patch": {
+        "operationId": "MeController_updateTrustedContact",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTrustedContactDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add or change the trusted-recovery contact — sends an invite; cool-off applies on change",
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/api/v1/me/recovery/trusted-contact/cancel-removal": {
+      "post": {
+        "operationId": "MeController_cancelRemoveTrustedContact",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel a pending trusted-contact removal before the cool-off elapses",
         "tags": [
           "Me"
         ]
@@ -2629,6 +2861,11 @@
                 "auth.phone_otp",
                 "user.recovery_email_added",
                 "user.recovery_email_added_alert",
+                "user.trusted_contact_invited",
+                "user.trusted_contact_accepted",
+                "user.trusted_contact_declined",
+                "user.trusted_contact_pending_change_alert",
+                "user.trusted_contact_pending_removal_alert",
                 "auth.new_location_login",
                 "auth.new_device_login",
                 "tenant.setup_expired",

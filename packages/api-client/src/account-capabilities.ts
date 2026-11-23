@@ -10,7 +10,6 @@ export interface StandIns {
   helpDesk: AccountHelpDesk;
   passkeyRegistration: PasskeyRegistration;
   addresses: AddressAvailability;
-  trustedContacts: TrustedContacts;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
@@ -52,9 +51,16 @@ const checked = (status: ServiceStatus): ServiceStatus => ({ window: async () =>
  * has one, otherwise nothing, or a stand-in when stand-ins are passed in (see docs/roadmap.md for the
  * endpoint each one is waiting for).
  */
-export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns?: StandIns): AccountCapabilities {
+const trustedContactsOf = (api: Pick<ApiClient, 'me'>): TrustedContacts => ({
+  invite: async (email) => {
+    await api.me.recovery.updateTrustedContact({ trustedContactEmail: email });
+  },
+});
+
+export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const trustedContacts = trustedContactsOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -68,7 +74,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns
     helpDesk: standIns.helpDesk,
     passkeyRegistration: standIns.passkeyRegistration,
     addresses: standIns.addresses,
-    trustedContacts: standIns.trustedContacts,
+    trustedContacts,
     preferences: standIns.preferences,
     serviceStatus: checked(standIns.serviceStatus),
     domainMarket: standIns.domainMarket,

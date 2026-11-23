@@ -28,10 +28,9 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.addresses).toBe(standIns.addresses);
-    expect(capabilities.trustedContacts).toBe(standIns.trustedContacts);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'trustedContacts', 'workspaceBilling']);
+    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
     expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
   });
 
@@ -76,6 +75,6 @@ describe('usableWindow', () => {
   it('checks whatever answers the capability, so a bad window never reaches a screen', async () => {
     const standIns = { ...createStandIns(async () => undefined), serviceStatus: { window: async () => ({ from: 'x', until: 'y' }) } };
 
-    await expect(createAccountCapabilities({ auth: {} as never }, standIns).serviceStatus!.window()).resolves.toBeNull();
+    await expect(createAccountCapabilities({ auth: {} as never, me: {} as never }, standIns).serviceStatus!.window()).resolves.toBeNull();
   });
 });

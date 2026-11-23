@@ -124,13 +124,6 @@ describe('stand-ins', () => {
     await expect(addresses.check('chidi.eze')).rejects.toMatchObject({ status: 429 });
   });
 
-  it('trusted contacts: accepts an invitation, then refuses the fourth', async () => {
-    const { trustedContacts } = createStandIns(instant);
-
-    for (let attempt = 0; attempt < 3; attempt += 1) await expect(trustedContacts.invite('chidi.eze@personal.example')).resolves.toBeUndefined();
-    await expect(trustedContacts.invite('chidi.eze@personal.example')).rejects.toMatchObject({ status: 429 });
-  });
-
   it('preferences: keeps the choices it was given', async () => {
     const { preferences } = createStandIns(instant);
 
