@@ -7,6 +7,7 @@ import { chromeMessages } from './messages';
 import { flowMessages as m } from '../../flow/messages';
 
 const SIGN_IN = '/signin';
+const ADMIN = '/admin';
 const SIGN_UPS = ['/personal', '/business'];
 
 /** Where the way out of a failed screen leads, and what it is called. */
@@ -17,10 +18,11 @@ export interface ErrorExit {
 
 const within = (pathname: string, flow: string) => pathname === flow || pathname.startsWith(`${flow}/`);
 
-/** The way out that fits where the person was: the start of the sign-up they were in, the start of sign-in from anywhere else. */
+/** The way out that fits where the person was: the start of the sign-up they were in, Admin's sign-in from the admin flow, the start of sign-in from anywhere else. */
 export const errorExitFor = (pathname: string): ErrorExit => {
   const signUp = SIGN_UPS.find((flow) => within(pathname, flow));
-  return signUp ? { href: signUp, label: chromeMessages.startAgain } : { href: SIGN_IN, label: m.backToSignIn };
+  if (signUp) return { href: signUp, label: chromeMessages.startAgain };
+  return { href: within(pathname, ADMIN) ? `${ADMIN}/signin` : SIGN_IN, label: m.backToSignIn };
 };
 
 export interface ErrorScreenProps {
