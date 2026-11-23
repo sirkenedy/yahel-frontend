@@ -18,8 +18,16 @@
 //    passkey goes through a slower path that emails the account, and the workspace's other administrators
 //    where there are any, and does not grant Admin at once.
 // 3. Before the first passkey, allow registration only within minutes of a second factor the server
-//    verified itself (the texted code to a confirmed phone, or the emailed code). The order of the app's
-//    steps is not that check.
+//    verified itself AND that was bound to the account before the current session. A phone set or confirmed
+//    on a password-only session does not count (a thief with the password can add their own number), nor
+//    does an emailed code to a mailbox the same password opens (a Yahel-hosted address). What counts:
+//    - a phone confirmed in an earlier session and unchanged for a cooling-off period; changing or adding an
+//      administrator's phone needs a passkey or the current phone's code, emails the account, and restarts
+//      the period;
+//    - an emailed code to an address the same password cannot open: the first confirmation of a new
+//      workspace's address, or an external recovery address.
+//    An administrator with neither goes through 2's slower, notified path, not straight to a passkey and
+//    Admin. The order of the app's steps is not that check.
 // 4. Refuse an attestation whose authenticator data lacks the user-verified (UV) flag: the client's
 //    `userVerification: 'required'` asks the device, it does not enforce anything.
 // 5. Email the account every time a passkey is added.
