@@ -37,7 +37,7 @@ describe('loadAdminFacts', () => {
     const { session, get } = sessionAs('signed-out');
     const membership = access(null);
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: membership })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: membership })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null, passkeyRequired: false });
     expect(get).not.toHaveBeenCalled();
     expect(membership.adminAccess!.membership).not.toHaveBeenCalled();
   });
@@ -45,20 +45,28 @@ describe('loadAdminFacts', () => {
   it('reads the workspace and whether a phone is confirmed, for the signed-in account', async () => {
     const { session } = sessionAs('signed-in', phone({ configured: true, verified: true }));
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio' });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: true }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio', passkeyRequired: true });
   });
 
   it('counts a confirmed number still waiting to replace an older one', async () => {
     const { session } = sessionAs('signed-in', phone({ pending: { value: '***0142', verified: true, requestedAt: null, usableAt: null } }));
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false }) })).resolves.toMatchObject({ phoneVerified: true });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: true }) })).resolves.toMatchObject({ phoneVerified: true });
+  });
+
+  it('says Admin is closed without a passkey only when the server says it enforces that', async () => {
+    const { session } = sessionAs('signed-in');
+    const facts = (answer: Parameters<typeof access>[0]) => loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(answer) });
+
+    await expect(facts({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: false })).resolves.toMatchObject({ passkeyRequired: false });
+    await expect(facts({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false } as Parameters<typeof access>[0])).resolves.toMatchObject({ passkeyRequired: false });
   });
 
   it('a personal session, or a member who administers nothing, is no administrator', async () => {
     const { session } = sessionAs('signed-in');
 
     await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, administrator: false, organisation: null });
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false }) })).resolves.toMatchObject({ administrator: false });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: true }) })).resolves.toMatchObject({ administrator: false });
   });
 });
 

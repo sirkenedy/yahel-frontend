@@ -36,6 +36,8 @@ export interface AdminFlowValue {
     /** The organisation's name, or `null` when nothing has said it. */
     organisation: string | null;
     hasPasskey: boolean;
+    /** The server says it closes Admin to an administrator without a passkey. Only then may a step say so. */
+    passkeyRequired: boolean;
     passkeyCancelled: boolean;
     /** The last press found no challenge ready, so no prompt opened. */
     passkeyUnprepared: boolean;
@@ -84,6 +86,8 @@ export interface AdminFlowProviderProps {
   facts: AdminFacts;
   /** What the server named the organisation, when it has. */
   organisation: string | null;
+  /** The server enforces the passkey rule (`WorkspaceMembership.passkeyRequired`). */
+  passkeyRequired: boolean;
   links: AdminLinks;
   navigate: (step: AdminStep, options?: { replace?: boolean }) => void;
   /** Whether the address bar shows this step: a navigation away may still be loading while the step is on screen. */
@@ -97,7 +101,7 @@ export interface AdminFlowProviderProps {
  * Gives the admin steps one thing to read: `{ state, actions, meta }`. The state comes from the store
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them.
  */
-export function AdminFlowProvider({ step, session, registrar, store, facts, organisation, links, navigate, isShown, leave, children }: AdminFlowProviderProps) {
+export function AdminFlowProvider({ step, session, registrar, store, facts, organisation, passkeyRequired, links, navigate, isShown, leave, children }: AdminFlowProviderProps) {
   const queryClient = useQueryClient();
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -121,6 +125,7 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
       // What the person named their business moments ago, for the address it was made with; otherwise what the server says.
       organisation: flow.handedOver && flow.email === address ? flow.organisation : organisation,
       hasPasskey: passkeyDone,
+      passkeyRequired,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
       passkeyUnprepared: requests.passkey.outcome === 'unprepared',
     },

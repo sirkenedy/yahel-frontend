@@ -62,7 +62,7 @@ const setup = ({ step = 'signin' as AdminStep, facts = { signedIn: false, phoneV
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: AdminStep, currentFacts: AdminFacts) => (
     <QueryClientProvider client={queryClient}>
-      <AdminFlowProvider step={current} session={session as unknown as Session} registrar={registrar as unknown as PasskeyRegistrar} store={store} facts={currentFacts} organisation="Northwind Studio" links={links} navigate={navigate} isShown={(at) => at === shown} leave={leave}>
+      <AdminFlowProvider step={current} session={session as unknown as Session} registrar={registrar as unknown as PasskeyRegistrar} store={store} facts={currentFacts} organisation="Northwind Studio" passkeyRequired links={links} navigate={navigate} isShown={(at) => at === shown} leave={leave}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </AdminFlowProvider>
     </QueryClientProvider>

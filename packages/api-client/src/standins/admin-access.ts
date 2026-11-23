@@ -26,6 +26,11 @@
 // 6. Issue a signed-in administrator's challenge from the session endpoint (`beginForAccount`), with the
 //    account's own user handle, its passkeys in `excludeCredentials`, and bound to the session.
 // See docs/roadmap.md, "Admins must use a passkey".
+//
+// `passkeyRequired` is the server saying it enforces all of that. The real endpoint may answer `true` only
+// once enforcement has shipped, and answers `false` until then; the interface then recommends a passkey
+// without claiming Admin is closed (decisions F-86). This stand-in answers `true`, so the demo shows the
+// designed screens.
 import type { AdminAccess } from '../capabilities';
 import type { Delay } from './timing';
 
@@ -34,6 +39,6 @@ export const DEMO_ORGANISATION = 'Northwind Studio';
 export const createAdminAccessStandIn = (delay: Delay, passkeys: { hasSaved(): boolean }): AdminAccess => ({
   async membership() {
     await delay(250);
-    return { organisation: DEMO_ORGANISATION, administrator: true, hasPasskey: passkeys.hasSaved() };
+    return { organisation: DEMO_ORGANISATION, administrator: true, hasPasskey: passkeys.hasSaved(), passkeyRequired: true };
   },
 });

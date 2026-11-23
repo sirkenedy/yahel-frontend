@@ -7,19 +7,22 @@ import { StepFrame } from './step-frame';
 /**
  * Admins must use a passkey (the design brief), so there is no "Not now": Admin opens from here only once
  * one exists. A device that cannot make one says so and offers only to sign out. The rule itself is the
- * server's to enforce; see the admin-access stand-in.
+ * server's to enforce: the words say Admin is closed without one only when the server says it enforces
+ * that (`passkeyRequired`), and otherwise recommend one (F-86).
  */
 export function AddPasskeyStep() {
   const { state, actions, meta } = useAdminFlow();
   const { passkey: request, signOut } = meta.requests;
   const done = state.hasPasskey;
+  const required = state.passkeyRequired;
+  const lede = required ? m.addPasskeyLede : m.addPasskeyLedeAdvised;
 
   if (!done && !meta.passkeySupported) {
     return (
-      <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede} requests={[signOut]}>
+      <StepFrame title={m.addPasskeyTitle} lede={lede} requests={[signOut]}>
         <FlowStep.Body>
           <FlowNotice tone="warning" title={m.unsupportedTitle}>
-            {m.unsupported}
+            {required ? m.unsupported : m.unsupportedAdvised}
           </FlowNotice>
         </FlowStep.Body>
         <FlowStep.Actions>
@@ -32,9 +35,9 @@ export function AddPasskeyStep() {
   }
 
   return (
-    <StepFrame title={done ? m.passkeyDoneTitle : m.addPasskeyTitle} lede={done ? m.passkeyDoneLede : m.addPasskeyLede} requests={done ? [] : [request]}>
+    <StepFrame title={done ? (required ? m.passkeyDoneTitle : m.passkeyDoneTitleAdvised) : m.addPasskeyTitle} lede={done ? m.passkeyDoneLede : lede} requests={done ? [] : [request]}>
       <FlowStep.Body>
-        <FlowCallout icon={<FlowIcon name="passkey" />} title={done ? m.passkeySavedOption : m.passkeyOption} tag={done ? undefined : m.passkeyRequired}>
+        <FlowCallout icon={<FlowIcon name="passkey" />} title={done ? m.passkeySavedOption : m.passkeyOption} tag={done ? undefined : required ? m.passkeyRequired : m.passkeyAdvised}>
           {done ? m.passkeySavedDetail : m.passkeyOptionDetail}
         </FlowCallout>
       </FlowStep.Body>

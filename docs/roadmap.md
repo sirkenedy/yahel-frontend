@@ -81,7 +81,7 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Whether a domain can be claimed (`domain-claims.ts`): `POST /v1/tenants/domain-claims/check`, the domain in the body
 - [ ] Domains to buy (`domain-market.ts`): `GET /v1/domains/search?q=`, with yearly prices; the purchase and the registrant’s details go with the workspace order
 - [ ] Plans, prices, promo codes, quotes and checkout (`workspace-billing.ts`): `GET /v1/billing/plans?country=`, `POST /v1/billing/promo-codes/check`, `POST /v1/billing/quotes`, and a checkout session with a payment provider. **This stand-in is not a payment implementation, and the two screens built on it (checkout, the bank’s code) are the design only**
-- [ ] Admin access (`admin-access.ts`): `GET /v1/me/workspace` (session), the workspace of the session's own token: its name, whether the member is its owner or an admin, and whether the identity has a passkey. Until it exists (with passkey registration), the admin first sign-in is not offered and a new administrator signs in through sign-in
+- [ ] Admin access (`admin-access.ts`): `GET /v1/me/workspace` (session), the workspace of the session's own token: its name, whether the member is its owner or an admin, whether the identity has a passkey, and `passkeyRequired`, whether the server enforces the passkey rule (false until it does; `decisions.md` F-86). Until it exists (with passkey registration), the admin first sign-in is not offered and a new administrator signs in through sign-in
 - [ ] The maintenance window (`service-status.ts`): `GET /v1/status`, answered while the API is down, with the window in progress; or `Retry-After` on the 503
 
 ### Placeholders the business must confirm

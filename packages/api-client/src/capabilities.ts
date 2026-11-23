@@ -328,6 +328,11 @@ export interface WorkspaceMembership {
   administrator: boolean;
   /** The person has at least one passkey. Admin is for administrators who have one. */
   hasPasskey: boolean;
+  /**
+   * The server's own statement that it enforces "Admins must use a passkey" for this workspace (every rule in
+   * the admin-access stand-in's header). Only when it is true may the interface say Admin is closed without one.
+   */
+  passkeyRequired: boolean;
 }
 
 /**

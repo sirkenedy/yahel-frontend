@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -29,7 +29,7 @@ type Overrides = { state?: Partial<AdminFlowValue['state']>; requests?: Partial<
 const fakeActions = () => ({ signIn: vi.fn(), confirmEmail: vi.fn(), resendEmailCode: vi.fn(), sendPhoneCode: vi.fn(), resendPhoneCode: vi.fn(), verifyPhone: vi.fn(), understand: vi.fn(), startPasskey: vi.fn(), signOut: vi.fn(), openAdmin: vi.fn() });
 
 const flowValue = (actions: AdminFlowValue['actions'], { state, requests, meta }: Overrides = {}): AdminFlowValue => ({
-  state: { ...initialAdminState, step: 'signin', address: null, domain: null, organisation: null, hasPasskey: false, passkeyCancelled: false, passkeyUnprepared: false, ...state },
+  state: { ...initialAdminState, step: 'signin', address: null, domain: null, organisation: null, hasPasskey: false, passkeyRequired: true, passkeyCancelled: false, passkeyUnprepared: false, ...state },
   actions,
   meta: {
     direction: 'forward',
@@ -218,6 +218,40 @@ describe('AddPasskeyStep', () => {
     expect(screen.queryByRole('button', { name: m.continueToAdmin })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: m.addPasskey }));
     expect(actions.startPasskey).toHaveBeenCalledTimes(1);
+  });
+
+  it('where the server does not enforce the rule, recommends a passkey without saying Admin is closed', () => {
+    setup(<AddPasskeyStep />, { state: { ...handedOver, passkeyRequired: false } });
+
+    expect(screen.getByText(m.addPasskeyLedeAdvised)).toBeInTheDocument();
+    expect(screen.getByText(m.passkeyAdvised)).toBeInTheDocument();
+    expect(screen.queryByText(m.passkeyRequired)).not.toBeInTheDocument();
+    expect(screen.queryByText(m.addPasskeyLede)).not.toBeInTheDocument();
+    cleanup();
+
+    setup(<AddPasskeyStep />, { state: { ...handedOver, passkeyRequired: false }, meta: { passkeySupported: false } });
+    expect(screen.getByText(m.unsupportedAdvised)).toBeInTheDocument();
+    expect(screen.queryByText(m.unsupported)).not.toBeInTheDocument();
+    cleanup();
+
+    setup(<AddPasskeyStep />, { state: { ...handedOver, passkeyRequired: false, hasPasskey: true } });
+    expect(heading(m.passkeyDoneTitleAdvised)).toBeInTheDocument();
+    expect(screen.queryByText(m.passkeyDoneTitle)).not.toBeInTheDocument();
+    cleanup();
+
+    setup(<PasskeyStep />, { state: { ...handedOver, passkeyRequired: false, passkeyCancelled: true } });
+    expect(screen.getByText(m.passkeyCancelledAdvised)).toBeInTheDocument();
+    expect(screen.queryByText(m.passkeyCancelled)).not.toBeInTheDocument();
+  });
+
+  it('where the server enforces it, says Admin is closed without one, as designed', () => {
+    setup(<AddPasskeyStep />, { state: handedOver, meta: { passkeySupported: false } });
+    expect(screen.getByText(m.addPasskeyLede)).toBeInTheDocument();
+    expect(screen.getByText(m.unsupported)).toBeInTheDocument();
+    cleanup();
+
+    setup(<AddPasskeyStep />, { state: { ...handedOver, hasPasskey: true } });
+    expect(heading(m.passkeyDoneTitle)).toBeInTheDocument();
   });
 
   it('holds the button while the challenge is fetched, so a press always opens the prompt', async () => {

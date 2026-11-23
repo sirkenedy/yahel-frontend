@@ -82,7 +82,7 @@ describe('stand-ins', () => {
   it('admin access: names the demo organisation and its administrator, who has a passkey only once one is saved', async () => {
     const { adminAccess, passkeyRegistration } = createStandIns(instant);
 
-    await expect(adminAccess.membership()).resolves.toEqual({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false });
+    await expect(adminAccess.membership()).resolves.toEqual({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: true });
     await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] }).catch(() => undefined);
     await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: false });
     await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });

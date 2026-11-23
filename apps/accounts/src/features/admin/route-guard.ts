@@ -23,11 +23,11 @@ export const isOffered = ({ config, capabilities }: { config: Pick<AppConfig, 'b
   config.businessSignUp && capabilities.adminAccess !== null && capabilities.passkeyRegistration !== null;
 
 /** What the step guards need to know, and whether the person signed in administers a workspace at all. Lookups are cached for the session. */
-export async function loadAdminFacts({ session, queryClient, capabilities }: AdminGuardContext): Promise<AdminFacts & { administrator: boolean; organisation: string | null }> {
+export async function loadAdminFacts({ session, queryClient, capabilities }: AdminGuardContext): Promise<AdminFacts & { administrator: boolean; organisation: string | null; passkeyRequired: boolean }> {
   const { status, profile } = session.store.getState();
-  if (status !== 'signed-in' || !profile) return { signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null };
+  if (status !== 'signed-in' || !profile) return { signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null, passkeyRequired: false };
   const [membership, phoneVerified] = await Promise.all([queryClient.ensureQueryData(membershipQuery(capabilities.adminAccess, profile.id)), queryClient.ensureQueryData(phoneVerifiedQuery(session.api, profile.id))]);
-  return { signedIn: true, phoneVerified, hasPasskey: membership?.hasPasskey ?? false, administrator: membership?.administrator ?? false, organisation: membership?.organisation ?? null };
+  return { signedIn: true, phoneVerified, hasPasskey: membership?.hasPasskey ?? false, administrator: membership?.administrator ?? false, organisation: membership?.organisation ?? null, passkeyRequired: membership?.passkeyRequired === true };
 }
 
 /** The step to show instead of `step`, or `null` when `step` itself can be shown. */

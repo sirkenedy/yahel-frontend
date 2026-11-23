@@ -47,6 +47,7 @@ function AdminLayout() {
         store={admin}
         facts={facts}
         organisation={facts.organisation}
+        passkeyRequired={facts.passkeyRequired}
         links={{ admin: config.adminUrl, signIn: config.signInUrl, resetPassword: config.signInUrl, help: config.helpUrl, businessTerms: config.businessTermsUrl, privacy: config.privacyUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         isShown={(to) => stepOfPath(router.latestLocation.pathname) === to}
