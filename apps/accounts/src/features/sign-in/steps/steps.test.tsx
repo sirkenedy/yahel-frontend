@@ -323,6 +323,9 @@ describe('PasswordStep', () => {
   });
 
   it('gives way to the paused screen when there were too many tries, with the way to reset and the way back', () => {
+    // Mid-afternoon, so ten minutes later is still today and is told as a time alone.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 10, 22, 14, 20));
     setup(<PasswordStep />, { state, requests: { password: failing({ ...locked, retryAt: Date.now() + 600_000 }) } });
 
     expect(screen.getByRole('heading', { level: 1, name: fm.lockedTitle })).toHaveFocus();

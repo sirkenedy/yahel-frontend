@@ -111,6 +111,8 @@ export function createApiClient(options: ApiClientOptions) {
       get: (signal?: AbortSignal) => request<Profile>('GET', '/api/v1/me', { auth: true, signal }),
       update: (body: Schemas['UpdateProfileDto']) => request<Profile>('PATCH', '/api/v1/me', { auth: true, body }),
       recovery: {
+        /** The ways back in as they stand, masked. */
+        get: (signal?: AbortSignal) => request<RecoveryMethods>('GET', '/api/v1/me/recovery', { auth: true, signal }),
         updateEmail: (body: Schemas['UpdateRecoveryEmailDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/email', { auth: true, body }),
         /** Stages the number and texts a code to it; `verifyPhone` confirms it. */
         updatePhone: (body: Schemas['UpdatePhoneDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/phone', { auth: true, body }),

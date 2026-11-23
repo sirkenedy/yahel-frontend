@@ -13,8 +13,10 @@ interface ImportMetaEnv {
   readonly VITE_BUSINESS_SIGN_UP?: string;
   /** Where "For my business or team" leads, when workspace sign-up is offered. Unset, it is `/business` in this app. */
   readonly VITE_BUSINESS_SIGN_UP_URL?: string;
-  /** Where a new workspace's administrator signs in. Unset, it is the sign-in address. */
+  /** Where a new workspace's administrator signs in. Unset, it is this app's `/admin/signin` where offered, and sign-in where not. */
   readonly VITE_ADMIN_SIGN_IN_URL?: string;
+  /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is `VITE_APP_URL`. */
+  readonly VITE_ADMIN_URL?: string;
   /** The agreements a workspace's administrator accepts. Unset, each is named without a link. */
   readonly VITE_BUSINESS_TERMS_URL?: string;
   readonly VITE_TRIAL_TERMS_URL?: string;

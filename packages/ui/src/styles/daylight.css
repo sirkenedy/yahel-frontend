@@ -249,7 +249,7 @@
 .ws-flow-step__links[data-align='end'] { justify-content: flex-end; }
 .ws-flow-step__note { margin: 0; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); }
 /* Block padding on an inline link enlarges its target without moving the lines of the sentence it sits in. */
-.ws-flow-step__note a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
+.ws-flow-step__note a, .ws-flow-facts a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
 .ws-flow-step__row--phone { grid-template-columns: 2fr 3fr; }
 .ws-flow-step__subheading { margin: var(--ws-space-8) 0 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
 .ws-flow-step__split { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); }
@@ -294,7 +294,7 @@
 .ws-flow .ws-flow-moment { animation-name: ws-flow-pop; animation-timing-function: var(--ws-easing-pop); }
 
 /* Workspace sign-up: pills, a plan, an order */
-.ws-flow-choice__tag, .ws-flow-badge { flex-shrink: 0; padding: var(--ws-space-2) var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-link); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); white-space: nowrap; }
+.ws-flow-choice__tag, .ws-flow-badge { flex-shrink: 0; max-width: 100%; padding: var(--ws-space-2) var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-link); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); }
 .ws-flow-badge { background: var(--ws-color-daylight-success-tint); color: var(--ws-color-daylight-success); font-weight: var(--ws-weight-bold); }
 /* With an amount, the words keep a line of their own when there is no room beside them (large text on a phone). */
 .ws-flow-choice:has(.ws-flow-choice__meta) { flex-wrap: wrap; }

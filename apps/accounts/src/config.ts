@@ -41,8 +41,13 @@ export const config = {
    */
   businessSignUp,
   businessSignUpUrl: businessSignUp ? (webAddress(env.VITE_BUSINESS_SIGN_UP_URL) ?? '/business') : null,
-  /** Where a new workspace's administrator signs in. Until the Admin sign-in exists it is this app's sign-in. */
-  adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL) ?? webAddress(env.VITE_SIGN_IN_URL) ?? '/signin',
+  /**
+   * Where a new workspace's administrator signs in, when it is served from elsewhere. Unset, it is this app's
+   * own first sign-in for administrators where the build offers it, and sign-in where it does not (F-80).
+   */
+  adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL),
+  /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is the app address. */
+  adminUrl: webAddress(env.VITE_ADMIN_URL) ?? appUrl,
   businessTermsUrl: webAddress(env.VITE_BUSINESS_TERMS_URL),
   trialTermsUrl: webAddress(env.VITE_TRIAL_TERMS_URL),
   domainTermsUrl: webAddress(env.VITE_DOMAIN_TERMS_URL),

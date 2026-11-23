@@ -1,4 +1,5 @@
 import { FlowButton, FlowCallout, FlowIcon, FlowStep } from '@yahel/ui';
+import { flowMessages as shared } from '../../../flow/messages';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
 import { StepFrame } from './step-frame';
@@ -21,7 +22,7 @@ export function AddPasskeyStep() {
           </FlowButton>
         ) : (
           <>
-            <FlowButton variant="primary" onPress={actions.startPasskey}>
+            <FlowButton variant="primary" onPress={actions.startPasskey} isPending={meta.passkeyPreparing} pendingLabel={shared.passkeyPreparing}>
               {m.addPasskey}
             </FlowButton>
             <FlowButton variant="quiet" onPress={actions.continueWithoutPasskey}>

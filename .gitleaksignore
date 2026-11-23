@@ -1,0 +1,2 @@
+# A demo value in a stand-in, not a secret: the base64 of "stand-in-credential", named so the generic API key rule matched it.
+ef75c8929df580fe2d5bc952fc200593d54f6376:packages/api-client/src/standins/passkey-registration.ts:generic-api-key:27

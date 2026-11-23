@@ -51,6 +51,13 @@ const meetsPasswordPolicy = (password: string) => password.length >= 8 && [/[a-z
 export const claimedDomain = 'northwind.example';
 
 export const requestId = 'req-e2e-7F3K2Q';
+/**
+ * The administrator of the seeded workspace (`claimedDomain`), made by workspace sign-up and never confirmed:
+ * the backend keeps such an identity, checks its password and then answers `EMAIL_NOT_VERIFIED`, as it does
+ * for any unconfirmed registration. The admin-access stand-in names the demo workspace, Northwind Studio.
+ */
+export const newAdmin = { email: 'kayode@northwind.example', password: 'Northwind Admin 2026!', firstName: 'Kayode' };
+
 /** An account whose identity an administrator has suspended: the backend answers 403 `FORBIDDEN`, and only once the password has matched. */
 export const suspendedCredentials = { email: 'tunde@northwind.example', password: 'Lagos-lagoon-at-dawn-7' };
 
@@ -119,6 +126,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
     { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
     { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun' }, password: newAdmin.password, twoStep: false, emailVerified: false },
     { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.

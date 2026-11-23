@@ -123,16 +123,21 @@ export interface FlowCalloutProps {
   /** A decorative icon in the tile at the start. */
   icon: ReactNode;
   title: string;
+  /** A few words in a pill beside the title, read as part of it: "Required for admins". */
+  tag?: string;
   children: ReactNode;
 }
 
 /** A card that reassures: one fact in bold and a line that explains it. */
-export function FlowCallout({ icon, title, children }: FlowCalloutProps) {
+export function FlowCallout({ icon, title, tag, children }: FlowCalloutProps) {
   return (
     <div className="ws-flow-waiting">
       <span className="ws-flow-choice__icon">{icon}</span>
       <span className="ws-flow-waiting__text">
-        <span className="ws-flow-waiting__title">{title}</span>
+        <span className="ws-flow-waiting__title">
+          {title}
+          {tag ? <> <span className="ws-flow-choice__tag">{tag}</span></> : null}
+        </span>
         <span className="ws-flow-waiting__detail">{children}</span>
       </span>
     </div>
@@ -175,10 +180,10 @@ function FlowFactsRoot({ children }: { children: ReactNode }) {
   return <ul className="ws-flow-facts">{children}</ul>;
 }
 
-function FlowFact({ lead, children }: { /** The few words that carry the fact, in bold. */ lead: string; children: ReactNode }) {
+function FlowFact({ lead, icon = 'check', children }: { /** The few words that carry the fact, in bold. */ lead: string; /** Decorative: a tick unless the fact is better drawn. */ icon?: FlowIconName; children: ReactNode }) {
   return (
     <li>
-      <FlowIcon name="check" />
+      <FlowIcon name={icon} />
       <span>
         <b>{lead}</b> {children}
       </span>

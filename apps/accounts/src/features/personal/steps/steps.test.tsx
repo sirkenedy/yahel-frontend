@@ -41,7 +41,7 @@ type Overrides = {
   offers?: Partial<PersonalFlowValue['meta']['offers']>;
   links?: Partial<PersonalFlowValue['meta']['links']>;
   requests?: Partial<PersonalFlowValue['meta']['requests']>;
-  meta?: Partial<Pick<PersonalFlowValue['meta'], 'backHref' | 'progress'>>;
+  meta?: Partial<Pick<PersonalFlowValue['meta'], 'backHref' | 'progress' | 'passkeyPreparing'>>;
 };
 
 const fakeActions = (): PersonalFlowValue['actions'] => ({
@@ -93,13 +93,14 @@ const answersOnly = ({ password, ...answers }: typeof initialPersonalState) => {
 };
 
 const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links, requests, meta }: Overrides = {}): PersonalFlowValue => ({
-  state: { ...answersOnly(initialPersonalState), step: 'name', hasPassword: false, address: '@yahel.example', fullName: '', addressCheck: { status: 'idle', alternatives: [] }, passkeyCancelled: false, emailCodeResent: false, phoneCodeResent: false, ...state },
+  state: { ...answersOnly(initialPersonalState), step: 'name', hasPassword: false, address: '@yahel.example', fullName: '', addressCheck: { status: 'idle', alternatives: [] }, passkeyCancelled: false, passkeyUnprepared: false, emailCodeResent: false, phoneCodeResent: false, ...state },
   actions,
   meta: {
     direction: 'forward',
     backHref: null,
     progress: null,
     mailDomain: 'yahel.example',
+    passkeyPreparing: false,
     offers: { passkey: true, business: false, contact: true, preferences: true, ...offers },
     links: { signIn: '/signin', terms: 'https://yahel.example/terms', privacy: 'https://yahel.example/privacy', ...links },
     screens: { account: null, exits: { signIn: '/signin', signUp: '/personal' }, serviceStatus: null },
@@ -502,6 +503,25 @@ describe('AddPasskeyStep and PasskeyStep', () => {
 
     expect(actions.startPasskey).toHaveBeenCalledTimes(1);
     expect(actions.continueWithoutPasskey).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds the button while the challenge is fetched, so a press always opens the prompt', async () => {
+    const { actions } = setup(<AddPasskeyStep />, { meta: { passkeyPreparing: true } });
+
+    await press(shared.passkeyPreparing);
+
+    expect(actions.startPasskey).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: m.addPasskey })).not.toBeInTheDocument();
+  });
+
+  it('says plainly when a press found no challenge ready, rather than that the prompt was closed', async () => {
+    const { actions } = setup(<PasskeyStep />, { state: { passkeyUnprepared: true } });
+
+    expect(screen.getByRole('status')).toHaveTextContent(shared.passkeyUnprepared);
+    expect(screen.queryByText(m.passkeyCancelled)).not.toBeInTheDocument();
+    await press(m.tryAgain);
+
+    expect(actions.startPasskey).toHaveBeenCalledTimes(1);
   });
 
   it('does not offer a second passkey once one is made', async () => {

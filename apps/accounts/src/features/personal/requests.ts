@@ -63,7 +63,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     describe: describe('passkey'),
     run: async () => {
       const result = await (registrar?.create({ address: address(), name: fullNameOf(state()) }) ?? { status: 'cancelled' as const });
-      if (result.status !== 'created') return 'cancelled' as const;
+      if (result.status !== 'created') return result.status;
       store.dispatch({ type: 'passkey-created', attestation: result.attestation });
       return 'created' as const;
     },

@@ -48,12 +48,13 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   const store = createSignInStore();
   const navigate = vi.fn();
   const leave = vi.fn();
+  let shown: SignInStep = step;
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   let latest: SignInFlowValue | undefined;
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
-      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} leave={leave}>
+      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </SignInFlowProvider>
     </QueryClientProvider>
@@ -61,7 +62,12 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   const view = render(tree(step));
   /** Everything the query client is holding on to, as text, to search for things that must not be kept. */
   const retained = () => JSON.stringify([queryClient.getMutationCache().getAll().map((mutation) => mutation.state), queryClient.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data])]);
-  return { session, capabilities, store, navigate, leave, queryClient, retained, flow: () => latest!, toast: () => said, goTo: (next: SignInStep) => view.rerender(tree(next)) };
+  return { session, capabilities, store, navigate, leave, queryClient, retained, flow: () => latest!, toast: () => said, goTo: (next: SignInStep) => {
+      shown = next;
+      view.rerender(tree(next));
+    },
+    /** The address changes while the step is still on screen, as when a navigation away is loading. */
+    leaveFor: (next: SignInStep) => (shown = next) };
 };
 
 describe('SignInFlowProvider', () => {
@@ -548,6 +554,22 @@ describe('confirming an email at sign-in', () => {
     expect(context.store.getState().provenPassword).toBeNull();
     expect(context.navigate).not.toHaveBeenCalledWith('confirm-email');
     expect(context.retained()).not.toContain('password-secret');
+  });
+
+  it.each(['recover', 'email'] as const)('holds no password and leads nowhere when a navigation away (to %s) began before the answer came', async (elsewhere) => {
+    const context = setup({ step: 'password' });
+    act(() => context.store.dispatch({ type: 'email-entered', email }));
+    let answer: () => void = () => undefined;
+    context.session.signIn.mockImplementationOnce(() => new Promise((_resolve, reject) => (answer = () => reject(unconfirmed()))));
+
+    act(() => void context.flow().actions.signInWithPassword('password-secret'));
+    await waitFor(() => expect(context.session.signIn).toHaveBeenCalled());
+    context.leaveFor(elsewhere);
+    await act(async () => answer());
+
+    await waitFor(() => expect(context.flow().meta.requests.password.isPending).toBe(false));
+    expect(context.store.getState().provenPassword).toBeNull();
+    expect(context.navigate).not.toHaveBeenCalledWith('confirm-email');
   });
 
   it('still shows the code step when asking for the fresh code fails', async () => {

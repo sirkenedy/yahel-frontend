@@ -1,5 +1,5 @@
 import { isApiError } from '@yahel/api-client';
-import { commonRows, describeFailure } from '../../flow/feedback';
+import { afterPasswordRows, commonRows, describeFailure, sentCodeRows, standingRows } from '../../flow/feedback';
 import type { Feedback, FeedbackMap } from '../../flow/feedback';
 import { signInMessages as m } from './messages';
 
@@ -14,33 +14,18 @@ type Rows = FeedbackMap<SignInField, SignInNext>;
 // A wrong password reads exactly like an unknown address, so the answer never says whether an account exists.
 const wrongCredentials = { place: 'field', field: 'password', text: m.wrongCredentials } as const;
 const wrongCode = { place: 'field', field: 'code', text: m.wrongCode } as const;
-const emailCodeRefused = { place: 'field', field: 'code', text: m.emailCodeRefused } as const;
 const passkeyFailed = { place: 'banner', tone: 'danger', text: m.passkeyFailed } as const;
 const refusedPassword = { place: 'field', field: 'password', text: m.passwordRefused } as const;
 
-// An account's standing, told only where the password has already matched; a signed-out request never shows these.
-const standing = {
-  ACCOUNT_SUSPENDED: { place: 'screen', screen: 'suspended' },
-  TENANT_SUSPENDED: { place: 'screen', screen: 'org-paused' },
-} as const satisfies Partial<Rows>;
-
-// What the server says only once the password has matched: none of it reveals more than signing in would.
-const afterPassword = {
-  ...standing,
-  TOO_MANY_REQUESTS: { place: 'screen', screen: 'locked' },
-  // A bare 403 is also an inactive membership, so it says only what is known: this account cannot sign in now.
-  FORBIDDEN: { place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' },
-  EMAIL_NOT_VERIFIED: { place: 'banner', tone: 'info', title: m.confirmEmailTitle, text: m.emailNotConfirmed },
-  SSO_REQUIRED: { place: 'banner', tone: 'info', title: m.singleSignOnTitle, text: m.singleSignOnRequired },
-  FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED: { place: 'banner', tone: 'warning', title: m.newPasswordNeededTitle, text: m.newPasswordNeeded, next: 'reset-password' },
-} as const satisfies Partial<Rows>;
+// Sign-in alone says this: it has a step to confirm the address on.
+const afterPassword = { ...afterPasswordRows, EMAIL_NOT_VERIFIED: { place: 'banner', tone: 'info', title: m.confirmEmailTitle, text: m.emailNotConfirmed } } as const satisfies Partial<Rows>;
 
 const rows: Record<FailureContext, Rows> = {
   password: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: wrongCredentials, REFUSED: wrongCredentials },
   passkey: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: passkeyFailed, REFUSED: passkeyFailed, CLIENT_FAULT: passkeyFailed },
   code: {
     ...commonRows,
-    ...standing,
+    ...standingRows,
     MFA_INVALID: wrongCode,
     INVALID_MFA_CODE: wrongCode,
     INVALID_TOKEN: wrongCode,
@@ -48,13 +33,7 @@ const rows: Record<FailureContext, Rows> = {
     MFA_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'sign-in-again' },
     TOKEN_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'sign-in-again' },
   },
-  'email-code': {
-    ...commonRows,
-    INVALID_TOKEN: emailCodeRefused,
-    REFUSED: emailCodeRefused,
-    FORBIDDEN: emailCodeRefused,
-    TOKEN_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyEmailCodes, next: 'resend' },
-  },
+  'email-code': { ...commonRows, ...sentCodeRows },
   reset: { ...commonRows, VALIDATION_ERROR: refusedPassword, REFUSED: refusedPassword },
   other: commonRows,
 };

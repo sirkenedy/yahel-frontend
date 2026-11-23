@@ -1,4 +1,5 @@
 import { FlowButton, FlowNotice, FlowStep, FlowWaiting } from '@yahel/ui';
+import { flowMessages as shared } from '../../../flow/messages';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
 import { StepFrame } from './step-frame';
@@ -12,6 +13,7 @@ export function PasskeyStep() {
       <FlowStep.Body>
         {request.isPending ? <FlowWaiting title={m.passkeyWaiting}>{m.passkeyWaitingDetail}</FlowWaiting> : null}
         {state.passkeyCancelled && !request.isPending ? <FlowNotice>{m.passkeyCancelled}</FlowNotice> : null}
+        {state.passkeyUnprepared && !request.isPending ? <FlowNotice>{shared.passkeyUnprepared}</FlowNotice> : null}
       </FlowStep.Body>
       <FlowStep.Links>
         <FlowButton variant="link" onPress={actions.continueWithoutPasskey}>

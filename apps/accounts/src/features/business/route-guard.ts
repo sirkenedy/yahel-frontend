@@ -1,7 +1,7 @@
 import type { AccountCapabilities } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AppConfig } from '../../config';
-import { hasWorkspaceUnderway, resumeStep } from './machine';
+import { adminAddressOf, hasWorkspaceUnderway, resumeStep } from './machine';
 import type { BusinessFacts, BusinessStep } from './machine';
 import type { BusinessStore } from './store';
 
@@ -42,4 +42,10 @@ export const forgetWorkspace = (store: BusinessStore, { unlessUnderway = false }
 /** Reaching checkout ends any change that was being made from it, however it was reached. */
 export const arriveAtCheckout = (store: BusinessStore) => {
   if (store.getState().editing) store.dispatch({ type: 'edit-finished' });
+};
+
+/** What a finished workspace sign-up hands to the administrator's first sign-in: the address to sign in with and the business's name. Never the password. */
+export const handoverOf = (store: BusinessStore) => {
+  const state = store.getState();
+  return state.creation.finished ? { email: adminAddressOf(state), organisation: state.businessName } : null;
 };

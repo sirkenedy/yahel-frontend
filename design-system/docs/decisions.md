@@ -230,3 +230,15 @@ The reasons are in `docs/decisions.md` F-65 to F-68.
 - **"Confirm your email first"** is now a step in sign-in, not a banner: the emailed code is entered there, a new one can be asked for after the usual pause, and a right code finishes signing in.
 - **A time on another day** is shown with its date.
 
+### Daylight admin first sign-in: departures from the boards (2026-11-23)
+
+The reasons are in `docs/decisions.md` F-80 to F-84.
+
+- **A passkey is required, as the brief says**: the passkey step has no "Not now", its tag reads "Required for admins", and Admin opens only once a passkey exists. A device that cannot make one says so and offers only "Sign out". The rule itself must be enforced by the backend; the interface only guides.
+- **The emailed code** is a step of its own before the phone, as in sign-in: the backend asks a new administrator to confirm the address, which the boards do not draw.
+- **No "Use your passkey"** on the sign-in (a new administrator has none yet); "Forgot password?" leads to sign-in.
+- **Arriving without the address** from workspace sign-up (a reload, a bookmark), the sign-in step also asks for it.
+- **Back links** on the two code steps and the passkey prompt; the phone is not prefilled and its country reads "+234 Nigeria", as in personal sign-up; the signed-in steps show the account in the header.
+- **After the passkey**, "Admin is protected." with "Continue to Admin", with the drawn toast.
+- **Not offered in a release build** until the backend can say who administers a workspace and save a passkey: a new administrator then signs in through sign-in.
+

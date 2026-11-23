@@ -10,7 +10,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, directory: null, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, standIns: [] });
+    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, directory: null, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] });
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
 
     await capabilities.recovery.send('amara@northwind.example', 'email');
@@ -31,8 +31,8 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.trustedContacts).toBe(standIns.trustedContacts);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'trustedContacts', 'workspaceBilling']);
-    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling });
+    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'trustedContacts', 'workspaceBilling']);
+    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
   });
 
   it('sends an emailed reset code through the real endpoint even with stand-ins, and a texted one through the stand-in', async () => {

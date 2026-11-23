@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { adminScreens } from './admin-screens';
 import { businessScreens } from './business-screens';
 import { personalScreens } from './personal-screens';
 import { at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys } from './accounts';
@@ -260,7 +261,7 @@ const screens: Screen[] = [
 ];
 
 /** Every state of every screen of the accounts app, for the accessibility and layout checks. */
-export const accountsScreens: Screen[] = [...screens, ...personalScreens, ...businessScreens].map(({ name, open }) => ({
+export const accountsScreens: Screen[] = [...screens, ...personalScreens, ...businessScreens, ...adminScreens].map(({ name, open }) => ({
   name,
   open: async (page) => {
     await open(page);

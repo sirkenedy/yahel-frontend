@@ -2,7 +2,7 @@ import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { Session } from '@yahel/auth';
 import { describe, expect, it } from 'vitest';
-import { arriveAtCheckout, businessFacts, forgetWorkspace, isOffered, isSignedIn, stepInsteadOf } from './route-guard';
+import { arriveAtCheckout, businessFacts, forgetWorkspace, handoverOf, isOffered, isSignedIn, stepInsteadOf } from './route-guard';
 import { createBusinessStore } from './store';
 
 const api = { auth: {} } as never;
@@ -66,5 +66,17 @@ describe('the guards', () => {
     const before = store.getState();
     arriveAtCheckout(store);
     expect(store.getState()).toBe(before);
+  });
+
+  it('hands the new administrator’s address and the business’s name, never the password, to Admin’s first sign-in once the workspace is made', () => {
+    const store = createBusinessStore();
+    store.dispatch({ type: 'business-entered', businessName: 'Northwind Studio', size: 'small', country: 'NG' });
+    store.dispatch({ type: 'owned-domain-entered', domain: 'northwind.example' });
+    store.dispatch({ type: 'admin-entered', adminUser: 'amara', password: 'Northwind Lagos 2026!', marketing: { productNews: false, teamTips: false } });
+    expect(handoverOf(store)).toBeNull();
+
+    store.dispatch({ type: 'workspace-created', tenantId: 't1' });
+    store.dispatch({ type: 'creation-finished' });
+    expect(handoverOf(store)).toEqual({ email: 'amara@northwind.example', organisation: 'Northwind Studio' });
   });
 });

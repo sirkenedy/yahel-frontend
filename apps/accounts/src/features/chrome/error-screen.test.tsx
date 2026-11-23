@@ -86,6 +86,9 @@ describe('errorExitFor', () => {
     expect(errorExitFor('/business')).toEqual({ href: '/business', label: chromeMessages.startAgain });
     expect(errorExitFor('/businesses')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/signin/password')).toEqual({ href: '/signin', label: m.backToSignIn });
+    expect(errorExitFor('/admin/phone')).toEqual({ href: '/admin/signin', label: m.backToSignIn });
+    expect(errorExitFor('/admin')).toEqual({ href: '/admin/signin', label: m.backToSignIn });
+    expect(errorExitFor('/administer')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/personally')).toEqual({ href: '/signin', label: m.backToSignIn });
     expect(errorExitFor('/')).toEqual({ href: '/signin', label: m.backToSignIn });
   });

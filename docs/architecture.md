@@ -9,7 +9,7 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 ```
 apps/
   shell/            sign-in, home, account. Later: app launcher, account switcher
-  accounts/         sign in, account recovery, personal sign-up, workspace sign-up. Later: first admin sign-in
+  accounts/         sign in, account recovery, personal sign-up, workspace sign-up, an administrator's first sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
@@ -89,6 +89,8 @@ apps/accounts/src/
     use-step-field.ts           one field of a step: value, problem, a server refusal, submit, focus on the problem; `useStepFields` for several
     use-step-travel.ts          which way the person moved and how many steps they have seen
     flow-store.ts               the in-memory store a flow's `reduce` drives
+    email-confirmation.ts       signing in with a password still to be confirmed, and confirming it with the emailed code (F-50, F-68)
+    phone-country-select.tsx    a phone number's country
     step-frame.tsx              the way back, the question, the page title, and whatever a request has to tell
   features/chrome/              the frame around every flow: brand, theme control, footer
   config.ts                     every outbound address, from `VITE_*` settings; nothing is derived from the host
@@ -98,14 +100,15 @@ apps/accounts/src/
 - **Flows share code through `src/flow/`, never through each other.** A feature may import `flow/` and packages; it may not import another feature (rulebook 1.3). What goes in `flow/` takes its words and its state as arguments.
 - **Steps do not call the API, the session or the router.** The flow's requests do (`requests.ts`), each through `useFlowRequest`: a TanStack mutation that ignores a second press, cannot be stranded by leaving the step, and keeps no password, code or token after it settles.
 - **A release build names its addresses.** `apps/accounts/src/build/build-guards.ts` fails a build that would fall back to a development address or ship stand-ins; `pnpm build` opts into local addresses, `build:release` does not. A demo build is exempt only with stand-ins on. And a built bundle checks where it is running before it mounts (`deployment.ts`): served from anywhere but this machine without https addresses for the backend and the app, it logs why and renders nothing.
-- **Sign-in, personal and business are separate route groups** (`/signin`, `/personal`, `/business`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
+- **Sign-in, personal, business and admin are separate route groups** (`/signin`, `/personal`, `/business`, `/admin`) because they will be served from different addresses. Where someone goes after signing in is decided by `resolveReturnAddress` in `@yahel/auth`, which accepts only origins listed in `VITE_APP_URL` and `VITE_RETURN_ORIGINS`.
 
 - **A flow that creates something does it in one resumable request.** Personal sign-up collects every answer first and creates the account only on "Agree and create account" (`features/personal/requests.ts`, `create`): register, sign in, set up. Each part is recorded in the flow state as it completes, so a retry skips what is done and the account is created once. What needs the account (the emailed code for an existing address, the texted code, saving the passkey) comes after it, whatever the drawings' order (`decisions.md` F-39, F-43).
 - **One mapping from a failure to feedback** (`flow/feedback.ts`, from the designs' `FeedbackCodeMap`). `answerOf(error)` names the answer: the backend's code where the map names one, otherwise the status, and for no answer at all whether the device is offline or the service is not answering (both are banners on the step; only a declared outage takes its place). A row describes the feedback: where it shows (`field`, `banner` or `screen`), the tone, the words, the next action. `describeFailure(error, rows)` picks the row and adds only an id to quote and when to try again. A flow's `feedback.ts` holds its rows per thing attempted, spread over `commonRows`; `useFlowRequest` keeps the described feedback, and steps hand their requests to the step frame. The frame shows a banner above the form, replaces the step with a whole-screen state, or leaves a `field` feedback to the field that names it (`forField`, `useStepField({ refusal })`). Nothing the server wrote reaches the screen, and no row says whether an account exists.
 - **A failed screen never shows the router's own error page.** A step that throws is replaced inside the frame by a plain message with a retry (the "Error" whole-screen state, `features/chrome/error-screen.tsx`); a layout or guard that throws gets the same with the frame; a boundary around the router catches the rest.
 - **A flow offers only what something answers for.** Workspace sign-up is designed around plans, a checkout and a domain registrar, none of which the backend has. Its machine takes those as facts (`BusinessFacts`, from the capabilities): with them, the thirteen designed steps; without them, a domain already owned and then the workspace, which is what `POST /auth/register-business` does. A release build therefore has a real flow and no pretend payment.
 - **Card details are a step's, not the flow's.** The checkout screen (demo builds only) holds the card in its fields, hands it once to a request, and keeps of it the network and last four digits. Nothing about a card or a bank's code is in the flow state, an address, web storage or the query client (`decisions.md` F-73).
-- **Each flow's screens are one file** (`vite.config.ts`, `codeSplitting`), loaded when the flow is first shown; the entry contains none. What only steps are built from (fields, the step frame, the whole-screen states) is a third file, `step-kit`.
+- **Each flow's screens are one file** (`vite.config.ts`, `codeSplitting`), loaded when the flow is first shown; the entry contains none. What only steps are built from (fields, the step frame, the whole-screen states) is a third file, `step-kit`. A layout's error screen travels with the layout (F-85).
+- **An administrator's first sign-in** (`features/admin/`, F-80) is reached from workspace sign-up's Ready, which hands over only the address and the business's name through the `/admin` guard. Once signed in, its guards land on the first thing not done (phone, welcome, passkey); Admin opens only once a passkey exists. That is guidance: the backend must enforce it (F-81). It is offered only where `adminAccess` and `passkeyRegistration` answer (F-82).
 
 ### 3.2 Capabilities and stand-ins
 
@@ -150,4 +153,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: the first admin sign-in (slice 4 of the accounts app), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: an administrator's first sign-in in a release build (it needs `GET /v1/me/workspace` and passkey registration, `decisions.md` F-82), enforcement of the passkey Admin requires (the backend's, F-81), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.

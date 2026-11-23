@@ -79,6 +79,8 @@ export interface SignInFlowProviderProps {
   passkeys: PasskeyClient | null;
   store: SignInStore;
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
+  /** Whether the address bar shows this step: a navigation away may still be loading while the step is on screen. */
+  isShown: (step: SignInStep) => boolean;
   /** Sends the browser to the validated return address. */
   leave: () => void;
   /** Addresses outside the flow that a whole-screen state can lead to. */
@@ -91,7 +93,7 @@ export interface SignInFlowProviderProps {
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
  * about the session, the API or the router.
  */
-export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, leave, links, children }: SignInFlowProviderProps) {
+export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, isShown, leave, links, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -103,7 +105,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
 
   const travel = useStepTravel(step, directionOf);
 
-  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions: () => recoveryOptions.data ?? [] });
+  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, recoveryOptions: () => recoveryOptions.data ?? [] });
 
   const facts = { signedIn: profile !== null, knownAccounts: accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
   const back = backOf(step, { ...flow, provenPassword }, facts);

@@ -33,11 +33,19 @@ describe('assertReleaseAddresses', () => {
     ['the mail domain is not a domain', { ...release, VITE_MAIL_DOMAIN: 'https://yahel.example' }, /^VITE_MAIL_DOMAIN must/],
     ['sign-in is served over plain http', { ...release, VITE_SIGN_IN_URL: 'http://accounts.yahel.example/signin' }, /^VITE_SIGN_IN_URL must be an https address/],
     ['sign-up and business sign-up are not addresses', { ...release, VITE_SIGN_UP_URL: 'accounts.yahel.example', VITE_BUSINESS_SIGN_UP_URL: 'javascript:alert(1)' }, /^VITE_SIGN_UP_URL and VITE_BUSINESS_SIGN_UP_URL must be an https address/],
+    ['Admin is served over plain http', { ...release, VITE_ADMIN_URL: 'http://admin.yahel.example' }, /^VITE_ADMIN_URL must be an https address/],
+    ['workspace sign-up is on without Admin’s address', { ...release, VITE_BUSINESS_SIGN_UP: 'on' }, /^VITE_ADMIN_URL must be set to Admin’s https address/],
+    ['workspace sign-up is on with Admin over plain http', { ...release, VITE_BUSINESS_SIGN_UP: 'on', VITE_ADMIN_URL: 'http://admin.yahel.example' }, /^VITE_ADMIN_URL must be an https address/],
     ['the backend is plain http', { ...release, VITE_API_URL: 'http://api.yahel.example/api' }, /^VITE_API_URL must/],
     ['the app is a development address', { ...release, VITE_APP_URL: 'http://localhost:5173/' }, /^VITE_APP_URL must/],
     ['an address is not an address', { ...release, VITE_APP_URL: 'app.yahel.example' }, /^VITE_APP_URL must/],
   ])('refuses a release build when %s', (_name, env, message) => {
     expect(() => assertReleaseAddresses('build', env)).toThrow(message);
+  });
+
+  it('allows workspace sign-up in a release once Admin’s https address is set, and needs none while it is off', () => {
+    expect(() => assertReleaseAddresses('build', { ...release, VITE_BUSINESS_SIGN_UP: 'on', VITE_ADMIN_URL: 'https://admin.yahel.example/' })).not.toThrow();
+    expect(() => assertReleaseAddresses('build', { ...release, VITE_BUSINESS_SIGN_UP: 'off' })).not.toThrow();
   });
 
   it('allows the three onward addresses over https, and unset', () => {
