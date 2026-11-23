@@ -21,6 +21,8 @@ export interface SignInRequestDeps {
   store: SignInStore;
   queryClient: QueryClient;
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
+  /** The address bar shows this step, even while a navigation away from it is still loading. */
+  isShown: (step: SignInStep) => boolean;
   /** The destinations currently offered on the recover step, to record where a code went. */
   recoveryOptions: () => RecoveryOption[];
 }
@@ -33,7 +35,7 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  * Every request the sign-in flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`. A new flow gets its own file of this shape.
  */
-export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions }: SignInRequestDeps) {
+export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
   const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
 
@@ -68,8 +70,9 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     run: async (value: string, { isCurrent }) => {
       const result = await signInOrConfirm(session, email(), value);
       if (result.ok || result.reason === 'mfa-required') return settle(result);
-      // The proof is held only for the confirm step, and only if the person is still where they asked for it.
-      if (!isCurrent()) return 'left' as const;
+      // The proof is held only for the confirm step, and only if the person is still where they asked for it:
+      // not left, and not on the way somewhere else while that page loads.
+      if (!isCurrent() || !isShown('password')) return 'left' as const;
       store.dispatch({ type: 'email-unconfirmed', password: value });
       return 'confirm-email' as const;
     },

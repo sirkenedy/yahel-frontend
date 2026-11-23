@@ -871,6 +871,63 @@ test.describe('accounts: confirming an email at sign-in', () => {
     expect(page.url()).not.toContain(pendingEmail);
   });
 
+  /** Holds the first sign-in's answer until the test lets it through. */
+  const holdFirstLogin = async (page: Page) => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let first = true;
+    await page.route('**/api/v1/auth/login', async (route) => {
+      if (!first) return route.fallback();
+      first = false;
+      await gate;
+      await route.fallback();
+    });
+    return release;
+  };
+
+  test('pressing Forgot password? while signing in: the answer does not pull the person back to the code step', async ({ page }) => {
+    const api = await mockApi(page);
+    const release = await holdFirstLogin(page);
+    await signInWithPassword(page, { email: pendingEmail, password: pendingPassword });
+    await expect(page.getByRole('button', { name: 'Signing in…' })).toBeVisible();
+
+    await page.getByRole('link', { name: 'Forgot password?' }).click();
+    await expect(page).toHaveURL(at('/signin/recover'));
+    release();
+
+    await expect.poll(() => loginCalls(api).length).toBe(1);
+    await page.waitForTimeout(500);
+    await expect(page).toHaveURL(at('/signin/recover'));
+    await expect(page.getByRole('heading', { level: 1, name: 'Confirm your email.' })).toHaveCount(0);
+    expect(sent(api, '/v1/auth/verify-email')).toHaveLength(0);
+  });
+
+  test('going Back and on to create an account while signing in: the answer leaves the person where they went', async ({ page }) => {
+    const api = await mockApi(page);
+    const release = await holdFirstLogin(page);
+    // Sign-up's screens arrive slowly, so the answer comes while the way out is still loading.
+    let loaded: () => void = () => undefined;
+    const personalLoaded = new Promise<void>((resolve) => (loaded = resolve));
+    await page.route(/\/assets\/personal-steps[^/]*\.js$/, async (route) => {
+      await personalLoaded;
+      await route.fallback();
+    });
+    await signInWithPassword(page, { email: pendingEmail, password: pendingPassword });
+    await expect(page.getByRole('button', { name: 'Signing in…' })).toBeVisible();
+
+    await page.goBack();
+    await expect(page.getByRole('heading', { level: 1, name: 'Welcome back.' })).toBeVisible();
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    release();
+    await expect.poll(() => loginCalls(api).length).toBe(1);
+    await page.waitForTimeout(500);
+    loaded();
+
+    await expect(page).toHaveURL(/\/personal/);
+    await expect(page.getByRole('heading', { level: 1, name: 'Confirm your email.' })).toHaveCount(0);
+    expect(sent(api, '/v1/auth/verify-email')).toHaveLength(0);
+  });
+
   test('the code step can be completed with the keyboard alone', async ({ page }) => {
     await signInUnconfirmed(page);
     await codeBoxes(page).focus();
