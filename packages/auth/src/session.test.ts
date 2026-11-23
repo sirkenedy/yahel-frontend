@@ -142,4 +142,21 @@ describe('createSession', () => {
     expect(tokenStorage.data).toEqual({ 'yahel.refresh-token': 'refresh-1' });
     expect(JSON.stringify(tokenStorage.data)).not.toContain('access-1');
   });
+
+  it('registers a business under this device’s id, without starting a session', async () => {
+    const deviceStorage = memoryStorage();
+    const tokenStorage = memoryStorage();
+    const created = { message: 'ok', identity: { id: 'i1', email: 'amara@northwind.example', emailVerified: false }, tenant: { id: 't1', slug: 'northwind-studio', displayName: 'Northwind Studio', status: 'pending_setup' }, domain: { domain: 'northwind.example', status: 'pending' } };
+    const fetchMock = routeFetch({ '/api/v1/auth/register-business': () => ok(created) });
+    const session = createSession({ baseUrl: 'http://api.test/api', tokenStorage, deviceStorage, fetch: fetchMock as typeof fetch });
+    const details = { email: 'amara@northwind.example', password: 'Northwind Lagos 2026!', firstName: 'Amara', lastName: 'Okafor', businessName: 'Northwind Studio', slug: 'northwind-studio', country: { name: 'Nigeria', code: 'NG', currency: 'NGN' }, dateOfBirth: '1994-03-14T00:00:00.000Z', employeeCount: 10, domain: 'northwind.example' };
+
+    await expect(session.registerBusiness(details)).resolves.toEqual(created);
+
+    const sent = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body)) as Record<string, unknown>;
+    expect(sent).toEqual({ ...details, deviceId: deviceStorage.data['yahel.device-id'] });
+    expect(sent.deviceId).toMatch(/^[0-9a-f-]{36}$/);
+    expect(tokenStorage.data).toEqual({});
+    expect(session.store.getState().status).toBe('unknown');
+  });
 });

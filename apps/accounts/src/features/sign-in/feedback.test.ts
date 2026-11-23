@@ -57,13 +57,18 @@ describe('describeSignInFailure: the password', () => {
     expect(timed.place === 'screen' ? timed.retryAt : Infinity).toBeLessThanOrEqual(Date.now() + 900_000);
   });
 
-  it.each<FailureContext>(['password', 'passkey'])('shows an account that may not sign in (by %s) as the turned-off screen, by today’s 403 or by its own code', (context) => {
-    expect(describeSignInFailure(answer(403, 'FORBIDDEN'), context)).toEqual({ place: 'screen', screen: 'suspended' });
+  it.each<FailureContext>(['password', 'passkey'])('says an account is turned off only when the answer says so (by %s); a bare 403 is told neutrally', (context) => {
+    expect(describeSignInFailure(answer(403, 'FORBIDDEN'), context)).toEqual({ place: 'banner', tone: 'danger', title: m.cannotSignInTitle, text: m.cannotSignIn, next: 'support' });
     expect(describeSignInFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'suspended' });
   });
 
-  it.each(contexts)('shows a paused organisation as its own screen (%s)', (context) => {
+  it.each<FailureContext>(['password', 'passkey', 'code'])('shows a paused organisation as its own screen once the password has matched (%s)', (context) => {
     expect(describeSignInFailure(answer(403, 'TENANT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'org-paused' });
+  });
+
+  it.each<FailureContext>(['reset', 'other'])('never shows an account’s or an organisation’s standing to a signed-out request (%s)', (context) => {
+    expect(describeSignInFailure(answer(403, 'TENANT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
+    expect(describeSignInFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
   });
 });
 
@@ -123,7 +128,7 @@ describe('describeSignInFailure: what reads the same at every step', () => {
     expect(describeSignInFailure(dropped, context)).toEqual({ place: 'banner', tone: 'offline', title: fm.offlineTitle, text: fm.offlineText, next: 'retry' });
 
     online.mockReturnValue(true);
-    expect(describeSignInFailure(dropped, context)).toEqual({ place: 'screen', screen: 'unreachable' });
+    expect(describeSignInFailure(dropped, context)).toEqual({ place: 'banner', tone: 'offline', title: fm.unreachableTitle, text: fm.unreachableText, next: 'retry' });
   });
 
   it('counts down a rate limit away from sign-in itself, as a warning', () => {
@@ -178,5 +183,19 @@ describe('carried', () => {
     expect(carried['reset-done']).toEqual({ place: 'banner', tone: 'warning', title: m.resetDoneTitle, text: m.resetDoneSignInFailed });
     expect(carried.wrong).toEqual({ place: 'field', field: 'code', text: m.recoverCodeRejected });
     expect(carried.spent).toEqual({ place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyResetCodes, next: 'resend' });
+  });
+});
+
+describe('the emailed code at sign-in', () => {
+  it.each([[401, 'INVALID_TOKEN'], [400, 'BAD_REQUEST'], [403, 'FORBIDDEN']])('puts a refused code (%i %s) beside the boxes', (status, code) => {
+    expect(describeSignInFailure(answer(status, code), 'email-code')).toEqual({ place: 'field', field: 'code', text: m.emailCodeRefused });
+  });
+
+  it('says a code that has had too many tries is dead, and offers a new one', () => {
+    expect(describeSignInFailure(answer(429, 'TOKEN_MAX_ATTEMPTS'), 'email-code')).toEqual({ place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyEmailCodes, next: 'resend' });
+  });
+
+  it('carries the news that the email is confirmed back to the password step', () => {
+    expect(carried['email-confirmed']).toEqual({ place: 'banner', tone: 'success', title: m.emailConfirmedTitle, text: m.emailConfirmedSignIn });
   });
 });

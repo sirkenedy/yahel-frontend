@@ -1,5 +1,5 @@
 import { createApiClient, isApiError, isMfaRequired } from '@yahel/api-client';
-import type { ApiClient, AuthTokens, Profile, SignedIn } from '@yahel/api-client';
+import type { ApiClient, AuthTokens, Profile, Schemas, SignedIn } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
 export type SessionStatus = 'unknown' | 'signed-out' | 'signed-in';
@@ -109,6 +109,12 @@ export function createSession(options: SessionOptions) {
       await loadProfile();
       return { ok: true };
     },
+
+    /**
+     * Creates a workspace and its administrator, naming this device as sign-in does. No session follows:
+     * the administrator's address has to be confirmed before it can sign in.
+     */
+    registerBusiness: (details: Omit<Schemas['RegisterBusinessDto'], 'deviceId' | 'deviceName'>) => api.auth.registerBusiness({ ...details, deviceId: deviceId() }),
 
     /** Finishes a sign-in that stopped for a second step. `trustDevice` skips that step on this device for 30 days. */
     async completeSecondStep(challengeToken: string, code: string, trustDevice = false) {

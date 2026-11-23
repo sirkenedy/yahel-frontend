@@ -13,6 +13,7 @@ import { SignInFlowContext } from '../sign-in-flow';
 import type { SignInFlowValue } from '../sign-in-flow';
 import { ChooseStep } from './choose-step';
 import { CodeStep } from './code-step';
+import { ConfirmEmailStep } from './confirm-email-step';
 import { DoneStep } from './done-step';
 import { EmailStep } from './email-step';
 import { HelpSentStep } from './help-sent-step';
@@ -37,6 +38,8 @@ const fakeActions = () => ({
     useAnotherAccount: vi.fn(),
     removeAccount: vi.fn(),
     signInWithPassword: vi.fn(),
+    confirmEmail: vi.fn(),
+    resendEmailCode: vi.fn(),
     startPasskey: vi.fn(),
     verifyCode: vi.fn(),
     sendTextCode: vi.fn(),
@@ -56,7 +59,7 @@ const flowValue = (actions: SignInFlowValue['actions'], { state, offers, request
     direction: 'forward',
     backHref,
       offers: { passkey: true, textCode: true, help: true, ...offers },
-      requests: { password: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, removeAccount: idle, signOut: idle, recoveryOptions: idle, ...requests },
+      requests: { password: idle, confirmEmail: idle, resendEmailCode: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, removeAccount: idle, signOut: idle, recoveryOptions: idle, ...requests },
       screens: { account: state?.email ?? null, exits: { signIn: '/signin/email', resetPassword: '/signin/recover' }, serviceStatus: null, ...screens },
     },
 });
@@ -324,8 +327,8 @@ describe('PasswordStep', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: fm.lockedTitle })).toHaveFocus();
     expect(screen.queryByLabelText(m.passwordLabel)).not.toBeInTheDocument();
-    expect(screen.getByText(fm.lockedLede(email))).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(/^You can try again at \d{2}:\d{2}\. Resetting your password works right away\.$/);
+    expect(screen.getByText(fm.lockedLede)).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(/^You can try again at \d{2}:\d{2}\.$/);
     expect(screen.getByRole('link', { name: fm.resetPassword })).toHaveAttribute('href', '/signin/recover');
     expect(screen.getByRole('link', { name: fm.backToSignIn })).toHaveAttribute('href', '/signin/email');
     expect(document.title).toBe(fm.pageTitle(fm.lockedTitle));
@@ -805,5 +808,54 @@ describe('NewPasswordStep', () => {
     expect(field).toBeInvalid();
     expect(field).toHaveAccessibleDescription(expect.stringContaining(m.passwordRefused));
     expect(field).toHaveFocus();
+  });
+});
+
+describe('ConfirmEmailStep', () => {
+  const state = { step: 'confirm-email' as const, email };
+
+  it('says where the code went and that the password was right, and submits six letters and numbers', async () => {
+    const { actions, user } = setup(<ConfirmEmailStep />, { state, backHref: '/signin/password' });
+    expect(screen.getByRole('heading', { level: 1, name: m.confirmStepTitle })).toBeInTheDocument();
+    expect(screen.getByText(m.confirmStepLede(email))).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: m.back })).toHaveAttribute('href', '/signin/password');
+
+    await user.type(screen.getByLabelText(m.emailCodeLabel), 'a1b2c3');
+    await user.click(screen.getByRole('button', { name: m.verify }));
+
+    expect(actions.confirmEmail).toHaveBeenCalledWith('a1b2c3');
+  });
+
+  it('asks for the whole code before sending anything', async () => {
+    const { actions, user } = setup(<ConfirmEmailStep />, { state });
+    await user.type(screen.getByLabelText(m.emailCodeLabel), 'A1B');
+    await user.click(screen.getByRole('button', { name: m.verify }));
+
+    expect(screen.getByLabelText(m.emailCodeLabel)).toHaveAccessibleDescription(m.emailCodeIncomplete);
+    expect(actions.confirmEmail).not.toHaveBeenCalled();
+  });
+
+  it('shows a refused code beside the boxes, and a dead code as a banner that sends a new one', async () => {
+    const refused = setup(<ConfirmEmailStep />, { state, requests: { confirmEmail: failing({ place: 'field', field: 'code', text: m.emailCodeRefused }) } });
+    expect(screen.getByLabelText(m.emailCodeLabel)).toHaveAccessibleDescription(m.emailCodeRefused);
+    refused.container.remove();
+
+    const { actions, user } = setup(<ConfirmEmailStep />, { state, requests: { confirmEmail: failing({ place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyEmailCodes, next: 'resend' }) } });
+    await user.click(within(screen.getByRole('alert')).getByRole('button', { name: m.sendNewCode }));
+    expect(actions.resendEmailCode).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers a new code only after a pause, because one has just been sent', () => {
+    vi.useFakeTimers();
+    const { actions } = setup(<ConfirmEmailStep />, { state });
+    const resend = () => screen.getByRole('button', { name: /^Send a new code/ });
+    expect(resend()).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(resend());
+    expect(actions.resendEmailCode).not.toHaveBeenCalled();
+
+    act(() => void vi.advanceTimersByTime(30_000));
+    fireEvent.click(resend());
+    expect(actions.resendEmailCode).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 });

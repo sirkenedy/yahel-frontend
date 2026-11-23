@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { businessScreens } from './business-screens';
 import { personalScreens } from './personal-screens';
 import { at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys } from './accounts';
 import { credentials, requestId, suspendedCredentials } from './api';
@@ -47,24 +48,25 @@ const feedbackScreens: Screen[] = [
     open: signInRefused('You can try again at', 429, 'BAD_REQUEST', { 'Retry-After': '600', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Retry-After' }),
   },
   {
-    name: 'accounts state: account turned off',
+    name: 'accounts banner: this account cannot sign in',
     open: async (page) => {
       await signInWithPassword(page, suspendedCredentials);
-      await page.getByRole('heading', { name: 'This account is turned off.' }).waitFor();
+      await page.getByText('This account can’t sign in right now').waitFor();
     },
   },
+  { name: 'accounts state: account turned off', open: signInRefused('This account is turned off.', 403, 'ACCOUNT_SUSPENDED') },
   { name: 'accounts state: organisation paused', open: signInRefused('Your organisation is paused.', 403, 'TENANT_SUSPENDED') },
   { name: 'accounts state: maintenance, with its window', open: signInRefused('Planned maintenance runs from', 503, 'SERVICE_UNAVAILABLE') },
   {
-    name: 'accounts state: not answering',
+    name: 'accounts banner: not answering, with Try again',
     open: async (page) => {
       await page.route('**/api/v1/auth/login', (route) => route.abort('connectionfailed'));
       await signInWithPassword(page);
-      await page.getByRole('heading', { name: 'We can’t reach Yahel right now.' }).waitFor();
+      await page.getByText('We can’t reach Yahel right now').waitFor();
     },
   },
   { name: 'accounts banner: our side, with the reference and Try again', open: signInRefused('Something went wrong on our side', 500, 'INTERNAL_ERROR') },
-  { name: 'accounts banner: confirm your email first', open: signInRefused('Confirm your email first', 403, 'EMAIL_NOT_VERIFIED') },
+  { name: 'accounts: confirm your email at sign-in', open: signInRefused('Confirm your email.', 403, 'EMAIL_NOT_VERIFIED') },
   { name: 'accounts banner: choose a new password first, with its action', open: signInRefused('Choose a new password first', 403, 'FIRST_LOGIN_PASSWORD_CHANGE_REQUIRED') },
   {
     name: 'accounts offline: the connection bar and the offline banner',
@@ -258,7 +260,7 @@ const screens: Screen[] = [
 ];
 
 /** Every state of every screen of the accounts app, for the accessibility and layout checks. */
-export const accountsScreens: Screen[] = [...screens, ...personalScreens].map(({ name, open }) => ({
+export const accountsScreens: Screen[] = [...screens, ...personalScreens, ...businessScreens].map(({ name, open }) => ({
   name,
   open: async (page) => {
     await open(page);

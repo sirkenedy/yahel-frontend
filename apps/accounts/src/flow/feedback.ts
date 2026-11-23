@@ -2,8 +2,8 @@ import { isApiError } from '@yahel/api-client';
 import type { FlowTone } from '@yahel/ui';
 import { flowMessages as m } from './messages';
 
-/** The whole-screen states. Several share one drawn screen: the two links and the two sessions are "Expired", the two outages "Maintenance". */
-export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' | 'link-used' | 'session-ended' | 'signed-out-everywhere' | 'maintenance' | 'unreachable';
+/** The whole-screen states. Several share one drawn screen: the two links and the two sessions are "Expired". */
+export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' | 'link-used' | 'session-ended' | 'signed-out-everywhere' | 'maintenance';
 
 /**
  * A failure, described for the person: which state shows it, where, in which words, and what they can do
@@ -11,7 +11,7 @@ export type ScreenKind = 'locked' | 'suspended' | 'org-paused' | 'link-expired' 
  */
 export type Feedback<Field extends string = string, Next extends string = string> =
   | { place: 'field'; field: Field; text: string; next?: Next }
-  | { place: 'banner'; tone: FlowTone; title?: string; text: string; next?: Next; reference?: string; retryAt?: number }
+  | { place: 'banner'; tone: FlowTone; title?: string; text: string; next?: Next; /** A second thing the person can do, after `next`. */ also?: Next; reference?: string; retryAt?: number }
   | { place: 'screen'; screen: ScreenKind; reference?: string; retryAt?: number };
 
 /** One row of the map: a feedback before the facts of a particular failure are added. */
@@ -51,10 +51,14 @@ export type FeedbackMap<Field extends string = string, Next extends string = str
 
 const serverError = { place: 'banner', tone: 'danger', title: m.serverErrorTitle, text: m.serverErrorText, next: 'retry' } as const;
 
-/** The rows that read the same in every flow: the connection, the server, the session, and the states only a whole screen can tell. */
+/**
+ * The rows that read the same in every flow: the connection, the server, the session and a spent link.
+ * An account's or an organisation's standing is not here: it is told only where a password has been proven (sign-in's rows).
+ */
 export const commonRows = {
   OFFLINE: { place: 'banner', tone: 'offline', title: m.offlineTitle, text: m.offlineText, next: 'retry' },
-  UNREACHABLE: { place: 'screen', screen: 'unreachable' },
+  // A request that got no answer is told on the step, where what was typed still is; only a declared outage takes the step's place.
+  UNREACHABLE: { place: 'banner', tone: 'offline', title: m.unreachableTitle, text: m.unreachableText, next: 'retry' },
   SERVICE_UNAVAILABLE: { place: 'screen', screen: 'maintenance' },
   TOO_MANY_REQUESTS: { place: 'banner', tone: 'warning', title: m.tooManyTitle, text: m.tooManyText },
   INTERNAL_ERROR: serverError,
@@ -62,8 +66,6 @@ export const commonRows = {
   UNKNOWN: serverError,
   SESSION_EXPIRED: { place: 'screen', screen: 'session-ended' },
   TOKEN_REUSE_DETECTED: { place: 'screen', screen: 'signed-out-everywhere' },
-  ACCOUNT_SUSPENDED: { place: 'screen', screen: 'suspended' },
-  TENANT_SUSPENDED: { place: 'screen', screen: 'org-paused' },
   INVITE_EXPIRED: { place: 'screen', screen: 'link-expired' },
   INVITE_ALREADY_USED: { place: 'screen', screen: 'link-used' },
   INVITE_ALREADY_ACCEPTED: { place: 'screen', screen: 'link-used' },
@@ -87,3 +89,10 @@ export function describeFailure<Field extends string, Next extends string>(error
 
 /** The feedback, when it belongs beside the named field. */
 export const forField = <Field extends string, Next extends string>(feedback: Feedback<Field, Next> | null | undefined, field: Field) => (feedback?.place === 'field' && feedback.field === field ? feedback : null);
+
+/** Whether a failure is the server answering with one of these codes. */
+export const hasCode = (error: unknown, ...codes: string[]) => isApiError(error) && codes.includes(error.code);
+
+/** A refusal the server will repeat however often it is asked, as opposed to a connection that dropped or a server that fell over. */
+export const isRefusal = (error: unknown) => isApiError(error) && error.status >= 400 && error.status < 500 && error.status !== 429 && error.code !== 'SESSION_EXPIRED' && error.code !== 'TOKEN_REUSE_DETECTED';
+

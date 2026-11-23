@@ -1,46 +1,23 @@
 import { isEmailShaped, newPasswordProblem } from '../../flow/credentials';
-import type { BirthDate } from './machine';
+import { ageOn, isoBirthDate, readBirthDate as readBirth } from '../../flow/birth-date';
+import type { TypedBirthDate } from '../../flow/birth-date';
 import { personalMessages as m } from './messages';
 
 const MAX_NAME = 50;
-const MIN_AGE = 13;
+export const MIN_AGE = 13;
 const MIN_ADDRESS = 4;
 const MAX_ADDRESS = 30;
 const addressCharacters = /^[a-z0-9.]+$/;
 const misplacedDot = /^\.|\.$|\.\./;
-const wholeNumber = /^\d+$/;
 export const CODE_LENGTH = 6;
 
 export const firstNameProblem = (name: string) => (name.trim() === '' ? m.firstNameRequired : name.trim().length > MAX_NAME ? m.nameTooLong : null);
 export const lastNameProblem = (name: string) => (name.trim().length > MAX_NAME ? m.nameTooLong : null);
 
-/** Whole years lived, counted the way the backend counts them (UTC calendar dates). */
-export function ageOn(birth: BirthDate, today: Date) {
-  const years = today.getUTCFullYear() - birth.year;
-  const birthdayPassed = today.getUTCMonth() + 1 > birth.month || (today.getUTCMonth() + 1 === birth.month && today.getUTCDate() >= birth.day);
-  return birthdayPassed ? years : years - 1;
-}
-
-const daysIn = (month: number, year: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
+export { ageOn, isoBirthDate };
 
 /** What is wrong with a date of birth as typed, field by field, and the date itself when nothing is. */
-export function readBirthDate(typed: { day: string; month: string; year: string }, today = new Date()): { problems: { day?: string; month?: string; year?: string }; birth: BirthDate | null } {
-  const day = wholeNumber.test(typed.day.trim()) ? Number(typed.day) : NaN;
-  const month = Number(typed.month);
-  const year = /^\d{4}$/.test(typed.year.trim()) ? Number(typed.year) : NaN;
-  const problems: { day?: string; month?: string; year?: string } = {};
-  if (!typed.month) problems.month = m.monthRequired;
-  if (!(year >= 1900 && year <= today.getUTCFullYear())) problems.year = m.yearInvalid;
-  // A day is checked against the month and year it belongs to once those are known, and against 31 until then.
-  const longest = problems.month || problems.year ? 31 : daysIn(month, year);
-  if (!(day >= 1 && day <= longest)) problems.day = m.dayInvalid;
-  if (problems.day || problems.month || problems.year) return { problems, birth: null };
-  const birth = { day, month, year };
-  return ageOn(birth, today) < MIN_AGE ? { problems: { year: m.tooYoung }, birth: null } : { problems: {}, birth };
-}
-
-/** The date as the backend takes it: midnight UTC of that calendar day. */
-export const isoBirthDate = ({ day, month, year }: BirthDate) => new Date(Date.UTC(year, month - 1, day)).toISOString();
+export const readBirthDate = (typed: TypedBirthDate, today = new Date()) => readBirth(typed, m, MIN_AGE, today);
 
 /** What is typed into the address field becomes a candidate name: lower case, spaces as full stops. */
 export const normaliseAddress = (typed: string) => typed.toLowerCase().replace(/\s+/g, '.');

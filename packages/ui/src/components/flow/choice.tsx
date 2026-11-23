@@ -38,11 +38,15 @@ export interface ChoiceProps {
   icon?: ReactNode;
   /** A second line that explains the option. */
   detail?: string;
+  /** A short mark beside the title, such as "Best match". */
+  tag?: string;
+  /** What the option costs or amounts to, at the far side: "₦18,500 a year". */
+  meta?: ReactNode;
   children: ReactNode;
 }
 
 /** One option. The whole card is the radio's hit target. */
-export function Choice({ value, icon, detail, children }: ChoiceProps) {
+export function Choice({ value, icon, detail, tag, meta, children }: ChoiceProps) {
   const group = use(ChoiceGroupContext);
   if (!group) throw new Error('<Choice> must be rendered inside <ChoiceGroup>.');
   return (
@@ -53,6 +57,9 @@ export function Choice({ value, icon, detail, children }: ChoiceProps) {
         <span className="ws-flow-choice__title">{children}</span>
         {detail ? <span className="ws-flow-choice__detail">{detail}</span> : null}
       </span>
+      {/* The space is for the option's name: these sit in separate boxes but are read as one phrase. */}
+      {tag ? <> <span className="ws-flow-choice__tag">{tag}</span></> : null}
+      {meta ? <> <span className="ws-flow-choice__meta">{meta}</span></> : null}
       <span className="ws-flow-choice__dot" aria-hidden="true" />
     </label>
   );

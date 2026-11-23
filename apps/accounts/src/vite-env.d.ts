@@ -9,8 +9,16 @@ interface ImportMetaEnv {
   readonly VITE_SIGN_UP_URL?: string;
   /** Where "Have an account? Sign in" leads. Unset, it is `/signin` in this app. */
   readonly VITE_SIGN_IN_URL?: string;
-  /** Where "For my business or team" leads. While unset, that choice says it is coming soon. */
+  /** `on` offers workspace sign-up in a release build; `off` withholds it from a demo build. Unset, only a demo build offers it. */
+  readonly VITE_BUSINESS_SIGN_UP?: string;
+  /** Where "For my business or team" leads, when workspace sign-up is offered. Unset, it is `/business` in this app. */
   readonly VITE_BUSINESS_SIGN_UP_URL?: string;
+  /** Where a new workspace's administrator signs in. Unset, it is the sign-in address. */
+  readonly VITE_ADMIN_SIGN_IN_URL?: string;
+  /** The agreements a workspace's administrator accepts. Unset, each is named without a link. */
+  readonly VITE_BUSINESS_TERMS_URL?: string;
+  readonly VITE_TRIAL_TERMS_URL?: string;
+  readonly VITE_DOMAIN_TERMS_URL?: string;
   /** The domain of a new Yahel address, without the @. Unset, it is `yahel.com`. */
   readonly VITE_MAIL_DOMAIN?: string;
   readonly VITE_HELP_URL?: string;

@@ -36,7 +36,6 @@ describe('StateScreen', () => {
     ['session-ended', m.sessionEndedTitle],
     ['signed-out-everywhere', m.signedOutTitle],
     ['maintenance', m.maintenanceTitle],
-    ['unreachable', m.unreachableTitle],
   ])('%s: names the page by its heading, moves focus to it and titles the tab', (kind, title) => {
     show(kind);
 
@@ -47,12 +46,13 @@ describe('StateScreen', () => {
     expect(document.title).toMatch(/ · Yahel$/);
   });
 
-  it('locked: says whose sign-in is paused, when it can be tried again, and offers a reset before the way back', () => {
+  it('locked: names nobody (the pause is not one account’s), says when to try again, and offers a reset before the way back', () => {
     const retryAt = Date.now() + 15 * 60_000;
     show('locked', { account: EMAIL, retryAt });
 
-    expect(screen.getByText(m.lockedLede(EMAIL))).toHaveTextContent(EMAIL);
-    expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.timeOf(retryAt)));
+    expect(screen.getByText(m.lockedLede)).not.toHaveTextContent(EMAIL);
+    expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.timeOf(retryAt)!));
+    expect(document.body).not.toHaveTextContent(/right away/);
     expect(link(m.resetPassword)).toHaveAttribute('href', '/signin/recover');
     expect(isPrimary(link(m.resetPassword))).toBe(true);
     expect(link(m.backToSignIn)).toHaveAttribute('href', '/signin/email');
@@ -60,11 +60,12 @@ describe('StateScreen', () => {
     expect(actions()).toEqual([m.resetPassword, m.backToSignIn]);
   });
 
-  it('locked: names no address and no time when it knows neither, and still says a reset works', () => {
+  it('locked: gives no time when it knows none, and promises nothing about a reset', () => {
     show('locked');
 
-    expect(screen.getByText(m.lockedLede(null))).not.toHaveTextContent('@');
+    expect(screen.getByText(m.lockedLede)).not.toHaveTextContent('@');
     expect(screen.getByRole('status')).toHaveTextContent(m.lockedNote);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/reset/i);
     expect(screen.getByRole('status')).not.toHaveTextContent(/try again at/);
   });
 
@@ -160,7 +161,7 @@ describe('StateScreen', () => {
     const retryAt = Date.now() + 3_600_000;
     show('maintenance', { retryAt });
 
-    expect(screen.getByText(m.maintenanceLede(m.timeOf(retryAt)))).toHaveTextContent(`We’ll be back by ${m.timeOf(retryAt)}.`);
+    expect(screen.getByText(m.maintenanceLede(m.timeOf(retryAt)!))).toHaveTextContent(`We’ll be back by ${m.timeOf(retryAt)!}.`);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
@@ -169,9 +170,25 @@ describe('StateScreen', () => {
     const serviceStatus: ServiceStatus = { window: vi.fn().mockResolvedValue(window) };
     show('maintenance', { serviceStatus, retryAt: Date.now() + 60_000 });
 
-    expect(await screen.findByText(m.maintenanceLede(m.timeOf(window.until)))).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.maintenanceWindow(m.timeOf(window.from), m.timeOf(window.until)));
+    expect(await screen.findByText(m.maintenanceLede(m.timeOf(window.until)!))).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(m.maintenanceWindow(m.timeOf(window.from)!, m.timeOf(window.until)!));
     expect(serviceStatus.window).toHaveBeenCalledTimes(1);
+  });
+
+  it('maintenance: a window whose times are not times is not shown, and nothing is thrown', async () => {
+    const serviceStatus: ServiceStatus = { window: vi.fn().mockResolvedValue({ from: 'soon', until: 'later' }) };
+    show('maintenance', { serviceStatus });
+
+    await vi.waitFor(() => expect(serviceStatus.window).toHaveBeenCalled());
+    expect(await screen.findByText(m.maintenanceLede(null))).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('locked: gives the date as well when the wait ends on another day', () => {
+    const retryAt = Date.now() + 26 * 3_600_000;
+    show('locked', { retryAt });
+
+    expect(screen.getByRole('status')).toHaveTextContent(m.lockedUntil(m.momentOf(retryAt)));
   });
 
   it('maintenance: says "soon" when the service announces no window', async () => {
@@ -185,19 +202,8 @@ describe('StateScreen', () => {
 
   it('asks about a window only for maintenance', () => {
     const serviceStatus: ServiceStatus = { window: vi.fn().mockResolvedValue(null) };
-    show('unreachable', { serviceStatus });
     show('locked', { serviceStatus });
 
     expect(serviceStatus.window).not.toHaveBeenCalled();
-  });
-
-  it('unreachable: does not blame the person’s connection or claim an upgrade, and offers another try', async () => {
-    const { onRetry } = show('unreachable');
-
-    expect(screen.getByText(m.unreachableLede)).toBeInTheDocument();
-    expect(document.body).not.toHaveTextContent(m.maintenanceTitle);
-
-    await userEvent.click(screen.getByRole('button', { name: m.tryAgain }));
-    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });

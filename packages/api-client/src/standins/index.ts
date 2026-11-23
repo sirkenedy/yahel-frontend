@@ -3,6 +3,8 @@
 import type { StandIns } from '../account-capabilities';
 import { createAddressStandIn } from './addresses';
 import { createDirectoryStandIn } from './directory';
+import { createDomainClaimsStandIn } from './domain-claims';
+import { createDomainMarketStandIn } from './domain-market';
 import { createHelpDeskStandIn } from './help-desk';
 import { createPasskeyRegistrationStandIn } from './passkey-registration';
 import { createPasskeyStandIn } from './passkeys';
@@ -11,6 +13,7 @@ import { createRecoveryByPhoneStandIn } from './recovery-by-phone';
 import { createServiceStatusStandIn } from './service-status';
 import { createTextCodeStandIn } from './text-codes';
 import { createTrustedContactsStandIn } from './trusted-contacts';
+import { createWorkspaceBillingStandIn } from './workspace-billing';
 import { realDelay } from './timing';
 import type { Delay } from './timing';
 
@@ -25,6 +28,9 @@ export const createStandIns = (delay: Delay = realDelay): StandIns => ({
   trustedContacts: createTrustedContactsStandIn(delay),
   preferences: createPreferencesStandIn(delay),
   serviceStatus: createServiceStatusStandIn(delay),
+  domainMarket: createDomainMarketStandIn(delay),
+  domainClaims: createDomainClaimsStandIn(delay),
+  workspaceBilling: createWorkspaceBillingStandIn(delay),
 });
 
 export { demoAccounts, demoProfile } from './demo-data';

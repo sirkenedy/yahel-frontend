@@ -2,6 +2,7 @@ export const chromeMessages = {
   brand: 'Yahel',
   brandHome: 'Yahel sign in',
   brandSignUp: 'Yahel account creation',
+  brandBusinessSignUp: 'Yahel workspace creation',
   skipToQuestion: 'Skip to the question',
   newHere: 'New to Yahel?',
   createAccount: 'Create an account',

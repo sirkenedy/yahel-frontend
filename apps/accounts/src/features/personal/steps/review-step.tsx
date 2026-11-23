@@ -1,8 +1,8 @@
 import { FlowButton, FlowCheckbox, FlowIcon, FlowStep, Receipt } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { maskedNumber } from '../countries';
-import { writtenDate } from '../dates';
+import { maskedNumber } from '../../../flow/countries';
+import { writtenDate } from '../../../flow/dates';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
 import type { ReviewRow } from '../personal-flow';

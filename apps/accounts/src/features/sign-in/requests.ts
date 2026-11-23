@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { isApiError } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
+import { hasCode } from '../../flow/feedback';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { say } from '../../flow/toasts';
 import { describeSignInFailure, rejectedResetCode } from './feedback';
@@ -64,8 +65,53 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   const password = useFlowRequest({
     visit,
     describe: describe('password'),
-    run: async (value: string) => settle(await session.signIn(email(), value)),
-    onDone: afterSignIn,
+    run: async (value: string, { isCurrent }) => {
+      try {
+        return settle(await session.signIn(email(), value));
+      } catch (error) {
+        // The backend says this only once the password has matched, so the registration is this person's
+        // to confirm. A fresh code is asked for: the one sent when the account was made may be long gone.
+        if (!hasCode(error, 'EMAIL_NOT_VERIFIED')) throw error;
+        await session.api.auth.resendVerification({ email: email() }).catch(() => undefined);
+        // The proof is held only for the confirm step, and only if the person is still where they asked for it.
+        if (!isCurrent()) return 'left' as const;
+        store.dispatch({ type: 'email-unconfirmed', password: value });
+        return 'confirm-email' as const;
+      }
+    },
+    onDone: (outcome) => {
+      if (outcome === 'confirm-email') navigate('confirm-email');
+      else if (outcome !== 'left') afterSignIn(outcome);
+    },
+  });
+
+  const confirmEmail = useFlowRequest({
+    visit,
+    describe: describe('email-code'),
+    run: async (value: string) => {
+      const proven = store.getState().provenPassword;
+      // Never reached through the interface: the step is shown only while the proof is held.
+      if (proven === null) throw new Error('No password has been proven in this visit');
+      await session.api.auth.verifyEmail({ email: email(), token: value });
+      // From here the address is confirmed, whatever happens to the sign-in that follows.
+      store.dispatch({ type: 'email-confirmed' });
+      try {
+        return settle(await session.signIn(email(), proven));
+      } catch {
+        return 'sign-in-failed' as const;
+      }
+    },
+    onDone: (outcome) => (outcome === 'sign-in-failed' ? navigate('password', { replace: true }) : afterSignIn(outcome)),
+  });
+
+  const resendEmailCode = useFlowRequest({
+    visit,
+    describe: describe('other'),
+    run: async () => {
+      if (store.getState().provenPassword === null) throw new Error('No password has been proven in this visit');
+      await session.api.auth.resendVerification({ email: email() });
+    },
+    onDone: () => say(m.newCodeSent),
   });
 
   const passkey = useFlowRequest({
@@ -188,7 +234,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     },
   });
 
-  return { password, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, removeAccount, signOut };
+  return { password, confirmEmail, resendEmailCode, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, removeAccount, signOut };
 }
 
 export type SignInRequests = ReturnType<typeof useSignInRequests>;

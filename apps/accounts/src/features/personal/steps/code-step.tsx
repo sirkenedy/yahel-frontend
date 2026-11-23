@@ -2,7 +2,7 @@ import { CodeInput, FlowButton, FlowStep } from '@yahel/ui';
 import { forField } from '../../../flow/feedback';
 import { ResendLink } from '../../../flow/resend-link';
 import { useStepField } from '../../../flow/use-step-field';
-import { maskedNumber } from '../countries';
+import { maskedNumber } from '../../../flow/countries';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
 import { CODE_LENGTH, codeProblem } from '../validation';

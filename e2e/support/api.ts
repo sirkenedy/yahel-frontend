@@ -41,10 +41,15 @@ export const registeredEmail = `kemi.adeyemi@${publicEmailDomain}`;
 
 const MAX_SECOND_STEP_ATTEMPTS = 5;
 const MIN_AGE = 13;
+/** A country whose age of consent the backend sets higher than its default (16, in its `ageOfConsentByCountry`). */
+export const strictCountry = 'DE';
 // The backend's rule for a new password: at least 8 characters with upper case, lower case, a number and a symbol.
 const meetsPasswordPolicy = (password: string) => password.length >= 8 && [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].every((pattern) => pattern.test(password));
 
 /** The id every answer carries, as the backend's `meta.requestId` does; a failure shows it as the reference to quote. */
+/** A domain a workspace already holds: the one the seeded accounts' addresses are on. */
+export const claimedDomain = 'northwind.example';
+
 export const requestId = 'req-e2e-7F3K2Q';
 /** An account whose identity an administrator has suspended: the backend answers 403 `FORBIDDEN`, and only once the password has matched. */
 export const suspendedCredentials = { email: 'tunde@northwind.example', password: 'Lagos-lagoon-at-dawn-7' };
@@ -116,6 +121,8 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
     { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
+  // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
+  const tenants: { id: string; slug: string; domain: string }[] = [{ id: '64f000000000000000000200', slug: 'northwind-studio', domain: claimedDomain }];
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
@@ -160,6 +167,27 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
         emailVerified: domain === mailDomain,
       });
       return ok(route, { message: domain === mailDomain ? 'Registration successful.' : 'Registration successful. Please verify your email.' }, 201);
+    }
+    if (path === '/v1/auth/register-business') {
+      // The order of the checks is the backend's (`auth.service.ts`, `registerBusiness`): the body, the age, a public domain, the address, the domain.
+      const sent = (request.postDataJSON() ?? {}) as { email?: string; password?: string; firstName?: string; lastName?: string; businessName?: string; slug?: string; country?: { name?: string; code?: string; currency?: string }; dateOfBirth?: string; employeeCount?: number; domain?: string; deviceId?: string };
+      const email = (sent.email ?? '').toLowerCase();
+      const domain = (sent.domain ?? '').toLowerCase();
+      const wellFormed =
+        /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && meetsPasswordPolicy(sent.password ?? '') && Boolean(sent.firstName) && typeof sent.lastName === 'string' && Boolean(sent.businessName) && (sent.businessName ?? '').length <= 100 &&
+        /^[a-z0-9-]{2,50}$/.test(sent.slug ?? '') && Boolean(sent.country?.name) && /^[A-Z]{2,3}$/.test(sent.country?.code ?? '') && /^[A-Z]{3}$/.test(sent.country?.currency ?? '') && !Number.isNaN(Date.parse(sent.dateOfBirth ?? '')) &&
+        Number.isInteger(sent.employeeCount) && (sent.employeeCount ?? 0) >= 1 && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain) && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(sent.deviceId ?? '');
+      if (!wellFormed) return fail(route, 422, 'VALIDATION_ERROR');
+      if (ageOf(sent.dateOfBirth ?? '') < (sent.country?.code === strictCountry ? 16 : MIN_AGE)) return fail(route, 403, 'USER_UNDERAGE');
+      if (domain === publicEmailDomain || domain === mailDomain) return fail(route, 400, 'PUBLIC_EMAIL_NOT_ALLOWED');
+      if (accounts.some((known) => known.profile.email === email)) return fail(route, 409, 'EMAIL_ALREADY_EXISTS');
+      if (tenants.some((tenant) => tenant.domain === domain)) return fail(route, 409, 'DOMAIN_CONFLICT');
+      // The short name is unique among workspaces; a second one of the same name collides at the database.
+      if (tenants.some((tenant) => tenant.slug === sent.slug)) return fail(route, 409, 'DUPLICATE_RECORD');
+      const id = `64f0000000000000000002${tenants.length}0`;
+      tenants.push({ id, slug: sent.slug ?? '', domain });
+      accounts.push({ profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null }, password: sent.password ?? '', twoStep: false, emailVerified: false });
+      return ok(route, { message: 'Registration successful. Verify your email to complete setup, then add the DNS record shown below.', identity: { id: `64f00000000000000000011${accounts.length - 1}`, email, emailVerified: false }, tenant: { id, slug: sent.slug, displayName: sent.businessName, status: 'pending_setup' }, domain: { domain, status: 'pending', verification: { type: 'TXT', host: `_yahel-verify.${domain}`, value: 'yahel-verify=e2e' } } }, 201);
     }
     if (path === '/v1/auth/verify-email') {
       const account = accounts.find((known) => known.profile.email === body?.email?.toLowerCase());

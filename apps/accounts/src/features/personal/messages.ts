@@ -18,7 +18,7 @@ export const personalMessages = {
   typePersonalDetail: 'Free personal account with your own address.',
   typeBusiness: 'For my business or team',
   typeBusinessDetail: 'Addresses on your domain, admin controls and a shared workspace.',
-  businessComingSoon: 'Business and team accounts are coming soon. For now, choose “For me” to create a personal account.',
+  businessUnavailable: 'Workspaces for a business or team aren’t available here yet. For now, choose “For me” to create a personal account.',
 
   nameTitle: 'What should we call you?',
   nameLede: 'This is how you’ll appear to people you email and share with.',

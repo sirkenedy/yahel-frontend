@@ -34,7 +34,7 @@ export function TypeStep() {
               {m.typeBusiness}
             </Choice>
           </ChoiceGroup>
-          {stopped ? <FlowNotice>{m.businessComingSoon}</FlowNotice> : null}
+          {stopped ? <FlowNotice>{m.businessUnavailable}</FlowNotice> : null}
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary">

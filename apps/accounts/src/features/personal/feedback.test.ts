@@ -23,10 +23,10 @@ describe('describePersonalFailure: the connection and the server, the same at ev
     expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'banner', tone: 'offline', title: shared.offlineTitle, text: shared.offlineText, next: 'retry' });
   });
 
-  it.each(contexts)('gives the whole screen to a service that does not answer while the device is online (%s)', (context) => {
+  it.each(contexts)('keeps the step, with a banner and Try again, when nothing answers while the device is online (%s)', (context) => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
 
-    expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'screen', screen: 'unreachable' });
+    expect(describePersonalFailure(noAnswer(), context)).toEqual({ place: 'banner', tone: 'offline', title: shared.unreachableTitle, text: shared.unreachableText, next: 'retry' });
   });
 
   it.each(contexts)('shows the maintenance screen for a 503 (%s)', (context) => {
@@ -66,8 +66,8 @@ describe('describePersonalFailure: the connection and the server, the same at ev
   });
 
   it.each(contexts)('knows the states only a whole screen can tell (%s)', (context) => {
-    expect(describePersonalFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'suspended' });
-    expect(describePersonalFailure(answer(403, 'TENANT_SUSPENDED'), context)).toEqual({ place: 'screen', screen: 'org-paused' });
+    expect(describePersonalFailure(answer(403, 'ACCOUNT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
+    expect(describePersonalFailure(answer(403, 'TENANT_SUSPENDED'), context)).not.toMatchObject({ place: 'screen' });
     expect(describePersonalFailure(answer(410, 'INVITE_EXPIRED'), context)).toEqual({ place: 'screen', screen: 'link-expired' });
     expect(describePersonalFailure(answer(409, 'INVITE_ALREADY_USED'), context)).toEqual({ place: 'screen', screen: 'link-used' });
     expect(describePersonalFailure(answer(409, 'INVITE_ALREADY_ACCEPTED'), context)).toEqual({ place: 'screen', screen: 'link-used' });

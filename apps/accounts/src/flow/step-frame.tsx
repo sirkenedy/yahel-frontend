@@ -69,22 +69,23 @@ export function FlowStepFrame({ title, pageTitle, lede, requests = [], feedback:
     return <StateScreen kind={screen.screen} retryAt={screen.retryAt} onRetry={told?.again ?? told?.clear ?? (() => undefined)} {...screens} />;
   }
 
-  const offered = feedback?.place === 'banner' && feedback.next ? feedback.next : null;
-  const withheld = offered !== null && next[offered] === null;
-  const given = offered && !withheld ? (next[offered] ?? (offered === 'retry' && told?.again ? { label: m.tryAgain, onPress: told.again } : null)) : null;
-  const action = given ? (
-    'href' in given ? (
-      <FlowLink variant="chip" href={given.href}>
+  /** The control for one of the things a banner offers. `retry` is the step's own form unless the step says otherwise. */
+  const actionFor = (offered: string | undefined): ReactNode => {
+    if (!offered || next[offered] === null) return null;
+    const given = next[offered] ?? (offered === 'retry' && told?.again ? { label: m.tryAgain, onPress: told.again } : null);
+    if (!given) return offered === 'retry' ? <FlowStep.Resubmit key={offered}>{m.tryAgain}</FlowStep.Resubmit> : null;
+    return 'href' in given ? (
+      <FlowLink key={offered} variant="chip" href={given.href}>
         {given.label}
       </FlowLink>
     ) : (
-      <FlowButton variant="chip" onPress={given.onPress}>
+      <FlowButton key={offered} variant="chip" onPress={given.onPress}>
         {given.label}
       </FlowButton>
-    )
-  ) : offered === 'retry' && !withheld ? (
-    <FlowStep.Resubmit>{m.tryAgain}</FlowStep.Resubmit>
-  ) : null;
+    );
+  };
+  const actions = feedback?.place === 'banner' ? [actionFor(feedback.next), actionFor(feedback.also)].filter(Boolean) : [];
+  const action = actions.length > 0 ? actions : null;
 
   return (
     <FlowStep direction={direction}>

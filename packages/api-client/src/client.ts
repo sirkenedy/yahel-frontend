@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -29,12 +29,15 @@ interface Envelope {
   meta?: { requestId?: string; validationErrors?: string[] };
 }
 
-/** `Retry-After` as seconds from now: the header is either a number of seconds or a date. Readable only when the server exposes it to browsers. */
+/** The longest wait the client will pass on. A header that asks for more (a mistake, or something hostile in between) is cut to this, so nobody is shown an absurd time. */
+export const MAX_RETRY_AFTER = 24 * 60 * 60;
+
+/** `Retry-After` as seconds from now, at most a day: the header is either a number of seconds or a date. Readable only when the server exposes it to browsers. */
 const retryAfterOf = (response: Response): number | undefined => {
   const header = response.headers?.get('Retry-After');
   if (!header) return undefined;
   const seconds = /^\d+$/.test(header.trim()) ? Number(header) : Math.ceil((Date.parse(header) - Date.now()) / 1000);
-  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
+  return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, MAX_RETRY_AFTER) : undefined;
 };
 
 /** What the backend's auth guard answers, with 401, when the access token is missing, expired or revoked. */
@@ -92,6 +95,7 @@ export function createApiClient(options: ApiClientOptions) {
     request,
     auth: {
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
+      registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
       refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
       logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),

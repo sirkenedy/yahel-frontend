@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Feedback } from './feedback';
 import { requestStatus, useFlowRequest } from './use-flow-request';
+import type { RequestVisit } from './use-flow-request';
 
 const deferred = <Value,>() => {
   let resolve!: (value: Value) => void;
@@ -18,7 +19,7 @@ const deferred = <Value,>() => {
 
 const describeFailure = (error: unknown): Feedback => (error instanceof ApiError && error.status === 401 ? { place: 'field', field: 'password', text: 'Wrong password.' } : { place: 'banner', tone: 'danger', text: 'Something went wrong.' });
 
-const setup = (run: (input: string) => Promise<string>, callbacks: { onDone?: (outcome: string) => void; onFailed?: (error: unknown) => void } = {}) => {
+const setup = (run: (input: string, during: RequestVisit) => Promise<string>, callbacks: { onDone?: (outcome: string) => void; onFailed?: (error: unknown) => void } = {}) => {
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   const hook = renderHook(({ visit }) => useFlowRequest<string, string>({ visit, describe: describeFailure, run, ...callbacks }), { wrapper, initialProps: { visit: 1 } });
@@ -62,7 +63,7 @@ describe('useFlowRequest', () => {
 
     act(() => expect(result.current.start('again')).toBe(true));
     await waitFor(() => expect(onDone).toHaveBeenCalledWith('signed-in', undefined, undefined, expect.anything()));
-    expect(run).toHaveBeenLastCalledWith('again');
+    expect(run).toHaveBeenLastCalledWith('again', expect.objectContaining({ isCurrent: expect.any(Function) }));
   });
 
   it('shows a failure during the visit it happened in and not after the step is left and revisited', async () => {
@@ -110,6 +111,41 @@ describe('useFlowRequest', () => {
     rerender({ visit: 2 });
 
     await waitFor(() => expect(result.current.outcome).toBe('cancelled'));
+  });
+
+  it('tells a running request whether the step it began on is still the one on screen', async () => {
+    const pending = deferred<string>();
+    const seen: boolean[] = [];
+    const { result, rerender } = setup(async (_input, during) => {
+      seen.push(during.isCurrent());
+      await pending.promise;
+      seen.push(during.isCurrent());
+      return 'done';
+    });
+
+    act(() => void result.current.start('x'));
+    await waitFor(() => expect(seen).toHaveLength(1));
+    rerender({ visit: 2 });
+    await act(async () => pending.resolve('go'));
+
+    expect(seen).toEqual([true, false]);
+  });
+
+  it('tells a running request its step is gone once the flow has left the screen altogether', async () => {
+    const pending = deferred<string>();
+    const seen: boolean[] = [];
+    const { result, unmount } = setup(async (_input, during) => {
+      await pending.promise;
+      seen.push(during.isCurrent());
+      return 'done';
+    });
+
+    act(() => void result.current.start('x'));
+    await waitFor(() => expect(result.current.isPending).toBe(true));
+    unmount();
+    await act(async () => pending.resolve('go'));
+
+    expect(seen).toEqual([false]);
   });
 
   it('never leaves its input in the query client', async () => {

@@ -5,7 +5,12 @@ const moment = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle:
 
 export const flowMessages = {
   pageTitle: (heading: string) => `${heading.replace(/[.?…]$/, '')} · Yahel`,
-  timeOf: (at: number | string) => time.format(new Date(at)),
+  /** A time for the person: the hour when it is today, the date with it on any other day, and `null` for a value that is not a time. Never throws. */
+  timeOf: (at: number | string, now: number = Date.now()) => {
+    const date = new Date(at);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toDateString() === new Date(now).toDateString() ? time.format(date) : moment.format(date);
+  },
   momentOf: (at: number) => moment.format(new Date(at)),
   /** Seconds as "0:24", for a wait shown in a control. */
   clock: (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
@@ -14,6 +19,8 @@ export const flowMessages = {
   offlineBar: 'What you’ve typed is safe on this device. We’ll carry on when you’re back.',
   offlineTitle: 'You’re offline',
   offlineText: 'We couldn’t send this step because there’s no connection. Everything you typed is still here.',
+  unreachableTitle: 'We can’t reach Yahel right now',
+  unreachableText: 'This step didn’t get through. Everything you typed is still here. Try again in a moment.',
   backOnline: 'You’re back online.',
   dismiss: 'Dismiss',
   slow: 'Still working. Your connection seems slow, so this is taking longer than usual.',
@@ -29,9 +36,9 @@ export const flowMessages = {
   listOf: (names: readonly string[]) => `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}.`,
 
   lockedTitle: 'Sign-in is paused for a while.',
-  lockedLede: (email: string | null) => `There were too many tries, so we’ve paused sign-in${email ? ` for ${email}` : ''} for a while. This keeps your account safe.`,
-  lockedUntil: (at: string) => `You can try again at ${at}. Resetting your password works right away.`,
-  lockedNote: 'Resetting your password works right away.',
+  lockedLede: 'There were too many sign-in tries, so we’ve paused sign-in for a while. This keeps accounts safe.',
+  lockedUntil: (at: string) => `You can try again at ${at}.`,
+  lockedNote: 'Wait a few minutes, then try again.',
   resetPassword: 'Reset your password',
   backToSignIn: 'Back to sign in',
   suspendedTitle: 'This account is turned off.',
@@ -57,8 +64,6 @@ export const flowMessages = {
   maintenanceTitle: 'Yahel is getting an upgrade.',
   maintenanceLede: (until: string | null) => `${until ? `We’ll be back by ${until}.` : 'We’ll be back soon.'} Mail sent to you keeps arriving and nothing is lost.`,
   maintenanceWindow: (from: string, until: string) => `Planned maintenance runs from ${from} to ${until}.`,
-  unreachableTitle: 'We can’t reach Yahel right now.',
-  unreachableLede: 'Your device is online, so the problem may be on our side. Nothing is lost. Try again in a moment.',
   errorTitle: 'Something went wrong on our side.',
   errorLede: 'It’s not you. Try again, or go back to the start.',
   errorPageTitle: 'Something went wrong · Yahel',

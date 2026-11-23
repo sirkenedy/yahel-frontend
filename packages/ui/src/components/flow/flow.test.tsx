@@ -450,6 +450,70 @@ describe('AccountChip and AccountList', () => {
   });
 });
 
+describe('FlowStep parts for a step that asks for several things', () => {
+  it('names a group of fields with a second-level heading', () => {
+    render(<FlowStep.Subheading>Card details</FlowStep.Subheading>);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Card details' })).toBeInTheDocument();
+  });
+
+  it('keeps two short fields side by side with the halves layout', () => {
+    render(
+      <FlowStep.Row layout="halves">
+        <span>Expiry</span>
+        <span>Security code</span>
+      </FlowStep.Row>,
+    );
+
+    expect(screen.getByText('Expiry').parentElement).toHaveClass('ws-flow-step__row--halves');
+  });
+
+  it('puts the lead first, then what is kept in view, then the rest, so one column reads in that order', () => {
+    render(
+      <FlowStep.Split lead={<p>How many people?</p>} aside={<p>Order summary</p>}>
+        <p>Card details</p>
+      </FlowStep.Split>,
+    );
+
+    const split = screen.getByText('Order summary').parentElement!.parentElement!;
+    expect(split.textContent).toBe('How many people?Order summaryCard details');
+    expect(Array.from(split.children).map((part) => part.className)).toEqual(['ws-flow-step__body ws-flow-step__lead', 'ws-flow-step__aside', 'ws-flow-step__body ws-flow-step__rest']);
+  });
+});
+
+describe('Receipt row with a detail', () => {
+  it('shows a quieter second line under the answer, inside the same description', () => {
+    render(
+      <Receipt label="Your workspace">
+        <Receipt.Row label="Business" detail="10–99 people · Nigeria">
+          Northwind Studio
+        </Receipt.Row>
+      </Receipt>,
+    );
+
+    expect(screen.getByText('10–99 people · Nigeria').closest('dd')).toHaveTextContent('Northwind Studio10–99 people · Nigeria');
+  });
+});
+
+describe('Choice with a tag and an amount', () => {
+  it('reads the tag and the amount as part of the option, between its words and its mark', () => {
+    render(
+      <ChoiceGroup label="Available domains" value="" onChange={() => undefined}>
+        <Choice value="example.com" tag="Best match" meta="₦18,500 a year">
+          example.com
+        </Choice>
+        <Choice value="example.net" meta="₦9,000 a year">
+          example.net
+        </Choice>
+      </ChoiceGroup>,
+    );
+
+    expect(screen.getByRole('radio', { name: 'example.com Best match ₦18,500 a year' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'example.net ₦9,000 a year' })).toBeInTheDocument();
+    expect(screen.getAllByText(/a year$/)).toHaveLength(2);
+  });
+});
+
 describe('ChoiceGroup', () => {
   function Harness() {
     const [value, setValue] = useState<'phone' | 'email'>('phone');

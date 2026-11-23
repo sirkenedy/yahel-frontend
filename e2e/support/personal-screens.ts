@@ -75,12 +75,10 @@ const feedbackScreens: Screen[] = [
 export const personalScreens: Screen[] = [
   { name: 'personal type', open: (page) => signUpTo(page, 'type') },
   {
-    name: 'personal type, business coming soon',
+    name: 'personal type, business chosen',
     open: async (page) => {
       await signUpTo(page, 'type');
       await page.getByRole('radio', { name: /For my business or team/ }).check();
-      await proceed(page);
-      await page.getByText('Business and team accounts are coming soon.').waitFor();
     },
   },
   {

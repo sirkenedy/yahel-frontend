@@ -1,8 +1,8 @@
 import { FlowButton, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { useStepFields, useStepField } from '../../../flow/use-step-field';
-import { africanCountries, namedCountries, otherCountries } from '../countries';
-import type { PhoneCountry } from '../countries';
+import { africanCountries, namedCountries, otherCountries } from '../../../flow/countries';
+import type { PhoneCountry } from '../../../flow/countries';
 import { DEFAULT_PHONE_COUNTRY } from '../machine';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createApiClient } from './client';
+import { MAX_RETRY_AFTER, createApiClient } from './client';
 import { ApiError } from './errors';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -156,6 +156,41 @@ describe('createApiClient', () => {
     expect(dated.retryAfter).toBeGreaterThan(85);
     expect(dated.retryAfter).toBeLessThanOrEqual(90);
     expect(await login()).toMatchObject({ status: 429, retryAfter: undefined });
+  });
+
+  it('registers a business with everything the backend asks for, and answers with the workspace', async () => {
+    const created = { message: 'ok', identity: { id: 'i1', email: 'amara@northwind.example', emailVerified: false }, tenant: { id: 't1', slug: 'northwind-studio', displayName: 'Northwind Studio', status: 'pending_setup' }, domain: { domain: 'northwind.example', status: 'pending' } };
+    const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data: created }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+    const body = { email: 'amara@northwind.example', password: 'Northwind Lagos 2026!', firstName: 'Amara', lastName: 'Okafor', businessName: 'Northwind Studio', slug: 'northwind-studio', country: { name: 'Nigeria', code: 'NG', currency: 'NGN' }, dateOfBirth: '1994-03-14T00:00:00.000Z', employeeCount: 10, domain: 'northwind.example', deviceId: '550e8400-e29b-41d4-a716-446655440000' };
+
+    await expect(api.auth.registerBusiness(body)).resolves.toEqual(created);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://api.test/api/v1/auth/register-business');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual(body);
+    expect(new Headers(init.headers).has('Authorization')).toBe(false);
+  });
+
+  it('surfaces a claimed domain with its backend code', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(409, { success: false, code: 'DOMAIN_CONFLICT', message: 'This domain is already claimed by another organization' }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+
+    await expect(api.auth.registerBusiness({} as never)).rejects.toMatchObject({ status: 409, code: 'DOMAIN_CONFLICT' });
+  });
+
+  it('never passes on a wait longer than a day, and ignores a Retry-After that is not a time', async () => {
+    const refused = (retryAfter: string) => new Response(JSON.stringify({ success: false, error: { code: 'BAD_REQUEST', message: 'x' } }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': retryAfter } });
+    const headers = ['999999999999999999999999', new Date(Date.now() + 400 * 86_400_000).toUTCString(), 'soon', '-5', '0', '1e9', new Date(Date.now() - 60_000).toUTCString()];
+    const fetchMock = vi.fn();
+    headers.forEach((header) => fetchMock.mockResolvedValueOnce(refused(header)));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
+    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x', deviceId: 'd' }).catch((error: unknown) => error as { retryAfter?: number });
+    const waits: unknown[] = [];
+    for (let asked = 0; asked < headers.length; asked += 1) waits.push(((await login()) as { retryAfter?: number }).retryAfter);
+
+    expect(waits).toEqual([MAX_RETRY_AFTER, MAX_RETRY_AFTER, undefined, undefined, undefined, undefined, undefined]);
   });
 
   it('answers with the refresh failure itself when refreshing the session rejects', async () => {

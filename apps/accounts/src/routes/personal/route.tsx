@@ -1,11 +1,11 @@
 import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@tanstack/react-router';
 import { resolveReturnAddress } from '@yahel/auth';
 import { useState } from 'react';
-import { useStore } from 'zustand';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
+import { useSignedInAccount } from '../../flow/use-signed-in-account';
 import { PageRouteError } from '../../route-error';
-import { accountOf, progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
+import { progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
 import { PersonalFlowProvider } from '../../features/personal/personal-flow';
 import { forgetSignUp, isSignedInElsewhere, personalFacts } from '../../features/personal/route-guard';
 
@@ -27,7 +27,7 @@ function PersonalLayout() {
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'type';
   const [detailsHidden, setDetailsHidden] = useState(false);
   const { businessSignUpUrl } = config;
-  const account = accountOf(useStore(personal), config.mailDomain);
+  const account = useSignedInAccount(session);
 
   return (
     <AppFrame
@@ -45,7 +45,8 @@ function PersonalLayout() {
         mailDomain={config.mailDomain}
         links={{ signIn: config.signInUrl, terms: config.termsUrl, privacy: config.privacyUrl, help: config.helpUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
-        leaveForBusiness={businessSignUpUrl ? () => window.location.assign(businessSignUpUrl) : null}
+        // A path is a step of this app; an address is the workspace sign-up served somewhere else.
+        leaveForBusiness={businessSignUpUrl === null ? null : () => (businessSignUpUrl.startsWith('/') ? void navigate({ href: businessSignUpUrl }) : window.location.assign(businessSignUpUrl))}
         leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}
       >
         <Outlet />

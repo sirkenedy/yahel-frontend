@@ -19,7 +19,8 @@ import type { SignInRequests } from './requests';
 import type { SignInStore } from './store';
 
 export interface SignInFlowValue {
-  state: SignInState & {
+  /** The flow state, without the password held for the confirm step: no step is ever handed it. */
+  state: Omit<SignInState, 'provenPassword'> & {
     step: SignInStep;
     profile: Profile | null;
     accounts: KnownAccount[];
@@ -36,6 +37,9 @@ export interface SignInFlowValue {
     useAnotherAccount: () => void;
     removeAccount: (email: string) => void;
     signInWithPassword: (password: string) => void;
+    /** Submits the emailed code that confirms the address, then finishes signing in. */
+    confirmEmail: (code: string) => void;
+    resendEmailCode: () => void;
     /** Must be called from a press handler: the browser shows the passkey prompt only for a user action. */
     startPasskey: () => void;
     verifyCode: (code: string) => void;
@@ -89,7 +93,7 @@ export interface SignInFlowProviderProps {
  */
 export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, leave, links, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
-  const flow = useStore(store);
+  const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
   const passkeyOffered = passkeys?.isSupported() ?? false;
   const accounts = useQuery(knownAccountsQuery(capabilities.directory)).data ?? [];
@@ -102,7 +106,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
   const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, recoveryOptions: () => recoveryOptions.data ?? [] });
 
   const facts = { signedIn: profile !== null, knownAccounts: accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
-  const back = backOf(step, flow, facts);
+  const back = backOf(step, { ...flow, provenPassword }, facts);
 
   const value: SignInFlowValue = {
     state: {
@@ -131,6 +135,8 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       },
       removeAccount: requests.removeAccount.start,
       signInWithPassword: requests.password.start,
+      confirmEmail: requests.confirmEmail.start,
+      resendEmailCode: requests.resendEmailCode.start,
       startPasskey: () => {
         if (!requests.passkey.start()) return;
         store.dispatch({ type: 'passkey-started' });
@@ -155,6 +161,8 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       offers: { passkey: passkeyOffered, textCode: capabilities.textCodes !== null, help: capabilities.helpDesk !== null },
       requests: {
         password: status(requests.password),
+        confirmEmail: status(requests.confirmEmail),
+        resendEmailCode: status(requests.resendEmailCode, requests.resendEmailCode.start),
         passkey: status(requests.passkey, requests.passkey.start),
         code: status(requests.code),
         textCode: status(requests.textCode, requests.textCode.start),

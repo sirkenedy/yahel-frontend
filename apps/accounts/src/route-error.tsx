@@ -1,15 +1,17 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
 import type { ErrorComponentProps } from '@tanstack/react-router';
 import { PageError, StepError, errorExitFor } from './features/chrome/error-screen';
+import { forgetWorkspace } from './features/business/route-guard';
 import { forgetSignUp } from './features/personal/route-guard';
 
 const useRecovery = (reset: () => void) => {
   const router = useRouter();
   const exit = errorExitFor(useLocation({ select: (location) => location.pathname }));
   const onRetry = () => {
-    // A screen that failed is not trusted with the password any longer: sign-up starts from its answers
-    // again, unless the account already exists and only finishing it is left.
+    // A screen that failed is not trusted with the password any longer: either sign-up starts from its
+    // answers again, unless the account or the workspace already exists and only finishing it is left.
     forgetSignUp(router.options.context.personal, { unlessUnderway: true });
+    forgetWorkspace(router.options.context.business, { unlessUnderway: true });
     reset();
     void router.invalidate();
   };

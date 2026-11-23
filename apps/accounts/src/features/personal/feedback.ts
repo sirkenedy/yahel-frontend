@@ -1,5 +1,4 @@
-import { isApiError } from '@yahel/api-client';
-import { commonRows, describeFailure } from '../../flow/feedback';
+import { commonRows, describeFailure, hasCode, isRefusal } from '../../flow/feedback';
 import type { Feedback, FeedbackMap } from '../../flow/feedback';
 import { personalMessages as m } from './messages';
 
@@ -43,7 +42,4 @@ export const refusals = {
   'not-personal': { place: 'field', field: 'email', text: m.ownEmailNotPersonal },
 } as const satisfies Record<string, PersonalFeedback>;
 
-export const hasCode = (error: unknown, ...codes: string[]) => isApiError(error) && codes.includes(error.code);
-
-/** A refusal the server will repeat however often it is asked, as opposed to a connection that dropped or a server that fell over. */
-export const isRefusal = (error: unknown) => isApiError(error) && error.status >= 400 && error.status < 500 && error.status !== 429 && error.code !== 'SESSION_EXPIRED' && error.code !== 'TOKEN_REUSE_DETECTED';
+export { hasCode, isRefusal };

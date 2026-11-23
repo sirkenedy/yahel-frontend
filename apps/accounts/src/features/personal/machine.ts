@@ -1,16 +1,12 @@
 import type { PasskeyAttestation } from '@yahel/api-client';
+import type { BirthDate } from '../../flow/dates';
+
+export type { BirthDate };
 
 export const personalSteps = ['type', 'name', 'birth', 'address', 'own-email', 'password', 'add-passkey', 'passkey', 'recovery', 'review', 'creating', 'own-code', 'code', 'ready', 'contact'] as const;
 export type PersonalStep = (typeof personalSteps)[number];
 
 export type Gender = 'unspecified' | 'woman' | 'man' | 'another';
-
-export interface BirthDate {
-  day: number;
-  /** 1 for January. */
-  month: number;
-  year: number;
-}
 
 /** The parts of an account that are set up after it exists. Each is settled once: saved, refused by the server, or skipped. */
 export type SetupPart = 'recoveryEmail' | 'preferences' | 'passkey' | 'phone';
@@ -310,9 +306,6 @@ export function backOf(step: PersonalStep, state: PersonalState, facts: Personal
 
 /** The account exists, or may: the answers are final, and visiting the start of the flow does not begin again. */
 export const hasAccountUnderway = (state: PersonalState) => stepAfterCreation(state) !== null;
-
-/** Whose account the signed-in screens of the flow are about. */
-export const accountOf = (state: PersonalState, mailDomain: string) => (state.creation.signedIn ? { name: fullNameOf(state), email: addressOf(state, mailDomain) } : null);
 
 /** The step that follows `step` once it has been answered. An answer changed from the review returns there. */
 export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'add-passkey' | 'passkey' | 'recovery', state: PersonalState, facts: PersonalFacts): PersonalStep {

@@ -144,7 +144,179 @@ export interface ServiceStatus {
   window(): Promise<ServiceWindow | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus';
+/** An amount of money in the currency's smallest unit (kobo for naira), so nothing is ever a fraction. */
+export interface Money {
+  amount: number;
+  /** ISO 4217. */
+  currency: string;
+}
+
+/** A domain that can be registered now, and what it costs a year. */
+export interface DomainOffer {
+  domain: string;
+  yearly: Money;
+  /** The one closest to what was asked for. */
+  bestMatch: boolean;
+}
+
+/** Finding a domain to buy. Buying it happens with the workspace order. */
+export interface DomainMarket {
+  /** Domains like the words asked about that can be registered now; empty when none can. */
+  search(query: string, signal?: AbortSignal): Promise<DomainOffer[]>;
+}
+
+/** `claimed`: a workspace already holds it. `public`: it belongs to an email provider, so no business can claim it. */
+export type DomainStanding = 'free' | 'claimed' | 'public';
+
+/** Whether a domain a business says it owns can be claimed by a new workspace. Advice: creating the workspace decides. */
+export interface DomainClaims {
+  check(domain: string): Promise<DomainStanding>;
+}
+
+export type BillingPeriod = 'monthly' | 'yearly';
+
+/** The plan a new workspace starts on, as the server sells it in one country. */
+export interface WorkspacePlan {
+  id: string;
+  name: string;
+  features: readonly string[];
+  /** What one person costs a month, when billed each way. */
+  seatPrice: Record<BillingPeriod, Money>;
+  /** What paying by the year saves, in percent. */
+  yearlySaving: number;
+  /** The free trial: how long, and the largest team that gets one. */
+  trial: { days: number; maxSeats: number };
+  /** Tax that is added to every price, in percent. */
+  taxRate: number;
+  /** From this many people, the plan is arranged in conversation instead. */
+  enterpriseFrom: number;
+}
+
+export interface PromoCode {
+  code: string;
+  percent: number;
+  months: number;
+}
+
+/** What is being ordered. `domain` is one bought here, or `null` for a domain the business already owns. */
+export interface OrderRequest {
+  planId: string;
+  period: BillingPeriod;
+  seats: number;
+  promoCode: string | null;
+  domain: string | null;
+}
+
+/**
+ * One line of what will be charged and when. `trial`: the free trial starts. `first-period`: the first
+ * month or year, taken today. `discount`: months at a reduced price. `plan`: the regular price.
+ * `renewal`: a yearly plan renewing.
+ */
+export interface ScheduledCharge {
+  /** The day it starts, as an ISO date; `null` for today. */
+  from: string | null;
+  kind: 'trial' | 'first-period' | 'discount' | 'plan' | 'renewal';
+  amount: Money;
+  /** What the amount is for each of; `null` for a single charge. */
+  per: 'month' | 'year' | null;
+  discount: { percent: number; months: number } | null;
+  /** For a plan paid once a year: what that payment is. */
+  billedYearly: Money | null;
+}
+
+/** The server's sums for an order. The interface shows them and never works out a price itself. */
+export interface OrderQuote {
+  period: BillingPeriod;
+  seats: number;
+  /** Whether this order starts with the free trial. */
+  trial: boolean;
+  promo: PromoCode | null;
+  /** What one person costs a month on this order, and what that becomes while a promo code applies. */
+  seatPrice: Money;
+  discountedSeatPrice: Money | null;
+  /** What the plan would cost today if there were no trial. */
+  planToday: Money;
+  schedule: readonly ScheduledCharge[];
+  domain: { name: string; yearly: Money } | null;
+  dueToday: Money;
+  taxRate: number;
+}
+
+/**
+ * A payment card as typed. Handed to `pay` and to nothing else: never stored, logged or put in an error.
+ *
+ * **Stand-in only. Card data must never reach Yahel.** This shape exists so the demo checkout can be seen;
+ * it must never be sent to a Yahel endpoint. A real checkout uses the payment provider's hosted fields or a
+ * redirect, and the bank's challenge on the provider's own page; this type then leaves the interface.
+ */
+export interface CardDetails {
+  number: string;
+  /** MM/YY. */
+  expiry: string;
+  securityCode: string;
+  name: string;
+}
+
+export interface PostalAddress {
+  street: string;
+  street2: string;
+  city: string;
+  /** The state or region; for Nigeria also the local government area. */
+  state: string;
+  localArea: string;
+  postalCode: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
+  /** In international form. */
+  phone: string;
+}
+
+/** Who is paying, and where invoices and (for a domain bought here) the registry's records point. */
+export interface BillingContact {
+  businessName: string;
+  email: string;
+  address: PostalAddress | null;
+}
+
+/** The bank wants a one-time code (`sentTo` is a masked number, when the bank says), or it refused the card. */
+export type PaymentStart = { status: 'code-needed'; paymentId: string; sentTo: string | null } | { status: 'declined' };
+
+/** `spent`: too many wrong codes, so the payment has to be started again. */
+export type PaymentConfirmation = 'authorised' | 'wrong-code' | 'expired-code' | 'spent';
+
+/** What an authorised payment turned out to be for, once the workspace exists. */
+export interface CompletedOrder {
+  tenantId: string | null;
+  domain: string;
+  /** The two choices on the admin step; both off unless turned on. */
+  marketing: { productNews: boolean; teamTips: boolean };
+}
+
+/**
+ * Plans, prices and paying for a new workspace.
+ *
+ * **`pay` and `confirm` are for the stand-in only: card data must never reach Yahel.** Do not implement them
+ * against a Yahel endpoint. A real checkout is the payment provider's hosted fields or a redirect, with the
+ * bank's challenge on the provider's page; both methods then leave this interface (`docs/roadmap.md`).
+ */
+export interface WorkspaceBilling {
+  plan(country: string): Promise<WorkspacePlan>;
+  /** The discount a code gives, or `null` when the code is not valid. */
+  promo(code: string): Promise<PromoCode | null>;
+  quote(order: OrderRequest): Promise<OrderQuote>;
+  /** Asks the bank to authorise what is due today (or a small hold, for a trial). Nothing is taken yet. Stand-in only: never send a card to Yahel. */
+  pay(order: OrderRequest, card: CardDetails, contact: BillingContact): Promise<PaymentStart>;
+  /** Asks the bank to send its one-time code again. */
+  resendCode(paymentId: string): Promise<void>;
+  /** Passes on the bank's one-time code. Stand-in only: a real checkout takes it on the provider's own page. */
+  confirm(paymentId: string, code: string): Promise<PaymentConfirmation>;
+  /** Ties an authorised payment to the workspace it paid for, which is when money is taken and a bought domain registered. Safe to repeat. */
+  complete(paymentId: string, order: CompletedOrder): Promise<void>;
+  /** Lets go of an authorisation whose workspace was not created. Safe to repeat. */
+  release(paymentId: string): Promise<void>;
+}
+
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'trustedContacts' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -158,6 +330,9 @@ export interface AccountCapabilities {
   trustedContacts: TrustedContacts | null;
   preferences: SignUpPreferences | null;
   serviceStatus: ServiceStatus | null;
+  domainMarket: DomainMarket | null;
+  domainClaims: DomainClaims | null;
+  workspaceBilling: WorkspaceBilling | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openBrokenStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
-import { backupCode, credentials, mockApi, resetCode, secondStepCode, twoStepCredentials } from './support/api';
+import { backupCode, credentials, emailCode, mockApi, pendingEmail, pendingPassword, resetCode, secondStepCode, twoStepCredentials } from './support/api';
 
 const newPassword = 'Sunrise over Lekki 94!';
 const password = (page: Page) => page.getByLabel('Password', { exact: true });
@@ -57,14 +57,16 @@ test.describe('accounts: sign in with a password', () => {
   });
 
   test('a lost connection is reported plainly and the attempt can be repeated', async ({ page }) => {
-    await mockApi(page, { offline: true });
+    const api = await mockApi(page, { offline: true });
     await signInWithPassword(page);
 
-    // No answer while the browser says it is online: the service is not answering, which is a whole screen.
-    await expect(page.getByRole('heading', { level: 1, name: 'We can’t reach Yahel right now.' })).toBeFocused();
+    // No answer while the browser says it is online: told on the step, which stays as it was.
+    await expect(page.getByRole('alert').filter({ hasText: 'We can’t reach Yahel right now' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Enter your password.' })).toBeVisible();
     await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect.poll(() => loginCalls(api).length).toBe(2);
     await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+    await expect(password(page)).toHaveValue(credentials.password);
   });
 
   test('too many attempts is reported plainly', async ({ page }) => {
@@ -72,7 +74,8 @@ test.describe('accounts: sign in with a password', () => {
     await signInWithPassword(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Sign-in is paused for a while.' })).toBeFocused();
-    await expect(page.getByRole('main')).toContainText(`we’ve paused sign-in for ${credentials.email} for a while`);
+    await expect(page.getByRole('main')).toContainText('we’ve paused sign-in for a while');
+    await expect(page.getByRole('main')).not.toContainText(`for ${credentials.email}`);
   });
 
   test('pressing Sign in twice sends one request', async ({ page }) => {
@@ -810,5 +813,70 @@ test.describe('accounts: when a screen fails', () => {
     await page.getByRole('link', { name: 'Back to sign in' }).click();
 
     await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+  });
+});
+
+test.describe('accounts: confirming an email at sign-in', () => {
+  const signInUnconfirmed = async (page: Page) => {
+    const api = await mockApi(page);
+    await signInWithPassword(page, { email: pendingEmail, password: pendingPassword });
+    await expect(page.getByRole('heading', { level: 1, name: 'Confirm your email.' })).toBeVisible();
+    return api;
+  };
+  const codeBoxes = (page: Page) => page.getByLabel('6-character code');
+  const sent = (api: Awaited<ReturnType<typeof mockApi>>, path: string) => api.calls.filter((call) => call.path === path);
+
+  test('a right password for an unconfirmed address leads to the emailed code, which finishes signing in', async ({ page }) => {
+    const api = await signInUnconfirmed(page);
+    await expect(page).toHaveURL(at('/signin/confirm-email'));
+    await expect(page.getByRole('main')).toContainText(`Enter the 6-character code we just sent to ${pendingEmail}`);
+    // Arriving asks for a fresh code, so the link to ask again waits.
+    expect(sent(api, '/v1/auth/verify-email/resend')).toHaveLength(1);
+    await expect(page.getByRole('button', { name: /^Send a new code in 0:\d{2}$/ })).toHaveAttribute('aria-disabled', 'true');
+
+    await codeBoxes(page).fill('WRONG1');
+    await page.getByRole('button', { name: 'Verify' }).click();
+    await expect(codeBoxes(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await expect(codeBoxes(page)).toBeFocused();
+
+    await codeBoxes(page).fill(emailCode);
+    await page.getByRole('button', { name: 'Verify' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Welcome back, Ngozi.' })).toBeVisible();
+    expect(sent(api, '/v1/auth/verify-email').at(-1)?.body).toEqual({ email: pendingEmail, token: emailCode });
+    expect(loginCalls(api)).toHaveLength(2);
+  });
+
+  test('a wrong password for an unconfirmed address is told like any other, and no code is asked for', async ({ page }) => {
+    const api = await mockApi(page);
+    await signInWithPassword(page, { email: pendingEmail, password: 'not the password' });
+
+    await expect(password(page)).toHaveAccessibleDescription(/don’t match/);
+    expect(sent(api, '/v1/auth/verify-email/resend')).toHaveLength(0);
+  });
+
+  test('the code step exists only while the password it proved is held: Back, Forward and reload return to signing in', async ({ page }) => {
+    const api = await signInUnconfirmed(page);
+    await page.goBack();
+    await expect(page.getByRole('heading', { level: 1, name: 'Enter your password.' })).toBeVisible();
+    await page.goForward();
+    await expect(page.getByRole('heading', { level: 1, name: 'Enter your password.' })).toBeVisible();
+    await expect(page).toHaveURL(at('/signin/password'));
+
+    await password(page).fill(pendingPassword);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Confirm your email.' })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Choose an account\.|Welcome back\./);
+    expect(sent(api, '/v1/auth/verify-email')).toHaveLength(0);
+    expect(page.url()).not.toContain(pendingEmail);
+  });
+
+  test('the code step can be completed with the keyboard alone', async ({ page }) => {
+    await signInUnconfirmed(page);
+    await codeBoxes(page).focus();
+    await page.keyboard.type(emailCode);
+    await page.keyboard.press('Enter');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Welcome back, Ngozi.' })).toBeVisible();
   });
 });

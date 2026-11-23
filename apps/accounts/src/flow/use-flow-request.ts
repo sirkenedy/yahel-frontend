@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Feedback } from './feedback';
 
 /** One request the flow can make: whether it is running, and what went wrong last time, described for the person. */
@@ -10,6 +10,12 @@ export interface FlowRequest<Field extends string = string, Next extends string 
   clear: () => void;
   /** Makes the request again, when it needs nothing typed to do so. */
   again?: () => void;
+}
+
+/** What a running request can ask about the visit it began in. */
+export interface RequestVisit {
+  /** The step the request began on is still the one on screen, not left and not returned to since. */
+  isCurrent: () => boolean;
 }
 
 export interface FlowRequestOptions<Input, Outcome, Field extends string, Next extends string> {
@@ -23,7 +29,7 @@ export interface FlowRequestOptions<Input, Outcome, Field extends string, Next e
    * Does the work. What it resolves with is kept by the query client until the next request, so it must
    * be a plain outcome ("signed-in", a masked number), never a password, a code or a token.
    */
-  run: (input: Input) => Promise<Outcome>;
+  run: (input: Input, during: RequestVisit) => Promise<Outcome>;
   onDone?: (outcome: Outcome) => void;
   onFailed?: (error: unknown) => void;
 }
@@ -38,7 +44,15 @@ export interface FlowRequestOptions<Input, Outcome, Field extends string, Next e
  */
 export function useFlowRequest<Input = void, Outcome = void, Field extends string = string, Next extends string = string>({ visit, scope = 'step', describe, run, onDone, onFailed }: FlowRequestOptions<Input, Outcome, Field, Next>) {
   const running = useRef(false);
-  const held = useRef<{ input: Input } | null>(null);
+  const held = useRef<{ input: Input; visit: number } | null>(null);
+  const latestVisit = useRef(visit);
+  useEffect(() => {
+    latestVisit.current = visit;
+    // Once the flow has left the screen altogether, no request that began in it is current any more.
+    return () => {
+      latestVisit.current = -1;
+    };
+  }, [visit]);
   const [startedIn, setStartedIn] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback<Field, Next> | null>(null);
 
@@ -50,7 +64,7 @@ export function useFlowRequest<Input = void, Outcome = void, Field extends strin
       const next = held.current;
       held.current = null;
       if (!next) throw new Error('A flow request ran without its input.');
-      return run(next.input);
+      return run(next.input, { isCurrent: () => latestVisit.current === next.visit });
     },
     onSuccess: onDone,
     onError: (error) => {
@@ -66,7 +80,7 @@ export function useFlowRequest<Input = void, Outcome = void, Field extends strin
   const start = (input: Input) => {
     if (running.current) return false;
     running.current = true;
-    held.current = { input };
+    held.current = { input, visit };
     setStartedIn(visit);
     setFeedback(null);
     mutation.mutate();

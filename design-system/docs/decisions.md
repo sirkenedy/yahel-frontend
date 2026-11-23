@@ -204,3 +204,29 @@ The reasons, and what was rejected, are in `docs/decisions.md` F-55 to F-64. The
 | O-4 | Native app technology | Depends on team and timeline, not design. |
 | O-5 | React component layer | Stack decided; code not written. |
 | O-6 | Illustrations | Style rules exist in `foundations/illustration.md`; no artwork drawn. |
+
+### Daylight workspace sign-up: departures from the boards (2026-11-22)
+
+The reasons, and what was rejected, are in `docs/decisions.md` F-70 to F-77. The component spec is `components/flow-business.md`.
+
+- **Date of birth.** The second question, "And who are you?", also asks for a date of birth, with one line saying why. The backend requires it to create any account and refuses an administrator younger than the country's age of consent.
+- **Country.** Country, state and the phone's country are the platform's select, as in personal sign-up. The "You seem to be in {country}" note is not built: nothing detects a location.
+- **Back link** on every step that has an earlier one.
+- **Dialogs.** Neither dialog is built, because there is no dialog component yet. The business address is its own step, reached from checkout with "Add business address" or "Edit"; the registered business name and the tax ID are not asked for. The warning that the trial is for teams of up to 10 is a banner where the number of people is chosen, with "Try with 10 people".
+- **Checkout.** Two columns from 1024 px, as drawn, with the order summary kept in view; one column below, in the board's mobile order. "Billing address is the same as my business address" is not built. The promo code is entered on the plan step only; checkout shows it applied. The seats block is not a card of its own. Where the board says "Card details are encrypted and processed in Nigeria" the screen says it is a demonstration and no card is charged: the checkout is a stand-in.
+- **Plan.** The card names the plan on one line ("Yahel Business"), not "Yahel" above "Business".
+- **Claimed domain.** The banner drops "Unfinished claims are released after 14 days".
+- **The bank's code** is six digits. A declined card, a wrong code, an expired code and a code spent by too many tries have words written for this build; no board draws them.
+- **Where the code goes.** The administrator step and Ready each carry a note, not drawn on the boards, saying plainly that the confirmation code is emailed to the new address on the business's domain and that it must be a mailbox the person can open now: on the administrator step, if it is not, don't continue yet; on Ready, sign in only once it is. The backend sends the code nowhere else (`docs/decisions.md` F-78, O-16). "Sign in to Admin" leads to sign-in until the administrator's first sign-in is built.
+- **Not offered in a release build** unless its deployment switches it on (`VITE_BUSINESS_SIGN_UP=on`, F-78): until the backend can send the code to a mailbox the person already has, the type screen's business choice says it isn't available yet, as it did before this flow existed.
+- **Without plans or a registrar** (any build that is not a demo) the flow is the business, the person, a domain already owned, the administrator's sign-in, then the workspace: four questions, with "Agree and create workspace".
+
+### Daylight error and feedback states: corrections (2026-11-22)
+
+The reasons are in `docs/decisions.md` F-65 to F-68.
+
+- **A request that gets no answer** is a banner on the step ("We can't reach Yahel right now", with "Try again"), as the code map draws for a lost connection. It no longer takes the step's place; the whole "getting an upgrade" screen is only for a declared outage (503).
+- **Sign-in paused.** The screen names no address and promises nothing about a reset: the pause is the backend's general rate limit. A 403 with no code of its own is a banner, "This account can't sign in right now"; "This account is turned off" is shown only for a suspended-account code, which the backend does not send yet.
+- **"Confirm your email first"** is now a step in sign-in, not a banner: the emailed code is entered there, a new one can be asked for after the usual pause, and a right code finishes signing in.
+- **A time on another day** is shown with its date.
+

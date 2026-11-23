@@ -460,8 +460,8 @@ test.describe('personal account: creating', () => {
     api.failNext('/v1/auth/register', 'lost');
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    // The answer never came while the browser was online: the whole screen for a service that is not answering.
-    await expect(heading(page, 'We can’t reach Yahel right now.')).toBeFocused();
+    // The answer never came while the browser was online: a banner on the creating screen, with the retry in place.
+    await expect(page.getByRole('alert').filter({ hasText: 'We can’t reach Yahel right now' })).toBeVisible();
     await page.getByRole('button', { name: 'Try again' }).click();
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
@@ -597,15 +597,16 @@ test.describe('personal account: addresses, reload and history', () => {
     await expect(page).toHaveURL(new RegExp(`^${accountsUrl}/signin/`));
   });
 
-  test('the business choice says it is coming soon while it has nowhere to lead', async ({ page }) => {
+  test('the business choice leads to workspace sign-up, and nothing typed here goes with it', async ({ page }) => {
     await mockApi(page);
     await signUpTo(page, 'type');
 
     await page.getByRole('radio', { name: /For my business or team/ }).check();
     await proceed(page);
 
-    await expect(page.getByText('Business and team accounts are coming soon.')).toBeVisible();
-    await expect(page).toHaveURL(at('/personal/type'));
+    await expect(heading(page, 'Tell us about your business.')).toBeVisible();
+    await expect(page).toHaveURL(at('/business/start'));
+    await expect(page.getByLabel('Business name')).toHaveValue('');
   });
 
   test('personal details can be blurred for a screen share, and come back in focus', async ({ page }) => {
@@ -730,7 +731,8 @@ test.describe('personal account: an address someone else registered first', () =
     await openPasswordStep(page, pendingEmail);
     await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'Confirm your email first' })).toContainText('Look for the message we sent when you created the account');
+    // Whoever holds that password is asked for the code from the mailbox, which only its owner can read.
+    await expect(heading(page, 'Confirm your email.')).toBeVisible();
   });
 
   test('the owner of an unconfirmed registration of their own, whose password opens it, is sent a code and finishes', async ({ page }) => {

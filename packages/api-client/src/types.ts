@@ -55,3 +55,14 @@ export interface RecoveryMethods {
 }
 
 export const isMfaRequired = (result: LoginResult): result is MfaRequired => 'mfaRequired' in result && result.mfaRequired === true;
+
+/**
+ * What `POST /auth/register-business` answers (from `auth.service.ts`, `registerBusiness`). It also carries
+ * the DNS instructions for proving the domain, which nothing reads yet and so is not typed here.
+ */
+export interface BusinessRegistration {
+  message: string;
+  identity: { id: string; email: string; emailVerified: boolean };
+  tenant: { id: string; slug: string; displayName: string; status: string };
+  domain: { domain: string; status: string };
+}

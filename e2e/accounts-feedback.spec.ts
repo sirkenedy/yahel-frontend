@@ -26,8 +26,10 @@ test.describe('feedback: sign in', () => {
     await expect(heading(page, 'Sign-in is paused for a while.')).toBeFocused();
     await expect(page).toHaveTitle('Sign-in is paused for a while · Yahel');
     await expect(page).toHaveURL(at('/signin/password'));
-    await expect(page.getByRole('main')).toContainText(`we’ve paused sign-in for ${credentials.email} for a while`);
-    await expect(page.getByRole('status')).toContainText(/You can try again at \d{2}:\d{2}\. Resetting your password works right away\./);
+    // The limit is on requests, not on one account: no address is named, and nothing is promised about a reset.
+    await expect(page.getByRole('main')).toContainText('we’ve paused sign-in for a while');
+    await expect(page.getByRole('main')).not.toContainText(credentials.email);
+    await expect(page.getByRole('status')).toHaveText(/^You can try again at \d{2}:\d{2}\.$/);
 
     await page.getByRole('link', { name: 'Reset your password' }).click();
     await expect(page.getByRole('radiogroup', { name: 'Where to send the code' })).toBeVisible();
@@ -38,21 +40,34 @@ test.describe('feedback: sign in', () => {
     await signInWithPassword(page);
 
     await expect(heading(page, 'Sign-in is paused for a while.')).toBeFocused();
-    await expect(page.getByRole('status')).toHaveText('Resetting your password works right away.');
+    await expect(page.getByRole('status')).toHaveText('Wait a few minutes, then try again.');
     await expect(page.getByRole('main')).not.toContainText('You can try again at');
 
     await page.getByRole('link', { name: 'Back to sign in' }).click();
     await expect(heading(page, 'Welcome back.')).toBeVisible();
   });
 
-  test('a suspended account is told so only after its password matched, with a way to another account', async ({ page }) => {
+  test('a bare 403 after the password matched says only that the account cannot sign in, on the step', async ({ page }) => {
     await mockApi(page);
+    await signInWithPassword(page, suspendedCredentials);
+
+    const banner = page.getByRole('alert').filter({ hasText: 'This account can’t sign in right now' });
+    await expect(banner).toBeVisible();
+    await expect(page.getByRole('main')).not.toContainText('turned off');
+    await expect(heading(page, 'Enter your password.')).toBeVisible();
+    await expect(banner.getByRole('link', { name: 'Contact support' })).toHaveAttribute('href', 'https://yahel.example/help');
+  });
+
+  test('a suspended account is told so only after its password matched, with a way to another account', async ({ page }) => {
+    const api = await mockApi(page);
     await openPasswordStep(page, suspendedCredentials.email);
     await password(page).fill('not its password');
     await page.getByRole('button', { name: 'Sign in' }).click();
     // Without the password the answer is the same as for any address.
     await expect(password(page)).toHaveAccessibleDescription(/don’t match/);
 
+    // The backend has no code for a suspended account yet (roadmap); the screen is shown only for that code.
+    api.failNext('/v1/auth/login', 403, 'ACCOUNT_SUSPENDED');
     await password(page).fill(suspendedCredentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(heading(page, 'This account is turned off.')).toBeFocused();
@@ -78,6 +93,9 @@ test.describe('feedback: sign in', () => {
   });
 
   test('a service down for maintenance says until when, and Try again brings the step back', async ({ page }) => {
+    // The window ends two hours after it starts, so the time of day is pinned: run late in the evening it would
+    // end tomorrow, and the screen rightly gives a date rather than a time (F-67).
+    await page.clock.setFixedTime(new Date('2026-06-15T10:00:00'));
     const api = await mockApi(page);
     await openPasswordStep(page);
     api.failNext('/v1/auth/login', 503);
@@ -98,7 +116,7 @@ test.describe('feedback: sign in', () => {
     await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
   });
 
-  test('an unconfirmed email, single sign-on and a forced password change are banners that say what to do', async ({ page }) => {
+  test('single sign-on and a forced password change are banners that say what to do', async ({ page }) => {
     const api = await mockApi(page);
     await openPasswordStep(page);
     const attempt = async (answer: string) => {
@@ -106,9 +124,6 @@ test.describe('feedback: sign in', () => {
       await password(page).fill(credentials.password);
       await page.getByRole('button', { name: 'Sign in' }).click();
     };
-
-    await attempt('EMAIL_NOT_VERIFIED');
-    await expect(page.getByRole('status').filter({ hasText: 'Confirm your email first' })).toContainText('Look for the message we sent when you created the account, then sign in again.');
 
     await attempt('SSO_REQUIRED');
     await expect(page.getByRole('status').filter({ hasText: 'Your organisation signs you in with its own system' })).toContainText('Ask your administrator how to sign in.');
@@ -347,6 +362,8 @@ test.describe('feedback: personal sign-up', () => {
     await expect(heading(page, 'Your session has ended.')).toBeFocused();
     await expect(page).toHaveTitle('Your session has ended · Yahel');
     await expect(page.getByRole('main')).toContainText('Sign in again to carry on.');
+    // Nobody is signed in any more, so the header must not say someone is.
+    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
     await page.getByRole('link', { name: 'Sign in again' }).click();
     await expect(page).toHaveURL(/\/signin/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Choose an account\.|Welcome back\./);
@@ -363,6 +380,7 @@ test.describe('feedback: personal sign-up', () => {
 
     await expect(heading(page, 'We signed you out everywhere.')).toBeFocused();
     await expect(page.getByRole('status')).toHaveText('If this wasn’t you, change your password after you sign in.');
+    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
     await expect(page.getByRole('link', { name: 'Sign in again' })).toBeVisible();
   });
 });
