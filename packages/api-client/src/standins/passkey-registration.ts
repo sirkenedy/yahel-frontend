@@ -24,7 +24,7 @@ import type { Delay } from './timing';
 
 const CHALLENGE = 'c3RhbmQtaW4tcmVnaXN0cmF0aW9uLTAwMDE';
 const USER_HANDLE = 'c3RhbmQtaW4tdXNlci1oYW5kbGU';
-const CREDENTIAL = 'c3RhbmQtaW4tY3JlZGVudGlhbA';
+const SAVED_ID = 'c3RhbmQtaW4tY3JlZGVudGlhbA';
 const ES256 = -7;
 const RS256 = -257;
 
@@ -38,7 +38,7 @@ export const createPasskeyRegistrationStandIn = (delay: Delay): PasskeyRegistrat
   return {
     begin,
     async beginForAccount(input) {
-      return { ...(await begin(input)), excludeCredentials: saved ? [CREDENTIAL] : [] };
+      return { ...(await begin(input)), excludeCredentials: saved ? [SAVED_ID] : [] };
     },
     async finish(attestation) {
       await delay(500);
