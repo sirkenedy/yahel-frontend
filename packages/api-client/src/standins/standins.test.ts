@@ -104,26 +104,6 @@ describe('stand-ins', () => {
     await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('addresses: says only whether a name is free, and offers free names like it', async () => {
-    const { addresses } = createStandIns(instant);
-
-    expect(await addresses.check('amara.okafor')).toEqual({ available: true, alternatives: ['okafor.amara', 'amaraokafor', 'amara.okafor1'] });
-    expect(await addresses.check('amara')).toEqual({ available: false, alternatives: ['amara.mail', 'amara1', 'hello.amara'] });
-    expect(await addresses.check('chidi.eze')).toMatchObject({ available: true });
-    expect(Object.keys(await addresses.check('admin')).sort()).toEqual(['alternatives', 'available']);
-    expect((await addresses.check('okafor')).alternatives).not.toContain('okafor');
-  });
-
-  it('addresses: stops a check that was cancelled, and refuses the forty-first', async () => {
-    const { addresses } = createStandIns(instant);
-    const cancelled = new AbortController();
-    cancelled.abort();
-
-    await expect(addresses.check('chidi.eze', cancelled.signal)).rejects.toMatchObject({ name: 'AbortError' });
-    for (let attempt = 0; attempt < 40; attempt += 1) await addresses.check('chidi.eze');
-    await expect(addresses.check('chidi.eze')).rejects.toMatchObject({ status: 429 });
-  });
-
   it('preferences: keeps the choices it was given', async () => {
     const { preferences } = createStandIns(instant);
 

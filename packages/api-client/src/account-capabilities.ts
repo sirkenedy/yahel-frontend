@@ -9,7 +9,6 @@ export interface StandIns {
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
   passkeyRegistration: PasskeyRegistration;
-  addresses: AddressAvailability;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
@@ -57,10 +56,15 @@ const trustedContactsOf = (api: Pick<ApiClient, 'me'>): TrustedContacts => ({
   },
 });
 
+const addressesOf = (api: Pick<ApiClient, 'auth'>): AddressAvailability => ({
+  check: (name, signal) => api.auth.addressAvailability({ name }, signal),
+});
+
 export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
   const trustedContacts = trustedContactsOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const addresses = addressesOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -73,7 +77,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, s
     recovery,
     helpDesk: standIns.helpDesk,
     passkeyRegistration: standIns.passkeyRegistration,
-    addresses: standIns.addresses,
+    addresses,
     trustedContacts,
     preferences: standIns.preferences,
     serviceStatus: checked(standIns.serviceStatus),

@@ -345,7 +345,7 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'addresses' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */

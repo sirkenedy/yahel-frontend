@@ -94,6 +94,8 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     request,
     auth: {
+      /** Whether a Yahel address (the part before the @) can still be had, with free ones like it. Advice only. */
+      addressAvailability: (body: Schemas['AddressAvailabilityDto'], signal?: AbortSignal) => request<Schemas['AddressAvailabilityResponseDto']>('POST', '/api/v1/auth/address-availability', { body, signal }),
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
       registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),

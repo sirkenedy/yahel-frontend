@@ -27,10 +27,9 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.directory).toBe(standIns.directory);
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
-    expect(capabilities.addresses).toBe(standIns.addresses);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['addresses', 'adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
     expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
   });
 

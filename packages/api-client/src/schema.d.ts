@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/address-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Whether a platform address can still be had, with free names like it */
+        post: operations["AuthController_checkAddressAvailability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/devices": {
         parameters: {
             query?: never;
@@ -1225,6 +1242,29 @@ export interface components {
              */
             method: "TXT" | "CNAME";
         };
+        AddressAvailabilityDto: {
+            /**
+             * @description The part before the @. Never a full address — the server supplies the platform domain.
+             * @example jane.o
+             */
+            name: string;
+        };
+        AddressAvailabilityResponseDto: {
+            /**
+             * @description Free names close to the one asked about, each checked against the directory
+             * @example [
+             *       "o.jane",
+             *       "janeo",
+             *       "jane.o1"
+             *     ]
+             */
+            alternatives: string[];
+            /**
+             * @description Whether the name can be had. False carries no reason: taken, reserved and held names read alike.
+             * @example true
+             */
+            available: boolean;
+        };
         BulkInviteMembersDto: {
             invitees: components["schemas"]["InviteeDto"][];
         };
@@ -1759,6 +1799,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AuthController_checkAddressAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressAvailabilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressAvailabilityResponseDto"];
+                };
             };
         };
     };

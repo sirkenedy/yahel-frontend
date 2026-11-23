@@ -2,7 +2,6 @@
 // Imported only by an app built with VITE_STAND_INS=on; a normal build must not contain this module.
 import type { StandIns } from '../account-capabilities';
 import { createAdminAccessStandIn } from './admin-access';
-import { createAddressStandIn } from './addresses';
 import { createDirectoryStandIn } from './directory';
 import { createDomainClaimsStandIn } from './domain-claims';
 import { createDomainMarketStandIn } from './domain-market';
@@ -26,7 +25,6 @@ export const createStandIns = (delay: Delay = realDelay): StandIns => {
     recoveryByPhone: createRecoveryByPhoneStandIn(delay),
     helpDesk: createHelpDeskStandIn(delay),
     passkeyRegistration,
-    addresses: createAddressStandIn(delay),
     preferences: createPreferencesStandIn(delay),
     serviceStatus: createServiceStatusStandIn(delay),
     domainMarket: createDomainMarketStandIn(delay),

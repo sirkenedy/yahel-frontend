@@ -53,6 +53,48 @@
         ],
         "type": "object"
       },
+      "AddressAvailabilityDto": {
+        "properties": {
+          "name": {
+            "description": "The part before the @. Never a full address — the server supplies the platform domain.",
+            "example": "jane.o",
+            "maxLength": 30,
+            "minLength": 4,
+            "pattern": "^(?!\\.)(?!.*\\.\\.)[a-z0-9.]+(?<!\\.)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "AddressAvailabilityResponseDto": {
+        "properties": {
+          "alternatives": {
+            "description": "Free names close to the one asked about, each checked against the directory",
+            "example": [
+              "o.jane",
+              "janeo",
+              "jane.o1"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "available": {
+            "description": "Whether the name can be had. False carries no reason: taken, reserved and held names read alike.",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "available",
+          "alternatives"
+        ],
+        "type": "object"
+      },
       "BulkInviteMembersDto": {
         "properties": {
           "invitees": {
@@ -1194,6 +1236,38 @@
           }
         },
         "summary": "Accept a workspace invitation — returns tokens and logs the user in immediately",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/address-availability": {
+      "post": {
+        "operationId": "AuthController_checkAddressAvailability",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressAvailabilityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressAvailabilityResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Whether a platform address can still be had, with free names like it",
         "tags": [
           "Auth"
         ]

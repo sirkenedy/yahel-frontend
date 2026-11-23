@@ -73,7 +73,7 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Accounts known on this device (`directory.ts`): `GET /v1/auth/known-accounts` and `DELETE /v1/auth/known-accounts/{email}`, scoped to the device id
 - [ ] Recovery destinations and a texted reset code (`recovery-by-phone.ts`): `POST /v1/auth/recovery/options` returning masked destinations, identical for unknown addresses, and a `channel` on `POST /v1/auth/forgot-password`
 - [ ] Help finding an account (`help-desk.ts`): `POST /v1/auth/account-help`
-- [ ] Address availability (`addresses.ts`): `POST /v1/auth/address-availability` (the name in the body)
+- [x] Address availability: now real, `POST /v1/auth/address-availability` (the name in the body; the stand-in is removed)
 - [ ] Passkey creation during sign-up (`passkey-registration.ts`): `POST /v1/auth/passkeys/registration/options` (no session) and `POST /v1/me/passkeys/registration/verify` (session). This replaces the earlier guess that both would be under `/me`: the challenge is needed before there is an account; and, for someone already signed in (an administrator adding a passkey), `POST /v1/me/passkeys/registration/options` (session), which the app asks with `beginForAccount`
 - [x] Trusted contact: now real, `PATCH /v1/me/recovery/trusted-contact` (the stand-in is removed)
 - [ ] The two review choices (`preferences.ts`): `PATCH /v1/me/preferences`, or fields on `RegisterDto`
