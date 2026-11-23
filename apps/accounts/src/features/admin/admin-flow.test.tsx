@@ -37,7 +37,7 @@ const fakeSession = () => {
 
 const fakeRegistrar = (supported = true, prepare: () => Promise<void> = async () => undefined) => ({
   isSupported: vi.fn(() => supported),
-  prepare: vi.fn((_account?: boolean) => prepare()),
+  prepare: vi.fn<(account?: boolean) => Promise<void>>(() => prepare()),
   create: vi.fn().mockResolvedValue({ status: 'created', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] } }),
   save: vi.fn().mockResolvedValue(undefined),
 });
