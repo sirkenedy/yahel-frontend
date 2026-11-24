@@ -86,7 +86,7 @@
 @media (hover: none) {
   .ws-flow-menu__row-out { inset-inline-end: 0; opacity: 1; }
   .ws-flow-menu__toggle, .ws-flow-menu__row-out { width: var(--ws-target-touch); height: var(--ws-target-touch); }
-  .ws-flow-menu__button { min-height: var(--ws-target-touch); }
+  .ws-flow-menu__button, .ws-flow-menu__footer a { min-height: var(--ws-target-touch); }
 }
 @media (prefers-reduced-motion: reduce) {
   .ws-flow-menu__panel { animation: none; }

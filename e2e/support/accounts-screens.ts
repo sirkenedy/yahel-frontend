@@ -13,7 +13,7 @@ const openPasskeyStep = async (page: Page, outcome: 'success' | 'cancelled') => 
 
 // Steps rise into place over half a second. A scan taken mid-rise would measure half-transparent text,
 // so each screen is handed over only once its entrance has finished. Endless animations (spinners) are left running.
-const settled = async (page: Page) => {
+export const settled = async (page: Page) => {
   await page.evaluate(() =>
     Promise.all(
       document
