@@ -59,7 +59,7 @@ export const requestId = 'req-e2e-7F3K2Q';
 /**
  * The administrator of the seeded workspace (`claimedDomain`), made by workspace sign-up whose phone was never
  * checked: the backend takes the address as verified and answers a right password with a phone challenge instead
- * of a session, until a texted code meets it. The admin-access stand-in names the demo workspace, Northwind Studio.
+ * of a session, until a texted code meets it. Its owner context (`/auth/contexts`) names the workspace, Northwind Studio.
  */
 export const newAdmin = { email: 'kayode@northwind.example', password: 'Northwind Admin 2026!', firstName: 'Kayode' };
 

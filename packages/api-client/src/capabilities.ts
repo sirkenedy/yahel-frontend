@@ -92,7 +92,7 @@ export interface PasskeyAttestation {
 
 /**
  * The server half of creating a passkey, for someone signed in: the server binds each challenge to the session,
- * and `finish` attaches the passkey to that account. A passkey is made only once the account exists (F-110).
+ * and `finish` attaches the passkey to that account. A passkey is made only once the account exists (F-108).
  */
 export interface PasskeyRegistration {
   beginForAccount(): Promise<PasskeyCreationOptions>;

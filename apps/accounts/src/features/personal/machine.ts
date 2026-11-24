@@ -67,7 +67,7 @@ export interface PersonalState {
   addressDraft: string;
   ownEmail: string;
   password: string | null;
-  /** A passkey was saved to the new account. It is offered once the account exists (F-110). */
+  /** A passkey was saved to the new account. It is offered once the account exists (F-108). */
   passkeySaved: boolean;
   /** The person asked for the passkey prompt in this page session. */
   passkeyStarted: boolean;

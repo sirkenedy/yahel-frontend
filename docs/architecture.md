@@ -112,7 +112,7 @@ apps/accounts/src/
 
 ### 3.2 Capabilities and stand-ins
 
-Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, the two choices on the sign-up review, the window of planned maintenance, and for a new workspace whether a domain can be claimed, domains to buy, and plans, prices and checkout. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
+Some designed features have no backend endpoint yet: a texted second-step code, recovery by phone, help finding an account, the two choices on the sign-up review, the window of planned maintenance, and for a new workspace domains to buy, and plans, prices and checkout. Passkey sign-in, passkey creation for a signed-in account and an administrator's access are real in every build (`decisions.md` F-106, F-107). Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
 
 Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/build-guards.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
 
@@ -153,4 +153,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: passkey creation for an administrator in a release build (it needs passkey registration, `decisions.md` F-82), any enforcement of passkeys for Admin (the backend's, F-81, F-98), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), translation and locale handling, the app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: any enforcement of passkeys for Admin (the backend's, F-81, F-98), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), translation and locale handling, the app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.

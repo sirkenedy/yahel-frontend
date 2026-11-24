@@ -94,7 +94,7 @@ export async function signUp(page: Page, path: PersonalPath = {}) {
   await heading(page, `You’re in, ${person.firstName}.`).waitFor();
 }
 
-/** Signs up to the last screen and goes on from it: the passkey is offered once the account exists (F-110). */
+/** Signs up to the last screen and goes on from it: the passkey is offered once the account exists (F-108). */
 export async function signUpToPasskeyOffer(page: Page, path: PersonalPath = {}) {
   await signUp(page, path);
   await page.getByRole('button', { name: 'Continue to Yahel' }).click();

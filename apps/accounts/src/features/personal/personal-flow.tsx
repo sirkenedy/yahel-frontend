@@ -236,7 +236,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       resendPhoneCode: requests.resendPhoneCode.start,
       skipPhone: requests.skipPhone,
       inviteContact: requests.inviteContact.start,
-      // A passkey is offered once, after the account exists, before the app opens (F-110).
+      // A passkey is offered once, after the account exists, before the app opens (F-108).
       continueToApp: () => (facts.passkeysOffered && !flow.passkeySaved ? navigate('add-passkey') : leave()),
     },
     meta: {
