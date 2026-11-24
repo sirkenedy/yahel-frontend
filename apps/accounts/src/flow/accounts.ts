@@ -18,8 +18,8 @@ export const accountsQuery = (directory: AccountDirectory) =>
     retryOnMount: false,
   });
 
-/** The list changed: read it again wherever it is shown. */
-export const refreshAccounts = (queryClient: QueryClient) => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY });
+/** The list changed: read it again wherever it is shown. A read already under way is the one that answers; it is not cancelled and restarted. */
+export const refreshAccounts = (queryClient: QueryClient) => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }, { cancelRefetch: false });
 
 /** The tab's account changed: nothing one account's requests left in the cache may be seen by another (rulebook 2.7). */
 export const forgetAccountData = (queryClient: QueryClient) => {

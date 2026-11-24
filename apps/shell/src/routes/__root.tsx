@@ -28,7 +28,7 @@ function Root() {
     () =>
       session.subscribe((event) => {
         if (event.type !== 'accounts-changed') queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
-        void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+        void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
         if (event.type !== 'accounts-changed') void router.invalidate();
       }),
     [session, queryClient, router],

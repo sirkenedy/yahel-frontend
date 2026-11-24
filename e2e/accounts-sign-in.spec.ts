@@ -361,6 +361,56 @@ test.describe('accounts: account chooser', () => {
   });
 });
 
+test.describe('accounts: reading the accounts on this device', () => {
+  const listCalls = (api: Awaited<ReturnType<typeof mockApi>>) => api.calls.filter((call) => call.path === '/v1/auth/accounts' && call.method === 'GET');
+  const watchAborted = (page: Page) => {
+    const aborted: string[] = [];
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/v1/auth/accounts')) aborted.push(request.url());
+    });
+    return aborted;
+  };
+  const settle = (page: Page) => page.waitForLoadState('networkidle');
+
+  test('opening the chooser asks once, and nothing is cancelled', async ({ page }) => {
+    const api = await mockApi(page);
+    const aborted = watchAborted(page);
+    await visit(page, '/signin');
+    await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(3);
+    await settle(page);
+    expect(listCalls(api)).toHaveLength(1);
+    expect(aborted).toEqual([]);
+  });
+
+  test('signing in reads the list once after the first read, and switching reads it once, with nothing cancelled', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [] });
+    const aborted = watchAborted(page);
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+    await settle(page);
+    const afterSignIn = listCalls(api).length;
+    expect(afterSignIn).toBe(2);
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: 'Add another account' }).click();
+    await page.getByLabel('Email').fill(twoStepCredentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(twoStepCredentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    await settle(page);
+    const beforeSwitch = listCalls(api).length;
+
+    await page.getByRole('button', { name: `Account: ${twoStepCredentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
+    await settle(page);
+    expect(listCalls(api).length - beforeSwitch).toBe(1);
+    expect(aborted).toEqual([]);
+  });
+});
+
 test.describe('accounts: account menu', () => {
   const avatar = (page: Page, email = credentials.email) => page.getByRole('button', { name: `Account: ${email}` });
   const menu = (page: Page) => page.getByRole('dialog', { name: 'Accounts' });
