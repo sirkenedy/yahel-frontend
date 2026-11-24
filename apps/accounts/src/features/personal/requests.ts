@@ -21,8 +21,6 @@ export interface PersonalRequestDeps {
   store: PersonalStore;
   mailDomain: string;
   navigate: (step: PersonalStep, options?: { replace?: boolean }) => void;
-  /** Moves on from a step that has been answered. */
-  advance: (from: 'passkey') => void;
   /** Waits about as long as a request would. Tests pass one that resolves at once. */
   pause?: () => Promise<void>;
 }
@@ -54,7 +52,7 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
  * Every request the personal flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`.
  */
-export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, advance, pause = realPause }: PersonalRequestDeps) {
+export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, pause = realPause }: PersonalRequestDeps) {
   const state = () => store.getState();
   const address = () => addressOf(state(), mailDomain);
   const describe = (context: FailureContext) => (error: unknown) => describePersonalFailure(error, context);
@@ -64,14 +62,17 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     scope: 'flow',
     describe: describe('passkey'),
+    // The account exists and is signed in: the passkey is made on the device and saved to it at once.
     run: async () => {
-      const result = await (registrar?.create({ address: address(), name: fullNameOf(state()) }) ?? { status: 'cancelled' as const });
+      if (!registrar) return 'cancelled' as const;
+      const result = await registrar.create({ address: address(), name: fullNameOf(state()) });
       if (result.status !== 'created') return result.status;
-      store.dispatch({ type: 'passkey-created', attestation: result.attestation });
-      return 'created' as const;
+      await registrar.save(result);
+      store.dispatch({ type: 'passkey-saved' });
+      return 'saved' as const;
     },
     onDone: (outcome) => {
-      if (outcome === 'created') advance('passkey');
+      if (outcome === 'saved') navigate('add-passkey', { replace: true });
     },
   });
 
@@ -164,12 +165,11 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
 
   const setUp = async (): Promise<CreateOutcome> => {
     stage('finishing');
-    const { recovery, preferences, passkey: attestation } = state();
+    const { recovery, preferences } = state();
     const wantsPreferences = preferences.productNews || preferences.activityHistory;
     // The recovery email was sent with the registration itself.
     if (recovery.email) await settle('recoveryEmail', async () => undefined);
     await settle('preferences', capabilities.preferences && wantsPreferences ? () => capabilities.preferences!.save(preferences) : null);
-    await settle('passkey', attestation && registrar ? () => registrar.save(attestation) : null);
     await sendPhoneCode();
     if (state().creation.phoneCodeAwaited) return 'confirm-phone';
     store.dispatch({ type: 'creation-finished' });

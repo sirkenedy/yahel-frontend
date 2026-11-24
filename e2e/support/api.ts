@@ -8,7 +8,12 @@ export const profile = {
   lastName: 'Okafor',
   displayName: 'Amara Okafor',
   photo: null,
+  // A member of Northwind Studio, which made her account.
+  accountType: 'managed' as 'personal' | 'business' | 'managed',
 };
+
+/** The credential id (base64url) of the passkey the stubbed device signs in with. Amara's. */
+export const signInCredentialId = 'AQID';
 
 export const credentials = { email: profile.email, password: 'correct horse battery staple' };
 
@@ -54,7 +59,7 @@ export const requestId = 'req-e2e-7F3K2Q';
 /**
  * The administrator of the seeded workspace (`claimedDomain`), made by workspace sign-up whose phone was never
  * checked: the backend takes the address as verified and answers a right password with a phone challenge instead
- * of a session, until a texted code meets it. The admin-access stand-in names the demo workspace, Northwind Studio.
+ * of a session, until a texted code meets it. Its owner context (`/auth/contexts`) names the workspace, Northwind Studio.
  */
 export const newAdmin = { email: 'kayode@northwind.example', password: 'Northwind Admin 2026!', firstName: 'Kayode' };
 
@@ -95,6 +100,8 @@ interface Account {
   suspended?: boolean;
   /** An administrator whose phone is still to be checked: no session until a texted code meets the challenge sign-in answers with. */
   phoneRequired?: boolean;
+  /** The workspace the account belongs to, as `/auth/accounts` reports it. */
+  membership?: { organisation: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' };
 }
 
 const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
@@ -131,6 +138,11 @@ export const rememberedByDefault: RememberedAccount[] = [
 ];
 
 const MAX_ACCOUNTS = 10;
+// As the backend decides `kind`: a membership, or an account type other than personal, makes a work account.
+const seatKindOf = (account: Account | undefined) =>
+  account && (account.membership || account.profile.accountType !== 'personal')
+    ? { kind: 'business' as const, organisation: account.membership?.organisation ?? null, role: account.membership?.role ?? null }
+    : { kind: 'personal' as const, organisation: null, role: null };
 // Opaque and base64url-shaped, as the backend's are; the address part only makes test failures readable.
 const handleFor = (slot: number, email: string) => `handle-${slot}-${email.split('@')[0]!.replace(/[^A-Za-z0-9_-]/g, '-')}`;
 
@@ -139,6 +151,8 @@ export interface MockApiOptions {
   remembered?: RememberedAccount[];
   /** Every request fails as if the connection had dropped. */
   offline?: boolean;
+  /** Puts an account in a workspace with another role than the seeded one, by its address. */
+  memberships?: Record<string, { organisation: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' }>;
   /** Sign-in attempts are refused by the rate limiter, which answers 429 under the general code `BAD_REQUEST`. */
   rateLimited?: boolean | { retryAfter: number; exposed: boolean };
 }
@@ -157,7 +171,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!seat) {
         const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
         const known = accounts.find((account) => account.profile.email === email);
-        seat = { email, displayName: known?.profile.displayName ?? email, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, email) };
+        seat = { email, displayName: known?.profile.displayName ?? email, ...seatKindOf(known), signedIn: false, slot, handle: handleFor(slot, email) };
         seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
       }
       seat.signedIn = true;
@@ -169,16 +183,31 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   // Which account each live access token belongs to. A slot signed out takes its tokens with it.
   const access = new Map<string, string>();
   const accounts: Account[] = [
-    { profile, password: credentials.password, twoStep: false, emailVerified: true },
-    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
-    { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true },
-    { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
+    { profile, password: credentials.password, twoStep: false, emailVerified: true, membership: { organisation: 'Northwind Studio', role: 'MEMBER' } },
+    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true, membership: { organisation: 'Northwind Studio', role: 'MEMBER' } },
+    { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare', accountType: 'personal' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
+    { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi', accountType: 'personal' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi', accountType: 'personal' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun', accountType: 'business' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true, membership: { organisation: 'Northwind Studio', role: 'OWNER' } },
+    { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze', accountType: 'personal' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
+  for (const account of accounts) account.membership = options.memberships?.[account.profile.email] ?? account.membership;
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
   const tenants: { id: string; slug: string; domain: string }[] = [{ id: '64f000000000000000000200', slug: 'northwind-studio', domain: claimedDomain }];
+  // Each account's passkeys by credential id, as the server stores them once a registration is verified.
+  const passkeys = new Map<string, { credentialId: string; deviceName: string | null; createdAt: string }[]>();
+  const passkeysOf = (email: string) => passkeys.get(email) ?? passkeys.set(email, []).get(email)!;
+  // Amara has one already: the credential the stubbed device signs in with (`stubPasskeys`).
+  passkeysOf(profile.email).push({ credentialId: signInCredentialId, deviceName: null, createdAt: '2026-11-01T09:00:00.000Z' });
+  // Challenges the server handed out and has not yet consumed, by token. Each is used once.
+  const webauthnChallenges = new Map<string, { kind: 'authentication' | 'registration'; email?: string }>();
+  const webauthnChallengeFor = (kind: 'authentication' | 'registration', email?: string) => {
+    const challengeToken = `webauthn-${kind}-${webauthnChallenges.size + 1}`;
+    webauthnChallenges.set(challengeToken, { kind, email });
+    return challengeToken;
+  };
+  const base64url = /^[A-Za-z0-9_-]+$/;
+  const base64urlOf = (text: string) => Buffer.from(text, 'utf8').toString('base64url');
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
@@ -222,7 +251,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!seat) {
         if (seats.length >= MAX_ACCOUNTS) return null;
         const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
-        seat = { email: account.profile.email, displayName: account.profile.displayName, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, account.profile.email) };
+        seat = { email: account.profile.email, displayName: account.profile.displayName, ...seatKindOf(account), signedIn: false, slot, handle: handleFor(slot, account.profile.email) };
         seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
       }
       seat.signedIn = true;
@@ -263,7 +292,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (domain !== mailDomain && domain !== publicEmailDomain) return fail(route, 400, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL');
       const displayName = body.displayName ?? `${body.firstName} ${body.lastName}`;
       accounts.push({
-        profile: { id: `64f00000000000000000010${accounts.length}`, globalId: `g-new-${accounts.length}`, email, firstName: body.firstName, lastName: body.lastName, displayName, photo: null },
+        profile: { id: `64f00000000000000000010${accounts.length}`, globalId: `g-new-${accounts.length}`, email, firstName: body.firstName, lastName: body.lastName, displayName, photo: null, accountType: 'personal' },
         password: body.password ?? '',
         twoStep: false,
         // An address on the platform's own domain is the person's by being claimed; any other has to be confirmed.
@@ -299,7 +328,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const id = `64f0000000000000000002${tenants.length}0`;
       tenants.push({ id, slug: sent.slug ?? '', domain });
       // The address is taken as verified and no email is sent; the session comes once a texted code meets the phone check.
-      const made = { profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null }, password: sent.password ?? '', twoStep: false, emailVerified: true, phoneRequired: true };
+      const made = { profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null, accountType: 'business' }, password: sent.password ?? '', twoStep: false, emailVerified: true, phoneRequired: true, membership: { organisation: sent.businessName ?? '', role: 'OWNER' } };
       accounts.push(made);
       return ok(route, { message: 'Workspace created. Verify a phone number to sign in.', phoneRequired: true, challengeToken: phoneCheckFor(made), identity: { id: made.profile.id, email, emailVerified: true }, tenant: { id, slug: sent.slug, displayName: sent.businessName, status: 'pending_setup' }, domain: { domain, status: 'pending', verification: { type: 'TXT', host: `_yahel-verify.${domain}`, value: 'yahel-verify=e2e' } } }, 201);
     }
@@ -346,6 +375,23 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const challengeToken = `challenge-${challenges.size + 1}`;
       challenges.set(challengeToken, { account, attempts: 0 });
       return ok(route, { mfaRequired: true, challengeToken }, 201);
+    }
+    // No credentials are listed, whatever the address: the server never says which passkeys an account has.
+    if (path === '/v1/auth/passkey/authenticate/begin') return ok(route, { options: { challenge: 'c2lnbi1pbi1jaGFsbGVuZ2U', timeout: 60000, rpId: 'localhost', userVerification: 'required' }, challengeToken: webauthnChallengeFor('authentication') });
+    if (path === '/v1/auth/passkey/authenticate/finish') {
+      const sent = request.postDataJSON() as { challengeToken?: string; response?: { id?: string; rawId?: string; type?: string; response?: Record<string, string> } } | null;
+      const challenge = webauthnChallenges.get(sent?.challengeToken ?? '');
+      webauthnChallenges.delete(sent?.challengeToken ?? '');
+      if (challenge?.kind !== 'authentication') return fail(route, 400, 'PASSKEY_CHALLENGE_INVALID');
+      // What @simplewebauthn/server checks before anything else: one id in base64url, said twice, of a public key.
+      const answer = sent?.response;
+      const fields = [answer?.response?.clientDataJSON, answer?.response?.authenticatorData, answer?.response?.signature];
+      if (!answer?.id || answer.id !== answer.rawId || answer.type !== 'public-key' || !base64url.test(answer.id) || !fields.every((field) => field && base64url.test(field))) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      const account = accounts.find((known) => passkeysOf(known.profile.email).some((passkey) => passkey.credentialId === answer.id));
+      if (!account) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      if (account.suspended) return fail(route, 403, 'FORBIDDEN');
+      if (account.phoneRequired) return ok(route, { phoneRequired: true, challengeToken: phoneCheckFor(account) }, 201);
+      return tokensFor(account);
     }
     if (path === '/v1/auth/mfa/challenge') {
       const challenge = challenges.get(body?.challengeToken ?? '');
@@ -395,6 +441,31 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     const signedIn = accounts.find((known) => known.profile.email === owner)?.profile;
     if (!signedIn) return fail(route, 401, 'SESSION_EXPIRED');
     if (path === '/v1/me') return ok(route, signedIn);
+    // A member's session is in their workspace; anyone else's is personal.
+    if (path === '/v1/auth/contexts') {
+      const membership = accounts.find((known) => known.profile === signedIn)?.membership;
+      const personal = { type: 'personal', tenantId: null, displayName: null, logoUrl: null, role: null, isCurrent: !membership };
+      return ok(route, membership ? [personal, { type: 'tenant', tenantId: '64f000000000000000000200', displayName: membership.organisation, logoUrl: null, role: membership.role, isCurrent: true }] : [personal]);
+    }
+    if (path === '/v1/auth/passkey/register/begin') {
+      const excludeCredentials = passkeysOf(signedIn.email).map(({ credentialId }) => ({ id: credentialId, type: 'public-key', transports: ['internal'] }));
+      const options = { challenge: 'cmVnaXN0ZXItY2hhbGxlbmdl', rp: { name: 'Yahel', id: 'localhost' }, user: { id: base64urlOf(signedIn.id), name: signedIn.email, displayName: signedIn.displayName }, pubKeyCredParams: [{ alg: -8, type: 'public-key' }, { alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }], timeout: 60000, attestation: 'none', excludeCredentials, authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' } };
+      return ok(route, { options, challengeToken: webauthnChallengeFor('registration', signedIn.email) });
+    }
+    if (path === '/v1/auth/passkey/register/finish') {
+      const sent = request.postDataJSON() as { challengeToken?: string; deviceName?: string; response?: { id?: string; rawId?: string; type?: string; response?: Record<string, unknown> } } | null;
+      const challenge = webauthnChallenges.get(sent?.challengeToken ?? '');
+      webauthnChallenges.delete(sent?.challengeToken ?? '');
+      // A challenge is bound to the session that asked for it.
+      if (challenge?.kind !== 'registration' || challenge.email !== signedIn.email) return fail(route, 400, 'PASSKEY_CHALLENGE_INVALID');
+      const answer = sent?.response;
+      const fields = [answer?.response?.clientDataJSON, answer?.response?.attestationObject];
+      if (!answer?.id || answer.id !== answer.rawId || answer.type !== 'public-key' || !base64url.test(answer.id) || !fields.every((field) => typeof field === 'string' && base64url.test(field))) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      if ([...passkeys.values()].flat().some((passkey) => passkey.credentialId === answer.id)) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      passkeysOf(signedIn.email).push({ credentialId: answer.id, deviceName: sent?.deviceName ?? null, createdAt: new Date().toISOString() });
+      return ok(route, { credentialId: answer.id, aaguid: null, deviceName: sent?.deviceName ?? null }, 201);
+    }
+    if (path === '/v1/auth/passkey/list') return ok(route, passkeysOf(signedIn.email).map((passkey) => ({ ...passkey, aaguid: null, transports: ['internal'], lastUsedAt: null })));
     const methods = recoveryOf(signedIn.email);
     if (path === '/v1/auth/phone/send-otp') {
       if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');

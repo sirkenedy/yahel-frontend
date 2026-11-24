@@ -6,19 +6,19 @@ import { StepFrame } from './step-frame';
 
 export function AddPasskeyStep() {
   const { state, actions, meta } = usePersonalFlow();
-  const made = state.passkey !== null;
+  const made = state.passkeySaved;
 
   return (
     <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede} requests={[meta.requests.passkey]}>
       <FlowStep.Body>
-        <FlowCallout icon={<FlowIcon name="passkey" />} title={made ? m.passkeyReady : m.passwordStillWorks}>
-          {made ? m.passkeyReadyDetail : m.passwordStillWorksDetail}
+        <FlowCallout icon={<FlowIcon name="passkey" />} title={made ? m.passkeySaved : m.passwordStillWorks}>
+          {made ? m.passkeySavedDetail : m.passwordStillWorksDetail}
         </FlowCallout>
       </FlowStep.Body>
       <FlowStep.Actions>
         {made ? (
           <FlowButton variant="primary" onPress={actions.continueWithoutPasskey}>
-            {m.continue}
+            {m.openYahel}
           </FlowButton>
         ) : (
           <>

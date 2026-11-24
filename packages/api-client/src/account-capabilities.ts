@@ -3,16 +3,13 @@ import type { ApiClient } from './client';
 
 /** The stand-in implementations, as `@yahel/api-client/standins` builds them. */
 export interface StandIns {
-  passkeys: PasskeyCeremony;
   textCodes: TextCodeSender;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
-  passkeyRegistration: PasskeyRegistration;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
   workspaceBilling: WorkspaceBilling;
-  adminAccess: AdminAccess;
 }
 
 /** `amara@northwind.example` becomes `a•••@northwind.example`: derived from what was typed, so it reveals nothing. */
@@ -70,25 +67,100 @@ const domainClaimsOf = (api: Pick<ApiClient, 'tenants'>): DomainClaims => ({
   check: async (domain) => (await api.tenants.checkDomainClaim({ domain })).standing,
 });
 
+/**
+ * Passkey sign-in through `/auth/passkey/authenticate/*`. The server's options are those of `@simplewebauthn/server`,
+ * and it verifies an `AuthenticationResponseJSON`: `id` and `rawId` the same base64url text.
+ */
+export const passkeySignInOf = (api: Pick<ApiClient, 'auth'>): PasskeyCeremony => ({
+  async begin({ email }) {
+    const { options, challengeToken } = await api.auth.passkeys.authenticateBegin(email ? { email } : {});
+    return {
+      challengeToken,
+      challenge: options.challenge,
+      rpId: options.rpId,
+      timeoutMs: options.timeout ?? 60_000,
+      allowCredentials: (options.allowCredentials ?? []).map(({ id }) => ({ id })),
+      userVerification: options.userVerification === 'required' ? 'required' : 'preferred',
+    };
+  },
+  finish: (challengeToken, assertion) =>
+    api.auth.passkeys.authenticateFinish({
+      challengeToken,
+      response: {
+        id: assertion.credentialId,
+        rawId: assertion.credentialId,
+        type: 'public-key',
+        response: { clientDataJSON: assertion.clientDataJSON, authenticatorData: assertion.authenticatorData, signature: assertion.signature, ...(assertion.userHandle ? { userHandle: assertion.userHandle } : {}) },
+        clientExtensionResults: {},
+      },
+    }),
+});
+
+/** Passkey creation for the signed-in account through `/auth/passkey/register/*`; the server verifies a `RegistrationResponseJSON`. */
+export const passkeyRegistrationOf = (api: Pick<ApiClient, 'auth'>): PasskeyRegistration => ({
+  async beginForAccount() {
+    const { options, challengeToken } = await api.auth.passkeys.registerBegin();
+    return {
+      challengeToken,
+      challenge: options.challenge,
+      rp: options.rp,
+      userHandle: options.user.id,
+      timeoutMs: options.timeout ?? 60_000,
+      algorithms: options.pubKeyCredParams.map(({ alg }) => alg),
+      excludeCredentials: (options.excludeCredentials ?? []).map(({ id }) => id),
+    };
+  },
+  async finish(challengeToken, attestation) {
+    await api.auth.passkeys.registerFinish({
+      challengeToken,
+      response: {
+        id: attestation.credentialId,
+        rawId: attestation.credentialId,
+        type: 'public-key',
+        response: { clientDataJSON: attestation.clientDataJSON, attestationObject: attestation.attestationObject, transports: attestation.transports },
+        clientExtensionResults: {},
+      },
+    });
+  },
+});
+
+const ADMIN_ROLES = new Set(['OWNER', 'ADMIN']);
+
+/**
+ * The session's workspace from its contexts, and whether the account has a passkey from its list.
+ * `passkeyRequired` stays false until the server enforces "Admins must use a passkey" (F-86).
+ */
+export const adminAccessOf = (api: Pick<ApiClient, 'auth'>): AdminAccess => ({
+  async membership() {
+    const [contexts, passkeys] = await Promise.all([api.auth.contexts(), api.auth.passkeys.list()]);
+    const workspace = contexts.find((context) => context.isCurrent && context.type === 'tenant');
+    if (!workspace) return null;
+    return { organisation: workspace.displayName, administrator: workspace.role !== null && ADMIN_ROLES.has(workspace.role), hasPasskey: passkeys.length > 0, passkeyRequired: false };
+  },
+});
+
 export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | 'tenants'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
   const trustedContacts = trustedContactsOf(api);
   const addresses = addressesOf(api);
   const directory = accountDirectoryOf(api);
   const domainClaims = domainClaimsOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const adminAccess = adminAccessOf(api);
+  const passkeys = passkeySignInOf(api);
+  const passkeyRegistration = passkeyRegistrationOf(api);
+  if (!standIns) return { passkeys, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
     send: (email, method) => (method === 'phone' ? standIns.recoveryByPhone.send(email, method) : byEmail.send(email, method)),
   };
   return {
-    passkeys: standIns.passkeys,
+    passkeys,
     textCodes: standIns.textCodes,
     directory,
     recovery,
     helpDesk: standIns.helpDesk,
-    passkeyRegistration: standIns.passkeyRegistration,
+    passkeyRegistration,
     addresses,
     trustedContacts,
     preferences: standIns.preferences,
@@ -96,7 +168,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | '
     domainMarket: standIns.domainMarket,
     domainClaims,
     workspaceBilling: standIns.workspaceBilling,
-    adminAccess: standIns.adminAccess,
+    adminAccess,
     standIns: Object.keys(standIns) as StandInName[],
   };
 }

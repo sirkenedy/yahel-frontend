@@ -57,7 +57,7 @@ const fakeSession = () => ({
 const fakeRegistrar = () => ({
   isSupported: () => true,
   prepare: vi.fn(),
-  create: vi.fn<PasskeyRegistrar['create']>(async () => ({ status: 'created', attestation })),
+  create: vi.fn<PasskeyRegistrar['create']>(async () => ({ status: 'created', attestation, challengeToken: 'pk-1' })),
   save: vi.fn<PasskeyRegistrar['save']>(async () => undefined),
 });
 
@@ -130,10 +130,9 @@ describe('PersonalFlowProvider: the questions', () => {
     act(() => flow().actions.enterBirth({ day: 14, month: 3, year: 1994 }, 'woman'));
     act(() => flow().actions.chooseAddress('amara.okafor'));
     act(() => flow().actions.choosePassword(password));
-    act(() => flow().actions.continueWithoutPasskey());
     act(() => flow().actions.enterRecovery({ country: 'NG', phone: '803 555 0142', email: '' }));
 
-    expect(moves()).toEqual(['name', 'birth', 'address', 'password', 'add-passkey', 'recovery', 'review']);
+    expect(moves()).toEqual(['name', 'birth', 'address', 'password', 'recovery', 'review']);
     expect(store.getState()).toMatchObject({ firstName: 'Amara', birth: { year: 1994 }, username: 'amara.okafor', password, recovery: { phone: '803 555 0142' }, recoveryAnswered: true });
     expect(flow().state).toMatchObject({ address, fullName: 'Amara Okafor' });
   });
@@ -162,12 +161,12 @@ describe('PersonalFlowProvider: the questions', () => {
 
     act(() => flow().actions.keepPassword());
 
-    expect(navigate).toHaveBeenLastCalledWith('add-passkey');
+    expect(navigate).toHaveBeenLastCalledWith('recovery');
     expect(store.getState().password).toBe(password);
   });
 
-  it('starts again from nothing on request: no answers, no password, no passkey', () => {
-    const { flow, store, navigate } = setup({ events: [...answers, { type: 'passkey-created', attestation }, { type: 'address-typed', draft: 'amara' }] });
+  it('starts again from nothing on request: no answers, no password', () => {
+    const { flow, store, navigate } = setup({ events: [...answers, { type: 'address-typed', draft: 'amara' }] });
 
     act(() => flow().actions.startAgain());
 
@@ -219,13 +218,11 @@ describe('PersonalFlowProvider: the questions', () => {
     expect(navigate).toHaveBeenLastCalledWith('review');
   });
 
-  it('changes the sign-in from the review by way of the passkey offer', () => {
+  it('changes the sign-in from the review and returns there, with no passkey offer before the account exists', () => {
     const { flow, navigate } = setup();
 
     act(() => flow().actions.edit('signIn'));
     act(() => flow().actions.choosePassword('Harmattan in Jos 2026!'));
-    expect(navigate).toHaveBeenLastCalledWith('add-passkey');
-    act(() => flow().actions.continueWithoutPasskey());
     expect(navigate).toHaveBeenLastCalledWith('review');
   });
 
@@ -313,31 +310,55 @@ describe('PersonalFlowProvider: the address check', () => {
   });
 });
 
-describe('PersonalFlowProvider: the passkey', () => {
-  it('makes one on the device, labelled for the person, keeps its public half and moves on', async () => {
-    const { flow, registrar, store, navigate } = setup({ step: 'add-passkey', events: answers.slice(0, 4) });
+describe('PersonalFlowProvider: the passkey, once the account is ready', () => {
+  const ready: PersonalEvent[] = [...answers, { type: 'creation-started' }, { type: 'account-created' }, { type: 'signed-in' }, { type: 'creation-finished' }];
+
+  it('offers a passkey before the app opens, and opens the app without one on “Not now”', () => {
+    const { flow, navigate, leave } = setup({ step: 'ready', events: ready });
+
+    act(() => flow().actions.continueToApp());
+    expect(navigate).toHaveBeenLastCalledWith('add-passkey');
+    expect(leave).not.toHaveBeenCalled();
+
+    act(() => flow().actions.continueWithoutPasskey());
+    expect(leave).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the app straight from Ready where no passkey can be made', () => {
+    const { flow, navigate, leave } = setup({ step: 'ready', events: ready, passkeys: false });
+
+    act(() => flow().actions.continueToApp());
+
+    expect(leave).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalledWith('add-passkey');
+  });
+
+  it('makes one on the device, labelled for the person, saves it to the new account at once and says so', async () => {
+    const { flow, registrar, store, navigate } = setup({ step: 'add-passkey', events: ready });
 
     act(() => flow().actions.startPasskey());
     expect(navigate).toHaveBeenLastCalledWith('passkey');
-    await waitFor(() => expect(navigate).toHaveBeenLastCalledWith('recovery'));
+    await waitFor(() => expect(navigate).toHaveBeenLastCalledWith('add-passkey', { replace: true }));
     expect(registrar!.create).toHaveBeenCalledWith({ address, name: 'Amara Okafor' });
-    expect(store.getState().passkey).toEqual(attestation);
+    expect(registrar!.save).toHaveBeenCalledWith({ status: 'created', attestation, challengeToken: 'pk-1' });
+    expect(store.getState().passkeySaved).toBe(true);
   });
 
   it('stays put when the prompt is closed, and says so', async () => {
-    const { flow, registrar, store, navigate, goTo } = setup({ step: 'add-passkey', events: answers.slice(0, 4) });
+    const { flow, registrar, store, navigate, goTo } = setup({ step: 'add-passkey', events: ready });
     registrar!.create.mockResolvedValue({ status: 'cancelled' });
 
     act(() => flow().actions.startPasskey());
     goTo('passkey');
 
     await waitFor(() => expect(flow().state.passkeyCancelled).toBe(true));
-    expect(store.getState().passkey).toBeNull();
+    expect(store.getState().passkeySaved).toBe(false);
+    expect(registrar!.save).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledTimes(1);
   });
 
   it('reports a device that could not make one', async () => {
-    const { flow, registrar, goTo } = setup({ step: 'add-passkey', events: answers.slice(0, 4) });
+    const { flow, registrar, goTo } = setup({ step: 'add-passkey', events: ready });
     registrar!.create.mockRejectedValue(new DOMException('x', 'InvalidStateError'));
 
     act(() => flow().actions.startPasskey());
@@ -510,15 +531,15 @@ describe('PersonalFlowProvider: creating the account', () => {
     expect(navigate).toHaveBeenCalledTimes(1);
   });
 
-  it('saves the passkey and the choices to the new account', async () => {
-    const { registrar, capabilities, store, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
+  it('saves the choices to the new account, and no passkey before the person asks for one', async () => {
+    const { registrar, capabilities, store, create } = setup({ events: [...answers, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
     const save = vi.spyOn(capabilities.preferences!, 'save');
 
     await create();
 
-    expect(registrar!.save).toHaveBeenCalledWith(attestation);
+    expect(registrar!.save).not.toHaveBeenCalled();
     expect(save).toHaveBeenCalledWith({ productNews: true, activityHistory: false });
-    expect(store.getState().creation.settled).toEqual(['recoveryEmail', 'preferences', 'passkey']);
+    expect(store.getState().creation.settled).toEqual(['recoveryEmail', 'preferences']);
   });
 
   it('does not send choices that were left off', async () => {
@@ -531,8 +552,8 @@ describe('PersonalFlowProvider: creating the account', () => {
   });
 
   it('does not take a session that ended during set-up for a refusal: nothing is noted as unsaved, and the whole screen says to sign in again', async () => {
-    const { registrar, store, flow, navigate, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
-    registrar!.save.mockRejectedValue(failure(401, 'SESSION_EXPIRED'));
+    const { capabilities, store, flow, navigate, create } = setup({ events: [...answers, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
+    vi.spyOn(capabilities.preferences!, 'save').mockRejectedValue(failure(401, 'SESSION_EXPIRED'));
 
     await create(null);
 
@@ -542,8 +563,8 @@ describe('PersonalFlowProvider: creating the account', () => {
   });
 
   it('says so when the server ended every session during set-up', async () => {
-    const { registrar, store, flow, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
-    registrar!.save.mockRejectedValue(failure(401, 'TOKEN_REUSE_DETECTED'));
+    const { capabilities, store, flow, create } = setup({ events: [...answers, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
+    vi.spyOn(capabilities.preferences!, 'save').mockRejectedValue(failure(401, 'TOKEN_REUSE_DETECTED'));
 
     await create(null);
 
@@ -552,17 +573,17 @@ describe('PersonalFlowProvider: creating the account', () => {
   });
 
   it('finishes without a part the server refuses, and notes it for the last screen', async () => {
-    const { registrar, store, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
-    registrar!.save.mockRejectedValue(failure(400, 'INVALID_TOKEN'));
+    const { capabilities, store, create } = setup({ events: [...answers, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
+    vi.spyOn(capabilities.preferences!, 'save').mockRejectedValue(failure(400, 'INVALID_TOKEN'));
 
     await create();
 
-    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['passkey'] });
+    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['preferences'] });
   });
 
   it('stops when a part cannot be reached, and a second try saves only what is left', async () => {
-    const { session, registrar, flow, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
-    registrar!.save.mockRejectedValueOnce(offline());
+    const { session, capabilities, flow, create } = setup({ events: [...answers, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } }] });
+    const save = vi.spyOn(capabilities.preferences!, 'save').mockRejectedValueOnce(offline());
 
     await create(null);
     await waitFor(() => expect(flow().meta.requests.create.feedback).toEqual(unreachable));
@@ -570,7 +591,7 @@ describe('PersonalFlowProvider: creating the account', () => {
 
     expect(session.api.auth.register).toHaveBeenCalledTimes(1);
     expect(session.signIn).toHaveBeenCalledTimes(1);
-    expect(registrar!.save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -790,8 +811,8 @@ describe('PersonalFlowProvider: after the account exists', () => {
     expect(store.getState().contactInvited).toBeNull();
   });
 
-  it('leaves for where the person was heading', () => {
-    const { flow, leave } = setup({ step: 'ready' });
+  it('leaves for where the person was heading once the passkey is settled', () => {
+    const { flow, leave } = setup({ step: 'ready', events: [...answers, { type: 'passkey-saved' }] });
 
     act(() => flow().actions.continueToApp());
 

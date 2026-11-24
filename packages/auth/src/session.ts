@@ -1,5 +1,5 @@
 import { accountDirectoryOf, createApiClient, isApiError, isMfaRequired, isPhoneRequired } from '@yahel/api-client';
-import type { ApiClient, AuthTokens, Profile, RegisterBusinessBody, SignedIn } from '@yahel/api-client';
+import type { ApiClient, AuthTokens, Profile, RegisterBusinessBody } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
 export type SessionStatus = 'unknown' | 'signed-out' | 'signed-in';
@@ -268,11 +268,8 @@ export function createSession(options: SessionOptions) {
     /** Finishes a sign-in that stopped for a second step. `trustDevice` skips that step in this browser for 30 days. */
     completeSecondStep: async (challengeToken: string, code: string, trustDevice = false) => signedIn(await api.auth.mfaChallenge({ challengeToken, code, trustDevice })),
 
-    /** Starts a session from a sign-in that happened outside the password endpoint, such as a passkey. */
-    establish({ tokens, profile }: SignedIn) {
-      accept(tokens);
-      store.setState({ status: 'signed-in', profile, slot: tokens.slot, handle: tokens.handle });
-    },
+    /** Starts a session from a sign-in that happened outside the password endpoint, such as a passkey, and loads its profile. */
+    establish: (tokens: AuthTokens) => signedIn(tokens),
 
     /**
      * Signs one account out of this browser, by default this tab's. It stays remembered, signed out. This tab

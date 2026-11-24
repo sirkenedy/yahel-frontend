@@ -78,6 +78,94 @@ export interface Profile {
   status?: string;
   locale?: string | null;
   timezone?: string | null;
+  /** `personal` for a personal account; `business` for a workspace founder; `managed` for an account an organisation made. */
+  accountType: 'personal' | 'business' | 'managed';
+}
+
+/** `GET /auth/contexts`: the personal and organisation contexts the session can act in. Hand-written: the generated schema types the nullable strings as objects. */
+export interface AuthContext {
+  type: 'personal' | 'tenant';
+  tenantId: string | null;
+  displayName: string | null;
+  logoUrl: string | null;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST' | null;
+  isCurrent: boolean;
+}
+
+/** `GET /auth/passkey/list`: one passkey of the signed-in account. */
+export interface PasskeyItem {
+  credentialId: string;
+  deviceName: string | null;
+  aaguid: string | null;
+  transports: string[];
+  lastUsedAt: string | null;
+  createdAt: string;
+}
+
+interface CredentialDescriptorJSON {
+  id: string;
+  type: 'public-key';
+  transports?: string[];
+}
+
+/** WebAuthn request options as the backend's `@simplewebauthn/server` makes them. Binary values are base64url text. */
+export interface WebAuthnRequestOptions {
+  challenge: string;
+  timeout?: number;
+  rpId?: string;
+  allowCredentials?: CredentialDescriptorJSON[];
+  userVerification?: 'required' | 'preferred' | 'discouraged';
+}
+
+/** WebAuthn creation options as the backend's `@simplewebauthn/server` makes them. Binary values are base64url text. */
+export interface WebAuthnCreationOptions {
+  challenge: string;
+  rp: { name: string; id?: string };
+  user: { id: string; name: string; displayName: string };
+  pubKeyCredParams: { alg: number; type: 'public-key' }[];
+  timeout?: number;
+  excludeCredentials?: CredentialDescriptorJSON[];
+}
+
+/** What a passkey `begin` answers: the options for the device, and the opaque token that names the challenge to `finish`. It lives 60 seconds. */
+export interface PasskeyChallenge<Options> {
+  options: Options;
+  challengeToken: string;
+}
+
+/** A passkey sign-in, as the backend verifies it (`AuthenticationResponseJSON`): `id` and `rawId` are the same base64url text. */
+export interface AuthenticationResponseJSON {
+  id: string;
+  rawId: string;
+  type: 'public-key';
+  response: { clientDataJSON: string; authenticatorData: string; signature: string; userHandle?: string };
+  clientExtensionResults: Record<string, never>;
+}
+
+/** A new passkey, as the backend verifies it (`RegistrationResponseJSON`). */
+export interface RegistrationResponseJSON {
+  id: string;
+  rawId: string;
+  type: 'public-key';
+  response: { clientDataJSON: string; attestationObject: string; transports?: string[] };
+  clientExtensionResults: Record<string, never>;
+}
+
+export interface PasskeyFinishBody<Response> {
+  challengeToken: string;
+  response: Response;
+  /** How the passkey is labelled in the account's list. */
+  deviceName?: string;
+}
+
+/** `POST /auth/passkey/authenticate/finish`: a session, or a phone check first, as a password sign-in can. */
+export type PasskeySignInResult = AuthTokens | PhoneRequired;
+
+/** `POST /auth/passkey/register/finish`. */
+export interface PasskeyRegistered {
+  credentialId: string;
+  aaguid: string | null;
+  deviceName: string | null;
 }
 
 /** A recovery contact that has been asked for but cannot be used yet. Values are masked by the backend. */

@@ -19,14 +19,12 @@ export const person = {
   recoveryEmail: 'amara.o@personal.example',
 };
 
-export type PersonalStop = 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'add-passkey' | 'recovery' | 'review' | 'done';
+export type PersonalStop = 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'recovery' | 'review' | 'done';
 
 export interface PersonalPath {
   /** A new Yahel address, or an email the person already has. */
   address?: 'yahel' | 'own';
   username?: string;
-  /** Whether "Add a passkey" is pressed. */
-  passkey?: boolean;
   /** What this browser does when asked for a passkey. Every engine is told, because not every test build has WebAuthn. */
   passkeys?: PasskeyOutcome;
   phone?: boolean;
@@ -41,7 +39,7 @@ export const heading = (page: Page, name: string | RegExp) => page.getByRole('he
  * Answers the questions of personal sign-up in order and stops with `stop` on screen (`done` presses
  * "Agree and create account"). The browser's passkey support is always described (`passkeys`), never taken from the engine.
  */
-export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahel', username = person.username, passkey = false, passkeys = 'success', phone = false, recoveryEmail = true, query = '' }: PersonalPath = {}) {
+export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahel', username = person.username, passkeys = 'success', phone = false, recoveryEmail = true, query = '' }: PersonalPath = {}) {
   await stubPasskeys(page, passkeys);
   await visit(page, `/personal${query}`);
   await heading(page, 'Create your Yahel account.').waitFor();
@@ -79,12 +77,6 @@ export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahe
   await page.getByLabel('Password', { exact: true }).fill(person.password);
 
   await next(page);
-  if (passkeys !== 'unsupported') {
-    await heading(page, 'Add a passkey too?').waitFor();
-    if (stop === 'add-passkey') return;
-    await page.getByRole('button', { name: passkey ? 'Add a passkey' : 'Not now' }).click();
-  }
-
   await heading(page, 'Ways back in.').waitFor();
   if (stop === 'recovery') return;
   if (phone) await page.getByLabel('Mobile number').fill(person.phone);
@@ -100,4 +92,11 @@ export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahe
 export async function signUp(page: Page, path: PersonalPath = {}) {
   await signUpTo(page, 'done', path);
   await heading(page, `You’re in, ${person.firstName}.`).waitFor();
+}
+
+/** Signs up to the last screen and goes on from it: the passkey is offered once the account exists (F-108). */
+export async function signUpToPasskeyOffer(page: Page, path: PersonalPath = {}) {
+  await signUp(page, path);
+  await page.getByRole('button', { name: 'Continue to Yahel' }).click();
+  await heading(page, 'Add a passkey too?').waitFor();
 }

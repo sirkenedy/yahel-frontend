@@ -22,6 +22,10 @@ export async function visit(page: Page, path: string) {
   }
 }
 
+/** Where the accounts app sends someone once they are in. Answered here, so every engine lands somewhere. */
+export const appUrl = 'http://localhost:5173/';
+export const stubApp = (page: Page) => page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
+
 /** `waiting`: the prompt stays open, so the waiting screen can be examined. */
 export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported' | 'waiting';
 
@@ -40,15 +44,16 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
       configurable: true,
       value: {
         get: async () => {
-          // Long enough for the waiting screen to be seen and asserted on.
-          await new Promise((resolve) => setTimeout(resolve, 400));
+          // Long enough for the waiting screen to be seen and asserted on; `waiting` never answers.
+          await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
           return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), authenticatorData: bytes(5), signature: bytes(6), userHandle: null } };
         },
         create: async () => {
           await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
-          return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
+          // A new credential: not the one Amara already signs in with.
+          return { rawId: bytes(9, 8, 7), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
         },
       },
     });

@@ -135,7 +135,8 @@ test.describe('accounts: the admin steps cannot be walked around', () => {
   });
 
   test('someone signed in with no confirmed phone confirms it on the account', async ({ page }) => {
-    const api = await mockApi(page, { remembered: [] });
+    // An owner of the workspace, as `/auth/contexts` says; a member is not taken through Admin's first steps.
+    const api = await mockApi(page, { remembered: [], memberships: { [credentials.email]: { organisation: 'Northwind Studio', role: 'OWNER' } } });
     await openPasswordStep(page, credentials.email);
     await page.getByLabel('Password', { exact: true }).fill(credentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();

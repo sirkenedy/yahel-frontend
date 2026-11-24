@@ -14,7 +14,7 @@ import type { SignInFlowValue } from './sign-in-flow';
 import { createSignInStore } from './store';
 
 const email = 'amara@northwind.example';
-const profile: Profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+const profile: Profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'personal' };
 const tokens = { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' };
 const known = (overrides: Partial<ClientAccount> = {}): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email, kind: 'personal', organisation: null, role: null, signedIn: false, ...overrides });
 const instant = async () => undefined;
@@ -64,7 +64,7 @@ function Probe({ onValue, onToast }: { onValue: (value: SignInFlowValue) => void
   return null;
 }
 
-const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[], returning = false } = {}) => {
+const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[], returning = false, checkPhone = undefined as ((email: string, challengeToken: string) => void) | undefined } = {}) => {
   act(() => dismissToast());
   const session = fakeSession(remembered);
   const capabilities: AccountCapabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
@@ -77,7 +77,7 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
-      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave} returning={returning}>
+      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave} returning={returning} checkPhone={checkPhone}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </SignInFlowProvider>
     </QueryClientProvider>
@@ -226,7 +226,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('keeps no password, code or token in the query client once a request has settled', async () => {
-    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens: { ...tokens, accessToken: 'access-secret' }, profile } }) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', tokens: { ...tokens, accessToken: 'access-secret' } }) };
     const { flow, session, navigate, store, retained } = setup({ step: 'password', passkeys });
     act(() => store.dispatch({ type: 'email-entered', email }));
     session.signIn.mockResolvedValueOnce({ ok: false, reason: 'mfa-required', challengeToken: 'challenge-secret' });
@@ -273,7 +273,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('starts the passkey prompt from the press, shows the wait, and signs in when the device answers', async () => {
-    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens, profile } }) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', tokens }) };
     const { flow, session, navigate, store } = setup({ passkeys });
 
     act(() => flow().actions.startPasskey());
@@ -282,7 +282,19 @@ describe('SignInFlowProvider', () => {
     expect(navigate).toHaveBeenCalledWith('passkey');
     await waitFor(() => expect(passkeys.signIn).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
-    expect(session.establish).toHaveBeenCalledWith({ tokens, profile });
+    expect(session.establish).toHaveBeenCalledWith(tokens);
+  });
+
+  it('sends a passkey sign-in that needs the phone checked first to the phone check, with no session', async () => {
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'phone-required', challengeToken: 'phone-1' }) };
+    const checkPhone = vi.fn();
+    const { flow, session, store } = setup({ passkeys, checkPhone });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    act(() => flow().actions.startPasskey());
+
+    await waitFor(() => expect(checkPhone).toHaveBeenCalledWith(email, 'phone-1'));
+    expect(session.establish).not.toHaveBeenCalled();
   });
 
   it('stays on the passkey step when the prompt is closed, and can ask again', async () => {

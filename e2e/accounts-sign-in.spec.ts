@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openBrokenStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { backupCode, credentials, emailCode, mockApi, pendingEmail, pendingPassword, resetCode, secondStepCode, twoStepCredentials } from './support/api';
 
 const newPassword = 'Sunrise over Lekki 94!';

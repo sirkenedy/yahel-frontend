@@ -80,7 +80,7 @@ describe('the guards', () => {
 });
 
 describe('filling in from the account in use', () => {
-  const profile: Profile = { id: '1', globalId: 'g', email: 'amara.okafor@yahel.example', firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+  const profile: Profile = { id: '1', globalId: 'g', email: 'amara.okafor@yahel.example', firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'personal' };
   const account = (kind: 'personal' | 'business'): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email: 'amara.okafor@yahel.example', kind, organisation: kind === 'business' ? 'Northwind Studio' : null, role: null, signedIn: true });
 
   it('takes the name and address of a personal account in use', () => {

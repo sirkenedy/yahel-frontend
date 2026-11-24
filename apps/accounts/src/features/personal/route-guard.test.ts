@@ -51,11 +51,11 @@ describe('forgetSignUp', () => {
     const personal = createPersonalStore();
     personal.dispatch({ type: 'name-entered', firstName: 'Amara', lastName: '' });
     personal.dispatch({ type: 'password-chosen', password: 'Sunrise over Lekki 94' });
-    personal.dispatch({ type: 'passkey-created', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: [] } });
+    personal.dispatch({ type: 'passkey-started' });
     return personal;
   };
 
-  it('forgets every answer, the password and the passkey', () => {
+  it('forgets every answer and the password', () => {
     const personal = answered();
 
     forgetSignUp(personal);

@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
-import type { AccountDirectory, ClientAccount } from '@yahel/api-client';
+import type { AccountDirectory, AccountStanding, ClientAccount } from '@yahel/api-client';
 import type { AccountKind } from '@yahel/ui';
 
 // The accounts this browser remembers belong to the browser, not to any one account, so the key carries
@@ -30,8 +30,21 @@ export const nameOf = (account: Pick<ClientAccount, 'displayName' | 'email'>) =>
 
 export const kindOf = (account: Pick<ClientAccount, 'kind'>): AccountKind => (account.kind === 'business' ? 'organisation' : 'person');
 
-/** Under an account's address: its organisation or "Personal" while signed in, "Signed out" when not. */
-export const statusOf = (account: Pick<ClientAccount, 'signedIn' | 'organisation'>, words: { personal: string; signedOut: string }) => (account.signedIn ? (account.organisation ?? words.personal) : words.signedOut);
+/** Under an account's address: its organisation, else "Work account" or "Personal" by kind, while signed in; "Signed out" when not. */
+export const statusOf = (account: Pick<ClientAccount, 'signedIn' | 'organisation' | 'kind'>, words: { personal: string; work: string; signedOut: string }) => {
+  if (!account.signedIn) return words.signedOut;
+  return account.organisation ?? (account.kind === 'business' ? words.work : words.personal);
+};
+
+/** The face for an account whose standing is known: an organisation square for any work account. */
+export const kindOfStanding = (standing: AccountStanding | null): AccountKind => (standing && standing.type !== 'personal' ? 'organisation' : 'person');
+
+/** The line under the account in use: "Admin · {organisation}", the organisation, "Work account" or "Personal account". */
+export const badgeOf = (standing: AccountStanding, words: { personalAccount: string; workAccount: string; admin: (organisation: string) => string }) => {
+  if (standing.type === 'admin') return words.admin(standing.organisation);
+  if (standing.type === 'member') return standing.organisation;
+  return standing.type === 'work' ? words.workAccount : words.personalAccount;
+};
 
 /** The first account other than `handle` that is still signed in. */
 export const nextSignedIn = (accounts: readonly ClientAccount[], handle: string | null) => accounts.find((account) => account.signedIn && account.handle !== handle) ?? null;

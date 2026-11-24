@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit, stubApp } from './support/accounts';
 import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
-import { heading, person, signUp, signUpTo } from './support/personal';
+import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './support/personal';
 
 const calls = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
 const registrations = (api: MockApi) => calls(api, '/v1/auth/register');
@@ -131,7 +131,6 @@ test.describe('personal account: an email the person already has', () => {
       await proceed(page);
       await page.getByLabel('Password', { exact: true }).fill(person.password);
       await proceed(page);
-      await page.getByRole('button', { name: 'Not now' }).click();
       await proceed(page, 'Skip');
       await page.getByRole('button', { name: 'Agree and create account' }).click();
       await heading(page, 'Check your inbox.').waitFor();
@@ -151,7 +150,6 @@ test.describe('personal account: an email the person already has', () => {
     await proceed(page);
     await page.getByLabel('Password', { exact: true }).fill(person.password);
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
 
@@ -164,44 +162,62 @@ test.describe('personal account: an email the person already has', () => {
 });
 
 test.describe('personal account: sign-in methods and ways back in', () => {
-  test('a passkey is created on the device and saved to the account', async ({ page }) => {
-    await mockApi(page);
-    await signUpTo(page, 'add-passkey');
+  test('once the account is ready, a passkey is created on the device and saved to the signed-in account', async ({ page }) => {
+    const api = await mockApi(page);
+    await signUpTo(page, 'password');
+    await page.getByLabel('Password', { exact: true }).fill(person.password);
+    await proceed(page);
+    // The passkey is no longer asked for before the account exists.
+    await expect(heading(page, 'Ways back in.')).toBeVisible();
+    await proceed(page, 'Skip');
+    await expect(page.getByRole('definition').filter({ hasText: /^Password$/ })).toBeVisible();
+    await page.getByRole('button', { name: 'Agree and create account' }).click();
+    await heading(page, 'You’re in, Amara.').waitFor();
 
+    await page.getByRole('button', { name: 'Continue to Yahel' }).click();
+    await expect(heading(page, 'Add a passkey too?')).toBeVisible();
     await page.getByRole('button', { name: 'Add a passkey' }).click();
     await expect(heading(page, 'Create your passkey.')).toBeVisible();
     await expect(page.getByText('Waiting for this device')).toBeVisible();
 
-    await heading(page, 'Ways back in.').waitFor();
-    await proceed(page, 'Skip');
-    await expect(page.getByText('Password and a passkey')).toBeVisible();
-    await page.getByRole('button', { name: 'Agree and create account' }).click();
-
-    await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
-    await expect(page.getByText('We couldn’t save your passkey.')).toHaveCount(0);
+    await expect(page.getByText('Passkey saved', { exact: true })).toBeVisible();
+    const finish = api.calls.find((call) => call.path === '/v1/auth/passkey/register/finish');
+    expect(finish?.authorization).toMatch(/^Bearer /);
+    expect(finish?.body).toMatchObject({ challengeToken: expect.stringMatching(/^webauthn-registration-/), response: { id: 'CQgH', rawId: 'CQgH', type: 'public-key' } });
   });
 
-  test('a closed passkey prompt can be tried again or left for the password', async ({ page }) => {
+  test('a closed passkey prompt can be tried again, or left for the password and the app', async ({ page }) => {
     await mockApi(page);
-    await signUpTo(page, 'add-passkey', { passkeys: 'cancelled' });
+    await stubApp(page);
+    await signUpToPasskeyOffer(page, { passkeys: 'cancelled' });
 
     await page.getByRole('button', { name: 'Add a passkey' }).click();
     await expect(page.getByText('The passkey prompt was closed before it finished.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
     await page.getByRole('button', { name: 'Use a password instead' }).click();
 
-    await heading(page, 'Ways back in.').waitFor();
-    await proceed(page, 'Skip');
-    await expect(page.getByRole('definition').filter({ hasText: /^Password$/ })).toBeVisible();
+    await expect(page).not.toHaveURL(/\/personal\//);
+  });
+
+  test('“Not now” opens the app without a passkey', async ({ page }) => {
+    const api = await mockApi(page);
+    await stubApp(page);
+    await signUpToPasskeyOffer(page);
+
+    await page.getByRole('button', { name: 'Not now' }).click();
+
+    await expect(page).not.toHaveURL(/\/personal\//);
+    expect(api.calls.some((call) => call.path === '/v1/auth/passkey/register/finish')).toBe(false);
   });
 
   test('no passkey is offered in a browser that cannot make one', async ({ page }) => {
     await mockApi(page);
-    await signUpTo(page, 'password', { passkeys: 'unsupported' });
+    await stubApp(page);
+    await signUp(page, { passkeys: 'unsupported' });
 
-    await page.getByLabel('Password', { exact: true }).fill(person.password);
-    await proceed(page);
+    await page.getByRole('button', { name: 'Continue to Yahel' }).click();
 
-    await expect(heading(page, 'Ways back in.')).toBeVisible();
+    await expect(page).not.toHaveURL(/\/personal\//);
   });
 
   test('a recovery phone is confirmed with a texted code once the account exists', async ({ page }) => {
@@ -253,7 +269,6 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await proceed(page);
     await page.getByLabel('Password', { exact: true }).fill(person.password);
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await expect(page.getByRole('definition').filter({ hasText: 'Not added' })).toBeVisible();
     await page.getByRole('button', { name: 'Agree and create account' }).click();
@@ -355,7 +370,6 @@ test.describe('personal account: what each question refuses', () => {
     await expect(page.getByText('Strong · 21 characters')).toBeVisible();
     await proceed(page);
 
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page);
     await expect(page.getByText('Add a phone number or an email, or choose Skip.')).toBeVisible();
     await page.getByLabel('Mobile number').fill('803');
@@ -402,7 +416,6 @@ test.describe('personal account: the review', () => {
     await page.getByRole('button', { name: 'Edit sign-in' }).click();
     await page.getByLabel('Password', { exact: true }).fill('Harmattan in Jos 2026!');
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await heading(page, 'Everything look right?').waitFor();
 
     await page.getByRole('button', { name: 'Edit recovery' }).click();
@@ -709,7 +722,6 @@ const answerOwnEmailTo = async (page: Page, email: string) => {
   await proceed(page);
   await page.getByLabel('Password', { exact: true }).fill(person.password);
   await proceed(page);
-  await page.getByRole('button', { name: 'Not now' }).click();
   await proceed(page, 'Skip');
   await page.getByRole('button', { name: 'Agree and create account' }).click();
   await heading(page, 'Check your inbox.').waitFor();
@@ -754,7 +766,6 @@ test.describe('personal account: an address someone else registered first', () =
     await proceed(page);
     await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await heading(page, 'Check your inbox.').waitFor();
@@ -803,27 +814,25 @@ test.describe('personal account: what is forgotten, and when', () => {
     await signUpTo(page, 'recovery');
 
     await page.getByRole('link', { name: 'Back' }).click();
-    await page.getByRole('link', { name: 'Back' }).click();
     await expect(heading(page, 'Create a password.')).toBeVisible();
     await expect(passwordField(page)).toHaveValue('');
     await expect(page.getByText('Your password is saved. Leave this empty to keep it, or type a new one.')).toBeVisible();
     expect(await page.content()).not.toContain(person.password);
 
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ password: person.password });
   });
 
-  test('leaving sign-up for sign-in forgets every answer, the password and the passkey', async ({ page }) => {
+  test('leaving sign-up for sign-in forgets every answer and the password', async ({ page }) => {
     await mockApi(page);
-    await signUpTo(page, 'recovery', { passkey: true });
+    await signUpTo(page, 'recovery');
     await page.evaluate(() => ((window as unknown as { stillHere: boolean }).stillHere = true));
 
     // Out through the first screen's own link, and back in through sign-in's, without the page reloading.
-    for (const question of ['Add a passkey too?', 'Create a password.', 'Pick your address.', 'A little about you.', 'What should we call you?', 'Create your Yahel account.']) {
+    for (const question of ['Create a password.', 'Pick your address.', 'A little about you.', 'What should we call you?', 'Create your Yahel account.']) {
       await page.getByRole('link', { name: 'Back' }).click();
       await heading(page, question).waitFor();
     }
@@ -847,9 +856,8 @@ test.describe('personal account: what is forgotten, and when', () => {
     await expect(page.getByText('Your password is saved.')).toHaveCount(0);
     await passwordField(page).fill('Harmattan in Jos 2026!');
     await proceed(page);
-    // The last person's passkey is gone too, so one is offered again.
-    await expect(heading(page, 'Add a passkey too?')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Add a passkey' })).toBeVisible();
+    await expect(heading(page, 'Ways back in.')).toBeVisible();
+    await expect(page.getByLabel('Recovery email')).toHaveValue('');
   });
 
   test('the brand link starts sign-up again from nothing', async ({ page }) => {
@@ -882,9 +890,10 @@ test.describe('personal account: what is forgotten, and when', () => {
   test('a sign-up screen that fails offers "Start again", and trying again does not keep the password', async ({ page }) => {
     await mockApi(page);
     await armStepFailure(page);
-    await signUpTo(page, 'add-passkey');
+    await signUpTo(page, 'password');
+    await page.getByLabel('Password', { exact: true }).fill(person.password);
     await failNextStep(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
+    await proceed(page);
 
     await expect(heading(page, 'Something went wrong on our side.')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Start again' })).toHaveAttribute('href', '/personal');
@@ -953,17 +962,19 @@ test.describe('personal account: fixes from review', () => {
     await page.getByRole('link', { name: 'Back' }).click();
     await expect(heading(page, 'Ways back in.')).toBeVisible();
     await page.getByRole('link', { name: 'Back' }).click();
-    await expect(heading(page, 'Add a passkey too?')).toBeVisible();
+    await expect(heading(page, 'Create a password.')).toBeVisible();
   });
 
-  test('the browser’s Back to the passkey prompt after a passkey was made shows the offer, which says one is ready', async ({ page }) => {
+  test('the browser’s Back to the passkey prompt after a passkey was saved shows the offer, which says so', async ({ page }) => {
     await mockApi(page);
-    await signUpTo(page, 'recovery', { passkey: true });
+    await signUpToPasskeyOffer(page);
+    await page.getByRole('button', { name: 'Add a passkey' }).click();
+    await page.getByText('Passkey saved', { exact: true }).waitFor();
 
     await page.goBack();
 
     await expect(page).toHaveURL(at('/personal/add-passkey'));
-    await expect(page.getByText('A passkey is ready on this device')).toBeVisible();
+    await expect(page.getByText('Passkey saved', { exact: true })).toBeVisible();
   });
 
   test('the terms and the privacy policy open in a new tab, so the answers are not lost by reading them', async ({ page }) => {
@@ -999,7 +1010,7 @@ test.describe('personal account: fixes from review', () => {
 
   test('the review’s action is reachable: in view at once on a computer, and never under the demo label', async ({ page, isMobile }) => {
     await mockApi(page);
-    await signUpTo(page, 'review', { passkey: true, phone: true });
+    await signUpTo(page, 'review', { phone: true });
     const action = page.getByRole('button', { name: 'Agree and create account' });
 
     if (isMobile) await action.scrollIntoViewIfNeeded();

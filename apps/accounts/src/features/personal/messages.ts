@@ -9,7 +9,7 @@ export const personalMessages = {
   show: 'Show',
   hide: 'Hide',
 
-  progressParts: { name: 'Your name', basics: 'Basics', address: 'Your address', password: 'Password', 'sign-in': 'Sign-in', recovery: 'Recovery', review: 'Review' },
+  progressParts: { name: 'Your name', basics: 'Basics', address: 'Your address', password: 'Password', recovery: 'Recovery', review: 'Review' },
 
   typeTitle: 'Create your Yahel account.',
   typeLede: 'One account for every Yahel app. You can add the other kind later.',
@@ -86,8 +86,8 @@ export const personalMessages = {
   addPasskeyLede: 'Next time, sign in with your fingerprint, face or screen lock. It’s faster than your password and can’t be phished.',
   passwordStillWorks: 'Your password still works',
   passwordStillWorksDetail: 'The passkey stays on this device. You can remove it any time.',
-  passkeyReady: 'A passkey is ready on this device',
-  passkeyReadyDetail: 'It will be added to your account when it is created.',
+  passkeySaved: 'Passkey saved',
+  passkeySavedDetail: 'Next time, sign in with your fingerprint, face or screen lock. Your password still works as a backup.',
   addPasskey: 'Add a passkey',
 
   passkeyTitle: 'Create your passkey.',
@@ -122,7 +122,6 @@ export const personalMessages = {
   hiddenRecovery: (lastDigits: string) => `•••••• ${lastDigits}`.trim(),
   hiddenValue: 'Hidden',
   signInPassword: 'Password',
-  signInPasswordAndPasskey: 'Password and a passkey',
   recoveryNone: 'Not added',
   tips: 'Email me tips and product news',
   activity: 'Keep my activity to improve suggestions in my files',
@@ -170,7 +169,6 @@ export const personalMessages = {
     recoveryEmail: 'We couldn’t save your recovery email. Add it in your account.',
     phone: 'This number can’t be used. Try another one in your account.',
     phoneSkipped: 'Your recovery phone isn’t confirmed yet. Confirm it in your account.',
-    passkey: 'We couldn’t save your passkey. Your password works; add a passkey in your account.',
     preferences: 'We couldn’t save your choices about tips and activity. Both are off; change them in your account.',
   },
   openYahel: 'Continue to Yahel',

@@ -1,20 +1,22 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createPasskeyClient } from './passkeys';
 import type { PasskeyEnvironment } from './passkeys';
 
 const bytes = (...values: number[]) => new Uint8Array(values).buffer;
-const signedIn = { tokens: { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }, profile: { id: '1', globalId: 'g', email: 'amara@northwind.example', firstName: 'Amara', lastName: null, displayName: null, photo: null } };
+const tokens = { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' };
 
 const setup = (overrides: Partial<PasskeyEnvironment> = {}, get = vi.fn()) => {
   const ceremony = {
-    begin: vi.fn().mockResolvedValue({ challenge: '-_8B', rpId: 'accounts.yahel.example', timeoutMs: 60_000, allowCredentials: [{ id: 'AQID' }], userVerification: 'required' }),
-    finish: vi.fn().mockResolvedValue(signedIn),
+    begin: vi.fn().mockResolvedValue({ challengeToken: 'pk-1', challenge: '-_8B', rpId: 'accounts.yahel.example', timeoutMs: 60_000, allowCredentials: [{ id: 'AQID' }], userVerification: 'required' }),
+    finish: vi.fn().mockResolvedValue(tokens),
   };
-  const environment: PasskeyEnvironment = { credentials: { get }, supported: true, rpId: 'accounts.yahel.example', ...overrides };
+  const environment: PasskeyEnvironment = { credentials: { get }, supported: true, ...overrides };
   return { ceremony, get, client: createPasskeyClient(ceremony, environment) };
 };
 
 describe('createPasskeyClient', () => {
+  afterEach(() => vi.useRealTimers());
+
   it('is offered whenever the browser has WebAuthn, wherever the passkey lives', () => {
     expect(setup().client.isSupported()).toBe(true);
     expect(setup({ supported: false }).client.isSupported()).toBe(false);
@@ -36,13 +38,24 @@ describe('createPasskeyClient', () => {
     expect(ceremony.begin).toHaveBeenCalledTimes(2);
   });
 
+  it('does not use a challenge fetched ahead that the server will have forgotten by the time the prompt answers', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const { client, ceremony } = setup({}, vi.fn().mockResolvedValue(null));
+
+    client.prepare('amara@northwind.example');
+    vi.setSystemTime(Date.now() + 51_000);
+    await client.signIn('amara@northwind.example');
+
+    expect(ceremony.begin).toHaveBeenCalledTimes(2);
+  });
+
   it('does not use a challenge prepared for a different account', async () => {
     const { client, ceremony } = setup({}, vi.fn().mockResolvedValue(null));
 
     client.prepare();
     await client.signIn('amara@northwind.example');
 
-    expect(ceremony.begin).toHaveBeenLastCalledWith({ email: 'amara@northwind.example', rpId: 'accounts.yahel.example' });
+    expect(ceremony.begin).toHaveBeenLastCalledWith({ email: 'amara@northwind.example' });
     expect(ceremony.begin).toHaveBeenCalledTimes(2);
   });
 
@@ -63,14 +76,22 @@ describe('createPasskeyClient', () => {
     const credential = { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(251, 255), authenticatorData: bytes(4), signature: bytes(5, 6), userHandle: bytes(7) } };
     const { client, ceremony, get } = setup({}, vi.fn().mockResolvedValue(credential));
 
-    await expect(client.signIn('amara@northwind.example')).resolves.toEqual({ status: 'signed-in', signedIn });
+    await expect(client.signIn('amara@northwind.example')).resolves.toEqual({ status: 'signed-in', tokens });
 
-    expect(ceremony.begin).toHaveBeenCalledWith({ email: 'amara@northwind.example', rpId: 'accounts.yahel.example' });
+    expect(ceremony.begin).toHaveBeenCalledWith({ email: 'amara@northwind.example' });
     const { publicKey } = get.mock.calls[0]![0];
     expect([...publicKey.challenge]).toEqual([251, 255, 1]);
     expect(publicKey).toMatchObject({ rpId: 'accounts.yahel.example', timeout: 60_000, userVerification: 'required' });
     expect([...publicKey.allowCredentials[0].id]).toEqual([1, 2, 3]);
-    expect(ceremony.finish).toHaveBeenCalledWith({ credentialId: 'AQID', clientDataJSON: '-_8', authenticatorData: 'BA', signature: 'BQY', userHandle: 'Bw' });
+    expect(ceremony.finish).toHaveBeenCalledWith('pk-1', { credentialId: 'AQID', clientDataJSON: '-_8', authenticatorData: 'BA', signature: 'BQY', userHandle: 'Bw' });
+  });
+
+  it('passes on a phone check the server asks for before the session, as after a password', async () => {
+    const credential = { rawId: bytes(1), response: { clientDataJSON: bytes(1), authenticatorData: bytes(1), signature: bytes(1), userHandle: null } };
+    const { client, ceremony } = setup({}, vi.fn().mockResolvedValue(credential));
+    ceremony.finish.mockResolvedValue({ phoneRequired: true, challengeToken: 'phone-1' });
+
+    await expect(client.signIn()).resolves.toEqual({ status: 'phone-required', challengeToken: 'phone-1' });
   });
 
   it('sends a null user handle when the device gives none', async () => {
@@ -79,7 +100,7 @@ describe('createPasskeyClient', () => {
 
     await client.signIn();
 
-    expect(ceremony.finish).toHaveBeenCalledWith(expect.objectContaining({ userHandle: null }));
+    expect(ceremony.finish).toHaveBeenCalledWith('pk-1', expect.objectContaining({ userHandle: null }));
   });
 
   it.each(['NotAllowedError', 'AbortError'])('treats a dismissed prompt (%s) as cancelled, not as a failure', async (name) => {

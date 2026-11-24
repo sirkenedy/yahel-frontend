@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
 import { emailCode, phoneCode, requestId } from './api';
-import { heading, person, signUp, signUpTo } from './personal';
+import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './personal';
 import { accountsUrl } from './accounts';
 
 const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();
@@ -151,11 +151,11 @@ export const personalScreens: Screen[] = [
       await page.getByRole('button', { name: 'Show password' }).click();
     },
   },
-  { name: 'personal add a passkey', open: (page) => signUpTo(page, 'add-passkey') },
+  { name: 'personal add a passkey', open: (page) => signUpToPasskeyOffer(page) },
   {
     name: 'personal passkey, waiting',
     open: async (page) => {
-      await signUpTo(page, 'add-passkey', { passkeys: 'waiting' });
+      await signUpToPasskeyOffer(page, { passkeys: 'waiting' });
       await page.getByRole('button', { name: 'Add a passkey' }).click();
       await page.getByText('Waiting for this device').waitFor();
     },
@@ -163,17 +163,17 @@ export const personalScreens: Screen[] = [
   {
     name: 'personal passkey, prompt closed',
     open: async (page) => {
-      await signUpTo(page, 'add-passkey', { passkeys: 'cancelled' });
+      await signUpToPasskeyOffer(page, { passkeys: 'cancelled' });
       await page.getByRole('button', { name: 'Add a passkey' }).click();
       await page.getByText('The passkey prompt was closed').waitFor();
     },
   },
   {
-    name: 'personal add a passkey, one already made',
+    name: 'personal add a passkey, one saved',
     open: async (page) => {
-      await signUpTo(page, 'recovery', { passkey: true });
-      await page.getByRole('link', { name: 'Back' }).click();
-      await page.getByText('A passkey is ready on this device').waitFor();
+      await signUpToPasskeyOffer(page);
+      await page.getByRole('button', { name: 'Add a passkey' }).click();
+      await page.getByText('Passkey saved', { exact: true }).waitFor();
     },
   },
   {
@@ -194,7 +194,7 @@ export const personalScreens: Screen[] = [
       await page.getByText('Check the number, or leave it empty.').waitFor();
     },
   },
-  { name: 'personal review', open: (page) => signUpTo(page, 'review', { passkey: true, phone: true }) },
+  { name: 'personal review', open: (page) => signUpTo(page, 'review', { phone: true }) },
   {
     name: 'personal review, private details shown, a choice turned on',
     open: async (page) => {

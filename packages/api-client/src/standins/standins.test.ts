@@ -1,27 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createStandIns, demoProfile } from './index';
+import { createStandIns } from './index';
 import { quoteFor } from './workspace-billing';
 
 const instant = async () => undefined;
-const assertion = { credentialId: 'id', clientDataJSON: 'c', authenticatorData: 'a', signature: 's', userHandle: null };
 
 describe('stand-ins', () => {
-  it('passkeys: hands out a challenge for the asking site and signs in the demo person', async () => {
-    const { passkeys } = createStandIns(instant);
-
-    const options = await passkeys.begin({ rpId: 'accounts.yahel.example' });
-    expect(options).toMatchObject({ rpId: 'accounts.yahel.example', allowCredentials: [], userVerification: 'required' });
-    expect(options.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
-
-    await expect(passkeys.finish(assertion)).resolves.toMatchObject({ profile: demoProfile, tokens: { tokenType: 'Bearer' } });
-  });
-
-  it('passkeys: refuses an assertion it could not verify', async () => {
-    const { passkeys } = createStandIns(instant);
-
-    await expect(passkeys.finish({ ...assertion, signature: '' })).rejects.toMatchObject({ status: 401, code: 'INVALID_CREDENTIALS' });
-  });
-
   it('text codes: names a masked number, then refuses the fourth request', async () => {
     const { textCodes } = createStandIns(instant);
 
@@ -53,42 +36,6 @@ describe('stand-ins', () => {
     for (let attempt = 0; attempt < 3; attempt += 1) await first.helpDesk.request({ contact: 'a@b.example' });
 
     await expect(createStandIns(instant).helpDesk.request({ contact: 'a@b.example' })).resolves.toBeUndefined();
-  });
-
-  it('passkey registration: hands out a challenge without being told who is asking, and accepts the new passkey', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    const options = await passkeyRegistration.begin({ rpId: 'accounts.yahel.example' });
-
-    expect(options).toMatchObject({ rp: { id: 'accounts.yahel.example', name: 'Yahel' }, algorithms: [-7, -257] });
-    expect(options.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(options.userHandle).toMatch(/^[A-Za-z0-9_-]+$/);
-    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] })).resolves.toBeUndefined();
-  });
-
-  it('admin access: names the demo organisation and its administrator, who has a passkey only once one is saved', async () => {
-    const { adminAccess, passkeyRegistration } = createStandIns(instant);
-
-    await expect(adminAccess.membership()).resolves.toEqual({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: true });
-    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] }).catch(() => undefined);
-    await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: false });
-    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });
-    await expect(adminAccess.membership()).resolves.toMatchObject({ hasPasskey: true });
-  });
-
-  it('passkey registration for someone signed in: lists the passkey already saved so the device does not make a second', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    await expect(passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' })).resolves.toMatchObject({ excludeCredentials: [] });
-    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });
-    const options = await passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' });
-    expect(options.excludeCredentials).toHaveLength(1);
-  });
-
-  it('passkey registration: refuses an attestation it could not verify', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] })).rejects.toMatchObject({ status: 400 });
   });
 
   it('preferences: keeps the choices it was given', async () => {

@@ -108,8 +108,12 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     describe: describe('passkey'),
     run: async () => {
       const result = await (passkeys?.signIn(store.getState().email ?? undefined) ?? { status: 'cancelled' as const });
+      if (result.status === 'phone-required') {
+        checkPhone(email(), result.challengeToken);
+        return 'phone-check' as const;
+      }
       if (result.status !== 'signed-in') return 'cancelled' as const;
-      session.establish(result.signedIn);
+      await session.establish(result.tokens);
       return 'signed-in' as const;
     },
     onDone: (outcome) => {

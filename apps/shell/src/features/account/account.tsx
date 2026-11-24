@@ -20,7 +20,8 @@ export const accountMessages = {
 export const displayName = (profile: Profile) =>
   profile.displayName?.trim() || [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email;
 
-export function ProfileSummary({ profile }: { profile: Profile }) {
+/** `tag` says which kind of account this is; it is left out until that is known. */
+export function ProfileSummary({ profile, tag }: { profile: Profile; tag: string | null }) {
   const name = displayName(profile);
   return (
     <div className="row">
@@ -29,7 +30,7 @@ export function ProfileSummary({ profile }: { profile: Profile }) {
         <div className="ws-headline">{name}</div>
         <div className="ws-footnote ws-secondary">{profile.email}</div>
       </div>
-      <span className="ws-tag ws-tag--accent">{accountMessages.personal}</span>
+      {tag ? <span className="ws-tag ws-tag--accent">{tag}</span> : null}
     </div>
   );
 }

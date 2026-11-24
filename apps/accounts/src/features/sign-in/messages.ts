@@ -11,6 +11,7 @@ export const signInMessages = {
   switchTo: 'Switch to',
   signInTo: 'Sign in to',
   personal: 'Personal',
+  work: 'Work account',
   signedOut: 'Signed out',
   accountsLoading: 'Finding the accounts on this device…',
   accountsFailedTitle: 'We couldn’t load your accounts',

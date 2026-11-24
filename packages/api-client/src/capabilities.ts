@@ -1,18 +1,15 @@
-import type { AuthTokens, ClientAccount, Profile } from './types';
+import type { ClientAccount, PasskeySignInResult } from './types';
 
 // Things the account flows need that the backend may not offer yet. Each is a small interface so the
 // interface code never knows whether a real endpoint or a stand-in is answering. See account-capabilities.ts.
 
-/** A signed-in session as a sign-in method other than the password endpoint would return it. */
-export interface SignedIn {
-  tokens: AuthTokens;
-  profile: Profile;
-}
-
 /** What the server asks the device to sign. Binary values are base64url text. */
 export interface PasskeyAssertionOptions {
+  /** Names this challenge to `finish`. Opaque; the server keeps a challenge for 60 seconds. */
+  challengeToken: string;
   challenge: string;
-  rpId: string;
+  /** The server's relying-party id; left out, the browser uses this page's host. */
+  rpId?: string;
   timeoutMs: number;
   /** Empty lets the device offer any passkey it holds for this site. */
   allowCredentials: { id: string }[];
@@ -29,12 +26,12 @@ export interface PasskeyAssertion {
 }
 
 /**
- * The server half of signing in with a passkey. A real server uses its own relying-party id and ignores
- * the one passed here, which exists for the stand-in; see docs/roadmap.md, "What each real endpoint must do".
+ * The server half of signing in with a passkey. `finish` answers with a session, or with a phone check first,
+ * as a password sign-in can. The address given to `begin` only shares the sign-in rate limit.
  */
 export interface PasskeyCeremony {
-  begin(input: { email?: string; rpId: string }): Promise<PasskeyAssertionOptions>;
-  finish(assertion: PasskeyAssertion): Promise<SignedIn>;
+  begin(input: { email?: string }): Promise<PasskeyAssertionOptions>;
+  finish(challengeToken: string, assertion: PasskeyAssertion): Promise<PasskeySignInResult>;
 }
 
 /** Sends the second-step code by text message instead of an authenticator app. */
@@ -72,14 +69,16 @@ export interface AccountHelpDesk {
 
 /** What the server asks the device to create. Binary values are base64url text. */
 export interface PasskeyCreationOptions {
+  /** Names this challenge to `finish`. Opaque; the server keeps a challenge for 60 seconds. */
+  challengeToken: string;
   challenge: string;
-  rp: { id: string; name: string };
-  /** A random handle for the account-to-be, or the signed-in account's own. It says nothing about the person. */
+  rp: { id?: string; name: string };
+  /** The signed-in account's own handle, as the server makes it. */
   userHandle: string;
   timeoutMs: number;
   /** COSE algorithm identifiers the server accepts, most preferred first. */
   algorithms: number[];
-  /** The account's passkeys already made, so a device does not make a second; only for a signed-in account. */
+  /** The account's passkeys already made, so a device does not make a second. */
   excludeCredentials?: string[];
 }
 
@@ -92,15 +91,12 @@ export interface PasskeyAttestation {
 }
 
 /**
- * The server half of creating a passkey. `begin` runs during sign-up, before the account exists, so it
- * takes and reveals nothing about a person; `beginForAccount` is for someone already signed in, and the
- * server binds its challenge to the session. `finish` runs once they are signed in and attaches the
- * passkey to the account. See docs/roadmap.md, "What each real endpoint must do".
+ * The server half of creating a passkey, for someone signed in: the server binds each challenge to the session,
+ * and `finish` attaches the passkey to that account. A passkey is made only once the account exists (F-108).
  */
 export interface PasskeyRegistration {
-  begin(input: { rpId: string }): Promise<PasskeyCreationOptions>;
-  beginForAccount(input: { rpId: string }): Promise<PasskeyCreationOptions>;
-  finish(attestation: PasskeyAttestation): Promise<void>;
+  beginForAccount(): Promise<PasskeyCreationOptions>;
+  finish(challengeToken: string, attestation: PasskeyAttestation): Promise<void>;
 }
 
 export interface AddressCheck {
@@ -324,15 +320,15 @@ export interface WorkspaceBilling {
 
 /** The workspace a signed-in session is in, as an administrator's first sign-in needs it. */
 export interface WorkspaceMembership {
-  /** The organisation's name. */
-  organisation: string;
+  /** The organisation's name, when the server has one. */
+  organisation: string | null;
   /** The person administers the workspace (its owner or an admin), so Admin is theirs to set up. */
   administrator: boolean;
   /** The person has at least one passkey. Admin is for administrators who have one. */
   hasPasskey: boolean;
   /**
-   * The server's own statement that it enforces "Admins must use a passkey" for this workspace (every rule in
-   * the admin-access stand-in's header). Only when it is true may the interface say Admin is closed without one.
+   * The server's own statement that it enforces "Admins must use a passkey" for this workspace (docs/roadmap.md,
+   * "What each real endpoint must do"). Only when it is true may the interface say Admin is closed without one.
    */
   passkeyRequired: boolean;
 }
@@ -347,16 +343,16 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
-  passkeys: PasskeyCeremony | null;
+  passkeys: PasskeyCeremony;
   textCodes: TextCodeSender | null;
   directory: AccountDirectory;
   recovery: RecoveryChannels;
   helpDesk: AccountHelpDesk | null;
-  passkeyRegistration: PasskeyRegistration | null;
+  passkeyRegistration: PasskeyRegistration;
   addresses: AddressAvailability | null;
   trustedContacts: TrustedContacts;
   preferences: SignUpPreferences | null;
@@ -364,7 +360,7 @@ export interface AccountCapabilities {
   domainMarket: DomainMarket | null;
   domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling | null;
-  adminAccess: AdminAccess | null;
+  adminAccess: AdminAccess;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }

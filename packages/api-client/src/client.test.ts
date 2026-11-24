@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { MAX_RETRY_AFTER, createApiClient } from './client';
 import { ApiError } from './errors';
 import { isPhoneRequired } from './types';
+import type { AuthenticationResponseJSON, RegistrationResponseJSON } from './types';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -157,6 +158,42 @@ describe('createApiClient', () => {
     expect(url).toBe('http://api.test/api/v1/me/recovery');
     expect(init.method).toBe('GET');
     expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it.each([
+    ['contexts', (api: ReturnType<typeof createApiClient>) => api.auth.contexts(), '/api/v1/auth/contexts', [{ type: 'tenant', tenantId: 't-1', displayName: 'Northwind Studio', logoUrl: null, role: 'OWNER', isCurrent: true }]],
+    ['passkeys.list', (api: ReturnType<typeof createApiClient>) => api.auth.passkeys.list(), '/api/v1/auth/passkey/list', [{ credentialId: 'c-1', deviceName: null, aaguid: null, transports: ['internal'], lastUsedAt: null, createdAt: '2026-11-24T10:00:00.000Z' }]],
+  ] as const)('auth.%s reads %s as the signed-in person', async (_, call, path, data) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(call(api)).resolves.toEqual(data);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe('GET');
+    expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  const assertion: AuthenticationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', authenticatorData: 'ad', signature: 'sig', userHandle: 'uh' }, clientExtensionResults: {} };
+  const attestation: RegistrationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', attestationObject: 'ao', transports: ['internal'] }, clientExtensionResults: {} };
+
+  it.each([
+    ['authenticateBegin', (api: ReturnType<typeof createApiClient>) => api.auth.passkeys.authenticateBegin({ email: 'amara@northwind.example' }), '/api/v1/auth/passkey/authenticate/begin', { email: 'amara@northwind.example' }, false],
+    ['authenticateFinish', (api: ReturnType<typeof createApiClient>) => api.auth.passkeys.authenticateFinish({ challengeToken: 'pk-1', response: assertion }), '/api/v1/auth/passkey/authenticate/finish', { challengeToken: 'pk-1', response: assertion }, false],
+    ['registerBegin', (api: ReturnType<typeof createApiClient>) => api.auth.passkeys.registerBegin(), '/api/v1/auth/passkey/register/begin', undefined, true],
+    ['registerFinish', (api: ReturnType<typeof createApiClient>) => api.auth.passkeys.registerFinish({ challengeToken: 'pk-2', response: attestation }), '/api/v1/auth/passkey/register/finish', { challengeToken: 'pk-2', response: attestation }, true],
+  ] as const)('auth.passkeys.%s posts to its endpoint, with a session only when it needs one', async (_, call, path, body, signedIn) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: { ok: true } }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(call(api)).resolves.toEqual({ ok: true });
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe('POST');
+    expect(init.body === undefined ? undefined : JSON.parse(init.body)).toEqual(body);
+    expect(init.headers.Authorization).toBe(signedIn ? 'Bearer token-1' : undefined);
   });
 
   it('does not refresh or resend when a signed-in request is refused for its own reasons, such as a wrong code', async () => {
