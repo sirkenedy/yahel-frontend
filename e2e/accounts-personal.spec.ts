@@ -18,9 +18,9 @@ test.describe('personal account: a new Yahel address', () => {
     await expect(page).toHaveURL(at('/personal/ready'));
     await expect(page.getByText(`${person.address} is ready. Every Yahel app now opens with it.`)).toBeVisible();
     expect(registrations(api)).toHaveLength(1);
-    expect(registrations(api)[0]!.body).toEqual({ email: person.address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: person.password });
+    expect(registrations(api)[0]!.body).toEqual({ email: person.address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: person.password, recoveryEmail: person.recoveryEmail });
     expect(calls(api, '/v1/auth/login')[0]!.body).toMatchObject({ email: person.address, password: person.password });
-    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: person.recoveryEmail });
+    expect(calls(api, '/v1/me/recovery/email')).toHaveLength(0);
     expect(calls(api, '/v1/auth/verify-email')).toHaveLength(0);
   });
 
@@ -209,7 +209,8 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     await expect(page.getByText(`We sent a 6-character code to ${person.maskedPhone}.`)).toBeVisible();
-    expect(calls(api, '/v1/me/recovery/phone')[0]!.body).toEqual({ phone: person.internationalPhone });
+    expect(registrations(api)[0]!.body).toMatchObject({ phone: person.internationalPhone });
+    expect(calls(api, '/v1/auth/phone/send-otp')[0]!.body).toEqual({ phone: person.internationalPhone });
 
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
@@ -218,7 +219,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await page.clock.fastForward(31_000);
     await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
     await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
-    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(2);
+    expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(2);
 
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -257,12 +258,13 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ firstName: 'Amara', lastName: '', displayName: 'Amara' });
-    expect(calls(api, '/v1/me/recovery/email')).toHaveLength(0);
-    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(0);
+    expect(registrations(api)[0]!.body).not.toHaveProperty('recoveryEmail');
+    expect(registrations(api)[0]!.body).not.toHaveProperty('phone');
+    expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(0);
   });
 
   test('someone the person trusts can be invited from the last screen', async ({ page }) => {
-    await mockApi(page);
+    const api = await mockApi(page);
     await signUp(page);
 
     await page.getByRole('link', { name: /Add someone you trust/ }).click();
@@ -273,6 +275,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await proceed(page, 'Send invitation');
 
     await expect(page.getByText('chidi.eze@personal.example is your trusted contact. We’ve sent them an invitation.')).toBeVisible();
+    expect(calls(api, '/v1/me/recovery/trusted-contact').map((call) => call.body)).toEqual([{ trustedContactEmail: 'chidi.eze@personal.example' }]);
   });
 });
 
@@ -408,7 +411,7 @@ test.describe('personal account: the review', () => {
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(heading(page, 'You’re in, Amarachi.')).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ email: 'amarachi.okafor@yahel.example', firstName: 'Amarachi', dateOfBirth: '1990-03-14T00:00:00.000Z', password: 'Harmattan in Jos 2026!' });
-    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: 'amarachi@personal.example' });
+    expect(registrations(api)[0]!.body).toMatchObject({ recoveryEmail: 'amarachi@personal.example' });
   });
 
   test('Back from an answer being changed returns to the review unchanged', async ({ page }) => {
@@ -895,7 +898,7 @@ test.describe('personal account: fixes from review', () => {
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
 
-    expect(calls(api, '/v1/me/recovery/phone/verify')).toHaveLength(1);
+    expect(calls(api, '/v1/auth/phone/verify')).toHaveLength(1);
     expect(calls(api, '/v1/auth/refresh')).toHaveLength(0);
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -1000,7 +1003,7 @@ test.describe('personal account: fixes from review', () => {
   test('a phone the server will not take is said to be refused, not unconfirmed', async ({ page }) => {
     const api = await mockApi(page);
     await signUpTo(page, 'review', { phone: true, recoveryEmail: false });
-    api.failNext('/v1/me/recovery/phone', 409, 'PHONE_ALREADY_IN_USE');
+    api.failNext('/v1/auth/phone/send-otp', 409, 'PHONE_ALREADY_IN_USE');
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
 

@@ -31,6 +31,13 @@ const answers: PersonalEvent[] = [
   { type: 'recovery-entered', country: 'NG', phone: '', email: 'amara.o@personal.example' },
 ];
 
+// Mirrors the backend's answer: a few names are taken, and alternatives are made from the name asked about.
+const takenAddresses = ['amara', 'okafor'];
+const alternativesTo = (name: string) => {
+  const [first = name, last] = name.split('.');
+  return last ? [`${last}.${first}`, `${first}${last}`] : [`${first}.mail`, `${first}1`, `hello.${first}`];
+};
+
 const fakeSession = () => ({
   signIn: vi.fn<Session['signIn']>(async () => ({ ok: true })),
   api: {
@@ -39,8 +46,11 @@ const fakeSession = () => ({
       verifyEmail: vi.fn().mockResolvedValue({ message: 'ok' }),
       resendVerification: vi.fn().mockResolvedValue({ message: 'ok' }),
       forgotPassword: vi.fn(),
+      sendPhoneOtp: vi.fn().mockResolvedValue({ message: 'ok' }),
+      verifyPhoneOtp: vi.fn().mockResolvedValue({ message: 'ok' }),
+      addressAvailability: vi.fn(async ({ name }: { name: string }) => ({ available: !takenAddresses.includes(name), alternatives: alternativesTo(name) })),
     },
-    me: { recovery: { updateEmail: vi.fn().mockResolvedValue({}), updatePhone: vi.fn().mockResolvedValue({}), verifyPhone: vi.fn().mockResolvedValue({}) } },
+    me: { recovery: { updateTrustedContact: vi.fn().mockResolvedValue({}) } },
   },
 });
 
@@ -237,11 +247,11 @@ describe('PersonalFlowProvider: the questions', () => {
     expect(flow().meta.direction).toBe('back');
   });
 
-  it('offers no trusted contact, choices or address check without stand-ins', () => {
+  it('offers no choices without stand-ins, while the trusted contact and the address check come from the server', async () => {
     const { flow } = setup({ step: 'address', standIns: false });
 
-    expect(flow().meta.offers).toMatchObject({ contact: false, preferences: false });
-    expect(flow().state.addressCheck).toEqual({ status: 'unoffered', alternatives: [] });
+    expect(flow().meta.offers).toMatchObject({ contact: true, preferences: false });
+    await waitFor(() => expect(flow().state.addressCheck.status).toBe('available'));
   });
 
   it('leaves for the business sign-up only when it has an address', () => {
@@ -338,16 +348,15 @@ describe('PersonalFlowProvider: the passkey', () => {
 });
 
 describe('PersonalFlowProvider: creating the account', () => {
-  it('registers what was answered, signs in, saves the ways back in and finishes', async () => {
+  it('registers what was answered with the ways back in, signs in and finishes', async () => {
     const { session, store, navigate, create } = setup();
 
     await create();
 
     expect(navigate).toHaveBeenCalledWith('creating');
-    expect(session.api.auth.register).toHaveBeenCalledWith({ email: address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password, gender: 'female' });
+    expect(session.api.auth.register).toHaveBeenCalledWith({ email: address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password, gender: 'female', recoveryEmail: 'amara.o@personal.example' });
     expect(session.signIn).toHaveBeenCalledWith(address, password);
-    expect(session.api.me.recovery.updateEmail).toHaveBeenCalledWith({ recoveryEmail: 'amara.o@personal.example' });
-    expect(session.api.me.recovery.updatePhone).not.toHaveBeenCalled();
+    expect(session.api.auth.sendPhoneOtp).not.toHaveBeenCalled();
     expect(store.getState().creation).toMatchObject({ created: true, signedIn: true, finished: true, settled: ['recoveryEmail'], unsaved: [] });
   });
 
@@ -356,7 +365,7 @@ describe('PersonalFlowProvider: creating the account', () => {
 
     await create();
 
-    expect(session.api.auth.register).toHaveBeenCalledWith({ email: address, firstName: 'Amara', lastName: '', displayName: 'Amara', dateOfBirth: '1994-03-14T00:00:00.000Z', password });
+    expect(session.api.auth.register).toHaveBeenCalledWith({ email: address, firstName: 'Amara', lastName: '', displayName: 'Amara', dateOfBirth: '1994-03-14T00:00:00.000Z', password, recoveryEmail: 'amara.o@personal.example' });
   });
 
   it('drops the password as soon as the account is signed in to, and keeps nothing secret in the query client', async () => {
@@ -522,19 +531,19 @@ describe('PersonalFlowProvider: creating the account', () => {
   });
 
   it('does not take a session that ended during set-up for a refusal: nothing is noted as unsaved, and the whole screen says to sign in again', async () => {
-    const { session, store, flow, navigate, create } = setup();
-    session.api.me.recovery.updateEmail.mockRejectedValue(failure(401, 'SESSION_EXPIRED'));
+    const { registrar, store, flow, navigate, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
+    registrar!.save.mockRejectedValue(failure(401, 'SESSION_EXPIRED'));
 
     await create(null);
 
     await waitFor(() => expect(flow().meta.requests.create.feedback).toEqual({ place: 'screen', screen: 'session-ended' }));
-    expect(store.getState().creation).toMatchObject({ created: true, signedIn: true, finished: false, settled: [], unsaved: [] });
+    expect(store.getState().creation).toMatchObject({ created: true, signedIn: true, finished: false, settled: ['recoveryEmail'], unsaved: [] });
     expect(navigate).not.toHaveBeenCalledWith('ready', { replace: true });
   });
 
   it('says so when the server ended every session during set-up', async () => {
-    const { session, store, flow, create } = setup();
-    session.api.me.recovery.updateEmail.mockRejectedValue(failure(401, 'TOKEN_REUSE_DETECTED'));
+    const { registrar, store, flow, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
+    registrar!.save.mockRejectedValue(failure(401, 'TOKEN_REUSE_DETECTED'));
 
     await create(null);
 
@@ -543,13 +552,12 @@ describe('PersonalFlowProvider: creating the account', () => {
   });
 
   it('finishes without a part the server refuses, and notes it for the last screen', async () => {
-    const { session, registrar, store, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
-    session.api.me.recovery.updateEmail.mockRejectedValue(failure(422, 'VALIDATION_ERROR'));
+    const { registrar, store, create } = setup({ events: [...answers, { type: 'passkey-created', attestation }] });
     registrar!.save.mockRejectedValue(failure(400, 'INVALID_TOKEN'));
 
     await create();
 
-    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['recoveryEmail', 'passkey'] });
+    expect(store.getState().creation).toMatchObject({ finished: true, unsaved: ['passkey'] });
   });
 
   it('stops when a part cannot be reached, and a second try saves only what is left', async () => {
@@ -562,7 +570,6 @@ describe('PersonalFlowProvider: creating the account', () => {
 
     expect(session.api.auth.register).toHaveBeenCalledTimes(1);
     expect(session.signIn).toHaveBeenCalledTimes(1);
-    expect(session.api.me.recovery.updateEmail).toHaveBeenCalledTimes(1);
     expect(registrar!.save).toHaveBeenCalledTimes(2);
   });
 });
@@ -574,12 +581,13 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
     const { session, store, flow, navigate, retained, create } = setup({ events: withPhone });
 
     await create('code');
-    expect(session.api.me.recovery.updatePhone).toHaveBeenCalledWith({ phone: '+2348035550142' });
+    expect(session.api.auth.register).toHaveBeenCalledWith(expect.objectContaining({ phone: '+2348035550142' }));
+    expect(session.api.auth.sendPhoneOtp).toHaveBeenCalledWith({ phone: '+2348035550142' });
     expect(store.getState().creation).toMatchObject({ phoneCodeAwaited: true, finished: false });
 
     act(() => flow().actions.verifyPhone('K9mP2r'));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
-    expect(session.api.me.recovery.verifyPhone).toHaveBeenCalledWith({ code: 'K9mP2r' });
+    expect(session.api.auth.verifyPhoneOtp).toHaveBeenCalledWith({ phone: '+2348035550142', code: 'K9mP2r' });
     expect(store.getState().creation).toMatchObject({ phoneCodeAwaited: false, finished: true, unsaved: [] });
     expect(retained()).not.toContain('K9mP2r');
   });
@@ -588,13 +596,13 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
     const { session, flow, goTo, create } = setup({ events: withPhone });
     await create('code');
     goTo('code');
-    session.api.me.recovery.verifyPhone.mockRejectedValueOnce(failure(401, 'INVALID_TOKEN'));
+    session.api.auth.verifyPhoneOtp.mockRejectedValueOnce(failure(401, 'INVALID_TOKEN'));
 
     act(() => flow().actions.verifyPhone('wrong1'));
     await waitFor(() => expect(flow().meta.requests.verifyPhone.feedback).toEqual(wrongCode));
     act(() => flow().actions.verifyPhone('K9mP2r'));
 
-    await waitFor(() => expect(session.api.me.recovery.verifyPhone).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(session.api.auth.verifyPhoneOtp).toHaveBeenCalledTimes(2));
   });
 
   it('sends a new code on request', async () => {
@@ -608,7 +616,7 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
     await waitFor(() => expect(flow().state.phoneCodeResent).toBe(true));
     // Said in passing, as a toast: the step itself shows nothing new.
     await waitFor(() => expect(toast()).toBe(m.newCodeSent));
-    expect(session.api.me.recovery.updatePhone).toHaveBeenCalledTimes(2);
+    expect(session.api.auth.sendPhoneOtp).toHaveBeenCalledTimes(2);
   });
 
   it('can be skipped, which is noted for the last screen', async () => {
@@ -623,7 +631,7 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
 
   it('finishes without the phone when the server will not take the number', async () => {
     const { session, store, create } = setup({ events: withPhone });
-    session.api.me.recovery.updatePhone.mockRejectedValue(failure(409, 'PHONE_ALREADY_IN_USE'));
+    session.api.auth.sendPhoneOtp.mockRejectedValue(failure(409, 'PHONE_ALREADY_IN_USE'));
 
     await create();
 
@@ -763,22 +771,23 @@ describe('PersonalFlowProvider: an email the person already has', () => {
 
 describe('PersonalFlowProvider: after the account exists', () => {
   it('invites a trusted contact and returns to the last screen', async () => {
-    const { store, flow, navigate, capabilities } = setup({ step: 'contact' });
-    const invite = vi.spyOn(capabilities.trustedContacts!, 'invite');
+    const { session, store, flow, navigate } = setup({ step: 'contact', standIns: false });
 
     act(() => flow().actions.inviteContact('chidi.eze@personal.example'));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('ready', { replace: true }));
-    expect(invite).toHaveBeenCalledWith('chidi.eze@personal.example');
+    expect(session.api.me.recovery.updateTrustedContact).toHaveBeenCalledWith({ trustedContactEmail: 'chidi.eze@personal.example' });
     expect(store.getState().contactInvited).toBe('chidi.eze@personal.example');
   });
 
-  it('refuses to invite anyone where trusted contacts are not offered', async () => {
-    const { flow } = setup({ step: 'contact', standIns: false });
+  it('says so when the invitation cannot be sent, and invites no one', async () => {
+    const { session, store, flow } = setup({ step: 'contact' });
+    session.api.me.recovery.updateTrustedContact.mockRejectedValue(failure(500, 'INTERNAL_SERVER_ERROR'));
 
     act(() => flow().actions.inviteContact('chidi.eze@personal.example'));
 
     await waitFor(() => expect(flow().meta.requests.inviteContact.feedback).toMatchObject({ place: 'banner', tone: 'danger', title: shared.serverErrorTitle, text: shared.serverErrorText, next: 'retry' }));
+    expect(store.getState().contactInvited).toBeNull();
   });
 
   it('leaves for where the person was heading', () => {

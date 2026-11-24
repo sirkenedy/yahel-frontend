@@ -90,6 +90,9 @@ interface Account {
   suspended?: boolean;
 }
 
+const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
+const wellFormedPhone = (phone: string | undefined) => Boolean(phone?.startsWith('+')) && (phone ?? '').replace(/\D/g, '').length >= 8;
+
 const emptyRecovery = () => ({
   recoveryEmail: { configured: false, value: null as string | null, lastUpdatedAt: null, pending: null as { value: string; requestedAt: string; usableAt: string } | null },
   phone: { configured: false, verified: false, value: null as string | null, lastUpdatedAt: null, pending: null as { value: string; verified: boolean; requestedAt: string; usableAt: string } | null },
@@ -157,12 +160,24 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return next;
     };
 
+    // Advice only, as the backend gives it: whether a Yahel address is free, and checked alternatives. Names reserved
+    // by the platform read as taken; so does any name with an account. `register` is still where a name is claimed.
+    if (path === '/v1/auth/address-availability') {
+      const name = String(body?.name ?? '').toLowerCase();
+      const reserved = ['amara', 'admin', 'hello', 'info', 'okafor', 'amara.o', 'support'];
+      const taken = (candidate: string) => reserved.includes(candidate) || accounts.some((known) => known.profile.email === `${candidate}@${mailDomain}`);
+      const [first = name, ...rest] = name.split('.');
+      const last = rest.join('');
+      const candidates = last ? [`${last}.${first}`, `${first}${last}`, `${first}.${last}1`, `${first}.${last.charAt(0)}`] : [`${first}.mail`, `${first}1`, `hello.${first}`];
+      return ok(route, { available: !taken(name), alternatives: candidates.filter((candidate) => candidate.length >= 4 && !taken(candidate)).slice(0, 3) }, 201);
+    }
     if (path === '/v1/auth/register') {
       const email = (body?.email ?? '').toLowerCase();
       const domain = email.split('@')[1] ?? '';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || /^\.|\.\.|\.@/.test(email) || !body?.firstName || typeof body.lastName !== 'string' || Number.isNaN(Date.parse(body.dateOfBirth ?? '')) || !meetsPasswordPolicy(body.password ?? '')) {
         return fail(route, 422, 'VALIDATION_ERROR');
       }
+      if ((body.recoveryEmail !== undefined && !body.recoveryEmail.includes('@')) || (body.phone !== undefined && !wellFormedPhone(body.phone))) return fail(route, 422, 'VALIDATION_ERROR');
       if (ageOf(body.dateOfBirth ?? '') < MIN_AGE) return fail(route, 403, 'USER_UNDERAGE');
       if (accounts.some((known) => known.profile.email === email)) return fail(route, 409, 'EMAIL_ALREADY_EXISTS');
       if (domain !== mailDomain && domain !== publicEmailDomain) return fail(route, 400, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL');
@@ -174,6 +189,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
         // An address on the platform's own domain is the person's by being claimed; any other has to be confirmed.
         emailVerified: domain === mailDomain,
       });
+      // The ways back in travel with the registration: the recovery email is staged, the phone waits for its texted code.
+      const methods = recoveryOf(email);
+      if (body.recoveryEmail) {
+        const [local = '', host = ''] = body.recoveryEmail.split('@');
+        methods.recoveryEmail.pending = staged(`${local.charAt(0)}***@${host.toLowerCase()}`);
+      }
+      if (body.phone) methods.phone.pending = { ...staged(`***${body.phone.slice(-4)}`), verified: false };
       return ok(route, { message: domain === mailDomain ? 'Registration successful.' : 'Registration successful. Please verify your email.' }, 201);
     }
     if (path === '/v1/auth/register-business') {
@@ -249,8 +271,22 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     }
     if (path === '/v1/me') return ok(route, signedIn);
     const methods = recoveryOf(signedIn.email);
-    const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
+    if (path === '/v1/auth/phone/send-otp') {
+      if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');
+      methods.phone.pending = { ...staged(`***${(body?.phone ?? '').slice(-4)}`), verified: false };
+      return ok(route, { message: 'Verification code sent' }, 201);
+    }
+    if (path === '/v1/auth/phone/verify') {
+      if (!methods.phone.pending) return fail(route, 403, 'FORBIDDEN');
+      if (body?.code !== phoneCode) return fail(route, 401, 'INVALID_TOKEN');
+      methods.phone.pending.verified = true;
+      return ok(route, { message: 'Phone verified' }, 201);
+    }
     if (path === '/v1/me/recovery') return ok(route, methods);
+    if (path === '/v1/me/recovery/trusted-contact') {
+      if (!(body?.trustedContactEmail ?? '').includes('@')) return fail(route, 422, 'VALIDATION_ERROR');
+      return ok(route, methods);
+    }
     if (path === '/v1/me/recovery/email') {
       const [local = '', domain] = (body?.recoveryEmail ?? '').split('@');
       if (!domain) return fail(route, 422, 'VALIDATION_ERROR');
@@ -258,9 +294,8 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return ok(route, methods);
     }
     if (path === '/v1/me/recovery/phone') {
-      const digits = (body?.phone ?? '').replace(/\D/g, '');
-      if (!body?.phone?.startsWith('+') || digits.length < 8) return fail(route, 400, 'BAD_REQUEST');
-      methods.phone.pending = { ...staged(`***${digits.slice(-4)}`), verified: false };
+      if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');
+      methods.phone.pending = { ...staged(`***${(body?.phone ?? '').slice(-4)}`), verified: false };
       return ok(route, methods);
     }
     if (path === '/v1/me/recovery/phone/verify') {
