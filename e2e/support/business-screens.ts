@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
-import { requestId } from './api';
+import { claimedDomain, requestId } from './api';
 import { business, card, createWorkspace, createWorkspaceTo, heading, proceed, searchForBoughtDomain } from './business';
 
 /** Answers the request that creates the workspace the way the backend would refuse it. Registered after the mock, so it is asked first. */
@@ -60,7 +60,7 @@ export const businessScreens: Screen[] = [
     name: 'business domain, claimed',
     open: async (page) => {
       await createWorkspaceTo(page, 'domain');
-      await page.getByLabel('Your domain', { exact: true }).fill('taken.example');
+      await page.getByLabel('Your domain', { exact: true }).fill(claimedDomain);
       await proceed(page);
       await page.getByText('Another organisation has claimed this domain').waitFor();
     },
