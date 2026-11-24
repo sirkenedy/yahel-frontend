@@ -63,6 +63,8 @@ test.describe('personal account: a new Yahel address', () => {
 
   test('an address that turns out to be taken when the account is created sends the person back to choose another, and nothing else is lost', async ({ page }) => {
     const api = await mockApi(page);
+    // Taken after the check said it was free: only creating the account finds out.
+    await page.route('**/api/v1/auth/address-availability', (route) => route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ success: true, data: { available: true, alternatives: [] }, meta: { requestId } }) }));
     await signUpTo(page, 'done', { username: takenAddress.split('@')[0] });
 
     await expect(heading(page, 'Pick your address.')).toBeVisible();
