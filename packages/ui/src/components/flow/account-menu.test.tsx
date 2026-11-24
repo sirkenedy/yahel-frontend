@@ -12,10 +12,13 @@ const labels = {
   manage: 'Manage your account',
   signOut: 'Sign out',
   others: 'Other accounts on this device',
+  showOthers: 'Show more accounts',
+  hideOthers: 'Hide more accounts',
   switchTo: 'Switch to',
   signInTo: 'Sign in to',
   signOutOf: (email: string) => `Sign out of ${email}`,
-  signIn: 'Sign in',
+  signOutThis: 'Sign out of this account',
+  signedOut: 'Signed out',
   add: 'Add another account',
   signOutAll: 'Sign out of all accounts',
   privacy: 'Privacy',
@@ -26,8 +29,8 @@ const setup = (overrides: Partial<AccountMenuProps> = {}) => {
   const props: AccountMenuProps = {
     current: { name: 'Amara Okafor', email: 'amara.okafor@yahel.example', kind: 'person', badge: 'Personal account' },
     others: [
-      { id: 'h-1', name: 'Amara Okafor', email: 'amara@northwind.example', kind: 'organisation', status: 'Northwind Studio', signedIn: true },
-      { id: 'h-2', name: 'Tunde Bakare', email: 'tunde@yahel.example', kind: 'person', status: 'Signed out', signedIn: false },
+      { id: 'h-1', name: 'Amara Okafor', email: 'amara@northwind.example', kind: 'organisation', signedIn: true },
+      { id: 'h-2', name: 'Tunde Bakare', email: 'tunde@yahel.example', kind: 'person', signedIn: false },
     ],
     labels,
     manageHref: 'https://app.yahel.example/u/0/account',
@@ -66,8 +69,23 @@ describe('AccountMenu', () => {
     const current = within(panel).getByRole('region', { name: 'Signed in as' });
     expect(current).toHaveTextContent('Amara Okafor');
     expect(current).toHaveTextContent('Personal account');
-    expect(within(panel).getByRole('heading', { name: 'Other accounts on this device' })).toBeInTheDocument();
+    expect(within(panel).getByRole('list', { name: 'Other accounts on this device' })).toBeInTheDocument();
     expect(within(panel).getByRole('link', { name: 'Privacy' })).toBeInTheDocument();
+  });
+
+  it('hides and shows the other accounts from the chevron, starting shown', async () => {
+    setup();
+    await open();
+    const panel = screen.getByRole('dialog', { name: 'Accounts' });
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Hide more accounts' }));
+    expect(within(panel).queryByRole('list', { name: 'Other accounts on this device' })).not.toBeInTheDocument();
+    const toggle = within(panel).getByRole('button', { name: 'Show more accounts' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(toggle);
+    expect(within(panel).getByRole('button', { name: 'Hide more accounts' })).toHaveAttribute('aria-expanded', 'true');
+    expect(within(panel).getByRole('list', { name: 'Other accounts on this device' })).toHaveTextContent('tunde@yahel.example·Signed out');
   });
 
   it('closes on Escape and gives focus back to the avatar, and closes on a press outside', async () => {
@@ -120,7 +138,8 @@ describe('AccountMenu', () => {
     await open();
 
     expect(screen.queryByRole('link', { name: 'Manage your account' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Other accounts on this device' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Other accounts on this device' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Hide more accounts' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Sign out of all accounts' }));
     expect(props.onSignOutAll).not.toHaveBeenCalled();
   });

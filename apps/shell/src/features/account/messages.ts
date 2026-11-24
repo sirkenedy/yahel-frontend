@@ -5,10 +5,13 @@ export const menuMessages = {
   manage: 'Manage your account',
   signOut: 'Sign out',
   others: 'Other accounts on this device',
+  showOthers: 'Show more accounts',
+  hideOthers: 'Hide more accounts',
   switchTo: 'Switch to',
   signInTo: 'Sign in to',
   signOutOf: (email: string) => `Sign out of ${email}`,
-  signIn: 'Sign in',
+  signOutThis: 'Sign out of this account',
+  signedOut: 'Signed out',
   add: 'Add another account',
   signOutAll: 'Sign out of all accounts',
   privacy: 'Privacy',
@@ -17,7 +20,5 @@ export const menuMessages = {
 
 export const accountWords = {
   personalAccount: 'Personal account',
-  personal: 'Personal',
-  signedOut: 'Signed out',
   admin: (organisation: string) => `Admin · ${organisation}`,
 } as const;

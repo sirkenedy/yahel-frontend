@@ -33,7 +33,7 @@ export interface AccountFaceProps {
   /** The server's initials, used for a person in place of ones made from the name. */
   initials?: string | null;
   avatarUrl?: string | null;
-  size?: 'small' | 'regular' | 'large';
+  size?: 'small' | 'regular' | 'medium' | 'large';
   /** A green dot for an account that is signed in; a dimmed face for one that is not. */
   presence?: 'signed-in' | 'signed-out';
 }

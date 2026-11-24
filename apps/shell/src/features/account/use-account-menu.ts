@@ -48,7 +48,7 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
 
   return {
     current: { name: current ? nameOf(current) : profile.displayName?.trim() || profile.email, email: profile.email, kind: 'person', initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: badgeOf(current) },
-    others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: account.kind === 'business' ? 'organisation' : 'person', initials: account.initials, avatarUrl: account.avatarUrl, status: account.signedIn ? (account.organisation ?? w.personal) : w.signedOut, signedIn: account.signedIn })),
+    others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: account.kind === 'business' ? 'organisation' : 'person', initials: account.initials, avatarUrl: account.avatarUrl, signedIn: account.signedIn })),
     manageHref: `/u/${slot}/account`,
     isBusy: action.isPending,
     onSignOut: () =>
