@@ -1,0 +1,94 @@
+/* Accounts: faces, the chooser's list and the account menu. Part of Daylight, and loaded on its own by apps
+   that show only the account menu (the shell), so they do not carry the flows' styles. */
+.ws-flow-hidden { position: absolute; width: var(--ws-border-hairline); height: var(--ws-border-hairline); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ws-flow-icon { flex-shrink: 0; width: var(--ws-icon-md); height: var(--ws-icon-md); stroke-width: var(--ws-border-focus); }
+
+/* Accounts */
+.ws-flow-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--ws-flow-avatar); height: var(--ws-flow-avatar); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-accent); color: var(--ws-color-daylight-on-accent); font-size: var(--ws-type-flow-label-size); font-weight: var(--ws-weight-bold); }
+.ws-flow-avatar--small { width: var(--ws-flow-avatar-sm); height: var(--ws-flow-avatar-sm); font-size: var(--ws-type-flow-note-size); font-weight: var(--ws-weight-semibold); }
+.ws-flow-avatar--organisation { border-radius: var(--ws-radius-md); background: var(--ws-color-daylight-soft); color: var(--ws-color-daylight-canvas); }
+.ws-flow-avatar--outline { background: transparent; box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line-strong); color: var(--ws-color-daylight-accent); }
+.ws-flow-chip { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--ws-space-8); box-sizing: border-box; max-width: 100%; min-height: var(--ws-target-touch); padding: var(--ws-space-4) var(--ws-space-16) var(--ws-space-4) var(--ws-space-4); padding-inline: var(--ws-space-4) var(--ws-space-16); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); font-size: var(--ws-type-flow-link-size); line-height: var(--ws-type-flow-link-line); font-weight: var(--ws-weight-medium); }
+.ws-flow-chip__email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-accounts { margin: 0; padding: 0; list-style: none; overflow: hidden; border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
+.ws-flow-accounts__item { display: flex; align-items: center; gap: var(--ws-space-8); padding-inline-end: var(--ws-space-12); }
+.ws-flow-accounts__item + .ws-flow-accounts__item { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
+.ws-flow-accounts__row { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--ws-space-12); margin-inline-end: calc(var(--ws-space-12) * -1); padding: var(--ws-space-12) var(--ws-space-16); border: 0; background: transparent; color: var(--ws-color-daylight-ink); font: inherit; text-align: start; cursor: pointer; }
+.ws-flow-accounts__item:has(> :nth-child(2)) .ws-flow-accounts__row { margin-inline-end: 0; }
+.ws-flow-accounts__row:hover { background: var(--ws-color-daylight-selected); }
+.ws-flow-accounts .ws-flow-accounts__row:focus-visible { outline-offset: calc(var(--ws-border-focus-strong) * -1); }
+.ws-flow-accounts__row:disabled { cursor: default; }
+.ws-flow-accounts__row--action { font-size: var(--ws-type-flow-link-size); font-weight: var(--ws-type-flow-link-weight); }
+.ws-flow-accounts__who { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--ws-space-2); }
+.ws-flow-accounts__name { font-weight: var(--ws-weight-semibold); }
+.ws-flow-accounts__email { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-accounts__detail { flex-shrink: 0; max-width: 40%; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); text-align: end; }
+.ws-flow-avatar--large { width: var(--ws-flow-avatar-lg); height: var(--ws-flow-avatar-lg); font-family: var(--ws-font-display); font-size: var(--ws-type-title-2-size); font-weight: var(--ws-type-flow-display-weight); }
+.ws-flow-avatar--tint { background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-accent); }
+.ws-flow-avatar { overflow: hidden; }
+.ws-flow-avatar__image { width: 100%; height: 100%; object-fit: cover; }
+.ws-flow-face { position: relative; display: inline-flex; flex-shrink: 0; }
+.ws-flow-face--away .ws-flow-avatar { background: var(--ws-color-daylight-track); color: var(--ws-color-daylight-soft); }
+.ws-flow-face__presence { position: absolute; inset-inline-end: calc(var(--ws-space-2) * -1); inset-block-end: calc(var(--ws-space-2) * -1); width: var(--ws-flow-presence); height: var(--ws-flow-presence); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-success); box-shadow: 0 0 0 var(--ws-border-focus) var(--ws-color-daylight-surface); }
+
+/* Account menu: the avatar at the top of a signed-in screen and the accounts panel it opens. */
+.ws-flow-menu { position: relative; display: flex; color: var(--ws-color-daylight-ink); font-family: var(--ws-font-text); }
+.ws-flow-menu :focus-visible { outline: var(--ws-border-focus-strong) solid var(--ws-color-daylight-accent); outline-offset: var(--ws-border-focus-offset); }
+.ws-flow-menu__trigger { display: inline-flex; align-items: center; justify-content: center; width: var(--ws-target-touch); height: var(--ws-target-touch); padding: 0; border: 0; border-radius: var(--ws-radius-full); background: transparent; cursor: pointer; }
+.ws-flow-menu__trigger .ws-flow-avatar { transition: box-shadow var(--ws-duration-quick) var(--ws-easing-standard); }
+.ws-flow-menu__trigger[data-hovered] .ws-flow-avatar { box-shadow: 0 0 0 var(--ws-border-ring) var(--ws-color-daylight-tint); }
+.ws-flow-menu__trigger[aria-expanded='true'] .ws-flow-avatar { box-shadow: 0 0 0 var(--ws-border-focus) var(--ws-color-daylight-canvas), 0 0 0 calc(var(--ws-border-focus) * 2) var(--ws-color-daylight-accent); }
+.ws-flow-menu__panel { position: absolute; inset-inline-end: 0; inset-block-start: calc(var(--ws-target-touch) + var(--ws-space-8)); z-index: var(--ws-z-popover); display: flex; flex-direction: column; gap: var(--ws-space-2); box-sizing: border-box; width: var(--ws-flow-menu); max-width: calc(100vw - var(--ws-space-24)); max-height: calc(100dvh - var(--ws-space-64) - var(--ws-space-16)); overflow-y: auto; padding: calc(var(--ws-space-4) + var(--ws-space-2)); border-radius: calc(var(--ws-radius-xl) + var(--ws-space-2)); background: var(--ws-color-daylight-surface); box-shadow: 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line), var(--ws-elevation-4); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); text-align: start; transform-origin: top right; animation: ws-flow-menu-in var(--ws-duration-standard) var(--ws-easing-pop) both; }
+@keyframes ws-flow-menu-in { from { opacity: 0; transform: translateY(calc(var(--ws-space-4) * -1.5)) scale(0.97); } }
+.ws-flow-menu__current { display: flex; flex-direction: column; gap: var(--ws-space-12); padding: calc(var(--ws-space-12) + var(--ws-space-2)) calc(var(--ws-space-12) + var(--ws-space-2)) var(--ws-space-12); border-radius: calc(var(--ws-radius-lg) + var(--ws-border-hairline)); background: var(--ws-color-daylight-canvas); }
+.ws-flow-menu__who { display: flex; align-items: center; gap: var(--ws-space-12); min-width: 0; }
+.ws-flow-avatar--medium { width: var(--ws-flow-avatar-md); height: var(--ws-flow-avatar-md); font-size: var(--ws-type-flow-lede-size); font-weight: var(--ws-weight-bold); }
+.ws-flow-menu__names { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--ws-border-hairline); }
+.ws-flow-menu__name { font-size: var(--ws-type-flow-link-size); line-height: var(--ws-type-flow-link-line); font-weight: var(--ws-type-flow-display-weight); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-menu__email { min-width: 0; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-menu__badge { align-self: flex-start; margin-block-start: var(--ws-space-4); padding: var(--ws-border-hairline) var(--ws-space-8); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-link); font-size: var(--ws-type-caption-2-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-type-flow-display-weight); }
+.ws-flow-menu__toggle, .ws-flow-menu__row-out { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: var(--ws-target-pointer); height: var(--ws-target-pointer); padding: 0; border: 0; border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); color: var(--ws-color-daylight-soft); cursor: pointer; }
+.ws-flow-menu__toggle[data-hovered] { background: var(--ws-color-daylight-selected); }
+.ws-flow-menu__glyph { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.ws-flow-menu__glyph .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); }
+.ws-flow-menu__toggle .ws-flow-icon { transition: transform var(--ws-duration-field) var(--ws-easing-standard); }
+.ws-flow-menu__toggle[aria-expanded='true'] .ws-flow-icon { transform: rotate(180deg); }
+.ws-flow-menu__actions { display: flex; gap: var(--ws-space-8); }
+.ws-flow-menu__button { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-height: calc(var(--ws-target-pointer) + var(--ws-space-4)); padding: 0 calc(var(--ws-space-12) + var(--ws-space-2)); border: 0; border-radius: var(--ws-radius-full); background: transparent; box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line-strong); color: var(--ws-color-daylight-ink); font: inherit; font-size: calc((var(--ws-type-flow-note-size) + var(--ws-type-flow-label-size)) / 2); font-weight: var(--ws-type-flow-display-weight); text-decoration: none; cursor: pointer; }
+.ws-flow-menu__button--grow { flex: 1 1 auto; background: var(--ws-color-daylight-surface); }
+.ws-flow-menu__button[data-hovered], .ws-flow-menu__button:hover { background: var(--ws-color-daylight-selected); }
+.ws-flow-menu__accounts { display: flex; flex-direction: column; max-height: var(--ws-flow-menu-list); overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: var(--ws-space-4) 0 0; list-style: none; }
+.ws-flow-menu__account { position: relative; display: flex; align-items: center; border-radius: var(--ws-radius-md); }
+.ws-flow-menu__row { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--ws-space-12); box-sizing: border-box; width: 100%; min-height: var(--ws-target-touch); padding: calc(var(--ws-space-4) + var(--ws-space-2)) calc(var(--ws-space-8) + var(--ws-space-2)); border: 0; border-radius: var(--ws-radius-md); background: transparent; color: var(--ws-color-daylight-ink); font: inherit; font-size: calc((var(--ws-type-flow-label-size) + var(--ws-type-flow-link-size)) / 2); font-weight: var(--ws-weight-semibold); text-align: start; cursor: pointer; transition: background-color var(--ws-duration-quick) var(--ws-easing-standard); }
+.ws-flow-menu__row[data-hovered], .ws-flow-menu__row[data-focus-visible] { background: var(--ws-color-daylight-selected); }
+.ws-flow-menu__row[data-disabled], .ws-flow-menu__row-out[data-disabled], .ws-flow-menu__button[data-disabled] { cursor: default; }
+.ws-flow-menu__row--account { min-height: calc(var(--ws-target-touch) + var(--ws-space-8)); padding-inline-end: var(--ws-target-touch); }
+.ws-flow-menu__row .ws-flow-avatar--organisation { border-radius: calc(var(--ws-radius-sm) + var(--ws-space-2)); }
+.ws-flow-menu__row .ws-flow-face__presence { width: calc(var(--ws-flow-presence) - var(--ws-space-2)); height: calc(var(--ws-flow-presence) - var(--ws-space-2)); }
+.ws-flow-menu__account .ws-flow-menu__names { gap: 0; }
+.ws-flow-menu__row-name { font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-menu__line { display: flex; gap: calc(var(--ws-space-4) + var(--ws-space-2)); min-width: 0; color: var(--ws-color-daylight-mute); font-size: calc(var(--ws-type-flow-note-size) - var(--ws-border-hairline) / 2); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-regular); }
+.ws-flow-menu__line > :not(.ws-flow-menu__email) { flex-shrink: 0; }
+.ws-flow-menu__account .ws-flow-menu__email { font-size: inherit; }
+.ws-flow-menu__row-out { position: absolute; inset-inline-end: calc(var(--ws-space-4) + var(--ws-space-2)); background: transparent; box-shadow: none; color: var(--ws-color-daylight-mute); opacity: 0; transition: opacity var(--ws-duration-instant) var(--ws-easing-standard), background-color var(--ws-duration-instant) var(--ws-easing-standard); }
+.ws-flow-menu__account:hover .ws-flow-menu__row-out, .ws-flow-menu__row-out[data-focus-visible], .ws-flow-menu__row-out:focus-visible { opacity: 1; }
+.ws-flow-menu__row-out[data-hovered] { background: var(--ws-color-daylight-line); color: var(--ws-color-daylight-ink); }
+.ws-flow-menu__rule { height: var(--ws-border-hairline); margin: var(--ws-space-4) calc(var(--ws-space-8) + var(--ws-space-2)); background: var(--ws-color-daylight-line); }
+.ws-flow-menu__row--action .ws-flow-avatar { width: var(--ws-flow-avatar-sm); height: var(--ws-flow-avatar-sm); }
+.ws-flow-menu__row--action .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); }
+.ws-flow-menu__row--action .ws-flow-avatar--outline { color: var(--ws-color-daylight-soft); }
+.ws-flow-menu__footer { display: flex; justify-content: center; gap: calc(var(--ws-space-4) + var(--ws-space-2)); margin: 0; padding: calc(var(--ws-space-4) + var(--ws-space-2)) 0; color: var(--ws-color-daylight-mute); font-size: calc(var(--ws-type-flow-note-size) - var(--ws-border-hairline)); }
+.ws-flow-menu__footer a { display: inline-flex; align-items: center; min-height: var(--ws-target-pointer); color: inherit; text-decoration: none; }
+.ws-flow-menu__footer a:hover { text-decoration: underline; }
+@media (max-width: 560px) {
+  .ws-flow-menu__panel { position: fixed; inset-inline: var(--ws-space-12); inset-block-start: calc(var(--ws-target-touch) + var(--ws-space-32)); width: auto; max-width: none; }
+}
+@media (hover: none) {
+  .ws-flow-menu__row-out { inset-inline-end: 0; opacity: 1; }
+  .ws-flow-menu__toggle, .ws-flow-menu__row-out { width: var(--ws-target-touch); height: var(--ws-target-touch); }
+  .ws-flow-menu__button, .ws-flow-menu__footer a { min-height: var(--ws-target-touch); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-flow-menu__panel { animation: none; }
+  .ws-flow-menu__toggle .ws-flow-icon, .ws-flow-menu__row-out { transition: none; }
+}

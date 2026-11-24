@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
-import { requestId } from './api';
+import { claimedDomain, requestId } from './api';
 import { business, card, createWorkspace, createWorkspaceTo, heading, proceed, searchForBoughtDomain } from './business';
 
 /** Answers the request that creates the workspace the way the backend would refuse it. Registered after the mock, so it is asked first. */
@@ -37,16 +37,30 @@ export const businessScreens: Screen[] = [
     open: async (page) => {
       // The answer never comes, so the screen that waits for it stays.
       await page.route('**/api/v1/auth/register-business', () => undefined);
-      await createWorkspaceTo(page, 'done');
+      await createWorkspaceTo(page, 'admin');
+      await page.getByLabel('Password', { exact: true }).fill(business.password);
+      await page.getByLabel('Confirm password').fill(business.password);
+      await proceed(page, 'Agree and continue');
       await heading(page, `Creating ${business.name}…`).waitFor();
     },
   },
-  { name: 'business ready', open: (page) => createWorkspace(page) },
+  { name: 'business found', open: (page) => createWorkspaceTo(page, 'found', { domain: 'bought' }) },
+  { name: 'business ready', open: (page) => createWorkspaceTo(page, 'ready') },
+  { name: 'business gateway', open: (page) => createWorkspaceTo(page, 'gateway', { domain: 'bought' }) },
+  {
+    name: 'business gateway, billing address',
+    open: async (page) => {
+      await createWorkspaceTo(page, 'gateway', { domain: 'bought' });
+      await page.getByRole('checkbox', { name: 'Billing address is the same as my business address' }).uncheck();
+      await page.getByRole('group', { name: 'Billing address' }).waitFor();
+    },
+  },
+  { name: 'business paid', open: (page) => createWorkspace(page, { domain: 'bought' }) },
   {
     name: 'business domain, claimed',
     open: async (page) => {
       await createWorkspaceTo(page, 'domain');
-      await page.getByLabel('Your domain', { exact: true }).fill('taken.example');
+      await page.getByLabel('Your domain', { exact: true }).fill(claimedDomain);
       await proceed(page);
       await page.getByText('Another organisation has claimed this domain').waitFor();
     },
@@ -56,7 +70,7 @@ export const businessScreens: Screen[] = [
     open: async (page) => {
       await createWorkspaceTo(page, 'you');
       await proceed(page);
-      await page.getByText('5 things to fix before you continue').waitFor();
+      await page.getByText('2 things to fix before you continue').waitFor();
     },
   },
   {
@@ -71,7 +85,10 @@ export const businessScreens: Screen[] = [
     name: 'business admin, address taken',
     open: async (page) => {
       await refuseCreation(page, 409, 'EMAIL_ALREADY_EXISTS');
-      await createWorkspaceTo(page, 'done');
+      await createWorkspaceTo(page, 'admin');
+      await page.getByLabel('Password', { exact: true }).fill(business.password);
+      await page.getByLabel('Confirm password').fill(business.password);
+      await proceed(page, 'Agree and continue');
       await page.getByText('That address already has a Yahel sign-in.').waitFor();
     },
   },
@@ -82,8 +99,8 @@ export const businessScreens: Screen[] = [
     open: async (page) => {
       await createWorkspaceTo(page, 'plan');
       await proceed(page, 'Continue to checkout');
-      await proceed(page, 'Start free trial');
-      await page.getByText('Add your business address.').waitFor();
+      await proceed(page, 'Continue to payment');
+      await page.getByText('Add your name and address.').waitFor();
     },
   },
   {
@@ -105,7 +122,10 @@ export const businessScreens: Screen[] = [
     name: 'business creating, failed',
     open: async (page) => {
       await refuseCreation(page, 500, 'INTERNAL_ERROR');
-      await createWorkspaceTo(page, 'done');
+      await createWorkspaceTo(page, 'admin');
+      await page.getByLabel('Password', { exact: true }).fill(business.password);
+      await page.getByLabel('Confirm password').fill(business.password);
+      await proceed(page, 'Agree and continue');
       await heading(page, 'We couldn’t finish creating your workspace.').waitFor();
     },
   },

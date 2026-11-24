@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_RETRY_AFTER, createApiClient } from './client';
 import { ApiError } from './errors';
+import { isPhoneRequired } from './types';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -16,11 +17,44 @@ describe('createApiClient', () => {
     expect(init.headers.Authorization).toBe('Bearer token-1');
   });
 
+  it('sends the browser’s cookies and says it is the web client on every request, signed in or not', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: [] }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await api.auth.accounts();
+    await api.me.get();
+
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init.credentials).toBe('include');
+      expect(init.headers['X-Yahel-Client']).toBe('web');
+    }
+  });
+
+  it.each([
+    ['refresh', () => [{ slot: 2 }], 'POST', '/api/v1/auth/refresh', { slot: 2 }, { accessToken: 'a', expiresIn: 900, slot: 2, handle: 'h-2' }],
+    ['logout', () => [{ slot: 2 }], 'POST', '/api/v1/auth/logout', { slot: 2 }, { slot: 2 }],
+    ['logoutBrowser', () => [], 'POST', '/api/v1/auth/logout-browser', undefined, null],
+    ['accounts', () => [], 'GET', '/api/v1/auth/accounts', undefined, [{ handle: 'h-0', slot: 0, signedIn: true }]],
+    ['removeAccount', () => ['h/1'], 'DELETE', '/api/v1/auth/accounts/h%2F1', undefined, { handle: 'h/1' }],
+  ] as const)('auth.%s reaches the browser’s accounts by slot or handle, with cookies and no bearer token', async (method, args, verb, path, body, data) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect((api.auth[method] as (...input: unknown[]) => Promise<unknown>)(...args())).resolves.toEqual(data);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe(verb);
+    expect(init.body === undefined ? undefined : JSON.parse(init.body)).toEqual(body);
+    expect(init.headers.Authorization).toBeUndefined();
+    expect(init.credentials).toBe('include');
+  });
+
   it('throws an ApiError carrying the backend code and request id', async () => {
     const fetchMock = vi.fn().mockResolvedValue(json(400, { success: false, code: 'VALIDATION_ERROR', message: 'Request validation failed', meta: { requestId: 'r-1', validationErrors: ['email must be an email'] } }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
 
-    const error = await api.auth.login({ email: 'x', password: 'y', deviceId: 'd' }).catch((e: unknown) => e);
+    const error = await api.auth.login({ email: 'x', password: 'y' }).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 400, code: 'VALIDATION_ERROR', requestId: 'r-1', validationErrors: ['email must be an email'] });
@@ -54,16 +88,18 @@ describe('createApiClient', () => {
   it('reports a network failure as status 0', async () => {
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: vi.fn().mockRejectedValue(new TypeError('failed')) });
 
-    await expect(api.auth.login({ email: 'a@b.c', password: 'p', deviceId: 'd' })).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
+    await expect(api.auth.login({ email: 'a@b.c', password: 'p' })).rejects.toMatchObject({ status: 0, code: 'NETWORK_ERROR' });
   });
 
   it.each([
     ['register', '/api/v1/auth/register', { email: 'amara.okafor@yahel.example', firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: 'Sunrise-over-Lekki-94' }, { message: 'Registration successful.' }],
-    ['mfaChallenge', '/api/v1/auth/mfa/challenge', { challengeToken: 'c-1', code: '482910', deviceId: 'd', trustDevice: false }, { accessToken: 'a', refreshToken: 'r', expiresIn: 900, tokenType: 'Bearer' }],
+    ['mfaChallenge', '/api/v1/auth/mfa/challenge', { challengeToken: 'c-1', code: '482910', trustDevice: false }, { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }],
     ['forgotPassword', '/api/v1/auth/forgot-password', { email: 'amara@northwind.example' }, { message: 'If this email exists, a reset link has been sent' }],
     ['resetPassword', '/api/v1/auth/reset-password', { email: 'amara@northwind.example', token: 'A7kZq2', password: 'New-passw0rd-here' }, { message: 'Password reset successfully. Please log in again.' }],
     ['verifyEmail', '/api/v1/auth/verify-email', { email: 'amara@northwind.example', token: 'A7kZq2' }, { message: 'Email verified successfully' }],
     ['resendVerification', '/api/v1/auth/verify-email/resend', { email: 'amara@northwind.example' }, { message: 'If this email exists and is unverified, a new link has been sent' }],
+    ['phoneChallengeSend', '/api/v1/auth/phone-challenge/send', { challengeToken: 'pc-1', phone: '+2348035550142' }, { message: 'Code sent.' }],
+    ['phoneChallengeVerify', '/api/v1/auth/phone-challenge/verify', { challengeToken: 'pc-1', code: 'A7kZq2' }, { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }],
   ] as const)('auth.%s posts its body to %s without a bearer token and unwraps the result', async (method, path, body, data) => {
     const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
@@ -154,14 +190,14 @@ describe('createApiClient', () => {
     const fetchMock = vi.fn().mockResolvedValue(json(401, { success: false, code: 'MFA_INVALID', message: 'Invalid or expired MFA code' }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
 
-    await expect(api.auth.mfaChallenge({ challengeToken: 'c-1', code: '000000', deviceId: 'd' })).rejects.toMatchObject({ status: 401, code: 'MFA_INVALID' });
+    await expect(api.auth.mfaChallenge({ challengeToken: 'c-1', code: '000000' })).rejects.toMatchObject({ status: 401, code: 'MFA_INVALID' });
   });
 
   it('says how long to wait when a refusal carries Retry-After, as seconds or as a date', async () => {
     const refused = (retryAfter: string) => new Response(JSON.stringify({ success: false, error: { code: 'BAD_REQUEST', message: 'ThrottlerException: Too Many Requests' } }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': retryAfter } });
     const fetchMock = vi.fn().mockResolvedValueOnce(refused('42')).mockResolvedValueOnce(refused(new Date(Date.now() + 90_000).toUTCString())).mockResolvedValueOnce(json(429, { success: false, code: 'TOO_MANY_REQUESTS' }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
-    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x', deviceId: 'd' }).catch((error: unknown) => error);
+    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x' }).catch((error: unknown) => error);
 
     expect(await login()).toMatchObject({ status: 429, retryAfter: 42 });
     const dated = (await login()) as { retryAfter: number };
@@ -174,7 +210,7 @@ describe('createApiClient', () => {
     const created = { message: 'ok', identity: { id: 'i1', email: 'amara@northwind.example', emailVerified: false }, tenant: { id: 't1', slug: 'northwind-studio', displayName: 'Northwind Studio', status: 'pending_setup' }, domain: { domain: 'northwind.example', status: 'pending' } };
     const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data: created }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
-    const body = { email: 'amara@northwind.example', password: 'Northwind Lagos 2026!', firstName: 'Amara', lastName: 'Okafor', businessName: 'Northwind Studio', slug: 'northwind-studio', country: { name: 'Nigeria', code: 'NG', currency: 'NGN' }, dateOfBirth: '1994-03-14T00:00:00.000Z', employeeCount: 10, domain: 'northwind.example', deviceId: '550e8400-e29b-41d4-a716-446655440000' };
+    const body = { email: 'amara@northwind.example', password: 'Northwind Lagos 2026!', firstName: 'Amara', lastName: 'Okafor', businessName: 'Northwind Studio', slug: 'northwind-studio', country: { name: 'Nigeria', code: 'NG', currency: 'NGN' }, dateOfBirth: '1994-03-14T00:00:00.000Z', employeeCount: 10, domain: 'northwind.example' };
 
     await expect(api.auth.registerBusiness(body)).resolves.toEqual(created);
 
@@ -198,7 +234,7 @@ describe('createApiClient', () => {
     const fetchMock = vi.fn();
     headers.forEach((header) => fetchMock.mockResolvedValueOnce(refused(header)));
     const api = createApiClient({ baseUrl: 'http://api.test/api', fetch: fetchMock });
-    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x', deviceId: 'd' }).catch((error: unknown) => error as { retryAfter?: number });
+    const login = () => api.auth.login({ email: 'amara@northwind.example', password: 'x' }).catch((error: unknown) => error as { retryAfter?: number });
     const waits: unknown[] = [];
     for (let asked = 0; asked < headers.length; asked += 1) waits.push(((await login()) as { retryAfter?: number }).retryAfter);
 
@@ -211,5 +247,13 @@ describe('createApiClient', () => {
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', refreshSession: () => Promise.reject(reuse), fetch: fetchMock });
 
     await expect(api.me.get()).rejects.toBe(reuse);
+  });
+});
+
+describe('isPhoneRequired', () => {
+  it('tells a phone challenge from a session or a second step', () => {
+    expect(isPhoneRequired({ phoneRequired: true, challengeToken: 'pc-1' })).toBe(true);
+    expect(isPhoneRequired({ mfaRequired: true, challengeToken: 'c-1' })).toBe(false);
+    expect(isPhoneRequired({ accessToken: 'a', expiresIn: 900, slot: 0, handle: 'h' })).toBe(false);
   });
 });

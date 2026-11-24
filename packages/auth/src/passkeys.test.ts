@@ -3,7 +3,7 @@ import { createPasskeyClient } from './passkeys';
 import type { PasskeyEnvironment } from './passkeys';
 
 const bytes = (...values: number[]) => new Uint8Array(values).buffer;
-const signedIn = { tokens: { accessToken: 'a', refreshToken: 'r', expiresIn: 900, tokenType: 'Bearer' }, profile: { id: '1', globalId: 'g', email: 'amara@northwind.example', firstName: 'Amara', lastName: null, displayName: null, photo: null } };
+const signedIn = { tokens: { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }, profile: { id: '1', globalId: 'g', email: 'amara@northwind.example', firstName: 'Amara', lastName: null, displayName: null, photo: null } };
 
 const setup = (overrides: Partial<PasskeyEnvironment> = {}, get = vi.fn()) => {
   const ceremony = {

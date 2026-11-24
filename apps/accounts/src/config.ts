@@ -1,3 +1,4 @@
+import { resolveReturnAddress } from '@yahel/auth';
 import type { ReturnAddressPolicy } from '@yahel/auth';
 import { isMailDomain } from './build/addresses';
 
@@ -26,12 +27,15 @@ export const businessSignUpOffered = (setting: string | undefined, standIns: str
 
 const businessSignUp = businessSignUpOffered(env.VITE_BUSINESS_SIGN_UP, env.VITE_STAND_INS);
 
+const returnPolicy: ReturnAddressPolicy = {
+  fallback: appUrl,
+  allowedOrigins: (env.VITE_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
+};
+const appHome = (slot: number) => new URL(`u/${slot}/`, appUrl).href;
+
 export const config = {
   apiUrl: env.VITE_API_URL ?? 'http://localhost:3200/api',
-  returnPolicy: {
-    fallback: appUrl,
-    allowedOrigins: (env.VITE_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
-  } satisfies ReturnAddressPolicy,
+  returnPolicy,
   // Sign-in and sign-up may be served from different addresses; until they are, each is a path in this app.
   signInUrl: webAddress(env.VITE_SIGN_IN_URL) ?? '/signin',
   signUpUrl: webAddress(env.VITE_SIGN_UP_URL) ?? '/personal',
@@ -48,6 +52,18 @@ export const config = {
   adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL),
   /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is the app address. */
   adminUrl: webAddress(env.VITE_ADMIN_URL) ?? appUrl,
+  /** The app's home for the account in `slot`: its addresses carry the slot (`/u/<slot>/`), so each account opens as itself. */
+  appHome,
+  /**
+   * Where someone goes once signed in as the account in `slot`: the return address if it is allowed, otherwise
+   * the app. The app's own home, which is what the app asks for when it sends people here, is that account's home.
+   */
+  afterSignIn: (candidate: string | undefined, slot: number) => {
+    const address = resolveReturnAddress(candidate, { ...returnPolicy, fallback: appHome(slot) });
+    return address === appUrl ? appHome(slot) : address;
+  },
+  /** Account settings for the account in `slot`, behind "Manage your account". Unset, the app's own. */
+  accountSettings: (slot: number) => new URL(`u/${slot}/account`, webAddress(env.VITE_ACCOUNT_URL) ?? appUrl).href,
   businessTermsUrl: webAddress(env.VITE_BUSINESS_TERMS_URL),
   trialTermsUrl: webAddress(env.VITE_TRIAL_TERMS_URL),
   domainTermsUrl: webAddress(env.VITE_DOMAIN_TERMS_URL),

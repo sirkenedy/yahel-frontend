@@ -3,15 +3,17 @@ import { resolveReturnAddress } from '@yahel/auth';
 import { useState } from 'react';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
-import { useSignedInAccount } from '../../flow/use-signed-in-account';
+import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 import { progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
 import { PersonalFlowProvider } from '../../features/personal/personal-flow';
-import { forgetSignUp, isSignedInElsewhere, personalFacts } from '../../features/personal/route-guard';
+import { forgetSignUp, isFinishedElsewhere, personalFacts } from '../../features/personal/route-guard';
 
 export const Route = createFileRoute('/personal')({
-  beforeLoad: ({ context }) => {
-    if (isSignedInElsewhere(context)) throw redirect({ to: '/signin', replace: true });
+  // Open whether or not this tab is signed in: creating an account is one more way to add one to this browser (F-94).
+  beforeLoad: ({ context, location }) => {
+    const step = stepOfPath(location.pathname);
+    if (step && isFinishedElsewhere(step, context)) throw redirect({ to: '/signin/done', replace: true });
     return { facts: personalFacts(context) };
   },
   // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.
@@ -21,19 +23,36 @@ export const Route = createFileRoute('/personal')({
 });
 
 function PersonalLayout() {
-  const { session, capabilities, registrar, personal, config } = Route.useRouteContext();
+  const { session, capabilities, registrar, personal, signIn, config } = Route.useRouteContext();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'type';
   const [detailsHidden, setDetailsHidden] = useState(false);
   const { businessSignUpUrl } = config;
-  const account = useSignedInAccount(session);
+  const menu = useAccountMenu({
+    session,
+    directory: capabilities.directory,
+    manageUrl: config.accountSettings,
+    privacyUrl: config.privacyUrl,
+    termsUrl: config.termsUrl,
+    go: {
+      signIn: (email) => {
+        signIn.dispatch(email ? { type: 'account-chosen', email } : { type: 'another-account-wanted' });
+        void navigate({ to: email ? '/signin/password' : '/signin/email' });
+      },
+      done: () => void navigate({ to: '/signin/done' }),
+      chooser: () => {
+        signIn.dispatch({ type: 'signed-out' });
+        void navigate({ to: '/signin/choose', replace: true });
+      },
+    },
+  });
 
   return (
     <AppFrame
       links={{ home: '/personal', homeLabel: chromeMessages.brandSignUp, signIn: step === 'type' ? config.signInUrl : null, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }}
+      menu={menu}
       // Offered on the numbered questions, which are the ones that ask for personal details.
-      account={account}
       privacy={progressOf(step) ? { isOn: detailsHidden, onToggle: () => setDetailsHidden(!detailsHidden) } : null}
     >
       <PersonalFlowProvider
@@ -47,7 +66,7 @@ function PersonalLayout() {
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         // A path is a step of this app; an address is the workspace sign-up served somewhere else.
         leaveForBusiness={businessSignUpUrl === null ? null : () => (businessSignUpUrl.startsWith('/') ? void navigate({ href: businessSignUpUrl }) : window.location.assign(businessSignUpUrl))}
-        leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}
+        leave={() => window.location.assign(resolveReturnAddress(search.return, { ...config.returnPolicy, fallback: config.appHome(session.store.getState().slot ?? 0) }))}
       >
         <Outlet />
       </PersonalFlowProvider>

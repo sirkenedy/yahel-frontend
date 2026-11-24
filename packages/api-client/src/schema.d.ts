@@ -21,6 +21,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The accounts this browser has used and not removed */
+        get: operations["AuthController_listClientAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/accounts/{handle}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an account from this client, signed in or not */
+        delete: operations["AuthController_removeClientAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/address-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Whether a platform address can still be had, with free names like it */
+        post: operations["AuthController_checkAddressAvailability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Swap the current session for one in another context, without re-authenticating */
+        post: operations["AuthController_switchContext"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/contexts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the personal and organisation contexts this account can act in */
+        get: operations["AuthController_listContexts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/devices": {
         parameters: {
             query?: never;
@@ -38,7 +123,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/devices/{deviceId}": {
+    "/api/v1/auth/devices/{clientId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -55,7 +140,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/devices/{deviceId}/trust": {
+    "/api/v1/auth/devices/{clientId}/trust": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,6 +175,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/identify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve what an email address signs in as, before any credential is supplied */
+        post: operations["AuthController_identify"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -116,7 +218,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Logout current session */
+        /** Sign one account in this browser out */
         post: operations["AuthController_logout"];
         delete?: never;
         options?: never;
@@ -141,6 +243,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/logout-browser": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign every account in this browser out, keeping them in the chooser */
+        post: operations["AuthController_logoutClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/mfa/challenge": {
         parameters: {
             query?: never;
@@ -152,6 +271,142 @@ export interface paths {
         put?: never;
         /** Submit MFA code to complete login — accepts TOTP or backup code */
         post: operations["AuthController_submitMfaChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/authenticate/begin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start passkey sign-in — returns request options for navigator.credentials.get() */
+        post: operations["AuthController_passkeyAuthenticateBegin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/authenticate/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the assertion and issue a session */
+        post: operations["AuthController_passkeyAuthenticateFinish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the passkeys registered on the current account */
+        get: operations["AuthController_listPasskeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/register/begin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start passkey registration — returns creation options for navigator.credentials.create() */
+        post: operations["AuthController_passkeyRegisterBegin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/register/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the attestation and store the passkey */
+        post: operations["AuthController_passkeyRegisterFinish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/passkey/{credentialId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a passkey — re-confirms identity with the account password */
+        delete: operations["AuthController_revokePasskey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/phone-challenge/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Text a 6-character code to a phone for a pending phone challenge from register-business, login or passkey sign-in */
+        post: operations["AuthController_sendPhoneChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/phone-challenge/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the texted code, mark the phone verified and issue the session */
+        post: operations["AuthController_verifyPhoneChallenge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -235,7 +490,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register a business — creates identity + tenant + owner membership + pending domain atomically */
+        /** Register a business — creates identity + tenant + owner membership + pending domain atomically, then answers with a phone challenge instead of a session */
         post: operations["AuthController_registerBusiness"];
         delete?: never;
         options?: never;
@@ -305,6 +560,40 @@ export interface paths {
         put?: never;
         /** Set the initial password (one-time, after invite accept) — rejects if password already exists */
         post: operations["AuthController_setPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/trusted-contact/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public — accept a trusted-contact invitation using the token from the invite email */
+        post: operations["AuthController_acceptTrustedContactInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/trusted-contact/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public — decline a trusted-contact invitation using the token from the invite email */
+        post: operations["AuthController_declineTrustedContactInvite"];
         delete?: never;
         options?: never;
         head?: never;
@@ -545,6 +834,41 @@ export interface paths {
         put?: never;
         /** Verify the pending recovery phone number with the OTP sent by SMS */
         post: operations["MeController_verifyRecoveryPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/recovery/trusted-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Request removal of the trusted contact — takes effect after a 7-day cool-off */
+        delete: operations["MeController_requestRemoveTrustedContact"];
+        options?: never;
+        head?: never;
+        /** Add or change the trusted-recovery contact — sends an invite; cool-off applies on change */
+        patch: operations["MeController_updateTrustedContact"];
+        trace?: never;
+    };
+    "/api/v1/me/recovery/trusted-contact/cancel-removal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a pending trusted-contact removal before the cool-off elapses */
+        post: operations["MeController_cancelRemoveTrustedContact"];
         delete?: never;
         options?: never;
         head?: never;
@@ -861,6 +1185,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/domain-claims/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Whether a business domain can still be claimed by a new workspace */
+        post: operations["TenantsController_checkDomainClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{tenantId}": {
         parameters: {
             query?: never;
@@ -1130,11 +1471,6 @@ export interface components {
     schemas: {
         AcceptInviteDto: {
             /**
-             * @description Client-generated UUID v4 identifying this device install
-             * @example 550e8400-e29b-41d4-a716-446655440000
-             */
-            deviceId: string;
-            /**
              * @description Human-readable device label rendered in the sessions list
              * @example Kehinde's iPhone
              */
@@ -1156,6 +1492,52 @@ export interface components {
              */
             method: "TXT" | "CNAME";
         };
+        AddressAvailabilityDto: {
+            /**
+             * @description The part before the @. Never a full address — the server supplies the platform domain.
+             * @example jane.o
+             */
+            name: string;
+        };
+        AddressAvailabilityResponseDto: {
+            /**
+             * @description Free names close to the one asked about, each checked against the directory
+             * @example [
+             *       "o.jane",
+             *       "janeo",
+             *       "jane.o1"
+             *     ]
+             */
+            alternatives: string[];
+            /**
+             * @description Whether the name can be had. False carries no reason: taken, reserved and held names read alike.
+             * @example true
+             */
+            available: boolean;
+        };
+        AuthContextItemDto: {
+            /** @example Northwind Studio */
+            displayName: Record<string, never> | null;
+            /**
+             * @description True for the context the caller is signed into right now
+             * @example false
+             */
+            isCurrent: boolean;
+            /** @example https://cdn.example.com/northwind.png */
+            logoUrl: Record<string, never> | null;
+            /**
+             * @example MEMBER
+             * @enum {string|null}
+             */
+            role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST" | null;
+            /** @example 507f1f77bcf86cd799439001 */
+            tenantId: Record<string, never> | null;
+            /**
+             * @example tenant
+             * @enum {string}
+             */
+            type: "personal" | "tenant";
+        };
         BulkInviteMembersDto: {
             invitees: components["schemas"]["InviteeDto"][];
         };
@@ -1173,6 +1555,56 @@ export interface components {
              * @example true
              */
             revokeOtherSessions: boolean;
+        };
+        ClientAccountResponseDto: {
+            /** @example https://cdn.example.com/a.png */
+            avatarUrl: Record<string, never> | null;
+            /** @example Jane Okafor */
+            displayName: Record<string, never> | null;
+            /**
+             * @description The full address. This is the person’s own browser, behind a secret cookie.
+             * @example jane.okafor@worksync.app
+             */
+            email: string;
+            /**
+             * @description Stable only within this client, and meaningless outside it
+             * @example k7Qd3rLm0pA2bXyZw9TcVe
+             */
+            handle: string;
+            /** @example JO */
+            initials: Record<string, never> | null;
+            /**
+             * @description business when the identity is managed or holds an active membership (a founder shows as their organisation’s admin)
+             * @example personal
+             * @enum {string}
+             */
+            kind: "personal" | "business";
+            /**
+             * @description The organisation a business account belongs to
+             * @example Northwind Studio
+             */
+            organisation: Record<string, never> | null;
+            /**
+             * @description That account’s role in the organisation
+             * @example ADMIN
+             * @enum {string|null}
+             */
+            role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST" | null;
+            /** @example true */
+            signedIn: boolean;
+            /**
+             * @description Position in this client, used in /u/<slot>/ addresses
+             * @example 0
+             */
+            slot: number;
+        };
+        ClientRemovedResponseDto: {
+            /** @example k7Qd3rLm0pA2bXyZw9TcVe */
+            handle: string;
+        };
+        ClientSlotResponseDto: {
+            /** @example 0 */
+            slot: number;
         };
         CountryDto: {
             code: string;
@@ -1198,9 +1630,62 @@ export interface components {
              */
             slug: string;
         };
+        DomainClaimDto: {
+            /**
+             * @description The company domain. A leading @, surrounding spaces and upper case are accepted and stripped.
+             * @example acme.com
+             */
+            domain: string;
+        };
+        DomainClaimResponseDto: {
+            /**
+             * @description free — no workspace holds it; claimed — one does, and this says nothing about which or how far along it is; public — a consumer mail provider, which no workspace may claim.
+             * @example free
+             * @enum {string}
+             */
+            standing: "free" | "claimed" | "public";
+        };
         ForgotPasswordDto: {
             /** @example jane@acme.com */
             email: string;
+        };
+        IdentifyDto: {
+            /** @example jane@acme.com */
+            email: string;
+        };
+        IdentifyResponseDto: {
+            /**
+             * @example tenant
+             * @enum {string}
+             */
+            context: "personal" | "tenant" | "sso" | "unknown";
+            /**
+             * @example [
+             *       "password",
+             *       "passkey"
+             *     ]
+             */
+            methods: ("password" | "passkey" | "sso" | "oauth")[];
+            /**
+             * @description Present only when context is sso
+             * @example https://api.example.com/api/v1/auth/sso/507f1f77bcf86cd799439011/initiate
+             */
+            ssoRedirectUrl?: string;
+            /** @description Present for the tenant and sso contexts */
+            tenant?: components["schemas"]["IdentifyTenantDto"];
+        };
+        IdentifyTenantDto: {
+            /** @example Northwind Studio */
+            displayName: string;
+            /** @example 507f1f77bcf86cd799439011 */
+            id: string;
+            /** @example https://cdn.example.com/logos/northwind.png */
+            logoUrl: Record<string, never> | null;
+            /**
+             * @description The organisation controls accounts on this email domain
+             * @example true
+             */
+            managed: boolean;
         };
         InviteMemberDto: {
             /** @example alice@acme.com */
@@ -1240,11 +1725,6 @@ export interface components {
         };
         LoginDto: {
             /**
-             * @description Client-generated UUID v4 identifying this device install
-             * @example 550e8400-e29b-41d4-a716-446655440000
-             */
-            deviceId: string;
-            /**
              * @description Human-readable device label rendered in the sessions list. Falls back to a server-parsed UA string.
              * @example Kehinde's iPhone
              */
@@ -1259,6 +1739,13 @@ export interface components {
              */
             tenantId?: string;
         };
+        LogoutSlotDto: {
+            /**
+             * @description Which account in this browser to sign out. That slot’s cookie is what authorises it.
+             * @example 0
+             */
+            slot: number;
+        };
         MfaChallengeSubmitDto: {
             /**
              * @description Challenge token received from the login MFA gate
@@ -1270,11 +1757,6 @@ export interface components {
              * @example 123456
              */
             code: string;
-            /**
-             * @description Client-generated UUID v4 identifying this device install
-             * @example 550e8400-e29b-41d4-a716-446655440000
-             */
-            deviceId: string;
             /**
              * @description Human-readable device label rendered in the sessions list
              * @example Kehinde's iPhone
@@ -1298,6 +1780,165 @@ export interface components {
             mfaRequired?: boolean;
             sessionMaxHours?: number;
         };
+        PasskeyAuthenticateBeginDto: {
+            /**
+             * @description Optional. Buckets the shared sign-in rate limit alongside /login and /identify. It never selects credentials: returning an address’s credential list would reveal whether it has an account, so sign-in relies on discoverable credentials.
+             * @example jane@acme.com
+             */
+            email?: string;
+        };
+        PasskeyAuthenticateFinishDto: {
+            /**
+             * @description Token returned by authenticate/begin
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            /** @example Kehinde's iPhone */
+            deviceName?: string;
+            /** @description The AuthenticationResponseJSON produced by navigator.credentials.get() */
+            response: Record<string, never>;
+        };
+        PasskeyChallengeResponseDto: {
+            /** @example 550e8400-e29b-41d4-a716-446655440000 */
+            challengeToken: string;
+            /** @description PublicKeyCredentialCreationOptionsJSON or PublicKeyCredentialRequestOptionsJSON */
+            options: Record<string, never>;
+        };
+        PasskeyItemResponseDto: {
+            /** @example adce0002-35bc-c60a-648b-0b25f1f05503 */
+            aaguid: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @example 2026-11-01T08:00:00.000Z
+             */
+            createdAt: string;
+            /** @example DJlX9eKsZ0k... */
+            credentialId: string;
+            /** @example Kehinde's iPhone */
+            deviceName: Record<string, never> | null;
+            /** @example 2026-11-22T09:12:00.000Z */
+            lastUsedAt: Record<string, never> | null;
+            /**
+             * @example [
+             *       "internal",
+             *       "hybrid"
+             *     ]
+             */
+            transports: string[];
+        };
+        PasskeyRegisterFinishDto: {
+            /**
+             * @description Token returned by register/begin
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            /**
+             * @description Label shown in the passkey list
+             * @example Kehinde's iPhone
+             */
+            deviceName?: string;
+            /** @description The RegistrationResponseJSON produced by navigator.credentials.create() */
+            response: Record<string, never>;
+        };
+        PasskeyRegisteredResponseDto: {
+            /** @example adce0002-35bc-c60a-648b-0b25f1f05503 */
+            aaguid?: Record<string, never> | null;
+            /** @example DJlX9eKsZ0k... */
+            credentialId: string;
+            /** @example Kehinde's iPhone */
+            deviceName: Record<string, never> | null;
+        };
+        PasskeyRevokeDto: {
+            /**
+             * @description Current account password, re-entered to confirm identity
+             * @example Secure@123
+             */
+            password: string;
+        };
+        PasskeyRevokedResponseDto: {
+            /** @example DJlX9eKsZ0k... */
+            credentialId: string;
+        };
+        PasskeySessionResponseDto: {
+            /** @example eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... */
+            accessToken: string;
+            /**
+             * @description Access token lifetime in seconds
+             * @example 900
+             */
+            expiresIn: number;
+            /** @example b1f0c2... */
+            refreshToken: string;
+            /** @example Bearer */
+            tokenType: string;
+        };
+        PhoneChallengeRequiredResponseDto: {
+            /** @example 550e8400-e29b-41d4-a716-446655440000 */
+            challengeToken: string;
+            /**
+             * @description No session was issued. Text a code to a phone, then check it, to sign in.
+             * @example true
+             */
+            phoneRequired: boolean;
+        };
+        PhoneChallengeSendDto: {
+            /**
+             * @description Challenge token from register-business, login or passkey sign-in
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            /**
+             * @description Phone to text the code to. E.164 preferred; a bare number is read against the account country.
+             * @example +14155552671
+             */
+            phone: string;
+        };
+        PhoneChallengeSentResponseDto: {
+            /** @example Verification code sent. */
+            message: string;
+            /**
+             * @description Seconds before another code can be requested
+             * @example 30
+             */
+            resendInSeconds: number;
+            /**
+             * @description Codes this challenge can still send
+             * @example 4
+             */
+            sendsLeft: number;
+        };
+        PhoneChallengeSessionResponseDto: {
+            /** @example eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... */
+            accessToken: string;
+            /**
+             * @description Access token lifetime in seconds
+             * @example 900
+             */
+            expiresIn: number;
+            /** @example k7Qd3rLm0pA2bXyZw9TcVe */
+            handle: string;
+            /**
+             * @description This account’s slot in the browser; the refresh token is in that slot’s cookie
+             * @example 0
+             */
+            slot: number;
+            /** @example Bearer */
+            tokenType: string;
+        };
+        PhoneChallengeVerifyDto: {
+            /** @example 550e8400-e29b-41d4-a716-446655440000 */
+            challengeToken: string;
+            /**
+             * @description The 6-character code texted to the phone (letters and digits, case-sensitive)
+             * @example 2BRGme
+             */
+            code: string;
+            /**
+             * @description Human-readable device label rendered in the sessions list
+             * @example Kehinde's MacBook
+             */
+            deviceName?: string;
+        };
         PlatformSendBroadcastDto: {
             /** @description Override the definition default channels */
             channels?: ("in_app" | "email" | "sms" | "push")[];
@@ -1307,7 +1948,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
             /** @description Recipient query — any supported type; no tenant scope enforced */
             recipientQuery: Record<string, never>;
             /** @description Tag the broadcast with a tenantId for audit + ownership scoping (optional) */
@@ -1370,30 +2011,44 @@ export interface components {
             /** @example America/New_York */
             timezone?: string;
         };
+        RecoveryResponseDto: {
+            /** @description Current recovery phone configuration with any pending change */
+            phone: Record<string, never>;
+            /** @description Current recovery email configuration with any pending change */
+            recoveryEmail: Record<string, never>;
+            /** @description Current trusted-recovery-contact configuration with any pending change or removal */
+            trustedContact: Record<string, never>;
+        };
         RefreshTokenDto: {
             /**
-             * @description Client-generated UUID v4 identifying this device install
-             * @example 550e8400-e29b-41d4-a716-446655440000
+             * @description Which account in this browser to refresh. The token itself comes from that slot’s cookie.
+             * @example 0
              */
-            deviceId: string;
-            /** @description Opaque refresh token issued at login */
-            refreshToken: string;
+            slot: number;
+        };
+        RegisterBusinessDomainDto: {
+            /** @example acme.com */
+            domain: string;
+            /** @example pending */
+            status: string;
+            /** @description The DNS record to add to prove the domain */
+            verification: Record<string, never> | null;
         };
         RegisterBusinessDto: {
             /** @example Acme Corp */
             businessName: string;
+            /**
+             * @description A mailbox the administrator can already open. Stored as the unverified recovery email so reset links reach them while the business domain has no mail.
+             * @example kehinde@gmail.com
+             */
+            contactEmail?: string;
             country: components["schemas"]["CountryDto"];
             /**
              * Format: date-time
-             * @description ISO 8601 date of birth — required for age gating
+             * @description ISO 8601 date of birth — age-gated against the country when given
              * @example 1995-08-12T00:00:00.000Z
              */
-            dateOfBirth: string;
-            /**
-             * @description Client-generated UUID v4 identifying this device install
-             * @example 550e8400-e29b-41d4-a716-446655440000
-             */
-            deviceId: string;
+            dateOfBirth?: string;
             /** @example Kehinde's iPhone */
             deviceName?: string;
             /**
@@ -1416,6 +2071,41 @@ export interface components {
              * @example acme
              */
             slug: string;
+        };
+        RegisterBusinessIdentityDto: {
+            /** @example kehinde@acme.com */
+            email: string;
+            /** @example true */
+            emailVerified: boolean;
+            /** @example 507f1f77bcf86cd799439011 */
+            id: string;
+        };
+        RegisterBusinessResponseDto: {
+            /**
+             * @description Pass to POST /v1/auth/phone-challenge/send and /verify
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            domain: components["schemas"]["RegisterBusinessDomainDto"];
+            identity: components["schemas"]["RegisterBusinessIdentityDto"];
+            /** @example Your account is ready. Check a phone by text to sign in. */
+            message: string;
+            /**
+             * @description Always true: the administrator is signed in only after a phone is checked
+             * @example true
+             */
+            phoneRequired: boolean;
+            tenant: components["schemas"]["RegisterBusinessTenantDto"];
+        };
+        RegisterBusinessTenantDto: {
+            /** @example Acme Corp */
+            displayName: string;
+            /** @example 507f1f77bcf86cd799439012 */
+            id: string;
+            /** @example acme */
+            slug: string;
+            /** @example pending_setup */
+            status: string;
         };
         RegisterDto: {
             country?: components["schemas"]["CountryDto"];
@@ -1454,6 +2144,16 @@ export interface components {
             password: string;
             /** @example +2348012345678 */
             phone?: string;
+            /**
+             * @description Optional recovery email captured at signup — stored unverified; can be changed later via PATCH /me/recovery/email which runs the full cool-off + alert flow
+             * @example jane.backup@gmail.com
+             */
+            recoveryEmail?: string;
+            /**
+             * @description Optional trusted contact (someone else you trust) captured at signup — an invitation is sent; status stays pending-consent until they accept. Can be changed later via PATCH /me/recovery/trusted-contact
+             * @example parent.jane@gmail.com
+             */
+            trustedContactEmail?: string;
         };
         ResendVerificationDto: {
             /** @example jane@gmail.com */
@@ -1485,7 +2185,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
             /** @description Recipient query — { type: "tenantMembers" | "userIds" | ... }. Scope is enforced to the caller tenant. */
             recipientQuery: Record<string, never>;
         };
@@ -1502,6 +2202,44 @@ export interface components {
              * @example Secure@123
              */
             newPassword: string;
+        };
+        SwitchContextDto: {
+            /**
+             * @description Organisation to switch into. Omit to return to the personal context.
+             * @example 507f1f77bcf86cd799439001
+             */
+            tenantId?: string;
+        };
+        SwitchContextResponseDto: {
+            /** @example eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... */
+            accessToken: string;
+            /** @example 900 */
+            expiresIn: number;
+            /** @example b1f0c2... */
+            refreshToken: string;
+            /**
+             * @example MEMBER
+             * @enum {string|null}
+             */
+            role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST" | null;
+            /**
+             * @description Null for the personal context
+             * @example 507f1f77bcf86cd799439001
+             */
+            tenantId: Record<string, never> | null;
+            /** @example Bearer */
+            tokenType: string;
+        };
+        TrustedContactConsentDto: {
+            /**
+             * @description Token embedded in the invitation link sent to the trusted contact
+             * @example a3f8c2d1b4e5f7...
+             */
+            token: string;
+        };
+        TrustedContactConsentResponseDto: {
+            /** @example Thanks — you have been added as a trusted recovery contact. */
+            message: string;
         };
         UpdateMemberDto: {
             /** @example Engineering */
@@ -1584,12 +2322,14 @@ export interface components {
             mfaRequired?: boolean;
             sessionTtlHours?: number;
         };
+        UpdateTrustedContactDto: {
+            /** @example parent.jane@gmail.com */
+            trustedContactEmail: string;
+        };
         UpgradeToBusinessDto: {
             /** @example Acme Corp */
             businessName: string;
             country: components["schemas"]["CountryDto"];
-            /** @example 550e8400-e29b-41d4-a716-446655440000 */
-            deviceId: string;
             /** @example Kehinde's iPhone */
             deviceName?: string;
             /** @example acme.com */
@@ -1660,6 +2400,111 @@ export interface operations {
             };
         };
     };
+    AuthController_listClientAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientAccountResponseDto"][];
+                };
+            };
+        };
+    };
+    AuthController_removeClientAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                handle: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientRemovedResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_checkAddressAvailability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddressAvailabilityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddressAvailabilityResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_switchContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwitchContextDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwitchContextResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_listContexts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthContextItemDto"][];
+                };
+            };
+        };
+    };
     AuthController_listDevices: {
         parameters: {
             query?: never;
@@ -1682,7 +2527,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                deviceId: string;
+                clientId: string;
             };
             cookie?: never;
         };
@@ -1701,7 +2546,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                deviceId: string;
+                clientId: string;
             };
             cookie?: never;
         };
@@ -1720,7 +2565,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                deviceId: string;
+                clientId: string;
             };
             cookie?: never;
         };
@@ -1755,6 +2600,29 @@ export interface operations {
             };
         };
     };
+    AuthController_identify: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IdentifyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentifyResponseDto"];
+                };
+            };
+        };
+    };
     AuthController_login: {
         parameters: {
             query?: never;
@@ -1768,15 +2636,41 @@ export interface operations {
             };
         };
         responses: {
+            /** @description A session; or { phoneRequired, challengeToken } while the account still needs its phone check; or { mfaRequired, challengeToken } for TOTP */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSessionResponseDto"] | components["schemas"]["PhoneChallengeRequiredResponseDto"];
+                };
             };
         };
     };
     AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LogoutSlotDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientSlotResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_logoutAll: {
         parameters: {
             query?: never;
             header?: never;
@@ -1793,7 +2687,7 @@ export interface operations {
             };
         };
     };
-    AuthController_logoutAll: {
+    AuthController_logoutClient: {
         parameters: {
             query?: never;
             header?: never;
@@ -1828,6 +2722,185 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AuthController_passkeyAuthenticateBegin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyAuthenticateBeginDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyChallengeResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_passkeyAuthenticateFinish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyAuthenticateFinishDto"];
+            };
+        };
+        responses: {
+            /** @description A session, or { phoneRequired, challengeToken } while the account still needs its phone check */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeySessionResponseDto"] | components["schemas"]["PhoneChallengeRequiredResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_listPasskeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyItemResponseDto"][];
+                };
+            };
+        };
+    };
+    AuthController_passkeyRegisterBegin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyChallengeResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_passkeyRegisterFinish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRegisterFinishDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyRegisteredResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_revokePasskey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                credentialId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyRevokeDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyRevokedResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_sendPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneChallengeSendDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSentResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_verifyPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneChallengeVerifyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSessionResponseDto"];
+                };
             };
         };
     };
@@ -1932,7 +3005,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RegisterBusinessResponseDto"];
+                };
             };
         };
     };
@@ -2011,6 +3086,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AuthController_acceptTrustedContactInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactConsentResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_declineTrustedContactInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustedContactConsentDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrustedContactConsentResponseDto"];
+                };
             };
         };
     };
@@ -2327,6 +3448,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    MeController_requestRemoveTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
+            };
+        };
+    };
+    MeController_updateTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTrustedContactDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
+            };
+        };
+    };
+    MeController_cancelRemoveTrustedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryResponseDto"];
+                };
             };
         };
     };
@@ -2683,7 +3865,7 @@ export interface operations {
                 /** @description Filter by recipient user ID */
                 userId?: string;
                 /** @description Filter by notification event */
-                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
                 /** @description Filter by delivery channel */
                 channel?: "in_app" | "email" | "sms" | "push";
                 /** @description Filter by delivery status */
@@ -2791,6 +3973,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    TenantsController_checkDomainClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DomainClaimDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainClaimResponseDto"];
+                };
             };
         };
     };

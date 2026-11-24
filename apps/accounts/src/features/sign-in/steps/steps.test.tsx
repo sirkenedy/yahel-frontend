@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ClientAccount } from '@yahel/api-client';
 import { flowMessages as fm } from '../../../flow/messages';
 import { carried } from '../feedback';
 import type { SignInFeedback } from '../feedback';
@@ -36,7 +37,11 @@ const fakeActions = () => ({
     chooseAccount: vi.fn(),
     enterEmail: vi.fn(),
     useAnotherAccount: vi.fn(),
+    showChooser: vi.fn(),
+    setRemoving: vi.fn(),
+    openRemoval: vi.fn(),
     removeAccount: vi.fn(),
+    reloadAccounts: vi.fn(),
     signInWithPassword: vi.fn(),
     confirmEmail: vi.fn(),
     resendEmailCode: vi.fn(),
@@ -48,18 +53,17 @@ const fakeActions = () => ({
     enterResetCode: vi.fn(),
     saveNewPassword: vi.fn(),
     requestHelp: vi.fn(),
-    signOut: vi.fn(),
     continueToApp: vi.fn(),
 });
 
 const flowValue = (actions: SignInFlowValue['actions'], { state, offers, requests, backHref = null, screens }: Overrides = {}): SignInFlowValue => ({
-  state: { ...initialSignInState, step: 'email', profile: null, accounts: [], recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, removedAccount: null, ...state },
+  state: { ...initialSignInState, step: 'email', profile: null, accounts: [], accountsStatus: 'success', recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, ...state },
   actions,
   meta: {
     direction: 'forward',
     backHref,
       offers: { passkey: true, textCode: true, help: true, ...offers },
-      requests: { password: idle, confirmEmail: idle, resendEmailCode: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, removeAccount: idle, signOut: idle, recoveryOptions: idle, ...requests },
+      requests: { password: idle, confirmEmail: idle, resendEmailCode: idle, passkey: idle, code: idle, textCode: idle, sendResetCode: idle, resendResetCode: idle, newPassword: idle, help: idle, switchAccount: idle, removeAccount: idle, recoveryOptions: idle, ...requests },
       screens: { account: state?.email ?? null, exits: { signIn: '/signin/email', resetPassword: '/signin/recover' }, serviceStatus: null, ...screens },
     },
 });
@@ -89,65 +93,69 @@ const locked = { place: 'screen', screen: 'locked' } as const;
 afterEach(() => {
   vi.useRealTimers();
 });
-const rowFor = (address: string) => screen.getByRole('button', { name: new RegExp(`^${m.continueAs}.*${address.replaceAll('.', '\\.')}`) });
+const rowFor = (address: string) => screen.getByRole('button', { name: new RegExp(`^(${m.switchTo}|${m.signInTo}).*${address.replaceAll('.', '\\.')}`) });
 
 describe('ChooseStep', () => {
-  const accounts = [
-    { name: 'Amara Okafor', email: 'amara.okafor@yahel.example', kind: 'person' as const },
-    { name: 'Amara Okafor', email, kind: 'organisation' as const, organisation: 'Northwind Studio' },
-    { name: 'Kofi Mensah', email: 'kofi@northwind.example', kind: 'person' as const, signedOut: true },
-  ];
+  const account = (handle: string, address: string, more: Partial<ClientAccount> = {}): ClientAccount => ({ handle, slot: Number(handle.slice(2)), displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email: address, kind: 'personal', organisation: null, role: null, signedIn: true, ...more });
+  const accounts = [account('h-0', 'amara.okafor@yahel.example'), account('h-1', email, { kind: 'business', organisation: 'Northwind Studio' }), account('h-2', 'kofi@northwind.example', { displayName: 'Kofi Mensah', signedIn: false })];
 
-  it('lists the accounts on this device with what kind each is', () => {
+  it('lists the accounts on this device with what kind each is and whether it is signed in', () => {
     setup(<ChooseStep />, { state: { step: 'choose', accounts } });
 
     const rows = within(screen.getByRole('list', { name: m.accountsLabel })).getAllByRole('listitem');
     expect(rows.map((row) => row.textContent)).toEqual([expect.stringContaining(m.personal), expect.stringContaining('Northwind Studio'), expect.stringContaining(m.signedOut), expect.stringContaining(m.useAnother)]);
+    expect(rowFor(email)).toHaveAccessibleName(new RegExp(`^${m.switchTo}`));
+    expect(rowFor('kofi@northwind.example')).toHaveAccessibleName(new RegExp(`^${m.signInTo}`));
   });
 
-  it('continues as the account that is picked, or starts fresh for another', async () => {
+  it('opens the account that is picked, or starts fresh for another', async () => {
     const { actions, user } = setup(<ChooseStep />, { state: { step: 'choose', accounts } });
 
     await user.click(rowFor(email));
     await user.click(screen.getByRole('button', { name: m.useAnother }));
 
-    expect(actions.chooseAccount).toHaveBeenCalledWith(email);
+    expect(actions.chooseAccount).toHaveBeenCalledWith(accounts[1]);
     expect(actions.useAnotherAccount).toHaveBeenCalledTimes(1);
   });
 
   it('removes accounts only in remove mode, where rows can no longer be picked by mistake', async () => {
     const { actions, user } = setup(<ChooseStep />, { state: { step: 'choose', accounts } });
     expect(screen.queryByRole('button', { name: m.removeLabel(email) })).not.toBeInTheDocument();
-
     await user.click(screen.getByRole('button', { name: m.removeAnAccount }));
+    expect(actions.setRemoving).toHaveBeenCalledWith(true);
+  });
+
+  it('in remove mode, removes by the account and offers Done', async () => {
+    const { actions, user } = setup(<ChooseStep />, { state: { step: 'choose', accounts, removing: true } });
+
     expect(rowFor(email)).toBeDisabled();
     await user.click(screen.getByRole('button', { name: m.removeLabel(email) }));
-    expect(actions.removeAccount).toHaveBeenCalledWith(email);
+    expect(actions.removeAccount).toHaveBeenCalledWith(accounts[1]);
 
     await user.click(screen.getByRole('button', { name: m.removeDone }));
-    expect(rowFor(email)).toBeEnabled();
+    expect(actions.setRemoving).toHaveBeenCalledWith(false);
   });
 
   it.each([
-    ['the row that takes its place', 'amara.okafor@yahel.example', m.removeLabel(email)],
-    ['the row before it when it was the last', 'kofi@northwind.example', m.removeLabel(email)],
+    ['the row that takes its place', 'h-1', m.removeLabel('kofi@northwind.example')],
+    ['the row before it when it was the last', 'h-2', m.removeLabel(email)],
   ])('moves focus to %s once an account has been removed', async (_name, removed, focused) => {
     function Chooser() {
       const [left, setLeft] = useState(accounts);
-      const actions = { ...fakeActions(), removeAccount: (address: string) => void setTimeout(() => setLeft((list) => list.filter((account) => account.email !== address)), 0) };
+      const actions = { ...fakeActions(), removeAccount: (gone: ClientAccount) => void setTimeout(() => setLeft((list) => list.filter((known) => known.handle !== gone.handle)), 0) };
       return (
-        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left } })}>
+        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left, removing: true } })}>
           <ChooseStep />
         </SignInFlowContext>
       );
     }
     render(<Chooser />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: m.removeAnAccount }));
+    const target = accounts.find((known) => known.handle === removed)!;
 
-    await user.click(screen.getByRole('button', { name: m.removeLabel(removed) }));
+    await user.click(screen.getByRole('button', { name: m.removeLabel(target.email) }));
 
-    await waitFor(() => expect(screen.queryByRole('button', { name: m.removeLabel(removed) })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('button', { name: m.removeLabel(target.email) })).not.toBeInTheDocument());
     expect(screen.getByRole('button', { name: focused })).toHaveFocus();
   });
 
@@ -156,26 +164,42 @@ describe('ChooseStep', () => {
       const [left, setLeft] = useState(accounts.slice(0, 1));
       const actions = { ...fakeActions(), removeAccount: () => void setTimeout(() => setLeft([]), 0) };
       return (
-        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left } })}>
+        <SignInFlowContext value={flowValue(actions, { state: { step: 'choose', accounts: left, removing: true } })}>
           <ChooseStep />
         </SignInFlowContext>
       );
     }
     render(<Chooser />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: m.removeAnAccount }));
 
     await user.click(screen.getByRole('button', { name: m.removeLabel('amara.okafor@yahel.example') }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: m.useAnother })).toHaveFocus());
   });
 
-  it('confirms a removal and reports one that failed', () => {
-    setup(<ChooseStep />, { state: { step: 'choose', accounts, removedAccount: email }, requests: { removeAccount: failing(offline) } });
+  it('reports a removal that failed', () => {
+    setup(<ChooseStep />, { state: { step: 'choose', accounts }, requests: { removeAccount: failing(offline) } });
 
-    expect(screen.getByRole('status')).toHaveTextContent(m.removed(email));
     expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineTitle);
     expect(screen.getByRole('alert')).toHaveTextContent(fm.offlineText);
+  });
+
+  it('says while the accounts are coming, and offers to try again when they could not be read', async () => {
+    const { unmount } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <SignInFlowContext value={flowValue(fakeActions(), { state: { step: 'choose', accountsStatus: 'pending' } })}>
+          <ChooseStep />
+        </SignInFlowContext>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByRole('status')).toHaveTextContent(m.accountsLoading);
+    expect(screen.queryByRole('button', { name: m.removeAnAccount })).not.toBeInTheDocument();
+    unmount();
+
+    const { actions, user } = setup(<ChooseStep />, { state: { step: 'choose', accountsStatus: 'error' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(m.accountsFailedTitle);
+    await user.click(screen.getByRole('button', { name: m.tryAgain }));
+    expect(actions.reloadAccounts).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -555,21 +579,14 @@ describe('DoneStep', () => {
     expect(screen.getByRole('heading', { name: 'Welcome back.' })).toBeInTheDocument();
   });
 
-  it('continues to the app or signs out for another account', async () => {
+  it('continues to the app, or opens the chooser for another account without signing out', async () => {
     const { actions, user } = setup(<DoneStep />, { state: { step: 'done', email, profile } });
 
     await user.click(screen.getByRole('button', { name: m.openYahel }));
     await user.click(screen.getByRole('button', { name: m.useAnother }));
 
     expect(actions.continueToApp).toHaveBeenCalledTimes(1);
-    expect(actions.signOut).toHaveBeenCalledTimes(1);
-  });
-
-  it('cannot continue while signing out', () => {
-    setup(<DoneStep />, { state: { step: 'done', email, profile }, requests: { signOut: pending } });
-
-    expect(screen.getByRole('button', { name: m.openYahel })).toBeDisabled();
-    expect(screen.getByRole('button', { name: m.signingOut })).toBeInTheDocument();
+    expect(actions.showChooser).toHaveBeenCalledTimes(1);
   });
 });
 

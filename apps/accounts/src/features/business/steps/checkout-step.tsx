@@ -3,9 +3,8 @@ import { useState } from 'react';
 import type { FormEvent, KeyboardEvent, ReactNode } from 'react';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
 import { useBusinessFlow } from '../business-flow';
-import { brandOf, formatCardNumber, formatExpiry, formatSecurityCode } from '../card';
 import { businessMessages as m } from '../messages';
-import { cardNumberProblem, expiryProblemOf, largeTeamProblem, nameOnCardProblem, securityCodeProblem } from '../validation';
+import { largeTeamProblem } from '../validation';
 import { PricingUnavailable } from './pricing-unavailable';
 import { StepFrame } from './step-frame';
 
@@ -22,24 +21,18 @@ const named = (name: string, href: string | null): ReactNode =>
   );
 
 /**
- * The order, then the card. Card number, expiry, security code and name live in this screen's fields and
- * nowhere else: they are handed to `actions.pay` once and are gone when the screen is. This is the design
- * over a stand-in, not a payment form (see `workspace-billing.ts`).
+ * The order, the workspace as created, where invoices go, and how it will be paid. The card itself is asked
+ * for on the next page, the payment partner's (`gateway-step.tsx`).
  */
 export function CheckoutStep() {
   const { state, actions, meta } = useBusinessFlow();
   const { plan, quote, address } = state;
   const { links } = meta;
-  const request = meta.requests.pay;
   const [addressAsked, setAddressAsked] = useState(false);
   const largest = plan.value?.trial.maxSeats ?? 10;
   const [manyTyped, setManyTyped] = useState(state.seats > largest ? String(state.seats) : '');
   const many = useStepField({ value: manyTyped, onChange: (typed) => chooseMany(typed.replace(/\D/g, '').slice(0, 4)), problemOf: (value) => (state.seats > largest ? largeTeamProblem(value, largest) : null), label: m.seatsMoreLabel });
-  const number = useStepField({ problemOf: cardNumberProblem, label: m.cardNumber, hasFormat: true });
-  const expiry = useStepField({ problemOf: (value) => expiryProblemOf(value), label: m.expiry, hasFormat: true });
-  const securityCode = useStepField({ problemOf: securityCodeProblem, label: m.securityCode, hasFormat: true });
-  const cardName = useStepField({ initial: [state.firstName, state.lastName].filter(Boolean).join(' '), problemOf: nameOnCardProblem, label: m.nameOnCard });
-  const form = useStepFields([many, number, expiry, securityCode, cardName]);
+  const form = useStepFields([many]);
 
   function chooseMany(typed: string) {
     setManyTyped(typed);
@@ -75,12 +68,12 @@ export function CheckoutStep() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     setAddressAsked(true);
     form.submit(event, () => {
-      if (address) actions.pay({ number: number.value, expiry: expiry.value, securityCode: securityCode.value, name: cardName.value.trim() });
+      if (address) actions.toPayment();
     });
   };
 
   return (
-    <StepFrame title={m.checkoutTitle} lede={sums.trial && firstCharge?.from ? m.checkoutLedeTrial(m.dayOf(firstCharge.from)) : m.checkoutLede(largest)} requests={[request]} toFix={form.toFix}>
+    <StepFrame title={m.checkoutTitle} lede={sums.trial && firstCharge?.from ? m.checkoutLedeTrial(m.dayOf(firstCharge.from)) : m.checkoutLede(largest)} toFix={form.toFix}>
       <FlowStep.Form onSubmit={submit}>
         <FlowStep.Split
           lead={
@@ -115,7 +108,7 @@ export function CheckoutStep() {
             <OrderSummary
               title={m.orderSummary}
               action={
-                <FlowButton variant="link" onPress={() => actions.edit('plan')}>
+                <FlowButton variant="link" onPress={actions.changePlan}>
                   {m.changePlan}
                 </FlowButton>
               }
@@ -146,43 +139,28 @@ export function CheckoutStep() {
           }
         >
           <Receipt label={m.yourOrder}>
-            <Receipt.Row label={m.rowBusiness} detail={m.businessDetail(m.sizeDetails[state.size], countryNames.of(state.country) ?? state.country)} action={edit(m.editBusiness, () => actions.edit('business'))}>
+            {/* The workspace exists now, so its answers are shown, not offered for change. */}
+            <Receipt.Row label={m.rowBusiness} detail={m.businessDetail(m.sizeDetails[state.size], countryNames.of(state.country) ?? state.country)}>
               {state.businessName}
             </Receipt.Row>
-            <Receipt.Row label={m.rowDomain} detail={state.domainSource === 'bought' ? m.domainBought : m.domainOwned} action={edit(m.editDomain, () => actions.edit('domain'))}>
+            <Receipt.Row label={m.rowDomain} detail={state.domainSource === 'bought' ? m.domainBought : m.domainOwned}>
               {state.domain}
             </Receipt.Row>
-            <Receipt.Row label={m.rowAdmin} detail={m.adminDetail} action={edit(m.editAdmin, () => actions.edit('admin'))}>
+            <Receipt.Row label={m.rowAdmin} detail={m.adminDetail}>
               {state.adminAddress}
             </Receipt.Row>
-            <Receipt.Row label={m.businessAddress} state={address ? 'done' : 'upcoming'} action={edit(address ? m.editAddress : m.addAddress, () => actions.edit('address'), address ? m.edit : m.addAddress)}>
+          </Receipt>
+          <FlowStep.Subheading>{m.contactInformation}</FlowStep.Subheading>
+          <Receipt label={m.contactInformation}>
+            <Receipt.Row label={state.businessName} state={address ? 'done' : 'upcoming'} action={edit(address ? m.editContact : m.addContact, actions.editContact, address ? m.edit : m.addContact)}>
               {address ? [address.street, address.street2, address.localArea, address.city, address.state, address.postalCode].filter(Boolean).join(', ') : null}
             </Receipt.Row>
           </Receipt>
           {addressAsked && !address ? <FlowNotice tone="danger">{m.addressRequired}</FlowNotice> : null}
-          <FlowStep.Subheading>{m.cardDetails}</FlowStep.Subheading>
-          <FlowTextField
-            label={m.cardNumber}
-            name="cc-number"
-            inputMode="numeric"
-            autoComplete="cc-number"
-            help={m.cardBrands}
-            suffix={brandOf(number.value) ?? undefined}
-            value={number.value}
-            onChange={(typed) => number.change(formatCardNumber(typed))}
-            onBlur={number.blur}
-            isValid={number.isValid}
-            error={number.error}
-            inputRef={number.inputRef}
-            isRequired
-            isSensitive
-          />
-          <FlowStep.Row layout="halves">
-            <FlowTextField label={m.expiry} name="cc-exp" inputMode="numeric" autoComplete="cc-exp" help={m.expiryHelp} value={expiry.value} onChange={(typed) => expiry.change(formatExpiry(typed))} onBlur={expiry.blur} isValid={expiry.isValid} error={expiry.error} inputRef={expiry.inputRef} isRequired isSensitive />
-            <FlowTextField label={m.securityCode} name="cc-csc" inputMode="numeric" autoComplete="cc-csc" help={m.securityCodeHelp} value={securityCode.value} onChange={(typed) => securityCode.change(formatSecurityCode(typed))} onBlur={securityCode.blur} isValid={securityCode.isValid} error={securityCode.error} inputRef={securityCode.inputRef} isRequired isSensitive />
-          </FlowStep.Row>
-          <FlowTextField label={m.nameOnCard} name="cc-name" autoComplete="cc-name" value={cardName.value} onChange={cardName.change} onBlur={cardName.blur} error={cardName.error} inputRef={cardName.inputRef} isRequired isSensitive />
-          <FlowNotice>{m.demoPayment}</FlowNotice>
+          <FlowStep.Subheading>{m.paymentMethod}</FlowStep.Subheading>
+          <FlowStep.Note>
+            <b>{m.cardNextPage}</b> {m.cardNextPageDetail(sums.domain !== null)}
+          </FlowStep.Note>
           <FlowStep.Note>
             {m.agreeByPaying}
             {named(m.businessAgreement, links.businessTerms)}
@@ -193,8 +171,8 @@ export function CheckoutStep() {
           </FlowStep.Note>
         </FlowStep.Split>
         <FlowStep.Actions>
-          <FlowButton type="submit" variant="primary" isPending={request.isPending} pendingLabel={m.checkingCard}>
-            {sums.trial ? (sums.domain ? m.payAndStartTrial(due) : m.startTrial) : m.payAndStart(due)}
+          <FlowButton type="submit" variant="primary">
+            {m.toPayment}
           </FlowButton>
         </FlowStep.Actions>
       </FlowStep.Form>

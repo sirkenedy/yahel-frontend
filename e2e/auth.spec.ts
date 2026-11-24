@@ -1,239 +1,123 @@
 import { expect, test } from '@playwright/test';
-import { credentials, mockApi, profile, signIn } from './support/api';
+import type { Page } from '@playwright/test';
+import { credentials, mockApi, profile, shellAccountsUrl, signIn, takenAddress } from './support/api';
 
-test.describe('sign in', () => {
-  test('a signed-out visitor is sent to sign-in', async ({ page }) => {
+// The shell has no sign-in page of its own (F-93): every way to sign in leaves for the accounts app. Its
+// browser tests stand in for that app, so a test can see exactly where the shell sent the person.
+const standInForAccountsApp = (page: Page) => page.route(`${shellAccountsUrl}/**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Accounts</title>' }));
+const shellHome = encodeURIComponent('http://localhost:4173/');
+
+test.describe('signing in, from the shell', () => {
+  test('a signed-out visitor is sent to the accounts app’s sign-in, asked to come back here', async ({ page }) => {
     await mockApi(page);
+    await standInForAccountsApp(page);
     await page.goto('/');
-    await expect(page).toHaveURL(/\/sign-in$/);
-    await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin?return=${shellHome}`);
   });
 
-  test('empty submit names what is missing and sends nothing', async ({ page }) => {
+  test('view the account, then sign out with nobody left: the accounts app’s sign-in', async ({ page }) => {
     const api = await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    await expect(page.getByText('Enter your email address')).toBeVisible();
-    await expect(page.getByText('Enter your password')).toBeVisible();
-    await expect(page.getByLabel('Email')).toBeFocused();
-    expect(api.calls.filter((c) => c.path === '/v1/auth/login')).toHaveLength(0);
-  });
-
-  test('wrong password explains the failure and keeps what was typed', async ({ page }) => {
-    await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByLabel('Email').fill(credentials.email);
-    await page.getByLabel('Password', { exact: true }).fill('wrong password');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    await expect(page.getByRole('alert')).toContainText("don't match");
-    await expect(page.getByLabel('Email')).toHaveValue(credentials.email);
-    await expect(page).toHaveURL(/\/sign-in$/);
-  });
-
-  test('the password can be revealed and hidden, and the value is kept', async ({ page }) => {
-    await mockApi(page);
-    await page.goto('/sign-in');
-    const password = page.getByLabel('Password', { exact: true });
-    await password.fill('a secret to check');
-    await expect(password).toHaveAttribute('type', 'password');
-
-    await page.getByRole('button', { name: 'Show password' }).click();
-    await expect(password).toHaveAttribute('type', 'text');
-    await expect(password).toHaveValue('a secret to check');
-    await expect(page.getByRole('button', { name: 'Hide password' })).toHaveAttribute('aria-pressed', 'true');
-    await expect(page).toHaveURL(/\/sign-in$/);
-
-    await page.getByRole('button', { name: 'Hide password' }).click();
-    await expect(password).toHaveAttribute('type', 'password');
-    await expect(password).toHaveValue('a secret to check');
-  });
-
-  test('the password is hidden again when sign-in is submitted', async ({ page }) => {
-    await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByLabel('Email').fill(credentials.email);
-    const password = page.getByLabel('Password', { exact: true });
-    await password.fill('wrong password');
-    await page.getByRole('button', { name: 'Show password' }).click();
-    await expect(password).toHaveAttribute('type', 'text');
-
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    await expect(page.getByRole('alert')).toContainText("don't match");
-    await expect(password).toHaveAttribute('type', 'password');
-    await expect(password).toHaveValue('wrong password');
-  });
-
-  test('showing and hiding the password never submits the form', async ({ page }) => {
-    const api = await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByLabel('Email').fill(credentials.email);
-    await page.getByLabel('Password', { exact: true }).fill(credentials.password);
-
-    await page.getByRole('button', { name: 'Show password' }).click();
-    await page.getByRole('button', { name: 'Hide password' }).click();
-
-    await expect(page.getByLabel('Password', { exact: true })).toHaveValue(credentials.password);
-    expect(api.calls.filter((c) => c.path === '/v1/auth/login')).toHaveLength(0);
-    await expect(page.getByRole('alert')).toHaveCount(0);
-    await expect(page).toHaveURL(/\/sign-in$/);
-  });
-
-  for (const path of ['Enter in the field', 'validation stops it', 'the connection is lost'] as const) {
-    test(`the password is hidden again on submit when ${path}`, async ({ page }) => {
-      await mockApi(page, { offline: path === 'the connection is lost' });
-      await page.goto('/sign-in');
-      if (path !== 'validation stops it') await page.getByLabel('Email').fill(credentials.email);
-      const password = page.getByLabel('Password', { exact: true });
-      await password.fill('a revealed secret');
-      await page.getByRole('button', { name: 'Show password' }).click();
-      await expect(password).toHaveAttribute('type', 'text');
-
-      if (path === 'Enter in the field') await password.press('Enter');
-      else await page.getByRole('button', { name: 'Sign in' }).click();
-
-      await expect(password).toHaveAttribute('type', 'password');
-      await expect(password).toHaveValue('a revealed secret');
-    });
-  }
-
-  for (const width of [320, 360, 768, 1024]) {
-    for (const mode of ['plain', '200% text', 'right to left'] as const) {
-      test(`the password field fits at ${width} wide, ${mode}`, async ({ page, isMobile }) => {
-        await page.setViewportSize({ width, height: 800 });
-        await mockApi(page);
-        await page.goto('/sign-in');
-        await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
-        await page.evaluate((m) => {
-          if (m === '200% text') document.documentElement.style.fontSize = '200%';
-          if (m === 'right to left') document.documentElement.dir = 'rtl';
-        }, mode);
-
-        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
-        const toggle = await page.getByRole('button', { name: 'Show password' }).boundingBox();
-        expect(toggle!.x).toBeGreaterThanOrEqual(0);
-        expect(toggle!.x + toggle!.width).toBeLessThanOrEqual(width + 0.5);
-        expect(Math.min(toggle!.width, toggle!.height)).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
-      });
-    }
-  }
-
-  test('the show control follows the password field in tab order and has a visible focus ring', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
-    await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByLabel('Password', { exact: true }).focus();
-    await page.keyboard.press('Tab');
-
-    const toggle = page.getByRole('button', { name: 'Show password' });
-    await expect(toggle).toBeFocused();
-    const ring = await toggle.evaluate((el) => {
-      const style = getComputedStyle(el);
-      return { style: style.outlineStyle, width: Number.parseFloat(style.outlineWidth), colour: style.outlineColor };
-    });
-    expect(ring.style).toBe('solid');
-    expect(ring.width).toBeGreaterThanOrEqual(2);
-    expect(ring.colour).not.toMatch(/rgba\(.*, 0\)|transparent/);
-    await page.keyboard.press('Space');
-    await expect(page.getByRole('button', { name: 'Hide password' })).toBeFocused();
-  });
-
-  test('the show control has a touch-sized target and stays inside the screen', async ({ page, isMobile }) => {
-    await mockApi(page);
-    await page.goto('/sign-in');
-    const box = await page.getByRole('button', { name: 'Show password' }).boundingBox();
-    const viewport = page.viewportSize()!;
-
-    expect(box!.height).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
-    expect(box!.width).toBeGreaterThanOrEqual(isMobile ? 43.5 : 27.5);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
-
-    await page.addStyleTag({ content: '* { letter-spacing: 0.06em !important; }' });
-    await page.evaluate(() => {
-      document.documentElement.style.fontSize = '200%';
-      document.documentElement.dir = 'rtl';
-    });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
-    await expect(page.getByRole('button', { name: 'Show password' })).toBeVisible();
-    const input = await page.getByLabel('Password', { exact: true }).boundingBox();
-    const toggle = await page.getByRole('button', { name: 'Show password' }).boundingBox();
-    expect(toggle!.x).toBeGreaterThanOrEqual(input!.x);
-    expect(toggle!.x + toggle!.width).toBeLessThanOrEqual(input!.x + input!.width + 0.5);
-  });
-
-  test('a lost connection is reported plainly', async ({ page }) => {
-    await mockApi(page, { offline: true });
-    await page.goto('/sign-in');
-    await page.getByLabel('Email').fill(credentials.email);
-    await page.getByLabel('Password', { exact: true }).fill(credentials.password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    await expect(page.getByRole('alert')).toContainText("Can't reach the server");
-  });
-
-  test('sign in, view the account, sign out', async ({ page }) => {
-    const api = await mockApi(page);
+    await standInForAccountsApp(page);
     await signIn(page);
 
-    await expect(page.getByText(profile.displayName)).toBeVisible();
-    await expect(page.getByText('Personal')).toBeVisible();
+    await expect(page).toHaveURL(/\/u\/0\/?$/);
+    await expect(page.getByRole('main').getByText(profile.displayName)).toBeVisible();
+    await expect(page.getByRole('main').getByText('Personal')).toBeVisible();
 
     await page.getByRole('link', { name: 'Manage account' }).click();
+    await expect(page).toHaveURL(/\/u\/0\/account$/);
     await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
     await expect(page.getByText(profile.globalId)).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to home' }).click();
-    await page.getByRole('button', { name: 'Sign out' }).click();
-    await expect(page).toHaveURL(/\/sign-in$/);
-    expect(api.calls.some((c) => c.path === '/v1/auth/logout')).toBe(true);
-
-    await page.goto('/account');
-    await expect(page).toHaveURL(/\/sign-in$/);
-  });
-
-  test('the form works with the keyboard alone', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
-    await mockApi(page);
-    await page.goto('/sign-in');
-    await page.getByLabel('Email').focus();
-    await page.keyboard.type(credentials.email);
-    await page.keyboard.press('Tab');
-    await page.keyboard.type(credentials.password);
-    await page.keyboard.press('Enter');
-
-    await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
+    await page.getByRole('main').getByRole('button', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin?return=${shellHome}`);
+    expect(api.calls.filter((c) => c.path === '/v1/auth/logout').map((c) => c.body)).toEqual([{ slot: 0 }]);
   });
 });
 
 test.describe('session', () => {
-  test('survives a reload by rotating the refresh token', async ({ page }) => {
+  test('survives a reload by refreshing the slot in the address', async ({ page }) => {
     const api = await mockApi(page);
     await signIn(page);
+    const before = api.calls.length;
     await page.reload();
 
     await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
-    expect(api.calls.filter((c) => c.path === '/v1/auth/refresh')).toHaveLength(1);
+    expect(api.calls.slice(before).filter((c) => c.path === '/v1/auth/refresh').map((c) => c.body)).toEqual([{ slot: 0 }]);
+    expect(api.calls.every((c) => c.client === 'web')).toBe(true);
   });
 
-  test('never writes the access token to web storage', async ({ page }) => {
+  test('keeps no token of any kind in web storage', async ({ page }) => {
     await mockApi(page);
     await signIn(page);
 
-    const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
-    expect(stored).not.toContain('access-');
-    expect(stored).toContain('refresh-');
-    expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(['yahel.device-id']);
+    expect(await page.evaluate(() => [Object.keys(localStorage), Object.keys(sessionStorage)])).toEqual([[], []]);
   });
 
-  test('a rejected refresh token ends the session cleanly', async ({ page }) => {
-    await mockApi(page);
-    await page.addInitScript(() => sessionStorage.setItem('yahel.refresh-token', 'stale-token'));
-    await page.goto('/');
+  test('a slot whose session has ended goes to the accounts app’s sign-in', async ({ page }) => {
+    const api = await mockApi(page);
+    await standInForAccountsApp(page);
+    await page.goto('/u/3/');
 
-    await expect(page).toHaveURL(/\/sign-in$/);
-    expect(await page.evaluate(() => sessionStorage.getItem('yahel.refresh-token'))).toBeNull();
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin?return=${shellHome}`);
+    const refreshed = api.calls.filter((c) => c.path === '/v1/auth/refresh').map((c) => c.body);
+    expect(refreshed.length).toBeGreaterThan(0);
+    expect(refreshed.every((body) => JSON.stringify(body) === JSON.stringify({ slot: 3 }))).toBe(true);
+  });
+});
+
+test.describe('account menu, in the shell', () => {
+  const menu = (page: Page) => page.getByRole('dialog', { name: 'Accounts' });
+
+  test('switches to another signed-in account at its own address', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [{ email: credentials.email, displayName: profile.displayName }, { email: takenAddress, displayName: 'Kemi Adeyemi' }] });
+    api.signInAs(takenAddress);
+    await signIn(page);
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await expect(menu(page).getByRole('link', { name: 'Manage your account' })).toBeFocused();
+    await menu(page).getByRole('button', { name: new RegExp(`^Switch to.*${takenAddress}`) }).click();
+
+    await expect(page).toHaveURL(/\/u\/1\/?$/);
+    await expect(page.getByRole('button', { name: `Account: ${takenAddress}` })).toBeVisible();
+  });
+
+  test('a signed-out account opens its password in the accounts app, named by its handle and never its address', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [{ email: credentials.email, displayName: profile.displayName }, { email: takenAddress, displayName: 'Kemi Adeyemi' }] });
+    await standInForAccountsApp(page);
+    await signIn(page);
+    const handle = api.remembered().find((account) => account.email === takenAddress)!.handle;
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await menu(page).getByRole('button', { name: new RegExp(`^Sign in to.*${takenAddress}`) }).click();
+
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin?account=${handle}&return=${shellHome}`);
+    expect(page.url()).not.toContain(encodeURIComponent(takenAddress));
+    expect(page.url()).not.toContain(takenAddress);
+  });
+
+  test('“Add another account” opens the accounts app’s email step, empty', async ({ page }) => {
+    await mockApi(page);
+    await standInForAccountsApp(page);
+    await signIn(page);
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await menu(page).getByRole('button', { name: 'Add another account' }).click();
+
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin/email?return=${shellHome}`);
+  });
+
+  test('signing out of all accounts leaves for the accounts app’s sign-in', async ({ page }) => {
+    const api = await mockApi(page);
+    await standInForAccountsApp(page);
+    await signIn(page);
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await menu(page).getByRole('button', { name: 'Sign out of all accounts' }).click();
+
+    await expect(page).toHaveURL(`${shellAccountsUrl}/signin?return=${shellHome}`);
+    expect(api.calls.some((c) => c.path === '/v1/auth/logout-browser')).toBe(true);
   });
 });

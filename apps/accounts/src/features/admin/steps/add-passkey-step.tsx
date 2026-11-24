@@ -5,29 +5,25 @@ import { adminMessages as m } from '../messages';
 import { StepFrame } from './step-frame';
 
 /**
- * Admins must use a passkey (the design brief), so there is no "Not now": Admin opens from here only once
- * one exists. A device that cannot make one says so and offers only to sign out. The rule itself is the
- * server's to enforce: the words say Admin is closed without one only when the server says it enforces
- * that (`passkeyRequired`), and otherwise recommend one (F-86).
+ * A passkey is recommended for admins, not required (F-98): "Not now" opens Admin without one. A device that
+ * cannot make one says so and offers the same way on.
  */
 export function AddPasskeyStep() {
   const { state, actions, meta } = useAdminFlow();
-  const { passkey: request, signOut } = meta.requests;
+  const { passkey: request } = meta.requests;
   const done = state.hasPasskey;
-  const required = state.passkeyRequired;
-  const lede = required ? m.addPasskeyLede : m.addPasskeyLedeAdvised;
 
   if (!done && !meta.passkeySupported) {
     return (
-      <StepFrame title={m.addPasskeyTitle} lede={lede} requests={[signOut]}>
+      <StepFrame title={m.addPasskeyTitle} lede={m.addPasskeyLede}>
         <FlowStep.Body>
           <FlowNotice tone="warning" title={m.unsupportedTitle}>
-            {required ? m.unsupported : m.unsupportedAdvised}
+            {m.unsupportedAdvised}
           </FlowNotice>
         </FlowStep.Body>
         <FlowStep.Actions>
-          <FlowButton variant="primary" onPress={actions.signOut} isPending={signOut.isPending} pendingLabel={m.signingOut}>
-            {m.signOut}
+          <FlowButton variant="primary" onPress={actions.openAdmin}>
+            {m.continueToAdmin}
           </FlowButton>
         </FlowStep.Actions>
       </StepFrame>
@@ -35,9 +31,9 @@ export function AddPasskeyStep() {
   }
 
   return (
-    <StepFrame title={done ? (required ? m.passkeyDoneTitle : m.passkeyDoneTitleAdvised) : m.addPasskeyTitle} lede={done ? m.passkeyDoneLede : lede} requests={done ? [] : [request]}>
+    <StepFrame title={done ? m.passkeyDoneTitle : m.addPasskeyTitle} lede={done ? m.passkeyDoneLede : m.addPasskeyLede} requests={done ? [] : [request]}>
       <FlowStep.Body>
-        <FlowCallout icon={<FlowIcon name="passkey" />} title={done ? m.passkeySavedOption : m.passkeyOption} tag={done ? undefined : required ? m.passkeyRequired : m.passkeyAdvised}>
+        <FlowCallout icon={<FlowIcon name="passkey" />} title={done ? m.passkeySavedOption : m.passkeyOption} tag={done ? undefined : m.passkeyAdvised}>
           {done ? m.passkeySavedDetail : m.passkeyOptionDetail}
         </FlowCallout>
       </FlowStep.Body>
@@ -47,10 +43,15 @@ export function AddPasskeyStep() {
             {m.continueToAdmin}
           </FlowButton>
         ) : (
-          // Pending while an earlier prompt is still open (left with Back) or the challenge is on its way: a press then would open nothing.
-          <FlowButton variant="primary" onPress={actions.startPasskey} isPending={request.isPending || meta.passkeyPreparing} pendingLabel={request.isPending ? m.passkeyWaiting : shared.passkeyPreparing}>
-            {m.addPasskey}
-          </FlowButton>
+          <>
+            {/* Pending while an earlier prompt is still open (left with Back) or the challenge is on its way: a press then would open nothing. */}
+            <FlowButton variant="primary" onPress={actions.startPasskey} isPending={request.isPending || meta.passkeyPreparing} pendingLabel={request.isPending ? m.passkeyWaiting : shared.passkeyPreparing}>
+              {m.addPasskey}
+            </FlowButton>
+            <FlowButton variant="quiet" onPress={actions.openAdmin} isDisabled={request.isPending}>
+              {m.notNow}
+            </FlowButton>
+          </>
         )}
       </FlowStep.Actions>
     </StepFrame>

@@ -16,6 +16,42 @@ const personInitials = (name: string) =>
 const initialsFor = (kind: AccountKind, name: string, email: string) =>
   kind === 'organisation' ? (email.split('@')[1] ?? email).charAt(0).toUpperCase() : personInitials(name) || email.charAt(0).toUpperCase();
 
+/** Only a web address may become an image source: anything else from data is ignored (rulebook 4.3). */
+const imageAddress = (url: string | null | undefined) => {
+  if (!url) return null;
+  try {
+    return ['https:', 'http:'].includes(new URL(url).protocol) ? url : null;
+  } catch {
+    return null;
+  }
+};
+
+export interface AccountFaceProps {
+  name: string;
+  email: string;
+  kind?: AccountKind;
+  /** The server's initials, used for a person in place of ones made from the name. */
+  initials?: string | null;
+  avatarUrl?: string | null;
+  size?: 'small' | 'regular' | 'medium' | 'large';
+  /** A green dot for an account that is signed in; a dimmed face for one that is not. */
+  presence?: 'signed-in' | 'signed-out';
+}
+
+/** An account's picture, or its initials: a person's in a circle, an organisation's domain letter in a rounded square. */
+export function AccountFace({ name, email, kind = 'person', initials, avatarUrl, size = 'regular', presence }: AccountFaceProps) {
+  const image = imageAddress(avatarUrl);
+  const letters = kind === 'person' && initials?.trim() ? initials.trim().slice(0, 2).toUpperCase() : initialsFor(kind, name, email);
+  return (
+    <span className={`ws-flow-face${presence === 'signed-out' ? ' ws-flow-face--away' : ''}`} aria-hidden="true">
+      <span className={`ws-flow-avatar ws-flow-avatar--${kind}${size === 'regular' ? '' : ` ws-flow-avatar--${size}`}`} translate="no">
+        {image ? <img className="ws-flow-avatar__image" src={image} alt="" referrerPolicy="no-referrer" /> : letters}
+      </span>
+      {presence === 'signed-in' ? <span className="ws-flow-face__presence" /> : null}
+    </span>
+  );
+}
+
 export interface AccountChipProps {
   email: string;
 }
@@ -68,9 +104,12 @@ interface AccountListAccountProps {
   name: string;
   email: string;
   kind?: AccountKind;
+  initials?: string | null;
+  avatarUrl?: string | null;
+  presence?: 'signed-in' | 'signed-out';
   /** Shown at the end of the row: "Personal", an organisation's name, "Signed out". */
   detail?: string;
-  /** Read out before the row's visible text to say what pressing it does, for example "Continue as". */
+  /** Read out before the row's visible text to say what pressing it does, for example "Switch to". */
   actionPrefix: string;
   onPress: () => void;
   isDisabled?: boolean;
@@ -78,14 +117,12 @@ interface AccountListAccountProps {
   children?: ReactNode;
 }
 
-function AccountListAccount({ name, email, kind = 'person', detail, actionPrefix, onPress, isDisabled, children }: AccountListAccountProps) {
+function AccountListAccount({ name, email, kind = 'person', initials, avatarUrl, presence, detail, actionPrefix, onPress, isDisabled, children }: AccountListAccountProps) {
   return (
     <li className="ws-flow-accounts__item">
       <Button className="ws-flow-accounts__row" onPress={onPress} isDisabled={isDisabled}>
         <span className="ws-flow-hidden">{actionPrefix} </span>
-        <span className={`ws-flow-avatar ws-flow-avatar--${kind}`} aria-hidden="true">
-          {initialsFor(kind, name, email)}
-        </span>
+        <AccountFace name={name} email={email} kind={kind} initials={initials} avatarUrl={avatarUrl} presence={presence} />
         <span className="ws-flow-accounts__who">
           <span className="ws-flow-accounts__name">{name}</span>
           <span className="ws-flow-accounts__email" translate="no">

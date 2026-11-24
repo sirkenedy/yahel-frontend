@@ -4,16 +4,16 @@ import { useSignInFlow } from '../sign-in-flow';
 import { StepFrame } from './step-frame';
 
 export function DoneStep() {
-  const { state, actions, meta } = useSignInFlow();
-  const { signOut } = meta.requests;
+  const { state, actions } = useSignInFlow();
 
   return (
     <StepFrame title={m.doneTitle(state.profile?.firstName ?? null)} lede={m.doneLede}>
       <FlowStep.Actions>
-        <FlowButton variant="primary" onPress={actions.continueToApp} isDisabled={signOut.isPending}>
+        <FlowButton variant="primary" onPress={actions.continueToApp}>
           {m.openYahel}
         </FlowButton>
-        <FlowButton variant="quiet" onPress={actions.signOut} isPending={signOut.isPending} pendingLabel={m.signingOut}>
+        {/* Another account is added beside this one: nobody is signed out to get there. */}
+        <FlowButton variant="quiet" onPress={actions.showChooser}>
           {m.useAnother}
         </FlowButton>
       </FlowStep.Actions>

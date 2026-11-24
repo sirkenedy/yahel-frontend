@@ -9,116 +9,111 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignedInRouteImport } from './routes/_signed-in'
-import { Route as SignInRouteImport } from './routes/sign-in'
-import { Route as SignedInIndexRouteImport } from './routes/_signed-in/index'
-import { Route as SignedInAccountRouteImport } from './routes/_signed-in/account'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as USlotRouteImport } from './routes/u/$slot'
+import { Route as USlotIndexRouteImport } from './routes/u/$slot/index'
+import { Route as USlotAccountRouteImport } from './routes/u/$slot/account'
 
-const SignedInRoute = SignedInRouteImport.update({
-  id: '/_signed-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignedInIndexRoute = SignedInIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => SignedInRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const SignedInAccountRoute = SignedInAccountRouteImport.update({
+const USlotRoute = USlotRouteImport.update({
+  id: '/u/$slot',
+  path: '/u/$slot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const USlotIndexRoute = USlotIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => USlotRoute,
+} as any)
+const USlotAccountRoute = USlotAccountRouteImport.update({
   id: '/account',
   path: '/account',
-  getParentRoute: () => SignedInRoute,
+  getParentRoute: () => USlotRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof SignedInIndexRoute
-  '/sign-in': typeof SignInRoute
-  '/account': typeof SignedInAccountRoute
+  '/': typeof IndexRoute
+  '/u/$slot': typeof USlotRouteWithChildren
+  '/u/$slot/account': typeof USlotAccountRoute
+  '/u/$slot/': typeof USlotIndexRoute
 }
 export interface FileRoutesByTo {
-  '/sign-in': typeof SignInRoute
-  '/account': typeof SignedInAccountRoute
-  '/': typeof SignedInIndexRoute
+  '/': typeof IndexRoute
+  '/u/$slot/account': typeof USlotAccountRoute
+  '/u/$slot': typeof USlotIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_signed-in': typeof SignedInRouteWithChildren
-  '/sign-in': typeof SignInRoute
-  '/_signed-in/account': typeof SignedInAccountRoute
-  '/_signed-in/': typeof SignedInIndexRoute
+  '/': typeof IndexRoute
+  '/u/$slot': typeof USlotRouteWithChildren
+  '/u/$slot/account': typeof USlotAccountRoute
+  '/u/$slot/': typeof USlotIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/account'
+  fullPaths: '/' | '/u/$slot' | '/u/$slot/account' | '/u/$slot/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/sign-in' | '/account' | '/'
-  id:
-    | '__root__'
-    | '/_signed-in'
-    | '/sign-in'
-    | '/_signed-in/account'
-    | '/_signed-in/'
+  to: '/' | '/u/$slot/account' | '/u/$slot'
+  id: '__root__' | '/' | '/u/$slot' | '/u/$slot/account' | '/u/$slot/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  SignedInRoute: typeof SignedInRouteWithChildren
-  SignInRoute: typeof SignInRoute
+  IndexRoute: typeof IndexRoute
+  USlotRoute: typeof USlotRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_signed-in': {
-      id: '/_signed-in'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof SignedInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_signed-in/': {
-      id: '/_signed-in/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof SignedInIndexRouteImport
-      parentRoute: typeof SignedInRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_signed-in/account': {
-      id: '/_signed-in/account'
+    '/u/$slot': {
+      id: '/u/$slot'
+      path: '/u/$slot'
+      fullPath: '/u/$slot'
+      preLoaderRoute: typeof USlotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$slot/': {
+      id: '/u/$slot/'
+      path: '/'
+      fullPath: '/u/$slot/'
+      preLoaderRoute: typeof USlotIndexRouteImport
+      parentRoute: typeof USlotRoute
+    }
+    '/u/$slot/account': {
+      id: '/u/$slot/account'
       path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof SignedInAccountRouteImport
-      parentRoute: typeof SignedInRoute
+      fullPath: '/u/$slot/account'
+      preLoaderRoute: typeof USlotAccountRouteImport
+      parentRoute: typeof USlotRoute
     }
   }
 }
 
-interface SignedInRouteChildren {
-  SignedInAccountRoute: typeof SignedInAccountRoute
-  SignedInIndexRoute: typeof SignedInIndexRoute
+interface USlotRouteChildren {
+  USlotAccountRoute: typeof USlotAccountRoute
+  USlotIndexRoute: typeof USlotIndexRoute
 }
 
-const SignedInRouteChildren: SignedInRouteChildren = {
-  SignedInAccountRoute: SignedInAccountRoute,
-  SignedInIndexRoute: SignedInIndexRoute,
+const USlotRouteChildren: USlotRouteChildren = {
+  USlotAccountRoute: USlotAccountRoute,
+  USlotIndexRoute: USlotIndexRoute,
 }
 
-const SignedInRouteWithChildren = SignedInRoute._addFileChildren(
-  SignedInRouteChildren,
-)
+const USlotRouteWithChildren = USlotRoute._addFileChildren(USlotRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  SignedInRoute: SignedInRouteWithChildren,
-  SignInRoute: SignInRoute,
+  IndexRoute: IndexRoute,
+  USlotRoute: USlotRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

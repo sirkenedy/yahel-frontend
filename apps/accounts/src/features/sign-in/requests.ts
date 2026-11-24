@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { isApiError } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
+import { accountsQuery, forgetAccountData } from '../../flow/accounts';
 import { confirmAndSignIn, resendConfirmation, signInOrConfirm } from '../../flow/email-confirmation';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { say } from '../../flow/toasts';
@@ -9,7 +10,6 @@ import { describeSignInFailure, rejectedResetCode } from './feedback';
 import type { FailureContext } from './feedback';
 import { signInMessages as m } from './messages';
 import type { SignInStep } from './machine';
-import { knownAccountsQuery } from './queries';
 import type { SignInStore } from './store';
 
 export interface SignInRequestDeps {
@@ -23,11 +23,15 @@ export interface SignInRequestDeps {
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
   /** The address bar shows this step, even while a navigation away from it is still loading. */
   isShown: (step: SignInStep) => boolean;
+  /** Where to go at once when signed in, for someone sent here to sign in; `null` shows Done. */
+  leave?: (() => void) | null;
+  /** Hands a phone challenge sign-in answered with to the phone step, which signs in once it is met. */
+  checkPhone: (email: string, challengeToken: string) => void;
   /** The destinations currently offered on the recover step, to record where a code went. */
   recoveryOptions: () => RecoveryOption[];
 }
 
-type SignInOutcome = 'signed-in' | 'second-step';
+type SignInOutcome = 'signed-in' | 'second-step' | 'phone-check';
 
 const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code === 'INVALID_TOKEN';
 
@@ -35,41 +39,40 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  * Every request the sign-in flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`. A new flow gets its own file of this shape.
  */
-export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, recoveryOptions }: SignInRequestDeps) {
+export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, checkPhone, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
   const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
 
-  const rememberAccount = async (signedOut: boolean) => {
-    const who = session.store.getState().profile;
-    if (!who || !capabilities.directory) return;
-    const name = who.displayName?.trim() || [who.firstName, who.lastName].filter(Boolean).join(' ') || who.email;
-    await capabilities.directory
-      .remember({ name, email: who.email, kind: 'person', signedOut })
-      .then(() => queryClient.invalidateQueries({ queryKey: knownAccountsQuery(capabilities.directory).queryKey }))
-      // The chooser is a convenience; failing to update it must never fail a sign-in or a sign-out.
-      .catch(() => undefined);
-  };
-
+  // A new account in this tab: nothing the last one's requests cached may be seen, and the chooser reads its list again.
   const finish = () => {
     store.dispatch({ type: 'signed-in' });
-    void rememberAccount(false);
-    navigate('done', { replace: true });
+    forgetAccountData(queryClient);
+    if (leave) leave();
+    else navigate('done', { replace: true });
   };
 
   // The challenge goes straight into the flow state; only the plain outcome is returned and kept.
   const settle = (result: SignInResult): SignInOutcome => {
     if (result.ok) return 'signed-in';
+    // No session until the phone is checked: the challenge goes straight to the phone step, never into this flow's state.
+    if (result.reason === 'phone-required') {
+      checkPhone(email(), result.challengeToken);
+      return 'phone-check';
+    }
     store.dispatch({ type: 'second-step-required', challengeToken: result.challengeToken });
     return 'second-step';
   };
-  const afterSignIn = (outcome: SignInOutcome) => (outcome === 'signed-in' ? finish() : navigate('code'));
+  const afterSignIn = (outcome: SignInOutcome) => {
+    if (outcome === 'signed-in') finish();
+    else if (outcome === 'second-step') navigate('code');
+  };
 
   const password = useFlowRequest({
     visit,
     describe: describe('password'),
     run: async (value: string, { isCurrent }) => {
       const result = await signInOrConfirm(session, email(), value);
-      if (result.ok || result.reason === 'mfa-required') return settle(result);
+      if (result.ok || result.reason !== 'unconfirmed') return settle(result);
       // The proof is held only for the confirm step, and only if the person is still where they asked for it:
       // not left, and not on the way somewhere else while that page loads.
       if (!isCurrent() || !isShown('password')) return 'left' as const;
@@ -87,7 +90,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     describe: describe('email-code'),
     run: async (value: string) => {
       const result = await confirmAndSignIn(session, email(), value, store.getState().provenPassword, () => store.dispatch({ type: 'email-confirmed' }));
-      return result.ok || result.reason === 'mfa-required' ? settle(result) : ('sign-in-failed' as const);
+      return result.ok || result.reason !== 'sign-in-failed' ? settle(result) : ('sign-in-failed' as const);
     },
     onDone: (outcome) => (outcome === 'sign-in-failed' ? navigate('password', { replace: true }) : afterSignIn(outcome)),
   });
@@ -191,35 +194,54 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     },
   });
 
+  const accountsNow = () => queryClient.fetchQuery({ ...accountsQuery(capabilities.directory), staleTime: 0 });
+
+  // A signed-in account opens without a password. One that turns out to be signed out after all asks for it.
+  const switchAccount = useFlowRequest({
+    visit,
+    describe: describe('other'),
+    run: async (handle: string) => {
+      const account = (await accountsNow()).find((known) => known.handle === handle);
+      if (!account) return { to: 'gone' as const };
+      if (!account.signedIn || !(await session.switchTo(account.slot, account.handle))) return { to: 'password' as const, email: account.email };
+      forgetAccountData(queryClient);
+      return { to: 'done' as const, email: account.email };
+    },
+    onDone: (outcome) => {
+      if (outcome.to === 'gone') return;
+      if (outcome.to === 'password') {
+        store.dispatch({ type: 'account-chosen', email: outcome.email });
+        navigate('password');
+        return;
+      }
+      store.dispatch({ type: 'account-chosen', email: outcome.email });
+      store.dispatch({ type: 'signed-in' });
+      if (leave) {
+        leave();
+        return;
+      }
+      say(m.switchedTo(outcome.email));
+      navigate('done');
+    },
+  });
+
   const removeAccount = useFlowRequest({
     visit,
     describe: describe('other'),
-    run: async (address: string) => {
-      await capabilities.directory?.remove(address);
-      const left = await queryClient.fetchQuery({ ...knownAccountsQuery(capabilities.directory), staleTime: 0 });
+    run: async ({ handle, email: address }: { handle: string; email: string }) => {
+      await session.removeAccount(handle);
+      const left = await accountsNow().catch(() => []);
       return { address, left: left.length };
     },
-    onDone: ({ left }) => {
-      if (left === 0) navigate('email', { replace: true });
+    onDone: ({ address, left }) => {
+      say(m.removed(address));
+      if (left > 0) return;
+      store.dispatch({ type: 'removing', on: false });
+      navigate('email', { replace: true });
     },
   });
 
-  const signOut = useFlowRequest({
-    visit,
-    describe: describe('other'),
-    run: async () => {
-      await rememberAccount(true);
-      // Signing out here always succeeds; a failed server call must not keep the person signed in on this device.
-      await session.signOut().catch(() => undefined);
-    },
-    onDone: () => {
-      store.dispatch({ type: 'signed-out' });
-      queryClient.clear();
-      navigate('choose', { replace: true });
-    },
-  });
-
-  return { password, confirmEmail, resendEmailCode, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, removeAccount, signOut };
+  return { password, confirmEmail, resendEmailCode, passkey, code, textCode, sendResetCode, resendResetCode, newPassword, help, switchAccount, removeAccount };
 }
 
 export type SignInRequests = ReturnType<typeof useSignInRequests>;

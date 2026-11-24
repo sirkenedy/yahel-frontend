@@ -1,15 +1,11 @@
 import { QueryClient } from '@tanstack/react-query';
-import { createAccountCapabilities } from '@yahel/api-client';
 import type { AdminAccess, RecoveryMethods } from '@yahel/api-client';
-import { createStandIns } from '@yahel/api-client/standins';
 import type { Session } from '@yahel/auth';
 import { describe, expect, it, vi } from 'vitest';
-import { dropProof, forgetAdmin, isOffered, loadAdminFacts, receiveHandover, stepInsteadOf } from './route-guard';
+import { forgetAdmin, isOffered, loadAdminFacts, pathOf, receiveHandover, stepInsteadOf, takePhoneChallenge } from './route-guard';
 import { createAdminStore } from './store';
 
-const api = { auth: {} } as never;
-const instant = async () => undefined;
-const handover = { email: 'amara@harbourline.example', organisation: 'Harbourline Studio' };
+const handover = { email: 'amara@harbourline.example', organisation: 'Harbourline Studio', challengeToken: 'pc-1', phone: null, continueToPlan: true };
 const profile = { id: 'p-1', globalId: 'g', email: 'kayode@northwind.example', firstName: 'Kayode', lastName: 'Balogun', displayName: 'Kayode Balogun', photo: null };
 const phone = (verified: Partial<RecoveryMethods['phone']>): RecoveryMethods => ({
   recoveryEmail: { configured: false, value: null, lastUpdatedAt: null, pending: null },
@@ -20,53 +16,38 @@ const sessionAs = (status: 'signed-in' | 'signed-out', recovery: RecoveryMethods
   const get = vi.fn().mockResolvedValue(recovery);
   return { session: { store: { getState: () => ({ status, profile: status === 'signed-in' ? profile : null }) }, api: { me: { recovery: { get } } } } as unknown as Session, get };
 };
-const access = (membership: Awaited<ReturnType<AdminAccess['membership']>>) => ({ adminAccess: { membership: vi.fn().mockResolvedValue(membership) } }) as unknown as Parameters<typeof loadAdminFacts>[0]['capabilities'];
+const access = (membership: Awaited<ReturnType<AdminAccess['membership']>> | undefined) => ({ adminAccess: membership === undefined ? null : { membership: vi.fn().mockResolvedValue(membership) } }) as unknown as Parameters<typeof loadAdminFacts>[0]['capabilities'];
 
 describe('isOffered', () => {
-  it('follows workspace sign-up, and needs the server to say who administers what and to take a passkey', () => {
-    const demo = createAccountCapabilities(api, createStandIns(instant));
-    expect(isOffered({ config: { businessSignUp: true }, capabilities: demo })).toBe(true);
-    expect(isOffered({ config: { businessSignUp: false }, capabilities: demo })).toBe(false);
-    expect(isOffered({ config: { businessSignUp: true }, capabilities: createAccountCapabilities(api) })).toBe(false);
-    expect(isOffered({ config: { businessSignUp: true }, capabilities: { ...demo, passkeyRegistration: null } })).toBe(false);
+  it('follows workspace sign-up, and opens in any build for a phone check sign-in is waiting on', () => {
+    const store = createAdminStore();
+    expect(isOffered({ config: { businessSignUp: true }, admin: store })).toBe(true);
+    expect(isOffered({ config: { businessSignUp: false }, admin: store })).toBe(false);
+
+    takePhoneChallenge(store, profile.email, 'pc-2');
+    expect(isOffered({ config: { businessSignUp: false }, admin: store })).toBe(true);
   });
 });
 
 describe('loadAdminFacts', () => {
   it('asks the server nothing while nobody is signed in', async () => {
     const { session, get } = sessionAs('signed-out');
-    const membership = access(null);
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: membership })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null, passkeyRequired: false });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null });
     expect(get).not.toHaveBeenCalled();
-    expect(membership.adminAccess!.membership).not.toHaveBeenCalled();
   });
 
   it('reads the workspace and whether a phone is confirmed, for the signed-in account', async () => {
     const { session } = sessionAs('signed-in', phone({ configured: true, verified: true }));
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: true }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio', passkeyRequired: true });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: false }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio' });
   });
 
-  it('counts a confirmed number still waiting to replace an older one', async () => {
-    const { session } = sessionAs('signed-in', phone({ pending: { value: '***0142', verified: true, requestedAt: null, usableAt: null } }));
-
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: true }) })).resolves.toMatchObject({ phoneVerified: true });
-  });
-
-  it('says Admin is closed without a passkey only when the server says it enforces that', async () => {
-    const { session } = sessionAs('signed-in');
-    const facts = (answer: Parameters<typeof access>[0]) => loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(answer) });
-
-    await expect(facts({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: false })).resolves.toMatchObject({ passkeyRequired: false });
-    await expect(facts({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false } as Parameters<typeof access>[0])).resolves.toMatchObject({ passkeyRequired: false });
-  });
-
-  it('a personal session, or a member who administers nothing, is no administrator', async () => {
+  it('a member who administers nothing is no administrator; where nothing can say, the server decides', async () => {
     const { session } = sessionAs('signed-in');
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, administrator: false, organisation: null });
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: true }) })).resolves.toMatchObject({ administrator: false });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: false }) })).resolves.toMatchObject({ administrator: false });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(undefined) })).resolves.toMatchObject({ signedIn: true, administrator: true, organisation: null });
   });
 });
 
@@ -77,26 +58,28 @@ describe('the store between steps', () => {
     expect(store.getState().email).toBeNull();
 
     receiveHandover(store, handover);
-    store.dispatch({ type: 'email-unconfirmed', password: 'pw' });
+    store.dispatch({ type: 'phone-code-sent', country: 'NG', number: '8035550142' });
     receiveHandover(store, handover);
-    expect(store.getState()).toMatchObject({ email: handover.email, handedOver: true, provenPassword: 'pw' });
+    expect(store.getState()).toMatchObject({ email: handover.email, handedOver: true, challengeToken: 'pc-1', phone: { number: '8035550142' } });
   });
 
-  it('drops the proof on leaving the confirm step and forgets everything on leaving the flow', () => {
+  it('forgets everything on leaving the flow before signing in, and keeps it once signed in', () => {
     const store = createAdminStore();
     receiveHandover(store, handover);
-    store.dispatch({ type: 'email-unconfirmed', password: 'pw' });
+    forgetAdmin(store, sessionAs('signed-in').session);
+    expect(store.getState().email).toBe(handover.email);
 
-    dropProof(store);
-    expect(store.getState().provenPassword).toBeNull();
-    forgetAdmin(store);
+    forgetAdmin(store, sessionAs('signed-out').session);
     expect(store.getState().email).toBeNull();
   });
 
-  it('says which step to show instead, or nothing when the step can be shown', () => {
+  it('says which step to show instead, sign-in when none can be, or nothing when the step can be shown', () => {
     const store = createAdminStore();
-    expect(stepInsteadOf('signin', store, { signedIn: false, phoneVerified: false, hasPasskey: false })).toBeNull();
-    expect(stepInsteadOf('welcome', store, { signedIn: false, phoneVerified: false, hasPasskey: false })).toBe('signin');
+    expect(stepInsteadOf('welcome', store, { signedIn: false, phoneVerified: false, hasPasskey: false })).toBe('sign-in');
+    expect(pathOf('sign-in')).toBe('/signin');
     expect(stepInsteadOf('welcome', store, { signedIn: true, phoneVerified: false, hasPasskey: false })).toBe('phone');
+    expect(pathOf('phone')).toBe('/admin/phone');
+    receiveHandover(store, handover);
+    expect(stepInsteadOf('phone', store, { signedIn: false, phoneVerified: false, hasPasskey: false })).toBeNull();
   });
 });

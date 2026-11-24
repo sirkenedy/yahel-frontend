@@ -1,7 +1,6 @@
 import type { BillingPeriod, DomainOffer, PromoCode } from '@yahel/api-client';
-import type { BirthDate } from '../../flow/dates';
 
-export const businessSteps = ['start', 'you', 'domain-question', 'domain', 'domain-ok', 'find', 'registrant', 'admin', 'plan', 'checkout', 'card-code', 'creating', 'ready'] as const;
+export const businessSteps = ['start', 'you', 'domain-question', 'domain', 'domain-ok', 'find', 'found', 'registrant', 'admin', 'creating', 'ready', 'plan', 'checkout', 'gateway', 'card-code', 'paid'] as const;
 export type BusinessStep = (typeof businessSteps)[number];
 
 /** How many people the business has, in the bands the first question offers. */
@@ -32,7 +31,7 @@ export interface Payment {
 }
 
 /** An answer the server refused, and the step that has to be answered again. */
-export type Rejection = { step: 'domain'; reason: 'claimed' | 'public' } | { step: 'find'; reason: 'claimed' } | { step: 'admin'; reason: 'taken' } | { step: 'you'; reason: 'underage' };
+export type Rejection = { step: 'domain'; reason: 'claimed' | 'public' } | { step: 'find'; reason: 'claimed' } | { step: 'admin'; reason: 'taken' };
 
 /**
  * How far creating the workspace has got. Each part is recorded as it happens, so another try (after a
@@ -44,9 +43,9 @@ export interface Creation {
   created: boolean;
   /** The workspace's id, when the answer that created it was received. */
   tenantId: string | null;
-  /** The payment has been tied to the workspace, or let go when no workspace was named (`tenantId` is `null`). */
-  settled: boolean;
   finished: boolean;
+  /** The order was paid for and tied to the workspace, after the administrator's phone was checked. */
+  settled: boolean;
 }
 
 /**
@@ -55,7 +54,8 @@ export interface Creation {
  * that asks for it until the workspace is created, and is dropped the moment it is, and with everything
  * else (`reset`) when the flow is left or started again. It is never handed back to a step. Card details
  * and the bank's code are never here at all: they go from their fields straight into one request, which
- * keeps no copy (`flow/use-flow-request.ts`); `payment` holds only what a receipt would print.
+ * keeps no copy (`flow/use-flow-request.ts`); `payment` holds only what a receipt would print. Registration
+ * answers with a phone challenge, not a session (F-97): it is kept until it is handed to the phone step.
  */
 export interface BusinessState {
   businessName: string;
@@ -66,7 +66,8 @@ export interface BusinessState {
   lastName: string;
   /** An address the person can open today. Asked only where something can use it. */
   contactEmail: string;
-  birth: BirthDate | null;
+  /** The personal account in use whose name and address filled in the empty fields, once per visit. `null` until then. */
+  prefilledFrom: string | null;
   domainSource: 'owned' | 'bought';
   /** A domain the business says it owns, as last entered. */
   ownedDomain: string;
@@ -86,13 +87,13 @@ export interface BusinessState {
   /** How many people to start with; `null` until checkout, which starts from the team's size. */
   seats: number | null;
   payment: Payment | null;
-  /** The person came back from checkout to change one answer, and returns there afterwards. */
-  editing: boolean;
   rejection: Rejection | null;
   creation: Creation;
+  /** The phone check registration answered with: no session exists until its texted code is met. */
+  challengeToken: string | null;
 }
 
-const initialCreation: Creation = { started: false, created: false, tenantId: null, settled: false, finished: false };
+const initialCreation: Creation = { started: false, created: false, tenantId: null, finished: false, settled: false };
 
 export const DEFAULT_COUNTRY = 'NG';
 
@@ -103,7 +104,7 @@ export const initialBusinessState: BusinessState = {
   firstName: '',
   lastName: '',
   contactEmail: '',
-  birth: null,
+  prefilledFrom: null,
   domainSource: 'owned',
   ownedDomain: '',
   ownedDomainConfirmed: false,
@@ -118,14 +119,14 @@ export const initialBusinessState: BusinessState = {
   planChosen: false,
   seats: null,
   payment: null,
-  editing: false,
   rejection: null,
   creation: initialCreation,
+  challengeToken: null,
 };
 
 export type BusinessEvent =
   | { type: 'business-entered'; businessName: string; size: TeamSize; country: string }
-  | { type: 'you-entered'; firstName: string; lastName: string; contactEmail: string; birth: BirthDate }
+  | { type: 'you-entered'; firstName: string; lastName: string; contactEmail: string }
   | { type: 'domain-source-chosen'; source: BusinessState['domainSource'] }
   | { type: 'owned-domain-entered'; domain: string }
   | { type: 'domain-refused'; reason: 'claimed' | 'public' }
@@ -142,16 +143,14 @@ export type BusinessEvent =
   | { type: 'payment-started'; payment: Omit<Payment, 'authorised'> }
   | { type: 'payment-authorised' }
   | { type: 'payment-dropped' }
-  | { type: 'edit-started' }
-  | { type: 'edit-finished' }
   | { type: 'creation-started' }
   /** The attempt ended without an answer that settles it: the person may go back and change things. */
   | { type: 'creation-stopped' }
-  | { type: 'workspace-created'; tenantId: string | null }
+  | { type: 'workspace-created'; tenantId: string | null; challengeToken: string | null }
   | { type: 'order-settled' }
   | { type: 'creation-finished' }
-  /** `returnToCheckout`: everything else stands, so once this is put right the person goes back to checkout. */
-  | { type: 'answer-rejected'; rejection: Rejection; returnToCheckout: boolean }
+  | { type: 'answer-rejected'; rejection: Rejection }
+  | { type: 'prefilled'; firstName: string; lastName: string; contactEmail: string; from: string }
   | { type: 'reset' };
 
 const clearRejection = (state: BusinessState, ...steps: Rejection['step'][]) => (state.rejection && steps.includes(state.rejection.step) ? null : state.rejection);
@@ -163,7 +162,7 @@ export function reduce(state: BusinessState, event: BusinessEvent): BusinessStat
       // The country sets the currency, so anything priced for the old one is asked for again.
       return { ...state, businessName: event.businessName, size: event.size, country: event.country, payment: null, ...(event.country === state.country ? {} : { promo: null, address: null }) };
     case 'you-entered':
-      return { ...state, firstName: event.firstName, lastName: event.lastName, contactEmail: event.contactEmail, birth: event.birth, rejection: clearRejection(state, 'you') };
+      return { ...state, firstName: event.firstName, lastName: event.lastName, contactEmail: event.contactEmail };
     case 'domain-source-chosen':
       // The first search is for the business's own name.
       return { ...state, domainSource: event.source, payment: null, search: event.source === 'bought' && state.search === '' ? state.businessName.toLowerCase() : state.search };
@@ -196,24 +195,24 @@ export function reduce(state: BusinessState, event: BusinessEvent): BusinessStat
       return state.payment ? { ...state, payment: { ...state.payment, authorised: true } } : state;
     case 'payment-dropped':
       return { ...state, payment: null };
-    case 'edit-started':
-      return { ...state, editing: true };
-    case 'edit-finished':
-      return { ...state, editing: false };
     case 'creation-started':
       return inCreation(state, { started: true });
     case 'creation-stopped':
       return state.creation.created ? state : inCreation(state, { started: false });
     case 'workspace-created':
-      // The last thing the password is needed for.
-      return { ...inCreation(state, { created: true, tenantId: event.tenantId }), password: null };
+      // The last thing the password is needed for. What signs in now is the phone check.
+      return { ...inCreation(state, { created: true, tenantId: event.tenantId }), password: null, challengeToken: event.challengeToken };
     case 'order-settled':
       return inCreation(state, { settled: true });
     case 'creation-finished':
       return inCreation(state, { finished: true });
     case 'answer-rejected':
-      // The workspace was not created, so the attempt is over and its payment with it.
-      return { ...state, rejection: event.rejection, editing: event.returnToCheckout, payment: null, creation: initialCreation, ...(event.rejection.step === 'domain' ? { ownedDomainConfirmed: false } : {}), ...(event.rejection.step === 'find' ? { bought: null } : {}) };
+      // The workspace was not created, so the attempt is over.
+      return { ...state, rejection: event.rejection, creation: initialCreation, ...(event.rejection.step === 'domain' ? { ownedDomainConfirmed: false } : {}), ...(event.rejection.step === 'find' ? { bought: null } : {}) };
+    case 'prefilled':
+      // Once only, and only into fields still empty: what the person typed, or cleared, is never filled again.
+      if (state.prefilledFrom !== null) return state;
+      return { ...state, firstName: state.firstName || event.firstName, lastName: state.lastName || event.lastName, contactEmail: state.contactEmail || event.contactEmail, prefilledFrom: event.from };
     case 'reset':
       return initialBusinessState;
   }
@@ -232,23 +231,46 @@ export const seatsOf = (state: Pick<BusinessState, 'seats' | 'size'>) => state.s
 export interface BusinessFacts {
   /** A domain can be searched for and bought here. Without it only a domain already owned can be used. */
   domainsForSale: boolean;
-  /** Plans and checkout exist. Without them the workspace is created straight after the administrator's sign-in. */
+  /** Plans and checkout exist. Without them the workspace is created and the administrator goes on to Admin. */
   billing: boolean;
+  /** This tab is signed in: after the workspace exists, only meeting the phone check does that. */
+  signedIn: boolean;
 }
 
-const aboutYouAnswered = (state: BusinessState) => state.businessName !== '' && state.firstName !== '' && state.birth !== null;
+const aboutYouAnswered = (state: BusinessState) => state.businessName !== '' && state.firstName !== '';
 const hasDomain = (state: BusinessState) => (state.domainSource === 'bought' ? state.bought !== null && state.address !== null : state.ownedDomain !== '' && state.ownedDomainConfirmed);
-const hasAdmin = (state: BusinessState) => hasDomain(state) && state.adminUser !== '' && state.password !== null;
+
+/** Once signed in after the workspace exists: the plan, checkout and payment, in that order, until it is paid. */
+function afterSignIn(step: BusinessStep, state: BusinessState, facts: BusinessFacts): BusinessStep {
+  if (!facts.billing) return 'ready';
+  if (state.creation.settled) return 'paid';
+  switch (step) {
+    case 'checkout':
+      return state.planChosen ? 'checkout' : 'plan';
+    case 'registrant':
+      // A business that owns its domain gives its address from checkout, where the invoice needs it.
+      return state.planChosen && state.domainSource === 'owned' ? 'registrant' : afterSignIn('checkout', state, facts);
+    case 'gateway':
+      return state.planChosen && state.address !== null ? 'gateway' : afterSignIn('checkout', state, facts);
+    case 'card-code':
+      return state.payment && !state.payment.authorised ? 'card-code' : afterSignIn('gateway', state, facts);
+    default:
+      return 'plan';
+  }
+}
 
 /**
  * The step that can honestly be shown when `step` is asked for: `step` itself if everything it depends
- * on is present, otherwise the nearest earlier step. This is what makes a reload, a pasted address or
+ * on is present, otherwise the nearest step that is. This is what makes a reload, a pasted address or
  * the Forward button land somewhere that works.
  */
 export function resumeStep(step: BusinessStep, state: BusinessState, facts: BusinessFacts): BusinessStep {
-  // Once the workspace exists the answers are final: only what comes after can be shown. While it is being
-  // created they are held too, so Back cannot reach a checkout whose payment is already being used.
-  if (state.creation.created) return state.creation.finished ? 'ready' : 'creating';
+  // Once the workspace exists the answers are final: only what comes after can be shown. Until the phone check
+  // signs the administrator in, that is Ready, which leads to it; afterwards, the plan and checkout.
+  if (state.creation.created) {
+    if (!state.creation.finished) return 'creating';
+    return facts.signedIn ? afterSignIn(step, state, facts) : 'ready';
+  }
   if (state.creation.started) return 'creating';
   const domainStart = (): BusinessStep => (aboutYouAnswered(state) ? (facts.domainsForSale ? 'domain-question' : 'domain') : resumeStep('you', state, facts));
   switch (step) {
@@ -264,37 +286,28 @@ export function resumeStep(step: BusinessStep, state: BusinessState, facts: Busi
       return aboutYouAnswered(state) && state.ownedDomain !== '' && state.rejection?.step !== 'domain' ? 'domain-ok' : resumeStep('domain', state, facts);
     case 'find':
       return facts.domainsForSale ? (aboutYouAnswered(state) ? 'find' : resumeStep('you', state, facts)) : domainStart();
-    case 'registrant': {
-      // The address of a business that owns its domain is asked for from checkout, where the invoice needs it.
-      const asked = state.domainSource === 'bought' ? state.bought !== null : facts.billing && hasAdmin(state);
-      return aboutYouAnswered(state) && asked ? 'registrant' : state.domainSource === 'bought' ? resumeStep('find', state, facts) : resumeStep('checkout', state, facts);
-    }
+    case 'found':
+      return state.domainSource === 'bought' && state.bought !== null && aboutYouAnswered(state) ? 'found' : resumeStep('find', state, facts);
+    case 'registrant':
+      return state.domainSource === 'bought' && state.bought !== null && aboutYouAnswered(state) ? 'registrant' : resumeStep('find', state, facts);
     case 'admin':
       if (hasDomain(state)) return 'admin';
       if (state.domainSource === 'bought') return resumeStep(state.bought ? 'registrant' : 'find', state, facts);
       return state.ownedDomain !== '' && aboutYouAnswered(state) ? resumeStep('domain-ok', state, facts) : domainStart();
-    case 'plan':
-      return facts.billing && hasAdmin(state) ? 'plan' : resumeStep('admin', state, facts);
-    case 'checkout':
-      return facts.billing && hasAdmin(state) && state.planChosen ? 'checkout' : resumeStep('plan', state, facts);
-    case 'card-code':
-      return state.payment && !state.payment.authorised ? 'card-code' : resumeStep('checkout', state, facts);
-    case 'creating':
-      return state.creation.started ? 'creating' : resumeStep(facts.billing ? 'checkout' : 'admin', state, facts);
-    case 'ready':
-      return resumeStep('creating', state, facts);
+    default:
+      // Creating, Ready and everything after need the workspace.
+      return resumeStep('admin', state, facts);
   }
 }
 
-const returnsToCheckout: readonly BusinessStep[] = ['start', 'you', 'domain-question', 'admin', 'plan'];
-
 /** Where the step's Back link leads, or `null` when there is nowhere earlier to go. */
 export function backOf(step: BusinessStep, state: BusinessState, facts: BusinessFacts): BusinessStep | null {
-  if (state.editing && returnsToCheckout.includes(step)) return 'checkout';
   switch (step) {
     case 'start':
     case 'creating':
     case 'ready':
+    case 'plan':
+    case 'paid':
       return null;
     case 'you':
       return 'start';
@@ -306,50 +319,57 @@ export function backOf(step: BusinessStep, state: BusinessState, facts: Business
       return 'domain';
     case 'find':
       return 'domain-question';
+    case 'found':
+      return 'find';
     case 'registrant':
-      return state.domainSource === 'bought' ? 'find' : 'checkout';
+      return state.domainSource === 'bought' && !state.creation.created ? 'found' : 'checkout';
     case 'admin':
       return state.domainSource === 'bought' ? 'registrant' : 'domain-ok';
-    case 'plan':
-      return 'admin';
     case 'checkout':
       return 'plan';
-    case 'card-code':
+    case 'gateway':
       return 'checkout';
+    case 'card-code':
+      return 'gateway';
   }
 }
 
-/** The workspace exists, or is being made: visiting the start of the flow does not begin again. */
+/** The workspace exists: visiting the start of the flow does not begin again. */
 export const hasWorkspaceUnderway = (state: BusinessState) => state.creation.created;
 
-/** The step that follows `step` once it has been answered. An answer changed from checkout returns there. `creating` means: create the workspace now. */
-export function nextOf(step: Exclude<BusinessStep, 'checkout' | 'card-code' | 'creating' | 'ready'>, state: BusinessState, facts: BusinessFacts): BusinessStep {
-  const onward = (next: BusinessStep) => (state.editing && facts.billing ? 'checkout' : next);
+/** The step that follows `step` once it has been answered. `creating` means: create the workspace now. */
+export function nextOf(step: Exclude<BusinessStep, 'creating' | 'ready' | 'gateway' | 'card-code' | 'paid'>, state: BusinessState, facts: BusinessFacts): BusinessStep {
   switch (step) {
     case 'start':
-      return onward('you');
+      return 'you';
     case 'you':
-      return onward(facts.domainsForSale ? 'domain-question' : 'domain');
+      return facts.domainsForSale ? 'domain-question' : 'domain';
     case 'domain-question':
       return state.domainSource === 'owned' ? 'domain' : 'find';
     case 'domain':
       return 'domain-ok';
     case 'find':
+      return 'found';
+    case 'found':
       return 'registrant';
     case 'domain-ok':
+      return 'admin';
     case 'registrant':
-      return onward('admin');
+      // For a bought domain the registrant comes before the admin sign-in; for one owned, it is asked from checkout.
+      return state.creation.created ? 'checkout' : 'admin';
     case 'admin':
-      return facts.billing ? onward('plan') : 'creating';
+      return 'creating';
     case 'plan':
       return 'checkout';
+    case 'checkout':
+      return 'gateway';
   }
 }
 
 export type ProgressPart = 'business' | 'you' | 'domain' | 'admin' | 'plan' | 'checkout';
 
 /** How far along the questions a step is, of how many, and which of them it belongs to. Steps outside the count have none. */
-export function progressOf(step: BusinessStep, facts: BusinessFacts): { current: number; total: number; part: ProgressPart } | null {
+export function progressOf(step: BusinessStep, facts: Pick<BusinessFacts, 'billing'>): { current: number; total: number; part: ProgressPart } | null {
   const total = facts.billing ? 6 : 4;
   const at = (current: number, part: ProgressPart) => ({ current, total, part });
   switch (step) {
@@ -361,6 +381,7 @@ export function progressOf(step: BusinessStep, facts: BusinessFacts): { current:
     case 'domain':
     case 'domain-ok':
     case 'find':
+    case 'found':
     case 'registrant':
       return at(3, 'domain');
     case 'admin':

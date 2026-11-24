@@ -1,10 +1,8 @@
 import { FlowButton, FlowStep, FlowTextField } from '@yahel/ui';
-import { useBirthFields } from '../../../flow/birth-fields';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
 import { useBusinessFlow } from '../business-flow';
-import { refusalFor } from '../feedback';
 import { businessMessages as m } from '../messages';
-import { MIN_AGE, contactEmailProblem, firstNameProblem, lastNameProblem } from '../validation';
+import { contactEmailProblem, firstNameProblem, lastNameProblem } from '../validation';
 import { StepFrame } from './step-frame';
 
 export function YouStep() {
@@ -13,14 +11,9 @@ export function YouStep() {
   const first = useStepField({ initial: state.firstName, problemOf: firstNameProblem, label: m.firstName });
   const last = useStepField({ initial: state.lastName, problemOf: lastNameProblem, label: m.lastName });
   const email = useStepField({ initial: state.contactEmail, problemOf: contactEmailProblem, label: m.contactEmail, hasFormat: true });
-  // The backend requires a date of birth to create any account, a workspace's administrator included.
-  const birthDate = useBirthFields({ initial: state.birth, words: m, minAge: MIN_AGE, refusal: refusalFor(state.rejection, 'you') });
-  const form = useStepFields([first, last, ...(asksEmail ? [email] : []), ...birthDate.fields]);
+  const form = useStepFields([first, last, ...(asksEmail ? [email] : [])]);
 
-  const submit = () => {
-    const birth = birthDate.read();
-    if (birth) actions.enterYou({ firstName: first.value.trim(), lastName: last.value.trim(), contactEmail: asksEmail ? email.value.trim() : '', birth });
-  };
+  const submit = () => actions.enterYou({ firstName: first.value.trim(), lastName: last.value.trim(), contactEmail: asksEmail ? email.value.trim() : '' });
 
   return (
     <StepFrame title={m.youTitle} lede={asksEmail ? m.youLedeWithEmail : m.youLede} toFix={form.toFix}>
@@ -33,8 +26,7 @@ export function YouStep() {
           {asksEmail ? (
             <FlowTextField label={m.contactEmail} name="email" type="email" inputMode="email" autoComplete="email" spellCheck="false" help={m.contactEmailHelp} value={email.value} onChange={email.change} onBlur={email.blur} isValid={email.isValid} error={email.error} inputRef={email.inputRef} isRequired isSensitive />
           ) : null}
-          {birthDate.row}
-          <FlowStep.Note>{m.birthWhy}</FlowStep.Note>
+          {state.prefilledFrom ? <FlowStep.Note>{m.prefilledFrom(state.prefilledFrom)}</FlowStep.Note> : null}
         </FlowStep.Body>
         <FlowStep.Actions>
           <FlowButton type="submit" variant="primary">

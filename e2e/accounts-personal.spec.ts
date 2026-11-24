@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys } from './support/accounts';
-import { emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
+import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo } from './support/personal';
 
@@ -18,9 +18,9 @@ test.describe('personal account: a new Yahel address', () => {
     await expect(page).toHaveURL(at('/personal/ready'));
     await expect(page.getByText(`${person.address} is ready. Every Yahel app now opens with it.`)).toBeVisible();
     expect(registrations(api)).toHaveLength(1);
-    expect(registrations(api)[0]!.body).toEqual({ email: person.address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: person.password });
+    expect(registrations(api)[0]!.body).toEqual({ email: person.address, firstName: 'Amara', lastName: 'Okafor', dateOfBirth: '1994-03-14T00:00:00.000Z', password: person.password, recoveryEmail: person.recoveryEmail });
     expect(calls(api, '/v1/auth/login')[0]!.body).toMatchObject({ email: person.address, password: person.password });
-    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: person.recoveryEmail });
+    expect(calls(api, '/v1/me/recovery/email')).toHaveLength(0);
     expect(calls(api, '/v1/auth/verify-email')).toHaveLength(0);
   });
 
@@ -63,6 +63,8 @@ test.describe('personal account: a new Yahel address', () => {
 
   test('an address that turns out to be taken when the account is created sends the person back to choose another, and nothing else is lost', async ({ page }) => {
     const api = await mockApi(page);
+    // Taken after the check said it was free: only creating the account finds out.
+    await page.route('**/api/v1/auth/address-availability', (route) => route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ success: true, data: { available: true, alternatives: [] }, meta: { requestId } }) }));
     await signUpTo(page, 'done', { username: takenAddress.split('@')[0] });
 
     await expect(heading(page, 'Pick your address.')).toBeVisible();
@@ -209,7 +211,8 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     await expect(page.getByText(`We sent a 6-character code to ${person.maskedPhone}.`)).toBeVisible();
-    expect(calls(api, '/v1/me/recovery/phone')[0]!.body).toEqual({ phone: person.internationalPhone });
+    expect(registrations(api)[0]!.body).toMatchObject({ phone: person.internationalPhone });
+    expect(calls(api, '/v1/auth/phone/send-otp')[0]!.body).toEqual({ phone: person.internationalPhone });
 
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
@@ -218,7 +221,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await page.clock.fastForward(31_000);
     await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
     await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
-    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(2);
+    expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(2);
 
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -257,12 +260,13 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ firstName: 'Amara', lastName: '', displayName: 'Amara' });
-    expect(calls(api, '/v1/me/recovery/email')).toHaveLength(0);
-    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(0);
+    expect(registrations(api)[0]!.body).not.toHaveProperty('recoveryEmail');
+    expect(registrations(api)[0]!.body).not.toHaveProperty('phone');
+    expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(0);
   });
 
   test('someone the person trusts can be invited from the last screen', async ({ page }) => {
-    await mockApi(page);
+    const api = await mockApi(page);
     await signUp(page);
 
     await page.getByRole('link', { name: /Add someone you trust/ }).click();
@@ -273,6 +277,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await proceed(page, 'Send invitation');
 
     await expect(page.getByText('chidi.eze@personal.example is your trusted contact. We’ve sent them an invitation.')).toBeVisible();
+    expect(calls(api, '/v1/me/recovery/trusted-contact').map((call) => call.body)).toEqual([{ trustedContactEmail: 'chidi.eze@personal.example' }]);
   });
 });
 
@@ -408,7 +413,7 @@ test.describe('personal account: the review', () => {
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(heading(page, 'You’re in, Amarachi.')).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ email: 'amarachi.okafor@yahel.example', firstName: 'Amarachi', dateOfBirth: '1990-03-14T00:00:00.000Z', password: 'Harmattan in Jos 2026!' });
-    expect(calls(api, '/v1/me/recovery/email')[0]!.body).toEqual({ recoveryEmail: 'amarachi@personal.example' });
+    expect(registrations(api)[0]!.body).toMatchObject({ recoveryEmail: 'amarachi@personal.example' });
   });
 
   test('Back from an answer being changed returns to the review unchanged', async ({ page }) => {
@@ -517,8 +522,7 @@ test.describe('personal account: creating', () => {
 
     await page.goBack();
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
-    await page.goto(at('/personal/name'));
-    await expect(page).toHaveURL(at('/signin/done'));
+    await expect(page).toHaveURL(at('/personal/ready'));
   });
 });
 
@@ -560,10 +564,10 @@ test.describe('personal account: addresses, reload and history', () => {
   test('a later step opened directly leads to the first question', async ({ page }) => {
     await mockApi(page);
     for (const step of ['review', 'creating', 'own-code', 'code', 'ready', 'contact', 'passkey']) {
-      await page.goto(at(`/personal/${step}`));
+      await visit(page, `/personal/${step}`);
       await expect(page).toHaveURL(at('/personal/name'));
     }
-    await page.goto(at('/personal'));
+    await visit(page, '/personal');
     await expect(page).toHaveURL(at('/personal/type'));
   });
 
@@ -577,19 +581,27 @@ test.describe('personal account: addresses, reload and history', () => {
     await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
   });
 
-  test('someone already signed in is taken to the signed-in screen instead', async ({ page }) => {
-    await mockApi(page);
+  test('someone signed in can create another account: it is added beside theirs, and this tab uses it', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [] });
     await signInWithPassword(page);
     await heading(page, 'Welcome back, Amara.').waitFor();
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: 'Add another account' }).click();
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
 
-    await page.goto(at('/personal'));
+    await signUp(page);
 
-    await expect(page).toHaveURL(at('/signin/done'));
+    expect(api.remembered().map(({ slot, email, signedIn }) => [slot, email, signedIn])).toEqual([[0, credentials.email, true], [1, person.address, true]]);
+    await page.getByRole('button', { name: `Account: ${person.address}` }).click();
+    const menu = page.getByRole('dialog', { name: 'Accounts' });
+    await expect(menu.getByRole('region', { name: 'Signed in as' })).toContainText(person.address);
+    await expect(menu.getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) })).toBeVisible();
   });
 
   test('sign-in and sign-up lead to each other', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('link', { name: 'Create an account' }).click();
     await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
 
@@ -632,7 +644,7 @@ test.describe('personal account: keyboard only', () => {
   test('an account can be created without a pointer', async ({ page }) => {
     await mockApi(page);
     await stubPasskeys(page, 'unsupported');
-    await page.goto(at('/personal'));
+    await visit(page, '/personal');
     await heading(page, 'Create your Yahel account.').waitFor();
     const type = async (label: string, text: string) => {
       await expect(page.getByLabel(label, { exact: true })).toBeFocused();
@@ -849,7 +861,7 @@ test.describe('personal account: what is forgotten, and when', () => {
     await proceed(page);
 
     await expect(page.getByLabel('First name')).toHaveValue('');
-    await page.goto(at('/personal/password'));
+    await visit(page, '/personal/password');
     await expect(page).toHaveURL(at('/personal/name'));
   });
 
@@ -895,7 +907,7 @@ test.describe('personal account: fixes from review', () => {
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
 
-    expect(calls(api, '/v1/me/recovery/phone/verify')).toHaveLength(1);
+    expect(calls(api, '/v1/auth/phone/verify')).toHaveLength(1);
     expect(calls(api, '/v1/auth/refresh')).toHaveLength(0);
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -969,9 +981,9 @@ test.describe('personal account: fixes from review', () => {
   test('the signed-in screens say whose account it is', async ({ page }) => {
     await mockApi(page);
     await signUpTo(page, 'review', { phone: true });
-    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    const account = page.getByRole('banner').getByText(`Signed in as ${person.address}`);
+    const account = page.getByRole('banner').getByRole('button', { name: `Account: ${person.address}` });
 
     await heading(page, 'Enter the code.').waitFor();
     await expect(account).toBeAttached();
@@ -1000,7 +1012,7 @@ test.describe('personal account: fixes from review', () => {
   test('a phone the server will not take is said to be refused, not unconfirmed', async ({ page }) => {
     const api = await mockApi(page);
     await signUpTo(page, 'review', { phone: true, recoveryEmail: false });
-    api.failNext('/v1/me/recovery/phone', 409, 'PHONE_ALREADY_IN_USE');
+    api.failNext('/v1/auth/phone/send-otp', 409, 'PHONE_ALREADY_IN_USE');
 
     await page.getByRole('button', { name: 'Agree and create account' }).click();
 

@@ -45,6 +45,9 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
   dateOfBirth: state.birth ? isoBirthDate(state.birth) : '',
   password: state.password ?? '',
   ...(state.gender === 'unspecified' ? {} : { gender: genderForApi[state.gender] }),
+  // The ways back in travel with the account, so it is created with them in one call.
+  ...(state.recovery.email ? { recoveryEmail: state.recovery.email } : {}),
+  ...(state.recovery.phone ? { phone: internationalNumber(state.recovery.country, state.recovery.phone) } : {}),
 });
 
 /**
@@ -144,12 +147,14 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     return awaitEmailCode(false);
   };
 
-  /** Stages the recovery phone, which texts it a code. It is settled later, when the code is entered or skipped. */
+  const phoneNumber = () => internationalNumber(state().recovery.country, state().recovery.phone);
+
+  /** Texts a code to the phone given at registration. It is settled later, when the code is entered or skipped. */
   const sendPhoneCode = async () => {
     const { recovery, creation } = state();
     if (!recovery.phone || creation.phoneCodeAwaited || creation.settled.includes('phone')) return;
     try {
-      await session.api.me.recovery.updatePhone({ phone: internationalNumber(recovery.country, recovery.phone) });
+      await session.api.auth.sendPhoneOtp({ phone: phoneNumber() });
       store.dispatch({ type: 'phone-code-sent' });
     } catch (error) {
       if (!isRefusal(error)) throw error;
@@ -161,7 +166,8 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     stage('finishing');
     const { recovery, preferences, passkey: attestation } = state();
     const wantsPreferences = preferences.productNews || preferences.activityHistory;
-    await settle('recoveryEmail', recovery.email ? () => session.api.me.recovery.updateEmail({ recoveryEmail: recovery.email }) : null);
+    // The recovery email was sent with the registration itself.
+    if (recovery.email) await settle('recoveryEmail', async () => undefined);
     await settle('preferences', capabilities.preferences && wantsPreferences ? () => capabilities.preferences!.save(preferences) : null);
     await settle('passkey', attestation && registrar ? () => registrar.save(attestation) : null);
     await sendPhoneCode();
@@ -231,7 +237,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('code'),
     run: async (code: string) => {
-      await session.api.me.recovery.verifyPhone({ code });
+      await session.api.auth.verifyPhoneOtp({ phone: phoneNumber(), code });
       store.dispatch({ type: 'setup-settled', part: 'phone', outcome: 'saved' });
     },
     onDone: finish,
@@ -241,8 +247,7 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('other'),
     run: async () => {
-      const { country, phone } = state().recovery;
-      await session.api.me.recovery.updatePhone({ phone: internationalNumber(country, phone) });
+      await session.api.auth.sendPhoneOtp({ phone: phoneNumber() });
       return 'sent' as const;
     },
     onDone: () => say(m.newCodeSent),
@@ -252,7 +257,6 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('other'),
     run: async (email: string) => {
-      if (!capabilities.trustedContacts) throw new Error('Trusted contacts are not offered');
       await capabilities.trustedContacts.invite(email);
       store.dispatch({ type: 'contact-invited', email });
     },

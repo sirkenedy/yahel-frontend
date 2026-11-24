@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createStandIns, demoAccounts, demoProfile } from './index';
+import { createStandIns, demoProfile } from './index';
 import { quoteFor } from './workspace-billing';
 
 const instant = async () => undefined;
@@ -27,19 +27,6 @@ describe('stand-ins', () => {
 
     for (let attempt = 0; attempt < 3; attempt += 1) await expect(textCodes.send('challenge')).resolves.toEqual({ destination: '+234 ••• ••• ••42' });
     await expect(textCodes.send('challenge')).rejects.toMatchObject({ status: 429 });
-  });
-
-  it('directory: starts with the demo accounts, remembers the latest first and removes', async () => {
-    const { directory } = createStandIns(instant);
-    expect(await directory.list()).toEqual(demoAccounts);
-
-    await directory.remember({ name: 'Kofi Mensah', email: 'kofi@northwind.example', kind: 'person', signedOut: true });
-    await directory.remember({ ...demoAccounts[1]!, signedOut: true });
-    expect((await directory.list()).map((account) => account.email)).toEqual(['amara@northwind.example', 'kofi@northwind.example', 'amara.okafor@yahel.example']);
-
-    await directory.remove('kofi@northwind.example');
-    expect(await directory.list()).toHaveLength(2);
-    await expect(directory.remove('kofi@northwind.example')).rejects.toMatchObject({ status: 404 });
   });
 
   it('recovery by phone: offers every address the same masked number', async () => {
@@ -104,33 +91,6 @@ describe('stand-ins', () => {
     await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] })).rejects.toMatchObject({ status: 400 });
   });
 
-  it('addresses: says only whether a name is free, and offers free names like it', async () => {
-    const { addresses } = createStandIns(instant);
-
-    expect(await addresses.check('amara.okafor')).toEqual({ available: true, alternatives: ['okafor.amara', 'amaraokafor', 'amara.okafor1'] });
-    expect(await addresses.check('amara')).toEqual({ available: false, alternatives: ['amara.mail', 'amara1', 'hello.amara'] });
-    expect(await addresses.check('chidi.eze')).toMatchObject({ available: true });
-    expect(Object.keys(await addresses.check('admin')).sort()).toEqual(['alternatives', 'available']);
-    expect((await addresses.check('okafor')).alternatives).not.toContain('okafor');
-  });
-
-  it('addresses: stops a check that was cancelled, and refuses the forty-first', async () => {
-    const { addresses } = createStandIns(instant);
-    const cancelled = new AbortController();
-    cancelled.abort();
-
-    await expect(addresses.check('chidi.eze', cancelled.signal)).rejects.toMatchObject({ name: 'AbortError' });
-    for (let attempt = 0; attempt < 40; attempt += 1) await addresses.check('chidi.eze');
-    await expect(addresses.check('chidi.eze')).rejects.toMatchObject({ status: 429 });
-  });
-
-  it('trusted contacts: accepts an invitation, then refuses the fourth', async () => {
-    const { trustedContacts } = createStandIns(instant);
-
-    for (let attempt = 0; attempt < 3; attempt += 1) await expect(trustedContacts.invite('chidi.eze@personal.example')).resolves.toBeUndefined();
-    await expect(trustedContacts.invite('chidi.eze@personal.example')).rejects.toMatchObject({ status: 429 });
-  });
-
   it('preferences: keeps the choices it was given', async () => {
     const { preferences } = createStandIns(instant);
 
@@ -147,25 +107,10 @@ describe('stand-ins', () => {
 
 describe('stand-ins for a new workspace', () => {
   const order = { planId: 'business', period: 'monthly' as const, seats: 3, promoCode: null, domain: null };
-  const card = { number: '4084 0840 8408 4081', expiry: '08/29', securityCode: '123', name: 'Amara Okafor' };
+  const card = { number: '4084 0840 8408 4081', expiry: '08/29', securityCode: '123', name: 'Amara Okafor', billingAddress: null };
   const contact = { businessName: 'Northwind Studio', email: 'amara@mail.example', address: null };
   const now = Date.UTC(2026, 10, 21);
   const naira = (amount: number) => ({ amount: amount * 100, currency: 'NGN' });
-
-  it('domain claims: a provider’s domain is public, a "taken" one claimed, the rest free, whatever the case', async () => {
-    const { domainClaims } = createStandIns(instant);
-
-    await expect(domainClaims.check('Gmail.com')).resolves.toBe('public');
-    await expect(domainClaims.check('taken.example')).resolves.toBe('claimed');
-    await expect(domainClaims.check(' northwind.example ')).resolves.toBe('free');
-  });
-
-  it('domain claims: refuses the 41st check as too many', async () => {
-    const { domainClaims } = createStandIns(instant);
-    for (let asked = 0; asked < 40; asked += 1) await domainClaims.check('northwind.example');
-
-    await expect(domainClaims.check('northwind.example')).rejects.toMatchObject({ status: 429 });
-  });
 
   it('domain market: offers four names made from the words asked about, the first marked best, at the boards’ prices', async () => {
     const { domainMarket } = createStandIns(instant);

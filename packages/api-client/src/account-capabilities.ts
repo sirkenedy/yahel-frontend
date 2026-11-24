@@ -5,16 +5,12 @@ import type { ApiClient } from './client';
 export interface StandIns {
   passkeys: PasskeyCeremony;
   textCodes: TextCodeSender;
-  directory: AccountDirectory;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
   passkeyRegistration: PasskeyRegistration;
-  addresses: AddressAvailability;
-  trustedContacts: TrustedContacts;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
-  domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling;
   adminAccess: AdminAccess;
 }
@@ -52,9 +48,35 @@ const checked = (status: ServiceStatus): ServiceStatus => ({ window: async () =>
  * has one, otherwise nothing, or a stand-in when stand-ins are passed in (see docs/roadmap.md for the
  * endpoint each one is waiting for).
  */
-export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns?: StandIns): AccountCapabilities {
+const trustedContactsOf = (api: Pick<ApiClient, 'me'>): TrustedContacts => ({
+  invite: async (email) => {
+    await api.me.recovery.updateTrustedContact({ trustedContactEmail: email });
+  },
+});
+
+/** The account chooser, on `GET /auth/accounts` and `DELETE /auth/accounts/{handle}`. */
+export const accountDirectoryOf = (api: Pick<ApiClient, 'auth'>): AccountDirectory => ({
+  list: (signal) => api.auth.accounts(signal),
+  remove: async (handle) => {
+    await api.auth.removeAccount(handle);
+  },
+});
+
+const addressesOf = (api: Pick<ApiClient, 'auth'>): AddressAvailability => ({
+  check: (name, signal) => api.auth.addressAvailability({ name }, signal),
+});
+
+const domainClaimsOf = (api: Pick<ApiClient, 'tenants'>): DomainClaims => ({
+  check: async (domain) => (await api.tenants.checkDomainClaim({ domain })).standing,
+});
+
+export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | 'tenants'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const trustedContacts = trustedContactsOf(api);
+  const addresses = addressesOf(api);
+  const directory = accountDirectoryOf(api);
+  const domainClaims = domainClaimsOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -63,16 +85,16 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth'>, standIns
   return {
     passkeys: standIns.passkeys,
     textCodes: standIns.textCodes,
-    directory: standIns.directory,
+    directory,
     recovery,
     helpDesk: standIns.helpDesk,
     passkeyRegistration: standIns.passkeyRegistration,
-    addresses: standIns.addresses,
-    trustedContacts: standIns.trustedContacts,
+    addresses,
+    trustedContacts,
     preferences: standIns.preferences,
     serviceStatus: checked(standIns.serviceStatus),
     domainMarket: standIns.domainMarket,
-    domainClaims: standIns.domainClaims,
+    domainClaims,
     workspaceBilling: standIns.workspaceBilling,
     adminAccess: standIns.adminAccess,
     standIns: Object.keys(standIns) as StandInName[],
