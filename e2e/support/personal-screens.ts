@@ -19,7 +19,7 @@ const openTextedCode = async (page: Page) => {
 
 const verifyRefused = (shown: string, status: number, code: string, refresh?: string, headers?: Record<string, string>) => async (page: Page) => {
   await openTextedCode(page);
-  await refuse(page, '/me/recovery/phone/verify', status, code, headers);
+  await refuse(page, '/auth/phone/verify', status, code, headers);
   if (refresh) await refuse(page, '/auth/refresh', 401, refresh);
   await page.getByLabel('6-character code').fill(phoneCode);
   await proceed(page, 'Verify');

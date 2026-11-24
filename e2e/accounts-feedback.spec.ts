@@ -290,7 +290,7 @@ test.describe('feedback: personal sign-up', () => {
     const api = await mockApi(page);
     await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
     await heading(page, 'Enter the code.').waitFor();
-    api.failNext('/v1/me/recovery/phone/verify', 429, 'TOKEN_MAX_ATTEMPTS');
+    api.failNext('/v1/auth/phone/verify', 429, 'TOKEN_MAX_ATTEMPTS');
     await code(page).fill('zzzzzz');
     await proceed(page, 'Verify');
 
@@ -298,7 +298,7 @@ test.describe('feedback: personal sign-up', () => {
     await expect(banner).toContainText('This code no longer works');
     await banner.getByRole('button', { name: 'Send a new code' }).click();
     await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
-    expect(calls(api, '/v1/me/recovery/phone')).toHaveLength(2);
+    expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(2);
 
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -309,7 +309,7 @@ test.describe('feedback: personal sign-up', () => {
     const api = await mockApi(page);
     await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
     await heading(page, 'Enter the code.').waitFor();
-    api.failNext('/v1/me/recovery/phone/verify', 429, undefined, { retryAfter: 45, exposed: true });
+    api.failNext('/v1/auth/phone/verify', 429, undefined, { retryAfter: 45, exposed: true });
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
 
@@ -354,7 +354,7 @@ test.describe('feedback: personal sign-up', () => {
     const api = await mockApi(page);
     await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
     await heading(page, 'Enter the code.').waitFor();
-    api.failNext('/v1/me/recovery/phone/verify', 401, 'SESSION_EXPIRED');
+    api.failNext('/v1/auth/phone/verify', 401, 'SESSION_EXPIRED');
     api.failNext('/v1/auth/refresh', 401, 'INVALID_TOKEN');
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');
@@ -373,7 +373,7 @@ test.describe('feedback: personal sign-up', () => {
     const api = await mockApi(page);
     await signUpTo(page, 'done', { phone: true, recoveryEmail: false });
     await heading(page, 'Enter the code.').waitFor();
-    api.failNext('/v1/me/recovery/phone/verify', 401, 'SESSION_EXPIRED');
+    api.failNext('/v1/auth/phone/verify', 401, 'SESSION_EXPIRED');
     api.failNext('/v1/auth/refresh', 401, 'TOKEN_REUSE_DETECTED');
     await code(page).fill(phoneCode);
     await proceed(page, 'Verify');

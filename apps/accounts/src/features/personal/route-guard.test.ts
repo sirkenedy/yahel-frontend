@@ -14,8 +14,8 @@ describe('personalFacts', () => {
     expect(personalFacts({ capabilities: createAccountCapabilities(api, createStandIns(instant)), registrar: registrar(true) })).toEqual({ passkeysOffered: true, contactOffered: true });
   });
 
-  it('offers neither a passkey nor a trusted contact without stand-ins, or in a browser without WebAuthn', () => {
-    expect(personalFacts({ capabilities: createAccountCapabilities(api), registrar: null })).toEqual({ passkeysOffered: false, contactOffered: false });
+  it('offers no passkey without stand-ins or in a browser without WebAuthn, and always a trusted contact', () => {
+    expect(personalFacts({ capabilities: createAccountCapabilities(api), registrar: null })).toEqual({ passkeysOffered: false, contactOffered: true });
     expect(personalFacts({ capabilities: createAccountCapabilities(api, createStandIns(instant)), registrar: registrar(false) }).passkeysOffered).toBe(false);
   });
 });
