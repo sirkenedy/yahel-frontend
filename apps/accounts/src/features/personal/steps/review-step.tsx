@@ -27,7 +27,7 @@ export function ReviewStep() {
     ['name', state.fullName],
     ['address', state.address],
     ['birthday', state.birth ? (shown ? writtenDate(state.birth, m.locale) : hidden(m.hiddenBirthday)) : null],
-    ['signIn', state.passkey ? m.signInPasswordAndPasskey : m.signInPassword],
+    ['signIn', m.signInPassword],
     ['recovery', ways.length === 0 ? m.recoveryNone : shown ? ways.join(' · ') : hidden(m.hiddenRecovery(recovery.phone.replace(/\D/g, '').slice(-2)))],
   ];
 

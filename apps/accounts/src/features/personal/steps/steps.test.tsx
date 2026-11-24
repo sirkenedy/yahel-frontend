@@ -34,7 +34,6 @@ type Request = FlowRequest<PersonalField, PersonalNext>;
 const idle: Request = { isPending: false, feedback: null, clear: () => undefined };
 const pending: Request = { ...idle, isPending: true };
 const telling = (feedback: PersonalFeedback, rest: Partial<Request> = {}): Request => ({ ...idle, feedback, ...rest });
-const attestation = { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: [] };
 
 type Overrides = {
   state?: Partial<PersonalFlowValue['state']>;
@@ -524,12 +523,12 @@ describe('AddPasskeyStep and PasskeyStep', () => {
     expect(actions.startPasskey).toHaveBeenCalledTimes(1);
   });
 
-  it('does not offer a second passkey once one is made', async () => {
-    const { actions } = setup(<AddPasskeyStep />, { state: { passkey: attestation } });
+  it('says the passkey is saved, offers no second one, and goes on to Yahel', async () => {
+    const { actions } = setup(<AddPasskeyStep />, { state: { passkeySaved: true } });
 
-    expect(screen.getByText(m.passkeyReady)).toBeInTheDocument();
+    expect(screen.getByText(m.passkeySaved)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: m.addPasskey })).not.toBeInTheDocument();
-    await press(m.continue);
+    await press(m.openYahel);
 
     expect(actions.continueWithoutPasskey).toHaveBeenCalledTimes(1);
   });
@@ -597,13 +596,13 @@ describe('ReviewStep', () => {
   const row = (label: string) => screen.getByText(label, { selector: 'dt' }).parentElement!;
 
   it('lists the account as answered, with the private lines hidden', () => {
-    setup(<ReviewStep />, { state: { ...answered, passkey: attestation } });
+    setup(<ReviewStep />, { state: answered });
 
     const receipt = screen.getByRole('group', { name: m.reviewLabel });
     expect(within(receipt).getAllByRole('term').map((term) => term.textContent)).toEqual(Object.values(m.rows));
     expect(row(m.rows.name)).toHaveTextContent('Amara Okafor');
     expect(row(m.rows.address)).toHaveTextContent('amara.okafor@yahel.example');
-    expect(row(m.rows.signIn)).toHaveTextContent(m.signInPasswordAndPasskey);
+    expect(row(m.rows.signIn)).toHaveTextContent(m.signInPassword);
     expect(row(m.rows.birthday)).not.toHaveTextContent('1994');
     expect(row(m.rows.birthday)).toHaveTextContent(m.hiddenValue);
     expect(row(m.rows.recovery)).toHaveTextContent('•••••• 42');
@@ -815,16 +814,16 @@ describe('ReadyStep and ContactStep', () => {
   });
 
   it('says what could not be saved, and who was invited', () => {
-    setup(<ReadyStep />, { state: { ...answered, contactInvited: 'chidi.eze@personal.example', creation: { ...initialPersonalState.creation, unsaved: ['phone', 'passkey'] } } });
+    setup(<ReadyStep />, { state: { ...answered, contactInvited: 'chidi.eze@personal.example', creation: { ...initialPersonalState.creation, unsaved: ['phone', 'preferences'] } } });
 
     expect(screen.getByText(m.unsaved.phone)).toBeInTheDocument();
     expect(screen.queryByText(m.unsaved.phoneSkipped)).not.toBeInTheDocument();
-    expect(screen.getByText(m.unsaved.passkey)).toBeInTheDocument();
+    expect(screen.getByText(m.unsaved.preferences)).toBeInTheDocument();
     expect(screen.getByText(m.trustInvited('chidi.eze@personal.example'))).toBeInTheDocument();
     // What was not saved is a warning; the invitation is good news.
     expect(screen.getAllByRole('alert').map((notice) => [notice.getAttribute('data-tone'), notice.textContent])).toEqual([
       ['warning', m.unsaved.phone],
-      ['warning', m.unsaved.passkey],
+      ['warning', m.unsaved.preferences],
     ]);
     expect(screen.getByRole('status')).toHaveAttribute('data-tone', 'success');
     expect(screen.getByRole('status')).toHaveTextContent(m.trustInvited('chidi.eze@personal.example'));

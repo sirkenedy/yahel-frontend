@@ -3,7 +3,6 @@ import { addressOf, backOf, directionOf, hasAccountUnderway, initialPersonalStat
 import type { PersonalEvent, PersonalFacts, PersonalState, PersonalStep } from './machine';
 
 const facts: PersonalFacts = { passkeysOffered: true, contactOffered: true };
-const attestation = { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: [] };
 const after = (...events: PersonalEvent[]) => events.reduce(reduce, initialPersonalState);
 
 const named: PersonalEvent = { type: 'name-entered', firstName: 'Amara', lastName: 'Okafor' };
@@ -39,9 +38,9 @@ describe('reduce', () => {
     expect(after(recoverable, { type: 'recovery-skipped' })).toMatchObject({ recovery: { phone: '', email: '' }, recoveryAnswered: true });
   });
 
-  it('keeps the passkey’s public half and the two choices', () => {
-    const state = after({ type: 'passkey-started' }, { type: 'passkey-created', attestation }, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } });
-    expect(state).toMatchObject({ passkeyStarted: true, passkey: attestation, preferences: { productNews: true, activityHistory: false } });
+  it('records a saved passkey and keeps the two choices', () => {
+    const state = after({ type: 'passkey-started' }, { type: 'passkey-saved' }, { type: 'preferences-changed', preferences: { productNews: true, activityHistory: false } });
+    expect(state).toMatchObject({ passkeyStarted: true, passkeySaved: true, preferences: { productNews: true, activityHistory: false } });
   });
 
   it('drops the password the moment the new account is signed in to', () => {
@@ -56,8 +55,8 @@ describe('reduce', () => {
   });
 
   it('records each part of setting up as settled, and which could not be saved', () => {
-    const state = after(...started, { type: 'setup-settled', part: 'recoveryEmail', outcome: 'saved' }, { type: 'passkey-created', attestation }, { type: 'setup-settled', part: 'passkey', outcome: 'refused' }, { type: 'phone-code-sent' }, { type: 'setup-settled', part: 'phone', outcome: 'skipped' });
-    expect(state.creation).toMatchObject({ settled: ['recoveryEmail', 'passkey', 'phone'], unsaved: ['passkey', 'phoneSkipped'], phoneCodeAwaited: false });
+    const state = after(...started, { type: 'setup-settled', part: 'recoveryEmail', outcome: 'saved' }, { type: 'setup-settled', part: 'preferences', outcome: 'refused' }, { type: 'phone-code-sent' }, { type: 'setup-settled', part: 'phone', outcome: 'skipped' });
+    expect(state.creation).toMatchObject({ settled: ['recoveryEmail', 'preferences', 'phone'], unsaved: ['preferences', 'phoneSkipped'], phoneCodeAwaited: false });
     expect(after(...started, { type: 'setup-settled', part: 'phone', outcome: 'refused' }).creation.unsaved).toEqual(['phone']);
   });
 
@@ -106,8 +105,8 @@ describe('reduce', () => {
     expect(resumeStep('own-email', state, facts)).toBe('own-email');
   });
 
-  it('forgets everything on reset: the answers, the password and the passkey', () => {
-    const state = after(...started, { type: 'passkey-created', attestation }, { type: 'address-typed', draft: 'x' }, { type: 'reset' });
+  it('forgets everything on reset: the answers and the password', () => {
+    const state = after(...started, { type: 'passkey-saved' }, { type: 'address-typed', draft: 'x' }, { type: 'reset' });
 
     expect(state).toEqual(initialPersonalState);
   });
@@ -140,10 +139,9 @@ describe('resumeStep', () => {
     ['own-email', [named, born], 'own-email'],
     ['password', [named, born], 'address'],
     ['password', [named, born, addressed], 'password'],
-    ['add-passkey', [named, born, addressed], 'password'],
-    ['add-passkey', [named, born, addressed, secured], 'add-passkey'],
-    ['passkey', [named, born, addressed, secured], 'add-passkey'],
-    ['passkey', [named, born, addressed, secured, { type: 'passkey-started' }], 'passkey'],
+    ['add-passkey', [named, born, addressed, secured], 'recovery'],
+    ['add-passkey', answered, 'review'],
+    ['passkey', started, 'creating'],
     ['recovery', [named, born, addressed, secured], 'recovery'],
     ['review', [named, born, addressed, secured], 'recovery'],
     ['review', answered, 'review'],
@@ -160,10 +158,13 @@ describe('resumeStep', () => {
     expect(resume('password', { ...after(named, born), addressKind: 'own' })).toBe('own-email');
   });
 
-  it('skips the passkey steps in a browser that cannot make one', () => {
-    const none = { ...facts, passkeysOffered: false };
-    expect(resume('add-passkey', after(named, born, addressed, secured), none)).toBe('recovery');
-    expect(resume('passkey', after(named, born, addressed, secured, { type: 'passkey-started' }), none)).toBe('recovery');
+  it('offers the passkey only once the account is ready, and skips it in a browser that cannot make one', () => {
+    const finished = after(...started, { type: 'account-created' }, { type: 'signed-in' }, { type: 'creation-finished' });
+    expect(resume('add-passkey', finished)).toBe('add-passkey');
+    expect(resume('passkey', finished)).toBe('add-passkey');
+    expect(resume('passkey', reduce(finished, { type: 'passkey-started' }))).toBe('passkey');
+    expect(resume('add-passkey', finished, { ...facts, passkeysOffered: false })).toBe('ready');
+    expect(resume('add-passkey', after(...started, { type: 'account-created' }, { type: 'signed-in' }))).toBe('creating');
   });
 
   it('shows only what comes after once the account exists: the answers are final', () => {
@@ -204,13 +205,13 @@ describe('resumeStep: the review and the passkey prompt', () => {
 
     // "Use an email I already have" from the address step changes nothing until an email is given.
     expect(resumeStep('own-email', editing, facts)).toBe('own-email');
-    expect(backOf('own-email', editing, facts)).toBe('review');
+    expect(backOf('own-email', editing)).toBe('review');
     expect(resumeStep('review', editing, facts)).toBe('review');
     expect(addressOf(editing, 'yahel.example')).toBe('amara.okafor@yahel.example');
   });
 
-  it('shows the passkey offer, not an empty prompt, once the passkey is made', () => {
-    const made = after(named, born, addressed, secured, { type: 'passkey-started' }, { type: 'passkey-created', attestation });
+  it('shows the passkey offer, not an empty prompt, once the passkey is saved', () => {
+    const made = after(...started, { type: 'account-created' }, { type: 'signed-in' }, { type: 'creation-finished' }, { type: 'passkey-started' }, { type: 'passkey-saved' });
 
     expect(resumeStep('passkey', made, facts)).toBe('add-passkey');
   });
@@ -231,7 +232,7 @@ describe('hasAccountUnderway', () => {
 });
 
 describe('backOf', () => {
-  const back = (step: PersonalStep, state = initialPersonalState, given = facts) => backOf(step, state, given);
+  const back = (step: PersonalStep, state = initialPersonalState) => backOf(step, state);
 
   it('leads one question back, and nowhere from the first or from anything after the account exists', () => {
     expect(personalSteps.map((step) => [step, back(step)])).toEqual([
@@ -241,54 +242,45 @@ describe('backOf', () => {
       ['address', 'birth'],
       ['own-email', 'address'],
       ['password', 'address'],
-      ['add-passkey', 'password'],
-      ['passkey', 'add-passkey'],
-      ['recovery', 'add-passkey'],
+      ['recovery', 'password'],
       ['review', 'recovery'],
       ['creating', null],
       ['own-code', null],
       ['code', null],
       ['ready', null],
+      ['add-passkey', 'ready'],
+      ['passkey', 'add-passkey'],
       ['contact', 'ready'],
     ]);
   });
 
-  it('follows the kind of address and what the browser offers', () => {
+  it('follows the kind of address', () => {
     expect(back('password', after({ type: 'own-email-chosen', email: 'amara@mail.example' }))).toBe('own-email');
-    expect(back('recovery', initialPersonalState, { ...facts, passkeysOffered: false })).toBe('password');
   });
 
   it('returns to the review from an answer that is being changed', () => {
     const editing = after(...answered, { type: 'edit-started' });
     for (const step of ['name', 'birth', 'address', 'own-email', 'password', 'recovery'] as const) expect(back(step, editing)).toBe('review');
-    expect(back('add-passkey', editing)).toBe('password');
+    expect(back('add-passkey', editing)).toBe('ready');
   });
 });
 
 describe('nextOf', () => {
   it('walks the questions in the designed order', () => {
     const state = after(...answered);
-    expect((['type', 'name', 'birth', 'address', 'own-email', 'password', 'add-passkey', 'passkey', 'recovery'] as const).map((step) => nextOf(step, state, facts))).toEqual(['name', 'birth', 'address', 'password', 'password', 'add-passkey', 'recovery', 'recovery', 'review']);
+    expect((['type', 'name', 'birth', 'address', 'own-email', 'password', 'recovery'] as const).map((step) => nextOf(step, state))).toEqual(['name', 'birth', 'address', 'password', 'password', 'recovery', 'review']);
   });
 
-  it('does not offer a passkey where none can be made, or a second one', () => {
-    expect(nextOf('password', after(...answered), { ...facts, passkeysOffered: false })).toBe('recovery');
-    expect(nextOf('password', after(...answered, { type: 'passkey-created', attestation }), facts)).toBe('recovery');
-  });
-
-  it('returns to the review after an answer changed from there, the passkey offer included', () => {
+  it('returns to the review after an answer changed from there', () => {
     const editing = after(...answered, { type: 'edit-started' });
-    expect((['name', 'birth', 'address', 'own-email', 'add-passkey', 'passkey', 'recovery'] as const).map((step) => nextOf(step, editing, facts))).toEqual(Array(7).fill('review'));
-    expect(nextOf('password', editing, facts)).toBe('add-passkey');
-    expect(nextOf('password', editing, { ...facts, passkeysOffered: false })).toBe('review');
+    expect((['name', 'birth', 'address', 'own-email', 'password', 'recovery'] as const).map((step) => nextOf(step, editing))).toEqual(Array(6).fill('review'));
   });
 });
 
 describe('progressOf', () => {
   it('counts the six questions and leaves the rest uncounted', () => {
-    expect(personalSteps.map((step) => progressOf(step)?.current ?? null)).toEqual([null, 1, 2, 3, 3, 4, 4, 4, 5, 6, null, null, null, null, null]);
-    expect(progressOf('passkey')?.part).toBe('sign-in');
-    expect(progressOf('add-passkey')?.part).toBe('password');
+    expect(personalSteps.map((step) => progressOf(step)?.current ?? null)).toEqual([null, 1, 2, 3, 3, 4, 5, 6, null, null, null, null, null, null, null]);
+    expect(progressOf('add-passkey')).toBeNull();
   });
 });
 

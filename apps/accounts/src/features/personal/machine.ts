@@ -1,15 +1,14 @@
-import type { PasskeyAttestation } from '@yahel/api-client';
 import type { BirthDate } from '../../flow/dates';
 
 export type { BirthDate };
 
-export const personalSteps = ['type', 'name', 'birth', 'address', 'own-email', 'password', 'add-passkey', 'passkey', 'recovery', 'review', 'creating', 'own-code', 'code', 'ready', 'contact'] as const;
+export const personalSteps = ['type', 'name', 'birth', 'address', 'own-email', 'password', 'recovery', 'review', 'creating', 'own-code', 'code', 'ready', 'add-passkey', 'passkey', 'contact'] as const;
 export type PersonalStep = (typeof personalSteps)[number];
 
 export type Gender = 'unspecified' | 'woman' | 'man' | 'another';
 
 /** The parts of an account that are set up after it exists. Each is settled once: saved, refused by the server, or skipped. */
-export type SetupPart = 'recoveryEmail' | 'preferences' | 'passkey' | 'phone';
+export type SetupPart = 'recoveryEmail' | 'preferences' | 'phone';
 
 /** What the last screen has to tell the person: a part the server refused, or the phone code they skipped. */
 export type Unsaved = SetupPart | 'phoneSkipped';
@@ -53,7 +52,7 @@ export interface Creation {
  * kept across steps, because the account is not created until the last of them. It is dropped the moment
  * the new account has been signed in to, and with everything else (`reset`) when the flow is left, started
  * again or stopped by a failed screen. It is never handed back to a field or to a step. Codes are never here: they go from the field straight into the
- * request, which keeps no copy (see `flow/use-flow-request.ts`). The passkey held here is its public half.
+ * request, which keeps no copy (see `flow/use-flow-request.ts`).
  */
 export interface PersonalState {
   firstName: string;
@@ -68,7 +67,8 @@ export interface PersonalState {
   addressDraft: string;
   ownEmail: string;
   password: string | null;
-  passkey: PasskeyAttestation | null;
+  /** A passkey was saved to the new account. It is offered once the account exists (F-110). */
+  passkeySaved: boolean;
   /** The person asked for the passkey prompt in this page session. */
   passkeyStarted: boolean;
   recovery: { country: string; phone: string; email: string };
@@ -97,7 +97,7 @@ export const initialPersonalState: PersonalState = {
   addressDraft: '',
   ownEmail: '',
   password: null,
-  passkey: null,
+  passkeySaved: false,
   passkeyStarted: false,
   recovery: { country: DEFAULT_PHONE_COUNTRY, phone: '', email: '' },
   recoveryAnswered: false,
@@ -116,7 +116,7 @@ export type PersonalEvent =
   | { type: 'own-email-chosen'; email: string }
   | { type: 'password-chosen'; password: string }
   | { type: 'passkey-started' }
-  | { type: 'passkey-created'; attestation: PasskeyAttestation }
+  | { type: 'passkey-saved' }
   | { type: 'recovery-entered'; country: string; phone: string; email: string }
   | { type: 'recovery-skipped' }
   | { type: 'preferences-changed'; preferences: PersonalState['preferences'] }
@@ -156,8 +156,8 @@ export function reduce(state: PersonalState, event: PersonalEvent): PersonalStat
       return { ...state, password: event.password };
     case 'passkey-started':
       return { ...state, passkeyStarted: true };
-    case 'passkey-created':
-      return { ...state, passkey: event.attestation };
+    case 'passkey-saved':
+      return { ...state, passkeySaved: true };
     case 'recovery-entered':
       return { ...state, recovery: { country: event.country, phone: event.phone, email: event.email }, recoveryAnswered: true };
     case 'recovery-skipped':
@@ -236,7 +236,13 @@ const stepAfterCreation = ({ creation }: PersonalState): PersonalStep | null => 
  */
 export function resumeStep(step: PersonalStep, state: PersonalState, facts: PersonalFacts): PersonalStep {
   const after = stepAfterCreation(state);
-  if (after) return step === 'contact' && after === 'ready' && facts.contactOffered ? 'contact' : after;
+  if (after === 'ready') {
+    if (step === 'contact' && facts.contactOffered) return 'contact';
+    if (step === 'add-passkey' && facts.passkeysOffered) return 'add-passkey';
+    // Once the passkey is saved the prompt has nothing left to show; the offer says so.
+    if (step === 'passkey' && facts.passkeysOffered) return state.passkeyStarted && !state.passkeySaved ? 'passkey' : 'add-passkey';
+  }
+  if (after) return after;
   switch (step) {
     case 'type':
     case 'name':
@@ -248,12 +254,6 @@ export function resumeStep(step: PersonalStep, state: PersonalState, facts: Pers
       return state.birth ? step : resumeStep('birth', state, facts);
     case 'password':
       return hasAddress(state) ? 'password' : resumeStep(state.addressKind === 'own' ? 'own-email' : 'address', state, facts);
-    case 'add-passkey':
-      if (!state.password) return resumeStep('password', state, facts);
-      return facts.passkeysOffered ? 'add-passkey' : 'recovery';
-    case 'passkey':
-      // Once the passkey is made the prompt has nothing left to show; the offer says one is ready.
-      return state.password && state.passkeyStarted && !state.passkey && facts.passkeysOffered ? 'passkey' : resumeStep('add-passkey', state, facts);
     case 'recovery':
       return state.password ? 'recovery' : resumeStep('password', state, facts);
     case 'review':
@@ -264,6 +264,8 @@ export function resumeStep(step: PersonalStep, state: PersonalState, facts: Pers
     case 'own-code':
     case 'code':
     case 'ready':
+    case 'add-passkey':
+    case 'passkey':
     case 'contact':
       return resumeStep('creating', state, facts);
   }
@@ -272,7 +274,7 @@ export function resumeStep(step: PersonalStep, state: PersonalState, facts: Pers
 const editable: readonly PersonalStep[] = ['name', 'birth', 'address', 'own-email', 'password', 'recovery'];
 
 /** Where the step's Back link leads, or `null` when there is nowhere earlier to go. */
-export function backOf(step: PersonalStep, state: PersonalState, facts: PersonalFacts): PersonalStep | null {
+export function backOf(step: PersonalStep, state: PersonalState): PersonalStep | null {
   if (state.editing && editable.includes(step)) return 'review';
   switch (step) {
     case 'type':
@@ -292,11 +294,11 @@ export function backOf(step: PersonalStep, state: PersonalState, facts: Personal
     case 'password':
       return state.addressKind === 'own' ? 'own-email' : 'address';
     case 'add-passkey':
-      return 'password';
+      return 'ready';
     case 'passkey':
       return 'add-passkey';
     case 'recovery':
-      return facts.passkeysOffered ? 'add-passkey' : 'password';
+      return 'password';
     case 'review':
       return 'recovery';
     case 'contact':
@@ -308,7 +310,7 @@ export function backOf(step: PersonalStep, state: PersonalState, facts: Personal
 export const hasAccountUnderway = (state: PersonalState) => stepAfterCreation(state) !== null;
 
 /** The step that follows `step` once it has been answered. An answer changed from the review returns there. */
-export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'add-passkey' | 'passkey' | 'recovery', state: PersonalState, facts: PersonalFacts): PersonalStep {
+export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email' | 'password' | 'recovery', state: PersonalState): PersonalStep {
   const onward = (next: PersonalStep) => (state.editing ? 'review' : next);
   switch (step) {
     case 'type':
@@ -321,10 +323,6 @@ export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email'
     case 'own-email':
       return onward('password');
     case 'password':
-      // A passkey made earlier in this visit is kept; it is not offered twice.
-      return facts.passkeysOffered && !state.passkey ? 'add-passkey' : onward('recovery');
-    case 'add-passkey':
-    case 'passkey':
       return onward('recovery');
     case 'recovery':
       return 'review';
@@ -334,7 +332,7 @@ export function nextOf(step: 'type' | 'name' | 'birth' | 'address' | 'own-email'
 export const PROGRESS_TOTAL = 6;
 
 /** How far along the six questions a step is, and which of them it belongs to. Steps outside the count have none. */
-export function progressOf(step: PersonalStep): { current: number; part: 'name' | 'basics' | 'address' | 'password' | 'sign-in' | 'recovery' | 'review' } | null {
+export function progressOf(step: PersonalStep): { current: number; part: 'name' | 'basics' | 'address' | 'password' | 'recovery' | 'review' } | null {
   switch (step) {
     case 'name':
       return { current: 1, part: 'name' };
@@ -344,10 +342,7 @@ export function progressOf(step: PersonalStep): { current: number; part: 'name' 
     case 'own-email':
       return { current: 3, part: 'address' };
     case 'password':
-    case 'add-passkey':
       return { current: 4, part: 'password' };
-    case 'passkey':
-      return { current: 4, part: 'sign-in' };
     case 'recovery':
       return { current: 5, part: 'recovery' };
     case 'review':

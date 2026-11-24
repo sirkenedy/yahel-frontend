@@ -152,10 +152,10 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
   })();
 
   /** Moves on from an answered step. An answer changed from the review returns there. */
-  const advance = (from: Parameters<typeof nextOf>[0]) => navigate(nextOf(from, store.getState(), facts));
+  const advance = (from: Parameters<typeof nextOf>[0]) => navigate(nextOf(from, store.getState()));
 
-  const requests = usePersonalRequests({ visit: travel.visit, session, capabilities, registrar, store, mailDomain, navigate, advance, pause });
-  const back = backOf(step, { ...flow, password }, facts);
+  const requests = usePersonalRequests({ visit: travel.visit, session, capabilities, registrar, store, mailDomain, navigate, pause });
+  const back = backOf(step, { ...flow, password });
 
   const value: PersonalFlowValue = {
     state: {
@@ -203,7 +203,7 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
         store.dispatch({ type: 'passkey-started' });
         navigate('passkey');
       },
-      continueWithoutPasskey: () => advance('add-passkey'),
+      continueWithoutPasskey: leave,
       enterRecovery: (recovery) => {
         store.dispatch({ type: 'recovery-entered', ...recovery });
         advance('recovery');
@@ -236,7 +236,8 @@ export function PersonalFlowProvider({ step, session, capabilities, registrar, s
       resendPhoneCode: requests.resendPhoneCode.start,
       skipPhone: requests.skipPhone,
       inviteContact: requests.inviteContact.start,
-      continueToApp: leave,
+      // A passkey is offered once, after the account exists, before the app opens (F-110).
+      continueToApp: () => (facts.passkeysOffered && !flow.passkeySaved ? navigate('add-passkey') : leave()),
     },
     meta: {
       direction: travel.direction,
