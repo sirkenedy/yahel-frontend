@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { at, openPasswordStep, stubPasskeys } from './support/accounts';
+import { openPasswordStep, stubPasskeys, visit } from './support/accounts';
 import { adminAddress, adminPhone, adminTo, codeBoxes, heading, stubAdmin } from './support/admin';
 import { credentials, mockApi, newAdmin, phoneCode } from './support/api';
 import type { MockApi } from './support/api';
@@ -34,7 +34,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
   test('once the phone is checked, the next sign-in opens a session straight away', async ({ page }) => {
     await mockApi(page);
     await adminTo(page, 'welcome');
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('button', { name: new RegExp(`^Switch to.*${newAdmin.email}`) }).waitFor();
 
     await openPasswordStep(page, newAdmin.email);
@@ -114,13 +114,13 @@ test.describe('accounts: the admin steps cannot be walked around', () => {
   test('with no session and no phone check, every step leads to sign-in; with a check, only the phone', async ({ page }) => {
     await mockApi(page);
     for (const step of ['phone', 'code', 'welcome', 'add-passkey', 'passkey']) {
-      await page.goto(at(`/admin/${step}`), { waitUntil: 'commit' });
+      await visit(page, `/admin/${step}`);
       await expect(page).toHaveURL(/\/signin\/(email|choose)$/);
     }
 
     await adminTo(page, 'phone');
     for (const step of ['code', 'welcome', 'add-passkey', 'passkey']) {
-      await page.goto(at(`/admin/${step}`), { waitUntil: 'commit' });
+      await visit(page, `/admin/${step}`);
       // A page load forgets the phone check: only sign-in can start another.
       await expect(page).toHaveURL(/\/signin\/(email|choose)$/);
     }
@@ -141,7 +141,7 @@ test.describe('accounts: the admin steps cannot be walked around', () => {
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
 
-    await page.goto(at('/admin'));
+    await visit(page, '/admin');
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
     await page.getByLabel('Mobile number').fill(adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();

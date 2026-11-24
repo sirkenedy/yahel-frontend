@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, at, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openBrokenStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys } from './support/accounts';
+import { accountsUrl, at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { backupCode, credentials, emailCode, mockApi, pendingEmail, pendingPassword, resetCode, secondStepCode, twoStepCredentials } from './support/api';
 
 const newPassword = 'Sunrise over Lekki 94!';
@@ -126,7 +126,7 @@ test.describe('accounts: sign in with a password', () => {
 
   test('says it is showing demo data while stand-ins are on', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
 
     await expect(page.getByRole('note')).toHaveText('Demo data');
     await signInWithPassword(page);
@@ -249,7 +249,7 @@ test.describe('accounts: sign in with a passkey', () => {
     await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign in with a passkey' })).toHaveCount(0);
 
-    await page.goto(at('/signin/passkey'));
+    await visit(page, '/signin/passkey');
     await expect(page).toHaveURL(at('/signin/choose'));
   });
 
@@ -269,7 +269,7 @@ test.describe('accounts: account chooser', () => {
 
   test('lists the accounts on this device; a signed-out one asks for its password with the address filled in', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await expect(page).toHaveURL(at('/signin/choose'));
 
     await expect(chooser(page).getByRole('listitem')).toHaveCount(3);
@@ -285,7 +285,7 @@ test.describe('accounts: account chooser', () => {
 
   test('a brand-new browser starts at the email step, with no chooser to go back to', async ({ page }) => {
     await mockApi(page, { remembered: [] });
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
 
     await expect(page).toHaveURL(at('/signin/email'));
     await expect(page.getByRole('link', { name: 'Back' })).toHaveCount(0);
@@ -310,7 +310,7 @@ test.describe('accounts: account chooser', () => {
 
   test('an account can be removed from this device; removing the last leads to the email step', async ({ page }) => {
     const api = await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('button', { name: 'Remove an account' }).click();
 
     await page.getByRole('button', { name: `Remove ${credentials.email} from this device` }).click();
@@ -342,7 +342,7 @@ test.describe('accounts: account chooser', () => {
     await mockApi(page);
     let broken = true;
     await page.route('**/api/v1/auth/accounts', (route) => (broken ? route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR' } }) }) : route.fallback()));
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
 
     await expect(page.getByRole('alert')).toContainText('We couldn’t load your accounts');
     broken = false;
@@ -581,7 +581,7 @@ test.describe('accounts: addresses, history and reload', () => {
   for (const step of ['password', 'code', 'passkey', 'recover', 'recover-code', 'new-password', 'help-sent', 'done']) {
     test(`opening /signin/${step} directly goes to a step that can be shown`, async ({ page }) => {
       await mockApi(page);
-      await page.goto(at(`/signin/${step}`));
+      await visit(page, `/signin/${step}`);
 
       await expect(page).toHaveURL(at(step === 'help-sent' ? '/signin/help' : '/signin/choose'));
     });
@@ -596,18 +596,18 @@ test.describe('accounts: addresses, history and reload', () => {
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
     expect(api.calls.filter((call) => call.path === '/v1/auth/refresh').map((call) => call.body)).toEqual([{ slot: 0 }]);
 
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await expect(page.getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) })).toBeVisible();
-    await page.goto(at('/signin/done'));
+    await visit(page, '/signin/done');
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
   });
 
   test('the root address and unknown addresses are handled', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/'));
+    await visit(page, '/');
     await expect(page).toHaveURL(at('/signin/choose'));
 
-    await page.goto(at('/nowhere'));
+    await visit(page, '/nowhere');
     await expect(page.getByRole('heading', { name: 'That page isn’t here.' })).toBeVisible();
     await page.getByRole('link', { name: 'Go to sign in' }).click();
     await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
@@ -615,7 +615,7 @@ test.describe('accounts: addresses, history and reload', () => {
 
   test('focus moves into each new step', async ({ page, isMobile }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeFocused();
 
     await page.getByRole('button', { name: 'Use another account' }).click();
@@ -663,7 +663,7 @@ test.describe('accounts: where sign-in leads', () => {
     await page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
     const handle = api.remembered().find((account) => account.email === credentials.email)!.handle;
 
-    await page.goto(at(`/signin?account=${handle}&return=${encodeURIComponent(appUrl)}`));
+    await visit(page, `/signin?account=${handle}&return=${encodeURIComponent(appUrl)}`);
     await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
     await expect(page.getByText(credentials.email, { exact: true })).toBeVisible();
     // The handle was used and dropped; only where to go back to is kept.
@@ -681,7 +681,7 @@ test.describe('accounts: where sign-in leads', () => {
   ]) {
     test(`a handle that ${name} opens the chooser and is not shown`, async ({ page }) => {
       await mockApi(page);
-      await page.goto(at(`/signin?account=${account}`));
+      await visit(page, `/signin?account=${account}`);
 
       await expect(page).toHaveURL(at('/signin/choose'));
       await expect(page.getByRole('main')).not.toContainText(decodeURIComponent(account!));
@@ -706,7 +706,7 @@ test.describe('accounts: keyboard only', () => {
   test('sign in with a password and a second step without touching the mouse', async ({ page, isMobile }) => {
     test.skip(isMobile, 'hardware keyboard flow is a desktop scenario');
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('heading', { name: 'Choose an account.' }).waitFor();
 
     await page.keyboard.press('Tab');
@@ -892,7 +892,7 @@ test.describe('accounts: when things go wrong after the hard part', () => {
 test.describe('accounts: page furniture', () => {
   test('each step names itself in the page title', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await expect(page).toHaveTitle('Choose an account · Yahel');
 
     await page.getByRole('button', { name: 'Use another account' }).click();
@@ -906,7 +906,7 @@ test.describe('accounts: page furniture', () => {
   test('the browser chrome colour follows the theme switch', async ({ page }) => {
     await mockApi(page);
     await page.emulateMedia({ colorScheme: 'light' });
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     const themeColour = page.locator('meta[name="theme-color"]');
     const canvas = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ws-color-daylight-canvas').trim());
 
@@ -949,7 +949,7 @@ test.describe('accounts: page furniture', () => {
 
   test('focus moves to the next row after an account is removed', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('button', { name: 'Remove an account' }).click();
 
     await page.getByRole('button', { name: /^Remove amara\.okafor/ }).click();

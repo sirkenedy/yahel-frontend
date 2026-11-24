@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, signInWithPassword, stubPasskeys } from './support/accounts';
+import { at, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
@@ -270,7 +270,7 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
   test('a domain owned and the admin sign-in, Ready, the phone check, the welcome, then Admin, with no payment and no demo label', async ({ page }) => {
     const api = await mockApi(page);
     await stubAdmin(page);
-    await page.goto(at('/business?stand-ins=off'));
+    await visit(page, '/business?stand-ins=off');
     await page.getByLabel('Business name').fill(business.name);
     await proceed(page);
     await page.getByLabel('First name').fill(business.firstName);

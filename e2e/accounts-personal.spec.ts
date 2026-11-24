@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys } from './support/accounts';
+import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo } from './support/personal';
@@ -564,10 +564,10 @@ test.describe('personal account: addresses, reload and history', () => {
   test('a later step opened directly leads to the first question', async ({ page }) => {
     await mockApi(page);
     for (const step of ['review', 'creating', 'own-code', 'code', 'ready', 'contact', 'passkey']) {
-      await page.goto(at(`/personal/${step}`), { waitUntil: 'commit' });
+      await visit(page, `/personal/${step}`);
       await expect(page).toHaveURL(at('/personal/name'));
     }
-    await page.goto(at('/personal'), { waitUntil: 'commit' });
+    await visit(page, '/personal');
     await expect(page).toHaveURL(at('/personal/type'));
   });
 
@@ -601,7 +601,7 @@ test.describe('personal account: addresses, reload and history', () => {
 
   test('sign-in and sign-up lead to each other', async ({ page }) => {
     await mockApi(page);
-    await page.goto(at('/signin'));
+    await visit(page, '/signin');
     await page.getByRole('link', { name: 'Create an account' }).click();
     await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
 
@@ -644,7 +644,7 @@ test.describe('personal account: keyboard only', () => {
   test('an account can be created without a pointer', async ({ page }) => {
     await mockApi(page);
     await stubPasskeys(page, 'unsupported');
-    await page.goto(at('/personal'));
+    await visit(page, '/personal');
     await heading(page, 'Create your Yahel account.').waitFor();
     const type = async (label: string, text: string) => {
       await expect(page.getByLabel(label, { exact: true })).toBeFocused();
@@ -861,7 +861,7 @@ test.describe('personal account: what is forgotten, and when', () => {
     await proceed(page);
 
     await expect(page.getByLabel('First name')).toHaveValue('');
-    await page.goto(at('/personal/password'));
+    await visit(page, '/personal/password');
     await expect(page).toHaveURL(at('/personal/name'));
   });
 

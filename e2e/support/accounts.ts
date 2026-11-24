@@ -5,6 +5,23 @@ import { credentials, resetCode, twoStepCredentials } from './api';
 export const accountsUrl = 'http://localhost:4175';
 export const at = (path: string) => `${accountsUrl}${path}`;
 
+/**
+ * Opens a page of the accounts app. WebKit reports a navigation as interrupted when the page being left is still
+ * finishing a redirect of its own (to the account chooser, say), so the address is asked for once more. A second
+ * interruption is the new page redirecting itself, which is what the caller then checks.
+ */
+export async function visit(page: Page, path: string) {
+  const interrupted = (error: unknown) => error instanceof Error && error.message.includes('is interrupted by another navigation');
+  try {
+    await page.goto(at(path));
+  } catch (error) {
+    if (!interrupted(error)) throw error;
+    await page.goto(at(path)).catch((again: unknown) => {
+      if (!interrupted(again)) throw again;
+    });
+  }
+}
+
 /** `waiting`: the prompt stays open, so the waiting screen can be examined. */
 export type PasskeyOutcome = 'success' | 'cancelled' | 'unsupported' | 'waiting';
 
@@ -40,8 +57,7 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
 
 /** Opens sign-in at the email step: past the account chooser when this browser remembers accounts, as it does by default. */
 export async function openEmailStep(page: Page, query = '') {
-  // WebKit counts the chooser's redirect, made before the page finishes loading, as a second navigation.
-  await page.goto(at(`/signin${query}`), { waitUntil: 'commit' });
+  await visit(page, `/signin${query}`);
   const another = page.getByRole('button', { name: 'Use another account' });
   const email = page.getByRole('heading', { name: 'Welcome back.' });
   await another.or(email).first().waitFor();
