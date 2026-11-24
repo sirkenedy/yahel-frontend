@@ -1,5 +1,4 @@
 import { Outlet, createFileRoute, redirect, useLocation, useNavigate } from '@tanstack/react-router';
-import { resolveReturnAddress } from '@yahel/auth';
 import { useState } from 'react';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
@@ -66,7 +65,8 @@ function PersonalLayout() {
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         // A path is a step of this app; an address is the workspace sign-up served somewhere else.
         leaveForBusiness={businessSignUpUrl === null ? null : () => (businessSignUpUrl.startsWith('/') ? void navigate({ href: businessSignUpUrl }) : window.location.assign(businessSignUpUrl))}
-        leave={() => window.location.assign(resolveReturnAddress(search.return, { ...config.returnPolicy, fallback: config.appHome(session.store.getState().slot ?? 0) }))}
+        // The account just made opens as itself: a return to the app's home becomes that account's home.
+        leave={() => window.location.assign(config.afterSignIn(search.return, session.store.getState().slot ?? 0))}
       >
         <Outlet />
       </PersonalFlowProvider>

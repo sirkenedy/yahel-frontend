@@ -14,6 +14,7 @@ describe('config', () => {
 
     expect(config.returnPolicy).toEqual({ fallback: 'http://localhost:5173/', allowedOrigins: [] });
     expect(config.appHome(2)).toBe('http://localhost:5173/u/2/');
+    expect(config.adminHome(2)).toBe('http://localhost:5173/u/2/');
     expect(config.accountSettings(0)).toBe('http://localhost:5173/u/0/account');
     expect(config.afterSignIn(undefined, 2)).toBe('http://localhost:5173/u/2/');
     expect(config.afterSignIn('http://localhost:5173/', 2)).toBe('http://localhost:5173/u/2/');
@@ -58,6 +59,7 @@ describe('config', () => {
     expect(config.adminSignInUrl).toBe('https://admin.yahel.example/signin');
     expect(config.adminUrl).toBe('https://admin.yahel.example/');
     expect(config.appHome(3)).toBe('https://app.yahel.example/u/3/');
+    expect(config.adminHome(3)).toBe('https://admin.yahel.example/u/3/');
     expect(config.accountSettings(3)).toBe('https://myaccount.yahel.example/u/3/account');
     expect(config.mailDomain).toBe('yahel.example');
     expect(config.privacyUrl).toBe('https://yahel.example/privacy');
