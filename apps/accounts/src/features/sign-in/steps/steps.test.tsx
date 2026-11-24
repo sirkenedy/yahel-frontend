@@ -57,7 +57,7 @@ const fakeActions = () => ({
 });
 
 const flowValue = (actions: SignInFlowValue['actions'], { state, offers, requests, backHref = null, screens }: Overrides = {}): SignInFlowValue => ({
-  state: { ...initialSignInState, step: 'email', profile: null, accounts: [], accountsStatus: 'success', recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, ...state },
+  state: { ...initialSignInState, step: 'email', profile: null, accounts: [], accountsStatus: 'success', adminOnly: false, recoveryOptions: null, textedTo: null, passkeyCancelled: false, resetCodeResent: false, ...state },
   actions,
   meta: {
     direction: 'forward',
@@ -200,6 +200,40 @@ describe('ChooseStep', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(m.accountsFailedTitle);
     await user.click(screen.getByRole('button', { name: m.tryAgain }));
     expect(actions.reloadAccounts).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the chooser for Admin', () => {
+  const admin: ClientAccount = { handle: 'h-0', slot: 0, displayName: 'Kayode Balogun', initials: 'KB', avatarUrl: null, email: 'kayode@northwind.example', kind: 'business', organisation: 'Northwind Studio', role: 'OWNER', signedIn: true };
+  const personal: ClientAccount = { ...admin, handle: 'h-1', slot: 1, displayName: 'Amara Okafor', email: 'amara.okafor@yahel.example', kind: 'personal', organisation: null, role: null };
+
+  it('asks for an administrator account above the list, with help when there is some', () => {
+    setup(<ChooseStep />, { state: { step: 'choose', accounts: [admin, personal], adminOnly: true }, screens: { exits: { signIn: '/signin/email', support: 'https://yahel.example/help' } } });
+
+    expect(screen.getByRole('status')).toHaveTextContent(m.adminNoticeTitle);
+    expect(screen.getByRole('status')).toHaveTextContent(m.adminNotice);
+    expect(screen.getByRole('link', { name: m.adminLearnMore })).toHaveAttribute('href', 'https://yahel.example/help');
+    expect(screen.getByText(m.chooseAdminLede)).toBeInTheDocument();
+  });
+
+  it('says beside the refused account that it is not an administrator, and only there', () => {
+    setup(<ChooseStep />, { state: { step: 'choose', accounts: [admin, personal], adminOnly: true, notAdmin: personal.email } });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(m.notAdmin(personal.email));
+    expect(rowFor(personal.email)).toHaveAccessibleDescription(m.notAdmin(personal.email));
+    expect(rowFor(admin.email)).not.toHaveAccessibleDescription();
+  });
+
+  it('shows nothing of the kind when the app did not ask for an administrator', () => {
+    setup(<ChooseStep />, { state: { step: 'choose', accounts: [admin, personal] } });
+
+    expect(screen.queryByText(m.adminNoticeTitle)).not.toBeInTheDocument();
+  });
+
+  it('asks for an administrator account on the email step too', () => {
+    setup(<EmailStep />, { state: { adminOnly: true } });
+
+    expect(screen.getByRole('status')).toHaveTextContent(m.adminNoticeTitle);
   });
 });
 

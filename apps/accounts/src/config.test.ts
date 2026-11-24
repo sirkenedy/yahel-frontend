@@ -65,6 +65,21 @@ describe('config', () => {
     expect(config.privacyUrl).toBe('https://yahel.example/privacy');
   });
 
+  it('sends someone who came from Admin back to Admin as the account just signed in to, even when Admin is not listed', async () => {
+    const config = await load({ VITE_APP_URL: 'https://app.yahel.example', VITE_ADMIN_URL: 'https://admin.yahel.example', VITE_RETURN_ORIGINS: '' });
+
+    expect(config.afterSignIn('https://admin.yahel.example/', 4)).toBe('https://admin.yahel.example/u/4/');
+    expect(config.afterSignIn('https://admin.yahel.example/u/1/domains', 4)).toBe('https://admin.yahel.example/u/1/domains');
+    expect(config.afterSignIn('https://admin.evil.example/', 4)).toBe('https://app.yahel.example/u/4/');
+    expect(config.afterSignIn('https://app.yahel.example/', 4)).toBe('https://app.yahel.example/u/4/');
+  });
+
+  it('leaves Admin out of the allowed returns while it has no address of its own', async () => {
+    const config = await load({ VITE_APP_URL: 'https://app.yahel.example', VITE_ADMIN_URL: '', VITE_RETURN_ORIGINS: '' });
+
+    expect(config.afterSignIn('https://admin.yahel.example/', 4)).toBe('https://app.yahel.example/u/4/');
+  });
+
   it.each(['javascript:alert(1)', 'data:text/html,x', 'not a url'])('ignores a setting that is not a web address: %s', async (value) => {
     const config = await load({ VITE_APP_URL: value, VITE_HELP_URL: value, VITE_SIGN_UP_URL: value, VITE_BUSINESS_SIGN_UP: 'on', VITE_BUSINESS_SIGN_UP_URL: value, VITE_ADMIN_SIGN_IN_URL: value, VITE_ADMIN_URL: value });
 

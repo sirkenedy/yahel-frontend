@@ -58,6 +58,13 @@ describe('reduce', () => {
     expect(resumeStep('password', done, facts())).toBe('password');
   });
 
+  it('remembers only whose account was refused for Admin, and forgets it once another is chosen', () => {
+    const refused = after({ type: 'email-entered', email }, { type: 'second-step-required', challengeToken: 'c-1' }, { type: 'signed-in' }, { type: 'not-admin', email });
+    expect(refused).toEqual({ ...initialSignInState, notAdmin: email });
+    expect(reduce(refused, { type: 'account-chosen', email: 'kayode@northwind.example' }).notAdmin).toBeNull();
+    expect(reduce(refused, { type: 'another-account-wanted' }).notAdmin).toBeNull();
+  });
+
   it('forgets everything on sign-out', () => {
     expect(after({ type: 'email-entered', email }, { type: 'passkey-started' }, { type: 'help-requested' }, { type: 'signed-out' })).toEqual(initialSignInState);
   });

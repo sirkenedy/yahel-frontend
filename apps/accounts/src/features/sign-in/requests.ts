@@ -1,5 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { isApiError } from '@yahel/api-client';
+import { currentAccountOf, isApiError, isWorkspaceAdmin } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
 import { accountsQuery, forgetAccountData } from '../../flow/accounts';
@@ -25,6 +25,8 @@ export interface SignInRequestDeps {
   isShown: (step: SignInStep) => boolean;
   /** Where to go at once when signed in, for someone sent here to sign in; `null` shows Done. */
   leave?: (() => void) | null;
+  /** Sent by Admin: an account that is not an administrator goes back to the chooser instead of leaving. */
+  adminOnly?: boolean;
   /** Hands a phone challenge sign-in answered with to the phone step, which signs in once it is met. */
   checkPhone: (email: string, challengeToken: string) => void;
   /** The destinations currently offered on the recover step, to record where a code went. */
@@ -39,15 +41,33 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  * Every request the sign-in flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`. A new flow gets its own file of this shape.
  */
-export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, checkPhone, recoveryOptions }: SignInRequestDeps) {
+export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, adminOnly = false, checkPhone, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
   const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
+
+  const accountsNow = () => queryClient.fetchQuery({ ...accountsQuery(capabilities.directory), staleTime: 0 });
+
+  /**
+   * For Admin, only an administrator leaves: anyone else, now signed in here too, is back on the chooser with
+   * the reason beside their row. The list's entry decides; without one, Admin's own check does.
+   */
+  const leaveAsAdmin = async (go: () => void) => {
+    const { handle, slot } = session.store.getState();
+    const account = currentAccountOf(await accountsNow().catch(() => []), handle, slot);
+    if (!account || isWorkspaceAdmin(account)) {
+      go();
+      return;
+    }
+    store.dispatch({ type: 'not-admin', email: account.email });
+    navigate('choose', { replace: true });
+  };
 
   // A new account in this tab: nothing the last one's requests cached may be seen, and the chooser reads its list again.
   const finish = () => {
     store.dispatch({ type: 'signed-in' });
     forgetAccountData(queryClient);
-    if (leave) leave();
+    if (leave && adminOnly) void leaveAsAdmin(leave);
+    else if (leave) leave();
     else navigate('done', { replace: true });
   };
 
@@ -197,8 +217,6 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
       navigate('help-sent');
     },
   });
-
-  const accountsNow = () => queryClient.fetchQuery({ ...accountsQuery(capabilities.directory), staleTime: 0 });
 
   // A signed-in account opens without a password. One that turns out to be signed out after all asks for it.
   const switchAccount = useFlowRequest({

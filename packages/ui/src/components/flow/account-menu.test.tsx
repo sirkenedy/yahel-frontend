@@ -23,6 +23,7 @@ const labels = {
   signOutAll: 'Sign out of all accounts',
   privacy: 'Privacy',
   terms: 'Terms',
+  admin: 'Admin console',
 };
 
 const setup = (overrides: Partial<AccountMenuProps> = {}) => {
@@ -145,6 +146,20 @@ describe('AccountMenu', () => {
   });
 });
 
+describe('AccountMenu for an administrator', () => {
+  it('links to Admin only when given its address', async () => {
+    setup({ adminHref: 'https://admin.yahel.example/u/0/' });
+    await open();
+    expect(screen.getByRole('link', { name: 'Admin console' })).toHaveAttribute('href', 'https://admin.yahel.example/u/0/');
+  });
+
+  it('offers no Admin link to anyone else', async () => {
+    setup();
+    await open();
+    expect(screen.queryByRole('link', { name: 'Admin console' })).not.toBeInTheDocument();
+  });
+});
+
 describe('AccountFace', () => {
   it('shows a picture only from a web address, and the initials otherwise', () => {
     const { container, rerender } = render(<AccountFace name="Amara Okafor" email="amara@yahel.example" avatarUrl="https://cdn.yahel.example/a.png" />);
@@ -165,5 +180,18 @@ describe('AccountFace', () => {
 
     expect(screen.getByRole('button', { name: /^Switch to/ })).toHaveTextContent('AO');
     expect(screen.getByRole('button', { name: /^Sign in to/ })).toHaveTextContent('TB');
+  });
+
+  it('says under a row why that account cannot be used, and ties it to the row', () => {
+    render(
+      <AccountList label="Accounts">
+        <AccountList.Account name="Tunde Bakare" email="tunde@yahel.example" actionPrefix="Switch to" onPress={() => undefined} problem="tunde@yahel.example isn't an administrator of a workspace." />
+        <AccountList.Account name="Amara Okafor" email="amara@yahel.example" actionPrefix="Switch to" onPress={() => undefined} />
+      </AccountList>,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent("tunde@yahel.example isn't an administrator of a workspace.");
+    expect(screen.getByRole('button', { name: /Tunde Bakare/ })).toHaveAccessibleDescription("tunde@yahel.example isn't an administrator of a workspace.");
+    expect(screen.getByRole('button', { name: /Amara Okafor/ })).not.toHaveAccessibleDescription();
   });
 });
