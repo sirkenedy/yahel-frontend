@@ -114,13 +114,13 @@ test.describe('accounts: the admin steps cannot be walked around', () => {
   test('with no session and no phone check, every step leads to sign-in; with a check, only the phone', async ({ page }) => {
     await mockApi(page);
     for (const step of ['phone', 'code', 'welcome', 'add-passkey', 'passkey']) {
-      await page.goto(at(`/admin/${step}`));
+      await page.goto(at(`/admin/${step}`), { waitUntil: 'commit' });
       await expect(page).toHaveURL(/\/signin\/(email|choose)$/);
     }
 
     await adminTo(page, 'phone');
     for (const step of ['code', 'welcome', 'add-passkey', 'passkey']) {
-      await page.goto(at(`/admin/${step}`));
+      await page.goto(at(`/admin/${step}`), { waitUntil: 'commit' });
       // A page load forgets the phone check: only sign-in can start another.
       await expect(page).toHaveURL(/\/signin\/(email|choose)$/);
     }

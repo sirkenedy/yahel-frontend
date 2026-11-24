@@ -564,10 +564,10 @@ test.describe('personal account: addresses, reload and history', () => {
   test('a later step opened directly leads to the first question', async ({ page }) => {
     await mockApi(page);
     for (const step of ['review', 'creating', 'own-code', 'code', 'ready', 'contact', 'passkey']) {
-      await page.goto(at(`/personal/${step}`));
+      await page.goto(at(`/personal/${step}`), { waitUntil: 'commit' });
       await expect(page).toHaveURL(at('/personal/name'));
     }
-    await page.goto(at('/personal'));
+    await page.goto(at('/personal'), { waitUntil: 'commit' });
     await expect(page).toHaveURL(at('/personal/type'));
   });
 
