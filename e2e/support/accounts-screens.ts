@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { adminScreens } from './admin-screens';
 import { businessScreens } from './business-screens';
 import { personalScreens } from './personal-screens';
-import { accountsUrl, at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys } from './accounts';
+import { accountsUrl, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys, visit } from './accounts';
 import { credentials, requestId, suspendedCredentials } from './api';
 
 const openPasskeyStep = async (page: Page, outcome: 'success' | 'cancelled') => {
@@ -135,14 +135,14 @@ const screens: Screen[] = [
   {
     name: 'accounts chooser',
     open: async (page) => {
-      await page.goto(at('/signin'));
+      await visit(page, '/signin');
       await page.getByRole('heading', { name: 'Choose an account.' }).waitFor();
     },
   },
   {
     name: 'accounts chooser, removing',
     open: async (page) => {
-      await page.goto(at('/signin'));
+      await visit(page, '/signin');
       await page.getByRole('button', { name: 'Remove an account' }).click();
       await page.getByRole('button', { name: /^Remove .+ from this device$/ }).first().waitFor();
     },
@@ -264,7 +264,7 @@ const screens: Screen[] = [
   {
     name: 'accounts page not found',
     open: async (page) => {
-      await page.goto(at('/nowhere'));
+      await visit(page, '/nowhere');
       await page.getByRole('heading', { name: 'That page isn’t here.' }).waitFor();
     },
   },

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { at } from './accounts';
+import { visit } from './accounts';
 import { phoneCode } from './api';
 
 export const business = {
@@ -73,7 +73,7 @@ export async function fillCard(page: Page, number = card.number) {
  * address is added from checkout.
  */
 export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain = 'owned', ownedDomain = business.domain, name = business.name, size, country, period, seats, promo, cardNumber }: BusinessPath = {}) {
-  await page.goto(at('/business'));
+  await visit(page, '/business');
   await heading(page, 'Tell us about your business.').waitFor();
   if (stop === 'start') return;
   await page.getByLabel('Business name').fill(name);
