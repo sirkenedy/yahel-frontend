@@ -12,16 +12,43 @@ const signedOut = { store: { getState: () => ({ status: 'signed-out', profile: n
 
 describe('businessFacts', () => {
   it('offers the whole designed flow where something answers for plans and domains', () => {
-    expect(businessFacts({ capabilities: createAccountCapabilities(api, createStandIns()), session: signedOut })).toEqual({ domainsForSale: true, billing: true, signedIn: false });
+    expect(businessFacts({ capabilities: createAccountCapabilities(api, createStandIns()), session: signedOut, business: createBusinessStore() })).toEqual({ domainsForSale: true, billing: true, signedIn: false });
   });
 
   it('offers neither a domain to buy nor a checkout where nothing does', () => {
-    expect(businessFacts({ capabilities: createAccountCapabilities(api), session: signedOut })).toEqual({ domainsForSale: false, billing: false, signedIn: false });
+    expect(businessFacts({ capabilities: createAccountCapabilities(api), session: signedOut, business: createBusinessStore() })).toEqual({ domainsForSale: false, billing: false, signedIn: false });
   });
 
   it('does not sell a domain where there is nowhere to pay for it', () => {
     const capabilities = { ...createAccountCapabilities(api, createStandIns()), workspaceBilling: null };
-    expect(businessFacts({ capabilities, session: signedOut })).toEqual({ domainsForSale: false, billing: false, signedIn: false });
+    expect(businessFacts({ capabilities, session: signedOut, business: createBusinessStore() })).toEqual({ domainsForSale: false, billing: false, signedIn: false });
+  });
+});
+
+describe('businessFacts once the workspace exists', () => {
+  const signedInAs = (email: string) => ({ store: { getState: () => ({ status: 'signed-in', profile: { email } }) } }) as unknown as Session;
+  const created = () => {
+    const business = createBusinessStore();
+    business.dispatch({ type: 'business-entered', businessName: 'Northwind Studio', size: 'small', country: 'NG' });
+    business.dispatch({ type: 'owned-domain-entered', domain: 'northwind.example' });
+    business.dispatch({ type: 'admin-entered', adminUser: 'amara', password: 'Northwind Lagos 2026!', marketing: { productNews: false, teamTips: false } });
+    business.dispatch({ type: 'workspace-created', tenantId: 't1', challengeToken: 'pc-1' });
+    business.dispatch({ type: 'creation-finished' });
+    return business;
+  };
+  const capabilities = createAccountCapabilities(api, createStandIns());
+
+  it('counts the tab as signed in only as the new administrator, so a personal account still leads to the phone check', () => {
+    const business = created();
+    const facts = businessFacts({ capabilities, session: signedInAs('kayode@personal.example'), business });
+    expect(facts.signedIn).toBe(false);
+    expect(stepInsteadOf('plan', business, facts)).toBe('ready');
+
+    expect(businessFacts({ capabilities, session: signedInAs('Amara@Northwind.example'), business }).signedIn).toBe(true);
+  });
+
+  it('counts any session before the workspace exists', () => {
+    expect(businessFacts({ capabilities, session: signedInAs('kayode@personal.example'), business: createBusinessStore() }).signedIn).toBe(true);
   });
 });
 

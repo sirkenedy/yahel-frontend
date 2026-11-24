@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import type { AccountDirectory, AccountStanding, ClientAccount } from '@yahel/api-client';
+import type { SessionState } from '@yahel/auth';
 import type { AccountKind } from '@yahel/ui';
 
 // The accounts this browser remembers belong to the browser, not to any one account, so the key carries
@@ -25,6 +26,13 @@ export const forgetAccountData = (queryClient: QueryClient) => {
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== ACCOUNTS_KEY[0] });
   void refreshAccounts(queryClient);
 };
+
+/**
+ * Whether this tab is signed in as `email`: a flow setting up one account counts nobody else's session as its own
+ * (F-109). With no address to set up, any session counts.
+ */
+export const isSignedInAs = ({ status, profile }: Pick<SessionState, 'status' | 'profile'>, email: string | null) =>
+  status === 'signed-in' && profile !== null && (email === null || profile.email.toLowerCase() === email.toLowerCase());
 
 export const nameOf = (account: Pick<ClientAccount, 'displayName' | 'email'>) => account.displayName?.trim() || account.email;
 
