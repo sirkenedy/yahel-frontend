@@ -13,7 +13,7 @@ const sessionWith = (status: 'signed-in' | 'signed-out') => ({ store: { getState
 
 const context = ({ status = 'signed-out' as 'signed-in' | 'signed-out', standIns = true, passkeySupported = true, accounts = 2 } = {}) => {
   const capabilities = createAccountCapabilities(apiWith(accounts), standIns ? createStandIns(instant) : undefined);
-  const passkeys = capabilities.passkeys ? ({ isSupported: () => passkeySupported, prepare: vi.fn(), signIn: vi.fn() } as PasskeyClient) : null;
+  const passkeys = { isSupported: () => passkeySupported, prepare: vi.fn(), signIn: vi.fn() } as PasskeyClient;
   return { session: sessionWith(status), queryClient: new QueryClient(), capabilities, passkeys, signIn: createSignInStore() };
 };
 
@@ -22,8 +22,8 @@ describe('loadSignInFacts', () => {
     await expect(loadSignInFacts(context())).resolves.toEqual({ signedIn: false, knownAccounts: 2, passkeysOffered: true, helpOffered: true });
   });
 
-  it('offers nothing extra without stand-ins', async () => {
-    await expect(loadSignInFacts(context({ standIns: false, accounts: 0 }))).resolves.toEqual({ signedIn: false, knownAccounts: 0, passkeysOffered: false, helpOffered: false });
+  it('offers passkeys, which are real, but no help desk without stand-ins', async () => {
+    await expect(loadSignInFacts(context({ standIns: false, accounts: 0 }))).resolves.toEqual({ signedIn: false, knownAccounts: 0, passkeysOffered: true, helpOffered: false });
   });
 
   it('does not offer passkeys in a browser without WebAuthn', async () => {

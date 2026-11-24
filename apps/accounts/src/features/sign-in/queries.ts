@@ -5,7 +5,8 @@ import type { PasskeyClient } from '@yahel/auth';
 // These run before anyone is signed in, so the keys carry the feature and no account context;
 // they are cleared with everything else on sign-out.
 
-const CHALLENGE_LIFETIME = 4 * 60_000;
+// The server keeps a challenge 60 seconds; the passkey client asks again at the press for one older than 50.
+const CHALLENGE_LIFETIME = 50_000;
 
 /** Asks the server for a passkey challenge ahead of the press. The challenge itself stays inside the passkey client. */
 export const passkeyChallengeQuery = (passkeys: PasskeyClient | null, email: string | null) =>

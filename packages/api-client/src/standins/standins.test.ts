@@ -1,27 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createStandIns, demoProfile } from './index';
+import { createStandIns } from './index';
 import { quoteFor } from './workspace-billing';
 
 const instant = async () => undefined;
-const assertion = { credentialId: 'id', clientDataJSON: 'c', authenticatorData: 'a', signature: 's', userHandle: null };
 
 describe('stand-ins', () => {
-  it('passkeys: hands out a challenge for the asking site and signs in the demo person', async () => {
-    const { passkeys } = createStandIns(instant);
-
-    const options = await passkeys.begin({ rpId: 'accounts.yahel.example' });
-    expect(options).toMatchObject({ rpId: 'accounts.yahel.example', allowCredentials: [], userVerification: 'required' });
-    expect(options.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
-
-    await expect(passkeys.finish(assertion)).resolves.toMatchObject({ profile: demoProfile, tokens: { tokenType: 'Bearer' } });
-  });
-
-  it('passkeys: refuses an assertion it could not verify', async () => {
-    const { passkeys } = createStandIns(instant);
-
-    await expect(passkeys.finish({ ...assertion, signature: '' })).rejects.toMatchObject({ status: 401, code: 'INVALID_CREDENTIALS' });
-  });
-
   it('text codes: names a masked number, then refuses the fourth request', async () => {
     const { textCodes } = createStandIns(instant);
 

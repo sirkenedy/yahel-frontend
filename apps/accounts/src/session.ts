@@ -15,7 +15,7 @@ export const loadCapabilities = async () => {
   const capabilities = createAccountCapabilities(session.api, await loadStandIns());
   return {
     capabilities,
-    passkeys: capabilities.passkeys ? createPasskeyClient(capabilities.passkeys, browserPasskeyEnvironment()) : null,
+    passkeys: createPasskeyClient(capabilities.passkeys, browserPasskeyEnvironment()),
     registrar: capabilities.passkeyRegistration ? createPasskeyRegistrar(capabilities.passkeyRegistration, browserPasskeyEnvironment()) : null,
   };
 };

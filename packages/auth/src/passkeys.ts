@@ -1,4 +1,5 @@
-import type { PasskeyAssertion, PasskeyAssertionOptions, PasskeyCeremony, SignedIn } from '@yahel/api-client';
+import { isPhoneRequired } from '@yahel/api-client';
+import type { AuthTokens, PasskeyAssertion, PasskeyAssertionOptions, PasskeyCeremony } from '@yahel/api-client';
 import { isDismissal, toBase64Url, toBytes } from './webauthn';
 
 /** The parts of the browser a passkey sign-in needs, passed in so they can be replaced in tests. */
@@ -10,8 +11,14 @@ export interface PasskeyEnvironment {
   rpId: string;
 }
 
-/** `cancelled` covers dismissing the prompt, a timeout and a device with no passkey for this site: none is an error to show. */
-export type PasskeyResult = { status: 'signed-in'; signedIn: SignedIn } | { status: 'cancelled' };
+/**
+ * `cancelled` covers dismissing the prompt, a timeout and a device with no passkey for this site: none is an error
+ * to show. `phone-required`: no session yet, the account's phone has to be checked first, as after a password.
+ */
+export type PasskeyResult = { status: 'signed-in'; tokens: AuthTokens } | { status: 'phone-required'; challengeToken: string } | { status: 'cancelled' };
+
+/** The server keeps a challenge 60 seconds; one fetched ahead is used only while it has time left for the prompt. */
+const CHALLENGE_FRESH_FOR = 50_000;
 
 
 const describeAssertion = (credential: PublicKeyCredential): PasskeyAssertion => {
@@ -27,8 +34,8 @@ const describeAssertion = (credential: PublicKeyCredential): PasskeyAssertion =>
 
 /** The browser half of signing in with a passkey (WebAuthn). The server half is the ceremony. */
 export function createPasskeyClient(ceremony: PasskeyCeremony, environment: PasskeyEnvironment) {
-  let prepared: { email: string | undefined; options: Promise<PasskeyAssertionOptions> } | null = null;
-  const begin = (email: string | undefined) => ceremony.begin({ email, rpId: environment.rpId });
+  let prepared: { email: string | undefined; options: Promise<PasskeyAssertionOptions>; at: number } | null = null;
+  const begin = (email: string | undefined) => ceremony.begin({ email });
 
   return {
     /** Passkey sign-in is offered only when this is true. */
@@ -45,14 +52,14 @@ export function createPasskeyClient(ceremony: PasskeyCeremony, environment: Pass
       if (!this.isSupported()) return;
       const options = begin(email);
       options.catch(() => undefined);
-      prepared = { email, options };
+      prepared = { email, options, at: Date.now() };
     },
 
     /** Call from a press handler: browsers only show the prompt in response to a user action. */
     async signIn(email?: string): Promise<PasskeyResult> {
       if (!environment.credentials) return { status: 'cancelled' };
-      // A challenge is used once. One fetched ahead for this account is taken; anything else is asked for now.
-      const ready = prepared && prepared.email === email ? prepared.options : null;
+      // A challenge is used once. One fetched ahead for this account, and still fresh, is taken; anything else is asked for now.
+      const ready = prepared && prepared.email === email && Date.now() - prepared.at < CHALLENGE_FRESH_FOR ? prepared.options : null;
       prepared = null;
       const options = await (ready ? ready.catch(() => begin(email)) : begin(email));
       let credential: Credential | null;
@@ -71,7 +78,8 @@ export function createPasskeyClient(ceremony: PasskeyCeremony, environment: Pass
         throw error;
       }
       if (!credential) return { status: 'cancelled' };
-      return { status: 'signed-in', signedIn: await ceremony.finish(describeAssertion(credential as PublicKeyCredential)) };
+      const result = await ceremony.finish(options.challengeToken, describeAssertion(credential as PublicKeyCredential));
+      return isPhoneRequired(result) ? { status: 'phone-required', challengeToken: result.challengeToken } : { status: 'signed-in', tokens: result };
     },
   };
 }

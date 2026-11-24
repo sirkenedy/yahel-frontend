@@ -4,7 +4,6 @@ import type { StandIns } from '../account-capabilities';
 import { createDomainMarketStandIn } from './domain-market';
 import { createHelpDeskStandIn } from './help-desk';
 import { createPasskeyRegistrationStandIn } from './passkey-registration';
-import { createPasskeyStandIn } from './passkeys';
 import { createPreferencesStandIn } from './preferences';
 import { createRecoveryByPhoneStandIn } from './recovery-by-phone';
 import { createServiceStatusStandIn } from './service-status';
@@ -16,7 +15,6 @@ import type { Delay } from './timing';
 export const createStandIns = (delay: Delay = realDelay): StandIns => {
   const passkeyRegistration = createPasskeyRegistrationStandIn(delay);
   return {
-    passkeys: createPasskeyStandIn(delay),
     textCodes: createTextCodeStandIn(delay),
     recoveryByPhone: createRecoveryByPhoneStandIn(delay),
     helpDesk: createHelpDeskStandIn(delay),
@@ -27,5 +25,3 @@ export const createStandIns = (delay: Delay = realDelay): StandIns => {
     workspaceBilling: createWorkspaceBillingStandIn(delay),
   };
 };
-
-export { demoProfile } from './demo-data';

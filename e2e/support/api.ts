@@ -12,6 +12,9 @@ export const profile = {
   accountType: 'managed' as 'personal' | 'business' | 'managed',
 };
 
+/** The credential id (base64url) of the passkey the stubbed device signs in with. Amara's. */
+export const signInCredentialId = 'AQID';
+
 export const credentials = { email: profile.email, password: 'correct horse battery staple' };
 
 /** An account with two-step sign-in turned on. */
@@ -191,6 +194,16 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   // Each account's passkeys by credential id, as the server stores them once a registration is verified.
   const passkeys = new Map<string, { credentialId: string; deviceName: string | null; createdAt: string }[]>();
   const passkeysOf = (email: string) => passkeys.get(email) ?? passkeys.set(email, []).get(email)!;
+  // Amara has one already: the credential the stubbed device signs in with (`stubPasskeys`).
+  passkeysOf(profile.email).push({ credentialId: signInCredentialId, deviceName: null, createdAt: '2026-11-01T09:00:00.000Z' });
+  // Challenges the server handed out and has not yet consumed, by token. Each is used once.
+  const webauthnChallenges = new Map<string, { kind: 'authentication' | 'registration'; email?: string }>();
+  const webauthnChallengeFor = (kind: 'authentication' | 'registration', email?: string) => {
+    const challengeToken = `webauthn-${kind}-${webauthnChallenges.size + 1}`;
+    webauthnChallenges.set(challengeToken, { kind, email });
+    return challengeToken;
+  };
+  const base64url = /^[A-Za-z0-9_-]+$/;
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
@@ -358,6 +371,23 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const challengeToken = `challenge-${challenges.size + 1}`;
       challenges.set(challengeToken, { account, attempts: 0 });
       return ok(route, { mfaRequired: true, challengeToken }, 201);
+    }
+    // No credentials are listed, whatever the address: the server never says which passkeys an account has.
+    if (path === '/v1/auth/passkey/authenticate/begin') return ok(route, { options: { challenge: 'c2lnbi1pbi1jaGFsbGVuZ2U', timeout: 60000, rpId: 'localhost', userVerification: 'required' }, challengeToken: webauthnChallengeFor('authentication') });
+    if (path === '/v1/auth/passkey/authenticate/finish') {
+      const sent = request.postDataJSON() as { challengeToken?: string; response?: { id?: string; rawId?: string; type?: string; response?: Record<string, string> } } | null;
+      const challenge = webauthnChallenges.get(sent?.challengeToken ?? '');
+      webauthnChallenges.delete(sent?.challengeToken ?? '');
+      if (challenge?.kind !== 'authentication') return fail(route, 400, 'PASSKEY_CHALLENGE_INVALID');
+      // What @simplewebauthn/server checks before anything else: one id in base64url, said twice, of a public key.
+      const answer = sent?.response;
+      const fields = [answer?.response?.clientDataJSON, answer?.response?.authenticatorData, answer?.response?.signature];
+      if (!answer?.id || answer.id !== answer.rawId || answer.type !== 'public-key' || !base64url.test(answer.id) || !fields.every((field) => field && base64url.test(field))) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      const account = accounts.find((known) => passkeysOf(known.profile.email).some((passkey) => passkey.credentialId === answer.id));
+      if (!account) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      if (account.suspended) return fail(route, 403, 'FORBIDDEN');
+      if (account.phoneRequired) return ok(route, { phoneRequired: true, challengeToken: phoneCheckFor(account) }, 201);
+      return tokensFor(account);
     }
     if (path === '/v1/auth/mfa/challenge') {
       const challenge = challenges.get(body?.challengeToken ?? '');

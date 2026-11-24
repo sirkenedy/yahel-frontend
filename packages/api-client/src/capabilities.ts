@@ -1,18 +1,15 @@
-import type { AuthTokens, ClientAccount, Profile } from './types';
+import type { ClientAccount, PasskeySignInResult } from './types';
 
 // Things the account flows need that the backend may not offer yet. Each is a small interface so the
 // interface code never knows whether a real endpoint or a stand-in is answering. See account-capabilities.ts.
 
-/** A signed-in session as a sign-in method other than the password endpoint would return it. */
-export interface SignedIn {
-  tokens: AuthTokens;
-  profile: Profile;
-}
-
 /** What the server asks the device to sign. Binary values are base64url text. */
 export interface PasskeyAssertionOptions {
+  /** Names this challenge to `finish`. Opaque; the server keeps a challenge for 60 seconds. */
+  challengeToken: string;
   challenge: string;
-  rpId: string;
+  /** The server's relying-party id; left out, the browser uses this page's host. */
+  rpId?: string;
   timeoutMs: number;
   /** Empty lets the device offer any passkey it holds for this site. */
   allowCredentials: { id: string }[];
@@ -29,12 +26,12 @@ export interface PasskeyAssertion {
 }
 
 /**
- * The server half of signing in with a passkey. A real server uses its own relying-party id and ignores
- * the one passed here, which exists for the stand-in; see docs/roadmap.md, "What each real endpoint must do".
+ * The server half of signing in with a passkey. `finish` answers with a session, or with a phone check first,
+ * as a password sign-in can. The address given to `begin` only shares the sign-in rate limit.
  */
 export interface PasskeyCeremony {
-  begin(input: { email?: string; rpId: string }): Promise<PasskeyAssertionOptions>;
-  finish(assertion: PasskeyAssertion): Promise<SignedIn>;
+  begin(input: { email?: string }): Promise<PasskeyAssertionOptions>;
+  finish(challengeToken: string, assertion: PasskeyAssertion): Promise<PasskeySignInResult>;
 }
 
 /** Sends the second-step code by text message instead of an authenticator app. */
@@ -347,11 +344,11 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling';
+export type StandInName = 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
-  passkeys: PasskeyCeremony | null;
+  passkeys: PasskeyCeremony;
   textCodes: TextCodeSender | null;
   directory: AccountDirectory;
   recovery: RecoveryChannels;

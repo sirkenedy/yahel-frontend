@@ -94,13 +94,12 @@ describe('createSession: signing in', () => {
     expect(session.store.getState().status).toBe('unknown');
   });
 
-  it('establishes a session from a sign-in made another way, without asking the server again', () => {
-    const { session, fetchMock } = make({});
+  it('establishes a session from a sign-in made another way, loading its profile with the new token', async () => {
+    const { session } = make({ '/api/v1/me': (_, init) => ok({ ...profile, auth: authOf(init) }) });
 
-    session.establish({ tokens: tokens(3), profile });
+    await expect(session.establish(tokens(3))).resolves.toEqual({ slot: 3, handle: 'h-3' });
 
-    expect(session.store.getState()).toEqual({ status: 'signed-in', profile, slot: 3, handle: 'h-3' });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(session.store.getState()).toMatchObject({ status: 'signed-in', profile: { email: profile.email, auth: 'Bearer access-3' }, slot: 3, handle: 'h-3' });
   });
 
   it('registers a business without starting a session or naming the device', async () => {
@@ -278,13 +277,14 @@ describe('createSession: restoring and refreshing by slot', () => {
       },
       '/api/v1/me': (_, init) => (authOf(init) === 'Bearer new' ? ok(profile) : fail(401, 'SESSION_EXPIRED')),
     });
-    session.establish({ tokens: tokens(0, 'h-0', 'old'), profile });
+    const established = session.establish(tokens(0, 'h-0', 'old'));
 
     const all = Promise.all([session.api.me.get(), session.api.me.get(), session.api.me.get()]);
     await vi.waitFor(() => expect(refreshes).toBe(1));
     release();
 
     await expect(all).resolves.toEqual([profile, profile, profile]);
+    await established;
     expect(refreshes).toBe(1);
   });
 

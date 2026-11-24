@@ -2,7 +2,7 @@ export { CLIENT_HEADER, createApiClient } from './client';
 export type { ApiClient, ApiClientOptions } from './client';
 export { ApiError, isApiError } from './errors';
 export { isMfaRequired, isPhoneRequired } from './types';
-export type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, PhoneRequired, RegisterBusinessBody, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
+export type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, PhoneRequired, PasskeySignInResult, RegisterBusinessBody, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
 export { accountDirectoryOf, createAccountCapabilities, maskEmail } from './account-capabilities';
 export type { StandIns } from './account-capabilities';
 export { currentAccountOf, standingOf } from './account-standing';
@@ -45,7 +45,6 @@ export type {
   RecoveryOption,
   ServiceStatus,
   ServiceWindow,
-  SignedIn,
   SignUpPreferences,
   StandInName,
   TextCodeSender,

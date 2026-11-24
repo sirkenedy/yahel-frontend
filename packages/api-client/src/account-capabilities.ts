@@ -3,7 +3,6 @@ import type { ApiClient } from './client';
 
 /** The stand-in implementations, as `@yahel/api-client/standins` builds them. */
 export interface StandIns {
-  passkeys: PasskeyCeremony;
   textCodes: TextCodeSender;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
@@ -69,6 +68,35 @@ const domainClaimsOf = (api: Pick<ApiClient, 'tenants'>): DomainClaims => ({
   check: async (domain) => (await api.tenants.checkDomainClaim({ domain })).standing,
 });
 
+/**
+ * Passkey sign-in through `/auth/passkey/authenticate/*`. The server's options are those of `@simplewebauthn/server`,
+ * and it verifies an `AuthenticationResponseJSON`: `id` and `rawId` the same base64url text.
+ */
+export const passkeySignInOf = (api: Pick<ApiClient, 'auth'>): PasskeyCeremony => ({
+  async begin({ email }) {
+    const { options, challengeToken } = await api.auth.passkeys.authenticateBegin(email ? { email } : {});
+    return {
+      challengeToken,
+      challenge: options.challenge,
+      rpId: options.rpId,
+      timeoutMs: options.timeout ?? 60_000,
+      allowCredentials: (options.allowCredentials ?? []).map(({ id }) => ({ id })),
+      userVerification: options.userVerification === 'required' ? 'required' : 'preferred',
+    };
+  },
+  finish: (challengeToken, assertion) =>
+    api.auth.passkeys.authenticateFinish({
+      challengeToken,
+      response: {
+        id: assertion.credentialId,
+        rawId: assertion.credentialId,
+        type: 'public-key',
+        response: { clientDataJSON: assertion.clientDataJSON, authenticatorData: assertion.authenticatorData, signature: assertion.signature, ...(assertion.userHandle ? { userHandle: assertion.userHandle } : {}) },
+        clientExtensionResults: {},
+      },
+    }),
+});
+
 const ADMIN_ROLES = new Set(['OWNER', 'ADMIN']);
 
 /**
@@ -91,14 +119,15 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | '
   const directory = accountDirectoryOf(api);
   const domainClaims = domainClaimsOf(api);
   const adminAccess = adminAccessOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
+  const passkeys = passkeySignInOf(api);
+  if (!standIns) return { passkeys, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
     send: (email, method) => (method === 'phone' ? standIns.recoveryByPhone.send(email, method) : byEmail.send(email, method)),
   };
   return {
-    passkeys: standIns.passkeys,
+    passkeys,
     textCodes: standIns.textCodes,
     directory,
     recovery,

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { adminAccessOf, createAccountCapabilities, maskEmail, usableWindow } from './account-capabilities';
+import { adminAccessOf, createAccountCapabilities, passkeySignInOf, maskEmail, usableWindow } from './account-capabilities';
 import type { ApiClient } from './client';
 import type { AuthContext } from './types';
 import { createStandIns } from './standins';
@@ -19,7 +19,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, standIns: [] });
+    expect(capabilities).toMatchObject({ textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, standIns: [] });
     expect(capabilities.addresses).not.toBeNull();
     expect(capabilities.trustedContacts).not.toBeNull();
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
@@ -33,13 +33,12 @@ describe('createAccountCapabilities', () => {
     const standIns = createStandIns(instant);
     const capabilities = createAccountCapabilities(client, standIns);
 
-    expect(capabilities.passkeys).toBe(standIns.passkeys);
     expect(capabilities.textCodes).toBe(standIns.textCodes);
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect([...capabilities.standIns].sort()).toEqual(['domainMarket', 'helpDesk', 'passkeyRegistration', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
     expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, workspaceBilling: standIns.workspaceBilling });
   });
 
@@ -92,6 +91,38 @@ describe('createAccountCapabilities', () => {
 
     it('answers null for a session in no workspace', async () => {
       await expect(accessWith([context({ type: 'personal', tenantId: null, isCurrent: true }), context({ isCurrent: false })], []).membership()).resolves.toBeNull();
+    });
+  });
+
+  describe('passkey sign-in, through the real endpoints', () => {
+    const passkeyApi = () => {
+      const auth = {
+        passkeys: {
+          authenticateBegin: vi.fn().mockResolvedValue({ challengeToken: 'pk-1', options: { challenge: 'Y2hhbGxlbmdl', timeout: 60_000, rpId: 'localhost', userVerification: 'required' } }),
+          authenticateFinish: vi.fn().mockResolvedValue({ accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }),
+        },
+      };
+      return { client: { auth } as unknown as Pick<ApiClient, 'auth'>, auth };
+    };
+
+    it('maps the server’s options, keeping the challenge token for finish', async () => {
+      const { client, auth } = passkeyApi();
+
+      await expect(passkeySignInOf(client).begin({ email: 'amara@northwind.example' })).resolves.toEqual({ challengeToken: 'pk-1', challenge: 'Y2hhbGxlbmdl', rpId: 'localhost', timeoutMs: 60_000, allowCredentials: [], userVerification: 'required' });
+      expect(auth.passkeys.authenticateBegin).toHaveBeenCalledWith({ email: 'amara@northwind.example' });
+      await passkeySignInOf(client).begin({});
+      expect(auth.passkeys.authenticateBegin).toHaveBeenLastCalledWith({});
+    });
+
+    it('sends the assertion as the server verifies it: id and rawId alike, no user handle when the device gave none', async () => {
+      const { client, auth } = passkeyApi();
+      const assertion = { credentialId: 'Y3JlZA', clientDataJSON: 'cd', authenticatorData: 'ad', signature: 'sig', userHandle: null };
+
+      await expect(passkeySignInOf(client).finish('pk-1', assertion)).resolves.toMatchObject({ slot: 0, handle: 'h-0' });
+      expect(auth.passkeys.authenticateFinish).toHaveBeenCalledWith({ challengeToken: 'pk-1', response: { id: 'Y3JlZA', rawId: 'Y3JlZA', type: 'public-key', response: { clientDataJSON: 'cd', authenticatorData: 'ad', signature: 'sig' }, clientExtensionResults: {} } });
+
+      await passkeySignInOf(client).finish('pk-2', { ...assertion, userHandle: 'dWg' });
+      expect(auth.passkeys.authenticateFinish).toHaveBeenLastCalledWith(expect.objectContaining({ response: expect.objectContaining({ response: expect.objectContaining({ userHandle: 'dWg' }) }) }));
     });
   });
 
