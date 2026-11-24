@@ -16,7 +16,7 @@ export const Route = createFileRoute('/business')({
   beforeLoad: ({ context }) => {
     // Not offered in this build (F-78): the personal sign-up's first question says so.
     if (!isOffered(context)) throw redirect({ to: '/personal', replace: true });
-    if (isSignedIn(context)) throw redirect({ to: '/signin', replace: true });
+    if (isSignedIn(context)) throw redirect({ to: '/signin/done', replace: true });
     return { facts: businessFacts(context) };
   },
   // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.

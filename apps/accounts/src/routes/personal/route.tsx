@@ -11,7 +11,7 @@ import { forgetSignUp, isSignedInElsewhere, personalFacts } from '../../features
 
 export const Route = createFileRoute('/personal')({
   beforeLoad: ({ context }) => {
-    if (isSignedInElsewhere(context)) throw redirect({ to: '/signin', replace: true });
+    if (isSignedInElsewhere(context)) throw redirect({ to: '/signin/done', replace: true });
     return { facts: personalFacts(context) };
   },
   // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.
