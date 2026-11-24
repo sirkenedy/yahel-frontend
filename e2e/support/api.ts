@@ -74,7 +74,9 @@ const fail = (route: Route, status: number, code: string, retry?: { retryAfter: 
   });
 
 export interface MockApi {
-  calls: { method: string; path: string; body: unknown; authorization: string | undefined }[];
+  calls: { method: string; path: string; body: unknown; authorization: string | undefined; client: string | undefined }[];
+  /** The accounts this browser remembers, by slot, as the server keeps them. */
+  remembered: () => { slot: number; handle: string; email: string; signedIn: boolean }[];
   /**
    * Makes the next request to `path` go wrong, once. A status answers with that failure and does nothing.
    * `lost` does what was asked and then drops the answer, as when a connection dies after the server has acted.
@@ -104,7 +106,27 @@ const ageOf = (dateOfBirth: string) => {
   return months < 0 || (months === 0 && now.getUTCDate() < born.getUTCDate()) ? years - 1 : years;
 };
 
+/** An account this browser remembers before the test starts. It need not have a password the mock knows. */
+export interface RememberedAccount {
+  email: string;
+  displayName: string;
+  kind?: 'personal' | 'business';
+  organisation?: string | null;
+  role?: 'OWNER' | 'ADMIN' | 'MEMBER' | null;
+  signedIn?: boolean;
+}
+
+/** What a browser that has signed in before remembers, as the chooser drawings show it. */
+export const rememberedByDefault: RememberedAccount[] = [
+  { email: profile.email, displayName: profile.displayName, kind: 'business', organisation: 'Northwind Studio', role: 'MEMBER' },
+  { email: `amara.okafor@yahel.example`, displayName: 'Amara Okafor' },
+];
+
+const MAX_ACCOUNTS = 10;
+
 export interface MockApiOptions {
+  /** The accounts this browser remembers at the start, signed out unless said. `[]` is a browser that never signed in. */
+  remembered?: RememberedAccount[];
   /** Every request fails as if the connection had dropped. */
   offline?: boolean;
   /** Sign-in attempts are refused by the rate limiter, which answers 429 under the general code `BAD_REQUEST`. */
@@ -114,12 +136,17 @@ export interface MockApiOptions {
 /** Stands in for the backend. Tokens rotate on every refresh so tests can tell them apart. */
 export async function mockApi(page: Page, options: MockApiOptions = {}): Promise<MockApi> {
   const failures = new Map<string, { how: number | 'lost'; code?: string; retry?: { retryAfter: number; exposed: boolean } }>();
-  const state: MockApi = { calls: [], failNext: (path, how, code, retry) => void failures.set(path, { how, code, retry }) };
+  // The browser's accounts, as the server keeps them against its cookie: a slot each, kept while remembered.
+  type Seat = Required<RememberedAccount> & { slot: number; handle: string };
+  let seats: Seat[] = (options.remembered ?? rememberedByDefault).map((account, slot) => ({ kind: 'personal', organisation: null, role: null, signedIn: false, ...account, slot, handle: `handle-${slot}-${account.email.split('@')[0]}` }));
+  const state: MockApi = {
+    calls: [],
+    remembered: () => seats.map(({ slot, handle, email, signedIn }) => ({ slot, handle, email, signedIn })),
+    failNext: (path, how, code, retry) => void failures.set(path, { how, code, retry }),
+  };
   let issued = 0;
-  const tokens = () => ({ accessToken: `access-${++issued}`, refreshToken: `refresh-${issued}`, expiresIn: 900, tokenType: 'Bearer' });
-  let validRefresh: string | null = null;
-  let validAccess: string | null = null;
-  let signedIn = profile;
+  // Which account each live access token belongs to. A slot signed out takes its tokens with it.
+  const access = new Map<string, string>();
   const accounts: Account[] = [
     { profile, password: credentials.password, twoStep: false, emailVerified: true },
     { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true },
@@ -144,17 +171,38 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     // A lost answer: everything below still happens, but the browser never hears of it.
     const route = failure === 'lost' ? ({ fulfill: () => incoming.abort('connectionreset'), abort: (reason?: string) => incoming.abort(reason) } as unknown as Route) : incoming;
     const authorization = request.headers()['authorization'];
-    state.calls.push({ method: request.method(), path, body, authorization });
+    const client = request.headers()['x-yahel-client'];
+    state.calls.push({ method: request.method(), path, body, authorization, client });
     if (options.offline) return route.abort('internetdisconnected');
+    // The backend refuses a browser that does not say it is the web client: it could not hold a session.
+    if (client !== 'web') return fail(route, 400, 'CLIENT_NOT_REGISTERED');
     // Without a code of its own a failure carries what the backend sends for that status: the rate limiter's general code, or its own for the rest.
     if (typeof failure === 'number') return fail(route, failure, failureCode ?? (failure === 429 ? 'BAD_REQUEST' : failure === 503 ? 'SERVICE_UNAVAILABLE' : 'INTERNAL_ERROR'), retry);
 
+    const accessFor = (seat: Seat) => {
+      const token = `access-${++issued}`;
+      access.set(token, seat.email);
+      return { accessToken: token, expiresIn: 900, tokenType: 'Bearer', slot: seat.slot, handle: seat.handle };
+    };
+    const signOutSeat = (seat: Seat) => {
+      seat.signedIn = false;
+      for (const [token, email] of access) if (email === seat.email) access.delete(token);
+    };
+    // A sign-in takes the account's remembered slot, or the lowest free one; the refresh token goes into a cookie, never the body.
     const issue = (account: (typeof accounts)[number]) => {
-      const next = tokens();
-      validRefresh = next.refreshToken;
-      validAccess = next.accessToken;
-      signedIn = account.profile;
-      return next;
+      let seat = seats.find((known) => known.email === account.profile.email);
+      if (!seat) {
+        if (seats.length >= MAX_ACCOUNTS) return null;
+        const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
+        seat = { email: account.profile.email, displayName: account.profile.displayName, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: `handle-${slot}-${account.profile.email.split('@')[0]}` };
+        seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
+      }
+      seat.signedIn = true;
+      return accessFor(seat);
+    };
+    const tokensFor = (account: (typeof accounts)[number]) => {
+      const issuedTokens = issue(account);
+      return issuedTokens ? ok(route, issuedTokens, 201) : fail(route, 409, 'TOO_MANY_ACCOUNTS');
     };
 
     if (path === '/v1/auth/register') {
@@ -178,13 +226,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     }
     if (path === '/v1/auth/register-business') {
       // The order of the checks is the backend's (`auth.service.ts`, `registerBusiness`): the body, the age, a public domain, the address, the domain.
-      const sent = (request.postDataJSON() ?? {}) as { email?: string; password?: string; firstName?: string; lastName?: string; businessName?: string; slug?: string; country?: { name?: string; code?: string; currency?: string }; dateOfBirth?: string; employeeCount?: number; domain?: string; deviceId?: string };
+      const sent = (request.postDataJSON() ?? {}) as { email?: string; password?: string; firstName?: string; lastName?: string; businessName?: string; slug?: string; country?: { name?: string; code?: string; currency?: string }; dateOfBirth?: string; employeeCount?: number; domain?: string };
       const email = (sent.email ?? '').toLowerCase();
       const domain = (sent.domain ?? '').toLowerCase();
       const wellFormed =
         /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && meetsPasswordPolicy(sent.password ?? '') && Boolean(sent.firstName) && typeof sent.lastName === 'string' && Boolean(sent.businessName) && (sent.businessName ?? '').length <= 100 &&
         /^[a-z0-9-]{2,50}$/.test(sent.slug ?? '') && Boolean(sent.country?.name) && /^[A-Z]{2,3}$/.test(sent.country?.code ?? '') && /^[A-Z]{3}$/.test(sent.country?.currency ?? '') && !Number.isNaN(Date.parse(sent.dateOfBirth ?? '')) &&
-        Number.isInteger(sent.employeeCount) && (sent.employeeCount ?? 0) >= 1 && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain) && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(sent.deviceId ?? '');
+        Number.isInteger(sent.employeeCount) && (sent.employeeCount ?? 0) >= 1 && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain);
       if (!wellFormed) return fail(route, 422, 'VALIDATION_ERROR');
       if (ageOf(sent.dateOfBirth ?? '') < (sent.country?.code === strictCountry ? 16 : MIN_AGE)) return fail(route, 403, 'USER_UNDERAGE');
       if (domain === publicEmailDomain || domain === mailDomain) return fail(route, 400, 'PUBLIC_EMAIL_NOT_ALLOWED');
@@ -211,7 +259,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!account) return fail(route, 401, 'INVALID_CREDENTIALS');
       if (!account.emailVerified) return fail(route, 403, 'EMAIL_NOT_VERIFIED');
       if (account.suspended) return fail(route, 403, 'FORBIDDEN');
-      if (!account.twoStep) return ok(route, issue(account), 201);
+      if (!account.twoStep) return tokensFor(account);
       const challengeToken = `challenge-${challenges.size + 1}`;
       challenges.set(challengeToken, { account, attempts: 0 });
       return ok(route, { mfaRequired: true, challengeToken }, 201);
@@ -226,7 +274,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
         return fail(route, 429, 'MFA_MAX_ATTEMPTS');
       }
       challenges.delete(body.challengeToken ?? '');
-      return ok(route, issue(challenge.account), 201);
+      return tokensFor(challenge.account);
     }
     // Answers the same way whether or not the address has an account.
     if (path === '/v1/auth/forgot-password') return ok(route, { message: 'If this email exists, a reset link has been sent' }, 201);
@@ -237,16 +285,32 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       account.password = body.password ?? '';
       return ok(route, { message: 'Password reset successfully. Please log in again.' }, 201);
     }
-    if (path === '/v1/auth/refresh') {
-      return body?.refreshToken && body.refreshToken === validRefresh ? ok(route, issue(accounts.find((known) => known.profile === signedIn)!), 201) : fail(route, 401, 'INVALID_TOKEN');
-    }
-    // What the backend's auth guard answers for a missing, expired or revoked access token.
-    if (authorization !== `Bearer ${validAccess}`) return fail(route, 401, 'SESSION_EXPIRED');
+    // The browser's own accounts, by its cookie: no access token is asked for.
+    const slotted = seats.find((seat) => seat.slot === Number((body as { slot?: unknown } | null)?.slot));
+    if (path === '/v1/auth/refresh') return slotted?.signedIn ? ok(route, accessFor(slotted), 201) : fail(route, 401, 'SESSION_EXPIRED');
     if (path === '/v1/auth/logout') {
-      validRefresh = null;
-      validAccess = null;
+      if (!slotted?.signedIn) return fail(route, 401, 'SESSION_EXPIRED');
+      signOutSeat(slotted);
+      return ok(route, { slot: slotted.slot }, 201);
+    }
+    if (path === '/v1/auth/logout-browser') {
+      seats.forEach(signOutSeat);
       return ok(route, null, 201);
     }
+    if (path === '/v1/auth/accounts') {
+      return ok(route, seats.map(({ handle, slot, displayName, email, kind, organisation, role, signedIn }) => ({ handle, slot, displayName, initials: displayName.split(/\s+/).map((word) => word.charAt(0)).join('').slice(0, 2).toUpperCase(), avatarUrl: null, email, kind, organisation, role, signedIn })));
+    }
+    if (path.startsWith('/v1/auth/accounts/') && request.method() === 'DELETE') {
+      const handle = decodeURIComponent(path.slice('/v1/auth/accounts/'.length));
+      const gone = seats.find((seat) => seat.handle === handle);
+      if (gone) signOutSeat(gone);
+      seats = seats.filter((seat) => seat.handle !== handle);
+      return ok(route, { handle });
+    }
+    // What the backend's auth guard answers for a missing, expired or revoked access token.
+    const owner = authorization?.startsWith('Bearer ') ? access.get(authorization.slice('Bearer '.length)) : undefined;
+    const signedIn = accounts.find((known) => known.profile.email === owner)?.profile;
+    if (!signedIn) return fail(route, 401, 'SESSION_EXPIRED');
     if (path === '/v1/me') return ok(route, signedIn);
     const methods = recoveryOf(signedIn.email);
     const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
@@ -275,10 +339,10 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   return state;
 }
 
-export async function signIn(page: Page) {
+export async function signIn(page: Page, account = credentials) {
   await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(credentials.email);
-  await page.getByLabel('Password', { exact: true }).fill(credentials.password);
+  await page.getByLabel('Email').fill(account.email);
+  await page.getByLabel('Password', { exact: true }).fill(account.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('heading', { name: 'Home' }).waitFor();
 }

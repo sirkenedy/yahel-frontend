@@ -220,6 +220,15 @@ const screens: Screen[] = [
       await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
     },
   },
+  {
+    name: 'accounts account menu',
+    open: async (page) => {
+      await signInWithPassword(page);
+      await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+      await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+      await page.getByRole('dialog', { name: 'Accounts' }).waitFor();
+    },
+  },
   { name: 'accounts help', open: openHelpStep },
   {
     name: 'accounts help sent',

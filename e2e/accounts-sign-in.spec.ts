@@ -14,7 +14,7 @@ test.describe('accounts: sign in with a password', () => {
 
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
     await expect(page).toHaveURL(at('/signin/done'));
-    await expect(page.getByText(credentials.email)).toBeVisible();
+    await expect(page.getByText(credentials.email, { exact: true })).toBeVisible();
     expect(loginCalls(api)).toHaveLength(1);
     expect(loginCalls(api)[0]!.body).toMatchObject({ email: credentials.email, password: credentials.password });
   });
@@ -118,9 +118,10 @@ test.describe('accounts: sign in with a password', () => {
       expect(addresses).not.toContain(secret);
     }
     const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
-    for (const secret of [twoStepCredentials.password, secondStepCode, 'access-', 'challenge-']) expect(stored).not.toContain(secret);
-    expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(['yahel.device-id']);
-    expect(await page.evaluate(() => Object.keys(sessionStorage))).toEqual(['yahel.refresh-token']);
+    for (const secret of [twoStepCredentials.password, secondStepCode, 'access-', 'challenge-', 'refresh', 'handle-']) expect(stored).not.toContain(secret);
+    // Only which of this browser's accounts the tab uses, so a reload returns to it: no token of any kind.
+    expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+    expect(await page.evaluate(() => ({ ...sessionStorage }))).toEqual({ 'yahel.slot': '2' });
   });
 
   test('says it is showing demo data while stand-ins are on', async ({ page }) => {
@@ -172,7 +173,7 @@ test.describe('accounts: two-step sign-in', () => {
     await openCodeStep(page);
 
     await page.getByRole('button', { name: 'Text me a code instead' }).click();
-    await expect(page.getByRole('status').filter({ hasText: 'We texted a code to +234' })).toBeVisible();
+    await expect(page.getByText('We texted a code to +234')).toBeVisible();
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
     await page.getByRole('button', { name: 'Verify' }).click();
@@ -264,16 +265,17 @@ test.describe('accounts: sign in with a passkey', () => {
 });
 
 test.describe('accounts: account chooser', () => {
-  test('lists the accounts on this device and continues as the one picked', async ({ page }) => {
+  const chooser = (page: Page) => page.getByRole('list', { name: 'Accounts on this device' });
+
+  test('lists the accounts on this device; a signed-out one asks for its password with the address filled in', async ({ page }) => {
     await mockApi(page);
     await page.goto(at('/signin'));
     await expect(page).toHaveURL(at('/signin/choose'));
 
-    const list = page.getByRole('list', { name: 'Accounts on this device' });
-    await expect(list.getByRole('listitem')).toHaveCount(3);
-    await expect(list).toContainText('Northwind Studio');
+    await expect(chooser(page).getByRole('listitem')).toHaveCount(3);
+    await expect(chooser(page).getByRole('listitem').first()).toContainText('Signed out');
 
-    await page.getByRole('button', { name: new RegExp(`^Continue as .*${credentials.email}`) }).click();
+    await page.getByRole('button', { name: new RegExp(`^Sign in to.*${credentials.email}`) }).click();
     await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
     await expect(page.getByText(credentials.email)).toBeVisible();
     await password(page).fill(credentials.password);
@@ -281,32 +283,160 @@ test.describe('accounts: account chooser', () => {
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
   });
 
-  test('an account can be removed from this device; removing the last leaves the chooser', async ({ page }) => {
-    await mockApi(page);
+  test('a brand-new browser starts at the email step, with no chooser to go back to', async ({ page }) => {
+    await mockApi(page, { remembered: [] });
+    await page.goto(at('/signin'));
+
+    await expect(page).toHaveURL(at('/signin/email'));
+    await expect(page.getByRole('link', { name: 'Back' })).toHaveCount(0);
+  });
+
+  test('a signed-in account opens at once, without a password, and says so', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [{ email: twoStepCredentials.email, displayName: 'Kofi Mensah', signedIn: true }] });
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+
+    await page.getByRole('button', { name: 'Use another account' }).click();
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    // Choosing another account signs nobody out.
+    expect(api.calls.some((call) => call.path === '/v1/auth/logout')).toBe(false);
+    await page.getByRole('button', { name: new RegExp(`^Switch to.*${twoStepCredentials.email}`) }).click();
+
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    await expect(page.getByText(`Switched to ${twoStepCredentials.email}.`)).toBeVisible();
+    expect(loginCalls(api)).toHaveLength(1);
+    expect(api.calls.filter((call) => call.path === '/v1/auth/refresh').map((call) => call.body)).toEqual([{ slot: 0 }]);
+  });
+
+  test('an account can be removed from this device; removing the last leads to the email step', async ({ page }) => {
+    const api = await mockApi(page);
     await page.goto(at('/signin'));
     await page.getByRole('button', { name: 'Remove an account' }).click();
 
     await page.getByRole('button', { name: `Remove ${credentials.email} from this device` }).click();
-    await expect(page.getByRole('status').filter({ hasText: `${credentials.email} removed from this device.` })).toBeVisible();
-    await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(2);
+    await expect(page.getByText(`${credentials.email} removed from this device.`)).toBeVisible();
+    await expect(chooser(page).getByRole('listitem')).toHaveCount(2);
+    expect(api.calls.find((call) => call.method === 'DELETE')?.path).toMatch(/^\/v1\/auth\/accounts\/handle-0-/);
 
     await page.getByRole('button', { name: /^Remove amara\.okafor/ }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
     await expect(page).toHaveURL(at('/signin/email'));
     await expect(page.getByRole('link', { name: 'Back' })).toHaveCount(0);
+    expect(api.remembered()).toEqual([]);
   });
 
-  test('signing out returns to the chooser with the account marked signed out', async ({ page }) => {
-    const api = await mockApi(page);
+  test('a device with ten accounts says so, and leads to removing one', async ({ page }) => {
+    const remembered = Array.from({ length: 10 }, (_, index) => ({ email: `person${index}@yahel.example`, displayName: `Person ${index}` }));
+    await mockApi(page, { remembered });
+    await openPasswordStep(page);
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await expect(page.getByRole('alert')).toContainText('This device is full');
+    await page.getByRole('button', { name: 'Remove an account' }).click();
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Remove person0@yahel.example from this device' })).toBeVisible();
+  });
+
+  test('says when the accounts cannot be read, and reads them again on request', async ({ page }) => {
+    await mockApi(page);
+    let broken = true;
+    await page.route('**/api/v1/auth/accounts', (route) => (broken ? route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ success: false, error: { code: 'INTERNAL_ERROR' } }) }) : route.fallback()));
+    await page.goto(at('/signin'));
+
+    await expect(page.getByRole('alert')).toContainText('We couldn’t load your accounts');
+    broken = false;
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(chooser(page).getByRole('listitem')).toHaveCount(3);
+  });
+});
+
+test.describe('accounts: account menu', () => {
+  const avatar = (page: Page, email = credentials.email) => page.getByRole('button', { name: `Account: ${email}` });
+  const menu = (page: Page) => page.getByRole('dialog', { name: 'Accounts' });
+
+  test('opens from the avatar on Done, shows the account in use and the others, and closes with Escape', async ({ page }) => {
+    await mockApi(page, { remembered: [{ email: credentials.email, displayName: 'Amara Okafor', kind: 'business', organisation: 'Northwind Studio', role: 'ADMIN' }, { email: 'tunde@yahel.example', displayName: 'Tunde Bakare' }] });
     await signInWithPassword(page);
     await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
 
-    await page.getByRole('button', { name: 'Use another account' }).click();
+    await avatar(page).click();
+    await expect(menu(page).getByRole('link', { name: 'Manage your account' })).toBeFocused();
+    await expect(menu(page).getByRole('link', { name: 'Manage your account' })).toHaveAttribute('href', 'http://localhost:5173/u/0/account');
+    await expect(menu(page).getByRole('region', { name: 'Signed in as' })).toContainText('Admin · Northwind Studio');
+    await expect(menu(page).getByRole('button', { name: new RegExp(`^Sign in to.*tunde@yahel\\.example`) })).toContainText('Signed out');
+
+    await page.keyboard.press('Escape');
+    await expect(menu(page)).toHaveCount(0);
+    await expect(avatar(page)).toBeFocused();
+
+    await avatar(page).click();
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).click();
+    await expect(menu(page)).toHaveCount(0);
+  });
+
+  test('switches to another signed-in account, signs one out in place, and signs out to the next one', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [] });
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+    // A second account in the same browser, added from the menu.
+    await avatar(page).click();
+    await menu(page).getByRole('button', { name: 'Add another account' }).click();
+    await expect(page.getByLabel('Email')).toHaveValue('');
+    await page.getByLabel('Email').fill(twoStepCredentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(twoStepCredentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await page.getByRole('button', { name: 'Verify' }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    expect(api.remembered().map(({ slot, signedIn }) => [slot, signedIn])).toEqual([[0, true], [1, true]]);
+
+    await avatar(page, twoStepCredentials.email).click();
+    await menu(page).getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
+    await expect(page.getByText(`Switched to ${credentials.email}.`)).toBeVisible();
+
+    await avatar(page).click();
+    await menu(page).getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(page.getByText(`Signed out of ${credentials.email}. Switched to ${twoStepCredentials.email}.`)).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    expect(api.calls.filter((call) => call.path === '/v1/auth/logout').map((call) => call.body)).toEqual([{ slot: 0 }]);
+
+    await avatar(page, twoStepCredentials.email).click();
+    await menu(page).getByRole('button', { name: 'Sign out', exact: true }).click();
+    await expect(page.getByText('Signed out. Your account stays on this device.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(3);
+  });
+
+  test('signs every account in this browser out, keeping them listed', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [{ email: 'tunde@yahel.example', displayName: 'Tunde Bakare', signedIn: true }] });
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+    await avatar(page).click();
+    await menu(page).getByRole('button', { name: 'Sign out of tunde@yahel.example' }).click();
+    await expect(page.getByText('Signed out of tunde@yahel.example.')).toBeVisible();
+    await expect(menu(page).getByRole('button', { name: new RegExp(`^Sign in to.*tunde@yahel\\.example`) })).toBeVisible();
+
+    await menu(page).getByRole('button', { name: 'Sign out of all accounts' }).click();
 
     await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
-    await expect(page.getByRole('button', { name: new RegExp(`^Continue as .*${credentials.email}`) })).toContainText('Signed out');
-    expect(api.calls.some((call) => call.path === '/v1/auth/logout')).toBe(true);
-    expect(await page.evaluate(() => sessionStorage.getItem('yahel.refresh-token'))).toBeNull();
+    await expect(page.getByText('Signed out of all accounts on this device.')).toBeVisible();
+    expect(api.calls.some((call) => call.path === '/v1/auth/logout-browser')).toBe(true);
+    expect(api.remembered().every((account) => !account.signedIn)).toBe(true);
+  });
+
+  test('a signed-out account in the menu leads to its password, with the address filled in', async ({ page }) => {
+    await mockApi(page);
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+
+    await avatar(page).click();
+    await menu(page).getByRole('button', { name: new RegExp(`^Sign in to.*amara\\.okafor@yahel\\.example`) }).click();
+
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByText('amara.okafor@yahel.example')).toBeVisible();
   });
 });
 
@@ -451,19 +581,19 @@ test.describe('accounts: addresses, history and reload', () => {
     });
   }
 
-  test('once signed in, a reload and every earlier step lead to Done', async ({ page }) => {
+  test('once signed in, a reload stays on Done for that account, and sign-in stays open to add another', async ({ page }) => {
     const api = await mockApi(page);
     await signInWithPassword(page);
     await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
 
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
-    expect(api.calls.filter((call) => call.path === '/v1/auth/refresh')).toHaveLength(1);
+    expect(api.calls.filter((call) => call.path === '/v1/auth/refresh').map((call) => call.body)).toEqual([{ slot: 0 }]);
 
-    await page.goBack();
-    await expect(page).toHaveURL(at('/signin/done'));
-    await page.goto(at('/signin/password'));
-    await expect(page).toHaveURL(at('/signin/done'));
+    await page.goto(at('/signin'));
+    await expect(page.getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) })).toBeVisible();
+    await page.goto(at('/signin/done'));
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
   });
 
   test('the root address and unknown addresses are handled', async ({ page }) => {
@@ -506,8 +636,8 @@ test.describe('accounts: where sign-in leads', () => {
     return page.url();
   };
 
-  test('goes to the app when no address was asked for', async ({ page }) => {
-    expect(await finish(page, '')).toBe(appUrl);
+  test('goes to the app as the account just signed in to, its slot in the address, when no address was asked for', async ({ page }) => {
+    expect(await finish(page, '')).toBe(`${appUrl}u/0/`);
   });
 
   test('returns to an allowed address, carried through every step', async ({ page }) => {
@@ -524,7 +654,7 @@ test.describe('accounts: where sign-in leads', () => {
     ['backslashes', 'https:\\\\evil.example'],
   ]) {
     test(`ignores a return address that is ${name}`, async ({ page }) => {
-      expect(await finish(page, `?return=${encodeURIComponent(address!)}`)).toBe(appUrl);
+      expect(await finish(page, `?return=${encodeURIComponent(address!)}`)).toBe(`${appUrl}u/0/`);
     });
   }
 });
@@ -694,8 +824,9 @@ test.describe('accounts: when things go wrong after the hard part', () => {
     await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
     expect(api.calls.filter((call) => call.path === '/v1/auth/reset-password')).toHaveLength(1);
 
+    // The spent code is gone with the reset: Back cannot reach the new password again.
     await page.goBack();
-    await expect(page).toHaveURL(at('/signin/done'));
+    await expect(page).not.toHaveURL(/\/signin\/(new-password|recover-code)$/);
   });
 
   test('an expired second step sends the person to sign in again, with the reason', async ({ page }) => {

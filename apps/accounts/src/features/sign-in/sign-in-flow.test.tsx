@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError, createAccountCapabilities } from '@yahel/api-client';
-import type { AccountCapabilities, Profile } from '@yahel/api-client';
+import type { AccountCapabilities, ClientAccount, Profile } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import { act, render, waitFor } from '@testing-library/react';
@@ -9,29 +9,52 @@ import { dismissToast, useToast } from '../../flow/toasts';
 import { createStore } from 'zustand/vanilla';
 import type { SignInStep } from './machine';
 import { signInMessages as m } from './messages';
-import { knownAccountsQuery } from './queries';
 import { SignInFlowProvider, useSignInFlow } from './sign-in-flow';
 import type { SignInFlowValue } from './sign-in-flow';
 import { createSignInStore } from './store';
 
 const email = 'amara@northwind.example';
 const profile: Profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
-const tokens = { accessToken: 'a', refreshToken: 'r', expiresIn: 900, tokenType: 'Bearer' };
+const tokens = { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' };
+const known = (overrides: Partial<ClientAccount> = {}): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email, kind: 'personal', organisation: null, role: null, signedIn: false, ...overrides });
 const instant = async () => undefined;
 
-const fakeSession = () => {
-  const store = createStore<{ status: 'signed-out' | 'signed-in'; profile: Profile | null }>(() => ({ status: 'signed-out', profile: null }));
-  const signedIn = () => store.setState({ status: 'signed-in', profile });
+const fakeSession = (remembered: ClientAccount[] = []) => {
+  const store = createStore<{ status: 'signed-out' | 'signed-in'; profile: Profile | null; slot: number | null; handle: string | null }>(() => ({ status: 'signed-out', profile: null, slot: null, handle: null }));
+  const signedIn = () => store.setState({ status: 'signed-in', profile, slot: 0, handle: 'h-0' });
+  let accounts = [...remembered];
   return {
     store,
     signIn: vi.fn(async () => {
       signedIn();
-      return { ok: true } as Awaited<ReturnType<Session['signIn']>>;
+      return { ok: true, slot: 0, handle: 'h-0' } as Awaited<ReturnType<Session['signIn']>>;
     }),
-    completeSecondStep: vi.fn(async () => signedIn()),
+    completeSecondStep: vi.fn(async () => {
+      signedIn();
+      return { slot: 0, handle: 'h-0' };
+    }),
     establish: vi.fn(() => signedIn()),
-    signOut: vi.fn(async () => void store.setState({ status: 'signed-out', profile: null })),
-    api: { auth: { resetPassword: vi.fn().mockResolvedValue({ message: 'ok' }), forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }), verifyEmail: vi.fn().mockResolvedValue({ message: 'ok' }), resendVerification: vi.fn().mockResolvedValue({ message: 'ok' }) } },
+    switchTo: vi.fn(async () => {
+      signedIn();
+      return true;
+    }),
+    removeAccount: vi.fn(async (handle: string) => {
+      accounts = accounts.filter((account) => account.handle !== handle);
+    }),
+    signOut: vi.fn(async () => void store.setState({ status: 'signed-out', profile: null, slot: null, handle: null })),
+    api: {
+      auth: {
+        accounts: vi.fn(async () => accounts),
+        removeAccount: vi.fn(async (handle: string) => {
+          accounts = accounts.filter((account) => account.handle !== handle);
+          return { handle };
+        }),
+        resetPassword: vi.fn().mockResolvedValue({ message: 'ok' }),
+        forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }),
+        verifyEmail: vi.fn().mockResolvedValue({ message: 'ok' }),
+        resendVerification: vi.fn().mockResolvedValue({ message: 'ok' }),
+      },
+    },
   };
 };
 
@@ -41,9 +64,9 @@ function Probe({ onValue, onToast }: { onValue: (value: SignInFlowValue) => void
   return null;
 }
 
-const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null } = {}) => {
+const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[] } = {}) => {
   act(() => dismissToast());
-  const session = fakeSession();
+  const session = fakeSession(remembered);
   const capabilities: AccountCapabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
   const store = createSignInStore();
   const navigate = vi.fn();
@@ -78,7 +101,7 @@ describe('SignInFlowProvider', () => {
     expect(store.getState()).toMatchObject({ email, fromChooser: false });
     expect(navigate).toHaveBeenLastCalledWith('password');
 
-    act(() => flow().actions.chooseAccount('kofi@northwind.example'));
+    act(() => flow().actions.chooseAccount(known({ email: 'kofi@northwind.example' })));
     expect(store.getState()).toMatchObject({ email: 'kofi@northwind.example', fromChooser: true });
 
     act(() => flow().actions.useAnotherAccount());
@@ -86,27 +109,28 @@ describe('SignInFlowProvider', () => {
     expect(navigate).toHaveBeenLastCalledWith('email');
   });
 
-  it('signs in with the password, remembers the account on this device and shows Done in place of the step', async () => {
-    const { flow, session, capabilities, navigate, store } = setup({ step: 'password' });
+  it('signs in with the password, reads this device’s accounts again and shows Done in place of the step', async () => {
+    const { flow, session, navigate, store } = setup({ step: 'password' });
     act(() => store.dispatch({ type: 'email-entered', email }));
+    await waitFor(() => expect(session.api.auth.accounts).toHaveBeenCalledTimes(1));
 
     act(() => flow().actions.signInWithPassword('secret'));
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('done', { replace: true }));
     expect(session.signIn).toHaveBeenCalledWith(email, 'secret');
-    await waitFor(async () => expect((await capabilities.directory!.list())[0]).toMatchObject({ email, name: 'Amara Okafor', signedOut: false }));
+    await waitFor(() => expect(session.api.auth.accounts).toHaveBeenCalledTimes(2));
   });
 
   it('ignores a second submit while the first is still running', async () => {
     const { flow, session, store } = setup({ step: 'password' });
     act(() => store.dispatch({ type: 'email-entered', email }));
-    let finish: (result: { ok: true }) => void = () => undefined;
+    let finish: (result: Awaited<ReturnType<Session['signIn']>>) => void = () => undefined;
     session.signIn.mockImplementation(() => new Promise((resolve) => (finish = resolve)));
 
     act(() => flow().actions.signInWithPassword('secret'));
     await waitFor(() => expect(flow().meta.requests.password.isPending).toBe(true));
     act(() => flow().actions.signInWithPassword('secret'));
-    await act(async () => finish({ ok: true }));
+    await act(async () => finish({ ok: true, slot: 0, handle: 'h-0' }));
 
     expect(session.signIn).toHaveBeenCalledTimes(1);
   });
@@ -202,7 +226,7 @@ describe('SignInFlowProvider', () => {
   });
 
   it('keeps no password, code or token in the query client once a request has settled', async () => {
-    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens: { ...tokens, accessToken: 'access-secret', refreshToken: 'refresh-secret' }, profile } }) };
+    const passkeys = { isSupported: () => true, prepare: vi.fn(), signIn: vi.fn().mockResolvedValue({ status: 'signed-in', signedIn: { tokens: { ...tokens, accessToken: 'access-secret' }, profile } }) };
     const { flow, session, navigate, store, retained } = setup({ step: 'password', passkeys });
     act(() => store.dispatch({ type: 'email-entered', email }));
     session.signIn.mockResolvedValueOnce({ ok: false, reason: 'mfa-required', challengeToken: 'challenge-secret' });
@@ -407,46 +431,81 @@ describe('SignInFlowProvider', () => {
     expect(store.getState().helpRequested).toBe(true);
   });
 
-  it('removes an account from this device, and leaves the chooser when it was the last', async () => {
-    const { flow, navigate } = setup({ step: 'choose' });
+  it('removes an account from this device by its handle, says so, and leaves the chooser when it was the last', async () => {
+    const remembered = [known({ handle: 'h-0', email }), known({ handle: 'h-1', slot: 1, email: 'amara.okafor@yahel.example' })];
+    const { flow, navigate, session, toast } = setup({ step: 'choose', remembered });
     await waitFor(() => expect(flow().state.accounts).toHaveLength(2));
 
-    act(() => flow().actions.removeAccount('amara@northwind.example'));
-    await waitFor(() => expect(flow().state.removedAccount).toBe('amara@northwind.example'));
-    expect(flow().state.accounts.map((account) => account.email)).toEqual(['amara.okafor@yahel.example']);
+    act(() => flow().actions.removeAccount(remembered[0]!));
+    await waitFor(() => expect(toast()?.text).toBe(m.removed(email)));
+    expect(session.removeAccount).toHaveBeenCalledWith('h-0');
+    await waitFor(() => expect(flow().state.accounts.map((account) => account.email)).toEqual(['amara.okafor@yahel.example']));
     expect(navigate).not.toHaveBeenCalled();
 
-    act(() => flow().actions.removeAccount('amara.okafor@yahel.example'));
+    act(() => flow().actions.removeAccount(remembered[1]!));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('email', { replace: true }));
   });
 
-  it('signs out, clears every cache and the flow, and returns to the start, even if the server call fails', async () => {
-    const { flow, session, navigate, store, queryClient, capabilities } = setup({ step: 'done' });
-    act(() => {
-      session.store.setState({ status: 'signed-in', profile });
-      store.dispatch({ type: 'email-entered', email });
-    });
-    queryClient.setQueryData(['mail', 'personal', 'inbox'], ['kept private']);
-    let remembered = false;
-    let settledBeforeSignOut = false;
-    const original = capabilities.directory!.remember.bind(capabilities.directory);
-    const remember = vi.spyOn(capabilities.directory!, 'remember').mockImplementation(async (account) => {
-      await original(account);
-      remembered = true;
-    });
-    session.signOut.mockImplementation(async () => {
-      settledBeforeSignOut = remembered;
-      throw new ApiError({ status: 500, code: 'INTERNAL_ERROR', message: 'x' });
-    });
+  it('switches to a signed-in account without a password, and asks for it when the account turns out signed out', async () => {
+    const remembered = [known({ handle: 'h-0', email, signedIn: true }), known({ handle: 'h-1', slot: 1, email: 'kofi@northwind.example', signedIn: true })];
+    const { flow, navigate, session, store, queryClient, toast } = setup({ step: 'choose', remembered });
+    await waitFor(() => expect(flow().state.accounts).toHaveLength(2));
+    queryClient.setQueryData(['admin', 'h-old', 'workspace'], ['kept private']);
 
-    act(() => flow().actions.signOut());
+    act(() => flow().actions.chooseAccount(remembered[0]!));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('done'));
+    expect(session.switchTo).toHaveBeenCalledWith(0, 'h-0');
+    expect(toast()?.text).toBe(m.switchedTo(email));
+    expect(queryClient.getQueryData(['admin', 'h-old', 'workspace'])).toBeUndefined();
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith('choose', { replace: true }));
-    expect(remember.mock.invocationCallOrder[0]).toBeLessThan(session.signOut.mock.invocationCallOrder[0]!);
-    expect(settledBeforeSignOut).toBe(true);
-    expect(store.getState().email).toBeNull();
-    expect(queryClient.getQueryData(['mail', 'personal', 'inbox'])).toBeUndefined();
-    expect((await capabilities.directory!.list())[0]).toMatchObject({ email, signedOut: true });
+    session.switchTo.mockResolvedValueOnce(false);
+    act(() => flow().actions.chooseAccount(remembered[1]!));
+    await waitFor(() => expect(navigate).toHaveBeenLastCalledWith('password'));
+    expect(store.getState()).toMatchObject({ email: 'kofi@northwind.example', fromChooser: true });
+  });
+
+  it('goes straight to the password for an account that is signed out', () => {
+    const { flow, navigate, session } = setup({ step: 'choose' });
+
+    act(() => flow().actions.chooseAccount(known()));
+
+    expect(session.switchTo).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenLastCalledWith('password');
+  });
+
+  it('says when the accounts cannot be read, offers no way back to the chooser it is on, and reads them again on request', async () => {
+    const { flow, session, queryClient } = setup({ step: 'email' });
+    await waitFor(() => expect(flow().state.accountsStatus).toBe('success'));
+    expect(flow().meta.backHref).toBeNull();
+
+    session.api.auth.accounts.mockRejectedValueOnce(new ApiError({ status: 0, code: 'NETWORK_ERROR', message: 'x' }));
+    await act(async () => void (await queryClient.resetQueries()));
+    await waitFor(() => expect(flow().state.accountsStatus).toBe('error'));
+    expect(flow().meta.backHref).toBe('/signin/choose');
+
+    act(() => flow().actions.reloadAccounts());
+    await waitFor(() => expect(flow().state.accountsStatus).toBe('success'));
+  });
+
+  it('keeps this tab’s account signed in when another is wanted, and opens the chooser to remove one when the device is full', () => {
+    const { flow, navigate, session, store } = setup({ step: 'done' });
+
+    act(() => flow().actions.showChooser());
+    expect(navigate).toHaveBeenLastCalledWith('choose');
+    expect(session.signOut).not.toHaveBeenCalled();
+
+    act(() => flow().actions.openRemoval());
+    expect(store.getState().removing).toBe(true);
+  });
+
+  it('points to “Remove an account” when this device has no room for another', async () => {
+    const { flow, session, store } = setup({ step: 'password' });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+    session.signIn.mockRejectedValueOnce(new ApiError({ status: 409, code: 'TOO_MANY_ACCOUNTS', message: 'x' }));
+
+    act(() => flow().actions.signInWithPassword('secret'));
+
+    await waitFor(() => expect(flow().meta.requests.password.feedback).toMatchObject({ place: 'banner', title: m.tooManyAccountsTitle, next: 'remove-account' }));
   });
 
   it('leaves for the app on request', () => {
@@ -458,8 +517,8 @@ describe('SignInFlowProvider', () => {
   });
 
   it('knows the way back and which way the person is travelling', async () => {
-    const { flow, goTo, store, queryClient } = setup({ step: 'email' });
-    await waitFor(() => expect(queryClient.getQueryData(knownAccountsQuery(null).queryKey)).toHaveLength(2));
+    const { flow, goTo, store } = setup({ step: 'email', remembered: [known()] });
+    await waitFor(() => expect(flow().state.accounts).toHaveLength(1));
     expect(flow().meta.backHref).toBe('/signin/choose');
     expect(flow().meta.direction).toBe('forward');
 

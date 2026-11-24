@@ -29,6 +29,7 @@ const named = [
   'SESSION_EXPIRED', 'INVALID_TOKEN', 'TOKEN_REUSE_DETECTED',
   'VALIDATION_ERROR', 'DUPLICATE_RECORD', 'EMAIL_ALREADY_EXISTS', 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL', 'USER_UNDERAGE', 'PHONE_ALREADY_IN_USE',
   'PUBLIC_EMAIL_NOT_ALLOWED', 'DOMAIN_CONFLICT', 'DOMAIN_ALREADY_CLAIMED', 'ALREADY_IN_ORG_CONTEXT', 'INVITE_EXPIRED', 'INVITE_ALREADY_USED', 'INVITE_ALREADY_ACCEPTED',
+  'TOO_MANY_ACCOUNTS',
 ] as const; // prettier-ignore
 
 const isNamed = (code: string): code is (typeof named)[number] => (named as readonly string[]).includes(code);
@@ -69,6 +70,8 @@ export const commonRows = {
   INVITE_EXPIRED: { place: 'screen', screen: 'link-expired' },
   INVITE_ALREADY_USED: { place: 'screen', screen: 'link-used' },
   INVITE_ALREADY_ACCEPTED: { place: 'screen', screen: 'link-used' },
+  // An eleventh account in one browser. Sign-in offers the way out ("Remove an account"); elsewhere the words name it.
+  TOO_MANY_ACCOUNTS: { place: 'banner', tone: 'warning', title: m.tooManyAccountsTitle, text: m.tooManyAccountsText },
 } as const satisfies FeedbackMap<never, 'retry'>;
 
 /** An account's or an organisation's standing: told only where a password has already matched, never to a signed-out request. */

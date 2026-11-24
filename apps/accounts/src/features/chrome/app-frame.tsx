@@ -1,5 +1,6 @@
-import { AccountAvatar, BrandMark, FlowButton, FlowConnectionBar, FlowIcon, FlowLink, FlowShell, FlowToast } from '@yahel/ui';
+import { AccountMenu, BrandMark, FlowButton, FlowConnectionBar, FlowIcon, FlowLink, FlowShell, FlowToast } from '@yahel/ui';
 import { useEffect } from 'react';
+import type { AccountMenuProps } from '@yahel/ui';
 import type { ReactNode } from 'react';
 import { flowMessages } from '../../flow/messages';
 import { dismissToast, say, useToast } from '../../flow/toasts';
@@ -24,13 +25,13 @@ export interface AppFrameProps {
   links: AppFrameLinks;
   /** A control that blurs personal details for screen shares and calls, on screens that ask for them. */
   privacy?: { isOn: boolean; onToggle: () => void } | null;
-  /** Whose account is signed in, shown on every screen where someone is. */
-  account?: { name: string; email: string } | null;
+  /** The account menu: whose account is signed in, on every screen where someone is, and the others in this browser. */
+  menu?: Omit<AccountMenuProps, 'labels'> | null;
   children: ReactNode;
 }
 
 /** The frame around every account screen: brand, theme control, the question, and the footer. */
-export function AppFrame({ links, privacy, account, children }: AppFrameProps) {
+export function AppFrame({ links, privacy, menu, children }: AppFrameProps) {
   const { theme, toggle } = useTheme();
   const online = useOnline();
   const toast = useToast();
@@ -81,7 +82,7 @@ export function AppFrame({ links, privacy, account, children }: AppFrameProps) {
         <FlowButton variant="round" aria-label={theme === 'dark' ? m.switchToLight : m.switchToDark} onPress={toggle}>
           <FlowIcon name={theme === 'dark' ? 'sun' : 'moon'} />
         </FlowButton>
-        {account ? <AccountAvatar name={account.name} label={m.signedInAs(account.email)} /> : null}
+        {menu ? <AccountMenu {...menu} labels={m.menu} /> : null}
       </FlowShell.Header>
       <FlowShell.Main>
         <FlowShell.Question>{children}</FlowShell.Question>

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AccountCapabilities, KnownAccount, Profile, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
+import type { AccountCapabilities, ClientAccount, Profile, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import type { FlowDirection } from '@yahel/ui';
 import { createContext, use } from 'react';
@@ -13,7 +13,8 @@ import type { SignInField, SignInNext } from './feedback';
 import type { ScreenFacts } from '../../flow/step-frame';
 import { backOf, directionOf, stepPath } from './machine';
 import type { SignInState, SignInStep } from './machine';
-import { knownAccountsQuery, passkeyChallengeQuery, recoveryOptionsQuery } from './queries';
+import { accountsQuery } from '../../flow/accounts';
+import { passkeyChallengeQuery, recoveryOptionsQuery } from './queries';
 import { useSignInRequests } from './requests';
 import type { SignInRequests } from './requests';
 import type { SignInStore } from './store';
@@ -23,19 +24,27 @@ export interface SignInFlowValue {
   state: Omit<SignInState, 'provenPassword'> & {
     step: SignInStep;
     profile: Profile | null;
-    accounts: KnownAccount[];
+    accounts: ClientAccount[];
+    /** Whether the list of this browser's accounts is still coming, could not be read, or is here. */
+    accountsStatus: 'pending' | 'error' | 'success';
     recoveryOptions: RecoveryOption[] | null;
     /** The masked number a second-step code was texted to, once one has been. */
     textedTo: string | null;
     passkeyCancelled: boolean;
     resetCodeResent: boolean;
-    removedAccount: string | null;
   };
   actions: {
-    chooseAccount: (email: string) => void;
+    /** Opens an account from the chooser: at once when it is signed in, at the password when not. */
+    chooseAccount: (account: ClientAccount) => void;
     enterEmail: (email: string) => void;
     useAnotherAccount: () => void;
-    removeAccount: (email: string) => void;
+    /** Shows the chooser again, keeping this tab's account signed in. */
+    showChooser: () => void;
+    setRemoving: (on: boolean) => void;
+    /** The chooser, ready to remove an account: the way out when this browser has no room for another. */
+    openRemoval: () => void;
+    removeAccount: (account: ClientAccount) => void;
+    reloadAccounts: () => void;
     signInWithPassword: (password: string) => void;
     /** Submits the emailed code that confirms the address, then finishes signing in. */
     confirmEmail: (code: string) => void;
@@ -49,7 +58,6 @@ export interface SignInFlowValue {
     enterResetCode: (code: string) => void;
     saveNewPassword: (password: string) => void;
     requestHelp: (contact: string) => void;
-    signOut: () => void;
     /** Leaves for the address the person was heading to before they were asked to sign in. */
     continueToApp: () => void;
   };
@@ -98,7 +106,8 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
   const passkeyOffered = passkeys?.isSupported() ?? false;
-  const accounts = useQuery(knownAccountsQuery(capabilities.directory)).data ?? [];
+  const accountList = useQuery(accountsQuery(capabilities.directory));
+  const accounts = accountList.data ?? [];
   const recoveryOptions = useQuery({ ...recoveryOptionsQuery(capabilities.recovery, flow.email), enabled: step === 'recover' && flow.email !== null });
   // Fetched before the press so the browser's prompt can open inside it.
   useQuery({ ...passkeyChallengeQuery(passkeys, flow.email), enabled: passkeyOffered && (step === 'email' || step === 'password') });
@@ -107,7 +116,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
 
   const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, recoveryOptions: () => recoveryOptions.data ?? [] });
 
-  const facts = { signedIn: profile !== null, knownAccounts: accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
+  const facts = { signedIn: profile !== null, knownAccounts: accountList.isError ? null : accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
   const back = backOf(step, { ...flow, provenPassword }, facts);
 
   const value: SignInFlowValue = {
@@ -116,15 +125,19 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       step,
       profile,
       accounts,
+      accountsStatus: accountList.status,
       recoveryOptions: recoveryOptions.data ?? null,
       textedTo: requests.textCode.outcome ?? null,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
       resetCodeResent: requests.resendResetCode.outcome === 'sent',
-      removedAccount: requests.removeAccount.outcome?.address ?? null,
     },
     actions: {
-      chooseAccount: (address) => {
-        store.dispatch({ type: 'account-chosen', email: address });
+      chooseAccount: (account) => {
+        if (account.signedIn) {
+          requests.switchAccount.start(account.handle);
+          return;
+        }
+        store.dispatch({ type: 'account-chosen', email: account.email });
         navigate('password');
       },
       enterEmail: (address) => {
@@ -135,7 +148,18 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
         store.dispatch({ type: 'another-account-wanted' });
         navigate('email');
       },
-      removeAccount: requests.removeAccount.start,
+      showChooser: () => {
+        store.dispatch({ type: 'another-account-wanted' });
+        navigate('choose');
+      },
+      setRemoving: (on) => store.dispatch({ type: 'removing', on }),
+      openRemoval: () => {
+        store.dispatch({ type: 'another-account-wanted' });
+        store.dispatch({ type: 'removing', on: true });
+        navigate('choose');
+      },
+      removeAccount: ({ handle, email }) => requests.removeAccount.start({ handle, email }),
+      reloadAccounts: () => void accountList.refetch(),
       signInWithPassword: requests.password.start,
       confirmEmail: requests.confirmEmail.start,
       resendEmailCode: requests.resendEmailCode.start,
@@ -154,7 +178,6 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       },
       saveNewPassword: requests.newPassword.start,
       requestHelp: requests.help.start,
-      signOut: requests.signOut.start,
       continueToApp: leave,
     },
     meta: {
@@ -172,8 +195,8 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
         resendResetCode: status(requests.resendResetCode, requests.resendResetCode.start),
         newPassword: status(requests.newPassword),
         help: status(requests.help),
+        switchAccount: status(requests.switchAccount),
         removeAccount: status(requests.removeAccount),
-        signOut: status(requests.signOut, requests.signOut.start),
         recoveryOptions: { isPending: recoveryOptions.isPending, feedback: recoveryOptions.error ? describeSignInFailure(recoveryOptions.error, 'other') : null, clear: () => void recoveryOptions.refetch(), again: () => void recoveryOptions.refetch() },
       },
       screens: {

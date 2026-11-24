@@ -49,7 +49,8 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
       employeeCount: 10,
       domain: business.domain,
     });
-    expect(sentBy(api).deviceId).toMatch(/^[0-9a-f-]{36}$/);
+    // The browser is named by the server's own cookie now: nothing the page made up is sent.
+    expect(sentBy(api)).not.toHaveProperty('deviceId');
   });
 
   test('the domain is proved later: nothing asks to verify it during sign-up, and the screens say when it will be', async ({ page }) => {
@@ -506,7 +507,8 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
   });
 
   test('without Admin’s first sign-in, the new administrator signs in through sign-in, confirms the emailed code and is in', async ({ page }) => {
-    await mockApi(page);
+    // A browser that has never signed in: sign-in opens at the email step.
+    await mockApi(page, { remembered: [] });
     await page.goto(at('/business?stand-ins=off'));
     await page.getByLabel('Business name').fill(business.name);
     await proceed(page);
@@ -667,8 +669,7 @@ test.describe('accounts: moving about in workspace sign-up', () => {
     const name = 'Amara Q Cardholder';
     const secrets = [card.number, card.number.replace(/ /g, ''), card.expiry, card.securityCode, name, card.code, business.password, business.contactEmail];
     const nothingKept = async (where: string) => {
-      // The device id is a random UUID that `@yahel/auth` keeps on purpose; a short code could appear in it by chance.
-      const kept = await page.evaluate(() => JSON.stringify([Object.entries(localStorage).filter(([key]) => key !== 'yahel.device-id'), { ...sessionStorage }, document.cookie]));
+      const kept = await page.evaluate(() => JSON.stringify([Object.entries(localStorage), { ...sessionStorage }, document.cookie]));
       for (const secret of secrets) expect(kept, `${secret} at ${where}`).not.toContain(secret);
       for (const secret of secrets) expect(decodeURIComponent(page.url()), `${secret} in the address at ${where}`).not.toContain(secret);
       expect(page.url()).toBe(at(where));

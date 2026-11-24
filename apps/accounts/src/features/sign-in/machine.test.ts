@@ -64,8 +64,23 @@ describe('reduce', () => {
 });
 
 describe('resumeStep', () => {
-  it('sends every step to Done once signed in', () => {
-    for (const step of signInSteps) expect(resumeStep(step, initialSignInState, facts({ signedIn: true }))).toBe('done');
+  it('opens Done only once signed in, and keeps every other step open to add another account', () => {
+    expect(resumeStep('done', initialSignInState, facts({ signedIn: true }))).toBe('done');
+    expect(resumeStep('done', initialSignInState, facts())).toBe('email');
+    expect(resumeStep('email', initialSignInState, facts({ signedIn: true }))).toBe('email');
+    expect(resumeStep('choose', initialSignInState, facts({ signedIn: true, knownAccounts: 1 }))).toBe('choose');
+  });
+
+  it('shows the chooser, to say so, when the list of this device’s accounts could not be read', () => {
+    expect(resumeStep('choose', initialSignInState, facts({ knownAccounts: null }))).toBe('choose');
+    expect(backOf('email', initialSignInState, facts({ knownAccounts: null }))).toBe('choose');
+  });
+
+  it('enters and leaves the chooser’s remove mode, which a new start forgets', () => {
+    const removing = reduce(initialSignInState, { type: 'removing', on: true });
+    expect(removing.removing).toBe(true);
+    expect(reduce(removing, { type: 'removing', on: false }).removing).toBe(false);
+    expect(reduce(removing, { type: 'another-account-wanted' }).removing).toBe(false);
   });
 
   it('starts at the chooser when this device knows accounts, otherwise at the email step', () => {
@@ -164,7 +179,7 @@ describe('confirming an email', () => {
     expect(resumeStep('confirm-email', proven, facts())).toBe('confirm-email');
     expect(resumeStep('confirm-email', reduce(proven, { type: 'proof-dropped' }), facts())).toBe('password');
     expect(resumeStep('confirm-email', initialSignInState, facts())).toBe('email');
-    expect(resumeStep('confirm-email', proven, facts({ signedIn: true }))).toBe('done');
+    expect(resumeStep('confirm-email', proven, facts({ signedIn: true }))).toBe('confirm-email');
     expect(backOf('confirm-email', proven, facts())).toBe('password');
     expect(stepOfPath('/signin/confirm-email')).toBe('confirm-email');
   });

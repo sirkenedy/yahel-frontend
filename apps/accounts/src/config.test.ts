@@ -13,6 +13,8 @@ describe('config', () => {
     const config = await load({ VITE_API_URL: '', VITE_APP_URL: '', VITE_RETURN_ORIGINS: '', VITE_SIGN_UP_URL: '', VITE_SIGN_IN_URL: '', VITE_BUSINESS_SIGN_UP_URL: '', VITE_MAIL_DOMAIN: '', VITE_HELP_URL: '', VITE_PRIVACY_URL: '', VITE_TERMS_URL: '' });
 
     expect(config.returnPolicy).toEqual({ fallback: 'http://localhost:5173/', allowedOrigins: [] });
+    expect(config.appHome(2)).toBe('http://localhost:5173/u/2/');
+    expect(config.accountSettings(0)).toBe('http://localhost:5173/u/0/account');
     expect(config).toMatchObject({ helpUrl: null, privacyUrl: null, termsUrl: null });
   });
 
@@ -40,6 +42,7 @@ describe('config', () => {
       VITE_BUSINESS_SIGN_UP_URL: 'https://accounts.yahel.example/business',
       VITE_ADMIN_SIGN_IN_URL: 'https://admin.yahel.example/signin',
       VITE_ADMIN_URL: 'https://admin.yahel.example',
+      VITE_ACCOUNT_URL: 'https://myaccount.yahel.example',
       VITE_MAIL_DOMAIN: ' Yahel.Example ',
       VITE_PRIVACY_URL: 'https://yahel.example/privacy',
     });
@@ -50,6 +53,8 @@ describe('config', () => {
     expect(config.businessSignUpUrl).toBe('https://accounts.yahel.example/business');
     expect(config.adminSignInUrl).toBe('https://admin.yahel.example/signin');
     expect(config.adminUrl).toBe('https://admin.yahel.example/');
+    expect(config.appHome(3)).toBe('https://app.yahel.example/u/3/');
+    expect(config.accountSettings(3)).toBe('https://myaccount.yahel.example/u/3/account');
     expect(config.mailDomain).toBe('yahel.example');
     expect(config.privacyUrl).toBe('https://yahel.example/privacy');
   });

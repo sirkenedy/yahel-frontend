@@ -6,7 +6,7 @@ import { forgetAdmin, isOffered, loadAdminFacts, receiveHandover } from '../../f
 import { handoverOf } from '../../features/business/route-guard';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
-import { useSignedInAccount } from '../../flow/use-signed-in-account';
+import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 
 export const Route = createFileRoute('/admin')({
@@ -27,18 +27,35 @@ export const Route = createFileRoute('/admin')({
 });
 
 function AdminLayout() {
-  const { session, registrar, admin, config, facts } = Route.useRouteContext();
+  const { session, capabilities, registrar, admin, signIn, config, facts } = Route.useRouteContext();
   const navigate = useNavigate();
   const router = useRouter();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'signin';
-  const account = useSignedInAccount(session);
+  const menu = useAccountMenu({
+    session,
+    directory: capabilities.directory,
+    manageUrl: config.accountSettings,
+    privacyUrl: config.privacyUrl,
+    termsUrl: config.termsUrl,
+    go: {
+      signIn: (email) => {
+        signIn.dispatch(email ? { type: 'account-chosen', email } : { type: 'another-account-wanted' });
+        void navigate({ to: email ? '/signin/password' : '/signin/email' });
+      },
+      done: () => void navigate({ to: '/signin/done' }),
+      chooser: () => {
+        signIn.dispatch({ type: 'signed-out' });
+        void navigate({ to: '/signin/choose', replace: true });
+      },
+    },
+  });
   const [detailsHidden, setDetailsHidden] = useState(false);
 
   return (
     <AppFrame
       links={{ home: '/admin', homeLabel: chromeMessages.brandAdminSignIn, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }}
       privacy={step === 'phone' ? { isOn: detailsHidden, onToggle: () => setDetailsHidden(!detailsHidden) } : null}
-      account={account}
+      menu={menu}
     >
       <AdminFlowProvider
         step={step}

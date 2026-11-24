@@ -7,11 +7,12 @@ import { loadSignInFacts, stepInsteadOf } from './route-guard';
 import { createSignInStore } from './store';
 
 const instant = async () => undefined;
-const api = { auth: { forgotPassword: vi.fn() } } as unknown as Session['api'];
+const remembered = (count: number) => Array.from({ length: count }, (_, slot) => ({ handle: `h-${slot}`, slot, displayName: null, initials: null, avatarUrl: null, email: `a${slot}@yahel.example`, kind: 'personal', organisation: null, role: null, signedIn: false }));
+const apiWith = (count: number) => ({ auth: { forgotPassword: vi.fn(), accounts: vi.fn().mockResolvedValue(remembered(count)), removeAccount: vi.fn() } }) as unknown as Session['api'];
 const sessionWith = (status: 'signed-in' | 'signed-out') => ({ store: { getState: () => ({ status, profile: null }) } }) as unknown as Session;
 
-const context = ({ status = 'signed-out' as 'signed-in' | 'signed-out', standIns = true, passkeySupported = true } = {}) => {
-  const capabilities = createAccountCapabilities(api, standIns ? createStandIns(instant) : undefined);
+const context = ({ status = 'signed-out' as 'signed-in' | 'signed-out', standIns = true, passkeySupported = true, accounts = 2 } = {}) => {
+  const capabilities = createAccountCapabilities(apiWith(accounts), standIns ? createStandIns(instant) : undefined);
   const passkeys = capabilities.passkeys ? ({ isSupported: () => passkeySupported, prepare: vi.fn(), signIn: vi.fn() } as PasskeyClient) : null;
   return { session: sessionWith(status), queryClient: new QueryClient(), capabilities, passkeys, signIn: createSignInStore() };
 };
@@ -22,7 +23,7 @@ describe('loadSignInFacts', () => {
   });
 
   it('offers nothing extra without stand-ins', async () => {
-    await expect(loadSignInFacts(context({ standIns: false }))).resolves.toEqual({ signedIn: false, knownAccounts: 0, passkeysOffered: false, helpOffered: false });
+    await expect(loadSignInFacts(context({ standIns: false, accounts: 0 }))).resolves.toEqual({ signedIn: false, knownAccounts: 0, passkeysOffered: false, helpOffered: false });
   });
 
   it('does not offer passkeys in a browser without WebAuthn', async () => {
@@ -35,18 +36,18 @@ describe('loadSignInFacts', () => {
 
   it('reads the known accounts once and reuses the answer on later steps', async () => {
     const shared = context();
-    const list = vi.spyOn(shared.capabilities.directory!, 'list');
+    const list = vi.spyOn(shared.capabilities.directory, 'list');
     await loadSignInFacts(shared);
     await loadSignInFacts(shared);
 
     expect(list).toHaveBeenCalledTimes(1);
   });
 
-  it('starts from the email step when the list of known accounts cannot be read', async () => {
+  it('reports a list of known accounts that cannot be read as unknown, for the chooser to explain', async () => {
     const broken = context();
-    broken.capabilities.directory!.list = vi.fn().mockRejectedValue(new Error('unreachable'));
+    broken.capabilities.directory.list = vi.fn().mockRejectedValue(new Error('unreachable'));
 
-    await expect(loadSignInFacts(broken)).resolves.toMatchObject({ knownAccounts: 0 });
+    await expect(loadSignInFacts(broken)).resolves.toMatchObject({ knownAccounts: null });
   });
 });
 
@@ -60,6 +61,7 @@ describe('stepInsteadOf', () => {
 
     store.dispatch({ type: 'email-entered', email: 'amara@northwind.example' });
     expect(stepInsteadOf('password', store, facts)).toBeNull();
-    expect(stepInsteadOf('password', store, { ...facts, signedIn: true })).toBe('done');
+    expect(stepInsteadOf('done', store, { ...facts, signedIn: true })).toBeNull();
+    expect(stepInsteadOf('done', store, facts)).toBe('email');
   });
 });

@@ -1,6 +1,7 @@
 import { Outlet, createFileRoute, useLocation, useNavigate, useRouter } from '@tanstack/react-router';
 import { resolveReturnAddress } from '@yahel/auth';
 import { AppFrame } from '../../features/chrome/app-frame';
+import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 import { stepOfPath, stepPath } from '../../features/sign-in/machine';
 import { dropProof, loadSignInFacts } from '../../features/sign-in/route-guard';
@@ -21,18 +22,38 @@ function SignInLayout() {
   const router = useRouter();
   const step = stepOfPath(useLocation({ select: (location) => location.pathname })) ?? 'email';
   const entry = step === 'choose' || step === 'email';
+  const toStep = (to: Parameters<typeof stepPath>[0], options?: { replace?: boolean }) => void navigate({ to: stepPath(to), replace: options?.replace });
+  const menu = useAccountMenu({
+    session,
+    directory: capabilities.directory,
+    manageUrl: config.accountSettings,
+    privacyUrl: config.privacyUrl,
+    termsUrl: config.termsUrl,
+    go: {
+      signIn: (email) => {
+        signIn.dispatch(email ? { type: 'account-chosen', email } : { type: 'another-account-wanted' });
+        toStep(email ? 'password' : 'email');
+      },
+      done: () => toStep('done'),
+      chooser: () => {
+        signIn.dispatch({ type: 'signed-out' });
+        toStep('choose', { replace: true });
+      },
+    },
+  });
 
   return (
-    <AppFrame links={{ home: '/signin', signUp: entry ? config.signUpUrl : null, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }}>
+    <AppFrame links={{ home: '/signin', signUp: entry ? config.signUpUrl : null, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }} menu={step === 'done' ? menu : null}>
       <SignInFlowProvider
         step={step}
         session={session}
         capabilities={capabilities}
         passkeys={passkeys}
         store={signIn}
-        navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
+        navigate={toStep}
         isShown={(to) => stepOfPath(router.latestLocation.pathname) === to}
-        leave={() => window.location.assign(resolveReturnAddress(search.return, config.returnPolicy))}
+        // With no address asked for, the app opens as the account just signed in to: its slot is in the address.
+        leave={() => window.location.assign(resolveReturnAddress(search.return, { ...config.returnPolicy, fallback: config.appHome(session.store.getState().slot ?? 0) }))}
         links={{ signUp: config.signUpUrl, help: config.helpUrl }}
       >
         <Outlet />

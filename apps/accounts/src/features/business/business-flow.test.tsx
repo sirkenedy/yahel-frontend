@@ -423,7 +423,7 @@ describe('BusinessFlowProvider: creating the workspace', () => {
 
   it.each([
     ['whose password is someone else’s', () => Promise.reject(failure(401, 'INVALID_CREDENTIALS')), 0],
-    ['that is already confirmed and opens', () => Promise.resolve({ ok: true } as const), 1],
+    ['that is already confirmed and opens', () => Promise.resolve({ ok: true, slot: 0, handle: 'h-0' } as const), 1],
     // Nothing was stored for a second step, but only a refusal is certain to have opened nothing: the session is closed anyway.
     ['that asks for a second step', () => Promise.resolve({ ok: false, reason: 'mfa-required', challengeToken: 'c' } as const), 1],
   ])('refuses the username for an address that already has an account %s, and signs nobody in', async (_, answer, signOuts) => {
@@ -465,13 +465,13 @@ describe('BusinessFlowProvider: creating the workspace', () => {
       if (path.endsWith('/auth/register-business')) return reply(409, { error: { code: 'EMAIL_ALREADY_EXISTS' } });
       if (path.endsWith('/auth/login')) {
         if (replies.login === 'lost') throw new TypeError('Failed to fetch');
-        return replies.login === 'tokens' ? reply(201, { data: { accessToken: 'a-1', refreshToken: 'r-1', expiresIn: 900, tokenType: 'Bearer' } }) : reply(replies.login === 'INVALID_CREDENTIALS' ? 401 : 403, { error: { code: replies.login } });
+        return replies.login === 'tokens' ? reply(201, { data: { accessToken: 'a-1', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' } }) : reply(replies.login === 'INVALID_CREDENTIALS' ? 401 : 403, { error: { code: replies.login } });
       }
       if (path.endsWith('/me')) return 'me' in replies && replies.me === 200 ? reply(200, { data: { id: 'u', email: 'amara@northwind.example' } }) : reply(500, { error: { code: 'INTERNAL_ERROR' } });
       if (path.endsWith('/auth/logout')) return reply(201, { data: null });
       return reply(404, { error: { code: 'NOT_FOUND' } });
     });
-    const real = createSession({ baseUrl: 'https://api.yahel.example', tokenStorage: memory, deviceStorage: memory, fetch: fetch as typeof globalThis.fetch });
+    const real = createSession({ baseUrl: 'https://api.yahel.example', slotStorage: memory, fetch: fetch as typeof globalThis.fetch });
     const { flow, navigate, store } = setup({ standIns: false, step: 'admin', events: answers.slice(0, 5), session: real });
 
     act(() => flow().actions.createWorkspace());

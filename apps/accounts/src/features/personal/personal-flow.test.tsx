@@ -32,7 +32,7 @@ const answers: PersonalEvent[] = [
 ];
 
 const fakeSession = () => ({
-  signIn: vi.fn<Session['signIn']>(async () => ({ ok: true })),
+  signIn: vi.fn<Session['signIn']>(async () => ({ ok: true, slot: 0, handle: 'h-0' })),
   api: {
     auth: {
       register: vi.fn().mockResolvedValue({ message: 'ok' }),
@@ -389,7 +389,7 @@ describe('PersonalFlowProvider: creating the account', () => {
   it('says how far it has got while it works', async () => {
     const { session, store, flow, create } = setup();
     let release: () => void = () => undefined;
-    session.signIn.mockImplementation(() => new Promise((resolve) => (release = () => resolve({ ok: true }))));
+    session.signIn.mockImplementation(() => new Promise((resolve) => (release = () => resolve({ ok: true, slot: 0, handle: 'h-0' }))));
 
     await create(null);
     await waitFor(() => expect(store.getState().creation.stage).toBe('signing-in'));
