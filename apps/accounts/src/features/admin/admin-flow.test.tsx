@@ -74,8 +74,9 @@ const setup = ({ step = 'phone' as AdminStep, facts = { signedIn: false, phoneVe
 const signedInFacts = { signedIn: true, phoneVerified: false, hasPasskey: false };
 
 describe('AdminFlowProvider: the phone check, before any session', () => {
-  it('texts the code for the handed-over check, then signs in with it and moves to the welcome', async () => {
-    const { flow, session, store, navigate } = setup();
+  it('texts the code for the handed-over check, then signs in with it, forgets what the account before cached, and moves to the welcome', async () => {
+    const { flow, session, store, navigate, queryClient } = setup();
+    queryClient.setQueryData(['membership', 'p-2'], { organisation: null });
     expect(flow().state.suggestedPhone).toEqual({ country: 'NG', number: '803 555 0142' });
 
     act(() => flow().actions.sendPhoneCode({ country: 'NG', number: '0803 555 0142' }));
@@ -87,6 +88,7 @@ describe('AdminFlowProvider: the phone check, before any session', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('welcome', { replace: true }));
     expect(session.completePhoneCheck).toHaveBeenCalledWith('pc-1', 'K9mP2r');
     expect(store.getState()).toMatchObject({ phoneVerified: true, challengeToken: null });
+    expect(queryClient.getQueryData(['membership', 'p-2'])).toBeUndefined();
   });
 
   it('a check that expired before a code was sent is forgotten, and leads to signing in again', async () => {

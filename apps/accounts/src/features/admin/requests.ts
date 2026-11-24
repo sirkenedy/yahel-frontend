@@ -1,6 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
-import { isSignedInAs } from '../../flow/accounts';
+import { forgetAccountData, isSignedInAs } from '../../flow/accounts';
 import { internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { flowMessages as shared } from '../../flow/messages';
@@ -29,6 +30,7 @@ export interface AdminRequestDeps {
  * signed in to this tab is never touched (F-109): without a challenge the check is lost, and the person signs in again.
  */
 export function useAdminRequests({ visit, session, registrar, store, navigate }: AdminRequestDeps) {
+  const queryClient = useQueryClient();
   /** Whose account it is once signed in: the session's, which outlives a reload, before the flow's own record. */
   const account = () => session.store.getState().profile ?? null;
   const describe = (context: FailureContext) => (error: unknown) => describeAdminFailure(error, context);
@@ -81,9 +83,12 @@ export function useAdminRequests({ visit, session, registrar, store, navigate }:
     describe: describe('code'),
     run: async (code: string) => {
       const token = challenge();
-      // Meeting the challenge is what signs the administrator in.
-      if (token) await session.completePhoneCheck(token, code);
-      else await ownAccount('TOKEN_MAX_ATTEMPTS').verifyPhone({ code });
+      // Meeting the challenge is what signs the administrator in: a new account in this tab, so nothing the last one
+      // cached may be seen, and the account list is read again (the one before moves to "Other accounts").
+      if (token) {
+        await session.completePhoneCheck(token, code);
+        forgetAccountData(queryClient);
+      } else await ownAccount('TOKEN_MAX_ATTEMPTS').verifyPhone({ code });
       store.dispatch({ type: 'phone-verified' });
     },
     onDone: () => navigate('welcome', { replace: true }),
