@@ -23,6 +23,8 @@ export interface SignInRequestDeps {
   navigate: (step: SignInStep, options?: { replace?: boolean }) => void;
   /** The address bar shows this step, even while a navigation away from it is still loading. */
   isShown: (step: SignInStep) => boolean;
+  /** Where to go at once when signed in, for someone sent here to sign in; `null` shows Done. */
+  leave?: (() => void) | null;
   /** The destinations currently offered on the recover step, to record where a code went. */
   recoveryOptions: () => RecoveryOption[];
 }
@@ -35,7 +37,7 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  * Every request the sign-in flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`. A new flow gets its own file of this shape.
  */
-export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, recoveryOptions }: SignInRequestDeps) {
+export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
   const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
 
@@ -43,7 +45,8 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   const finish = () => {
     store.dispatch({ type: 'signed-in' });
     forgetAccountData(queryClient);
-    navigate('done', { replace: true });
+    if (leave) leave();
+    else navigate('done', { replace: true });
   };
 
   // The challenge goes straight into the flow state; only the plain outcome is returned and kept.
@@ -203,6 +206,10 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
       }
       store.dispatch({ type: 'account-chosen', email: outcome.email });
       store.dispatch({ type: 'signed-in' });
+      if (leave) {
+        leave();
+        return;
+      }
       say(m.switchedTo(outcome.email));
       navigate('done');
     },

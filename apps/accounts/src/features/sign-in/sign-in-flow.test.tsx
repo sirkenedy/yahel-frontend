@@ -64,7 +64,7 @@ function Probe({ onValue, onToast }: { onValue: (value: SignInFlowValue) => void
   return null;
 }
 
-const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[] } = {}) => {
+const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[], returning = false } = {}) => {
   act(() => dismissToast());
   const session = fakeSession(remembered);
   const capabilities: AccountCapabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
@@ -77,7 +77,7 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
-      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave}>
+      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave} returning={returning}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </SignInFlowProvider>
     </QueryClientProvider>
@@ -506,6 +506,16 @@ describe('SignInFlowProvider', () => {
     act(() => flow().actions.signInWithPassword('secret'));
 
     await waitFor(() => expect(flow().meta.requests.password.feedback).toMatchObject({ place: 'banner', title: m.tooManyAccountsTitle, next: 'remove-account' }));
+  });
+
+  it('goes straight back to where the person was sent from once signed in, without showing Done', async () => {
+    const { flow, navigate, store, leave } = setup({ step: 'password', returning: true });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    act(() => flow().actions.signInWithPassword('secret'));
+
+    await waitFor(() => expect(leave).toHaveBeenCalledTimes(1));
+    expect(navigate).not.toHaveBeenCalledWith('done', { replace: true });
   });
 
   it('leaves for the app on request', () => {

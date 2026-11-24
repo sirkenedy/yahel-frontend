@@ -35,7 +35,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [x] Slice 2: personal account creation (15 screens): type, name, date of birth, a new Yahel address or an existing email, password, passkey, ways back in, review, creating, the emailed and texted codes, ready, trusted contact
 - [x] Slice 3: business workspace creation (13 screens): the business, the person, a domain owned or bought, the administrator’s sign-in, the plan, checkout and the bank’s code (both over stand-ins), creating, ready. Without stand-ins: a domain already owned, then the workspace
 - [x] Slice 4: an administrator's first sign-in (6 screens): the password (with the emailed code when the address is still to be confirmed), a phone and its texted code, the welcome, and the passkey Admin requires. Offered only where something answers for the workspace and for saving a passkey: a demo build today (`decisions.md` F-80 to F-85)
-- [ ] Hand the shell's sign-in over to the accounts app (the refresh token is now a cookie on the API's domain, F-89; needs the accounts address in the shell's settings)
+- [x] Hand the shell's sign-in over to the accounts app (`VITE_ACCOUNTS_URL`, `decisions.md` F-93)
 - [ ] "Trust this device" on the second step, "Keep me signed in", the language menu (decisions O-10). The account menu is done (F-91)
 
 ## Then: organisations

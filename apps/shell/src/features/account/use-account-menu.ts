@@ -18,7 +18,12 @@ const badgeOf = (account: ClientAccount | undefined) => {
 export interface ShellMenuRoutes {
   /** The app as the account in `slot`. */
   home: (slot: number) => void;
+  /** The accounts app's sign-in, when no account is left to use. */
   signIn: () => void;
+  /** The accounts app's email step, empty. */
+  addAccount: () => void;
+  /** The accounts app's password step for a signed-out account of this browser, named by its handle. */
+  signInTo: (handle: string) => void;
 }
 
 /** The account menu in the app's header, for the account in this tab; `null` when nobody is signed in. */
@@ -58,7 +63,7 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
       const account = others.find((known) => known.handle === id);
       if (!account) return;
       if (account.signedIn) go.home(account.slot);
-      else go.signIn();
+      else go.signInTo(account.handle);
     },
     onSignOutOf: (id) =>
       start(async () => {
@@ -67,7 +72,7 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
         await session.signOut(account.slot).catch(() => undefined);
         await queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
       }),
-    onAdd: go.signIn,
+    onAdd: go.addAccount,
     onSignOutAll: () =>
       start(async () => {
         await session.signOutAll().catch(() => undefined);

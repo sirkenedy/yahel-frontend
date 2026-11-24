@@ -1,13 +1,13 @@
 import { Outlet, createFileRoute, useLocation, useNavigate, useRouter } from '@tanstack/react-router';
-import { resolveReturnAddress } from '@yahel/auth';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 import { stepOfPath, stepPath } from '../../features/sign-in/machine';
-import { dropProof, loadSignInFacts } from '../../features/sign-in/route-guard';
+import { dropProof, loadSignInFacts, validateSignInSearch } from '../../features/sign-in/route-guard';
 import { SignInFlowProvider } from '../../features/sign-in/sign-in-flow';
 
 export const Route = createFileRoute('/signin')({
+  validateSearch: validateSignInSearch,
   beforeLoad: async ({ context }) => ({ facts: await loadSignInFacts(context) }),
   // A proof stored as sign-in was left must not outlive it.
   onLeave: ({ context }) => dropProof(context.signIn),
@@ -52,8 +52,10 @@ function SignInLayout() {
         store={signIn}
         navigate={toStep}
         isShown={(to) => stepOfPath(router.latestLocation.pathname) === to}
-        // With no address asked for, the app opens as the account just signed in to: its slot is in the address.
-        leave={() => window.location.assign(resolveReturnAddress(search.return, { ...config.returnPolicy, fallback: config.appHome(session.store.getState().slot ?? 0) }))}
+        // The app opens as the account just signed in to: its slot is in the address.
+        leave={() => window.location.assign(config.afterSignIn(search.return, session.store.getState().slot ?? 0))}
+        // Sent here by the app (or another allowed address): it goes straight back once signed in, with no Done to press.
+        returning={search.return !== undefined}
         links={{ signUp: config.signUpUrl, help: config.helpUrl }}
       >
         <Outlet />

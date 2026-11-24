@@ -78,6 +78,8 @@ export interface MockApi {
   calls: { method: string; path: string; body: unknown; authorization: string | undefined; client: string | undefined }[];
   /** The accounts this browser remembers, by slot, as the server keeps them. */
   remembered: () => { slot: number; handle: string; email: string; signedIn: boolean }[];
+  /** Signs an account in as if it had done so in the accounts app: it takes its remembered slot, or the lowest free one. Resolves its slot. */
+  signInAs: (email: string) => number;
   /**
    * Makes the next request to `path` go wrong, once. A status answers with that failure and does nothing.
    * `lost` does what was asked and then drops the answer, as when a connection dies after the server has acted.
@@ -124,6 +126,8 @@ export const rememberedByDefault: RememberedAccount[] = [
 ];
 
 const MAX_ACCOUNTS = 10;
+// Opaque and base64url-shaped, as the backend's are; the address part only makes test failures readable.
+const handleFor = (slot: number, email: string) => `handle-${slot}-${email.split('@')[0]!.replace(/[^A-Za-z0-9_-]/g, '-')}`;
 
 export interface MockApiOptions {
   /** The accounts this browser remembers at the start, signed out unless said. `[]` is a browser that never signed in. */
@@ -139,10 +143,21 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   const failures = new Map<string, { how: number | 'lost'; code?: string; retry?: { retryAfter: number; exposed: boolean } }>();
   // The browser's accounts, as the server keeps them against its cookie: a slot each, kept while remembered.
   type Seat = Required<RememberedAccount> & { slot: number; handle: string };
-  let seats: Seat[] = (options.remembered ?? rememberedByDefault).map((account, slot) => ({ kind: 'personal', organisation: null, role: null, signedIn: false, ...account, slot, handle: `handle-${slot}-${account.email.split('@')[0]}` }));
+  let seats: Seat[] = (options.remembered ?? rememberedByDefault).map((account, slot) => ({ kind: 'personal', organisation: null, role: null, signedIn: false, ...account, slot, handle: handleFor(slot, account.email) }));
   const state: MockApi = {
     calls: [],
     remembered: () => seats.map(({ slot, handle, email, signedIn }) => ({ slot, handle, email, signedIn })),
+    signInAs: (email) => {
+      let seat = seats.find((known) => known.email === email);
+      if (!seat) {
+        const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
+        const known = accounts.find((account) => account.profile.email === email);
+        seat = { email, displayName: known?.profile.displayName ?? email, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, email) };
+        seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
+      }
+      seat.signedIn = true;
+      return seat.slot;
+    },
     failNext: (path, how, code, retry) => void failures.set(path, { how, code, retry }),
   };
   let issued = 0;
@@ -195,7 +210,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!seat) {
         if (seats.length >= MAX_ACCOUNTS) return null;
         const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
-        seat = { email: account.profile.email, displayName: account.profile.displayName, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: `handle-${slot}-${account.profile.email.split('@')[0]}` };
+        seat = { email: account.profile.email, displayName: account.profile.displayName, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, account.profile.email) };
         seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
       }
       seat.signedIn = true;
@@ -348,13 +363,21 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     return fail(route, 404, 'NOT_FOUND');
   });
 
+  mocks.set(page, state);
   return state;
 }
 
+const mocks = new WeakMap<Page, MockApi>();
+
+/** The accounts app, as the shell's local build names it (`VITE_ACCOUNTS_URL` unset): the shell's browser tests stand in for it. */
+export const shellAccountsUrl = 'http://localhost:5175';
+
+/**
+ * Opens the shell signed in. The shell has no sign-in page of its own (F-93): the account is signed in as the
+ * accounts app would have done it, and the shell opens at its slot. Call `mockApi` first.
+ */
 export async function signIn(page: Page, account = credentials) {
-  await page.goto('/sign-in');
-  await page.getByLabel('Email').fill(account.email);
-  await page.getByLabel('Password', { exact: true }).fill(account.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  const slot = mocks.get(page)!.signInAs(account.email);
+  await page.goto(`/u/${slot}/`);
   await page.getByRole('heading', { name: 'Home' }).waitFor();
 }

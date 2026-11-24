@@ -1,4 +1,4 @@
-import { Link, createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import { Button, Card } from '@yahel/ui';
 import { useState } from 'react';
 import { useStore } from 'zustand';
@@ -7,16 +7,15 @@ import { ProfileSummary, accountMessages as m } from '../../../features/account/
 export const Route = createFileRoute('/u/$slot/')({ component: HomePage });
 
 function HomePage() {
-  const { session } = Route.useRouteContext();
+  const { session, accountsApp } = Route.useRouteContext();
   const { slot } = Route.useParams();
   const profile = useStore(session.store, (state) => state.profile);
-  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
 
   const signOut = async () => {
     setSigningOut(true);
     await session.signOut().catch(() => undefined);
-    await navigate({ to: '/sign-in' });
+    window.location.assign(accountsApp.signIn());
   };
 
   if (!profile) return null;

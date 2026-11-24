@@ -14,6 +14,28 @@ export interface SignInGuardContext {
   signIn: SignInStore;
 }
 
+/** A handle names an account in this browser only, so only its shape is checked; anything else is ignored, never shown. */
+const HANDLE = /^[A-Za-z0-9_-]{8,64}$/;
+
+export interface SignInSearch {
+  /** One of this browser's accounts, by its handle, for which the app asks the password step. */
+  account?: string;
+}
+
+export const validateSignInSearch = (search: Record<string, unknown>): SignInSearch => (typeof search.account === 'string' && HANDLE.test(search.account) ? { account: search.account } : {});
+
+/**
+ * Prepares the password step for the account a handle names, when it is one this browser remembers and it is
+ * signed out. The address comes from the browser's own list, never from the link. Resolves whether it did.
+ */
+export const chooseByHandle = ({ queryClient, capabilities, signIn }: Pick<SignInGuardContext, 'queryClient' | 'capabilities' | 'signIn'>, handle: string | undefined) => {
+  if (!handle) return false;
+  const account = queryClient.getQueryData(accountsQuery(capabilities.directory).queryKey)?.find((known) => known.handle === handle);
+  if (!account || account.signedIn) return false;
+  signIn.dispatch({ type: 'account-chosen', email: account.email });
+  return true;
+};
+
 /** Gathers what the step guards need to know. The lookup is cached, so later steps do not wait. A list that cannot be read is the chooser's to explain. */
 export async function loadSignInFacts({ session, queryClient, capabilities, passkeys }: SignInGuardContext): Promise<SignInFacts> {
   const accounts = await queryClient.ensureQueryData(accountsQuery(capabilities.directory)).catch(() => null);

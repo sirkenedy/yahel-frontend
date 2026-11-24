@@ -15,6 +15,10 @@ describe('config', () => {
     expect(config.returnPolicy).toEqual({ fallback: 'http://localhost:5173/', allowedOrigins: [] });
     expect(config.appHome(2)).toBe('http://localhost:5173/u/2/');
     expect(config.accountSettings(0)).toBe('http://localhost:5173/u/0/account');
+    expect(config.afterSignIn(undefined, 2)).toBe('http://localhost:5173/u/2/');
+    expect(config.afterSignIn('http://localhost:5173/', 2)).toBe('http://localhost:5173/u/2/');
+    expect(config.afterSignIn('http://localhost:5173/u/0/account', 2)).toBe('http://localhost:5173/u/0/account');
+    expect(config.afterSignIn('https://evil.example/', 2)).toBe('http://localhost:5173/u/2/');
     expect(config).toMatchObject({ helpUrl: null, privacyUrl: null, termsUrl: null });
   });
 

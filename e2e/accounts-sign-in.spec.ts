@@ -630,8 +630,11 @@ test.describe('accounts: where sign-in leads', () => {
     await page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
     await page.route('https://evil.example/**', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>Evil</title>' }));
     await signInWithPassword(page, credentials, query);
-    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
-    await page.getByRole('button', { name: 'Continue to Yahel' }).click();
+    // Sent here with somewhere to go back to, the person goes back once signed in; otherwise Done offers the way.
+    if (!query.includes('return=')) {
+      await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+      await page.getByRole('button', { name: 'Continue to Yahel' }).click();
+    }
     await page.waitForURL((url) => url.origin !== accountsUrl);
     return page.url();
   };
@@ -644,6 +647,40 @@ test.describe('accounts: where sign-in leads', () => {
     const wanted = `${appUrl}account?tab=security`;
     expect(await finish(page, `?return=${encodeURIComponent(wanted)}`)).toBe(wanted);
   });
+
+  test('the app’s own home, as the app asks for it, opens as the account just signed in to', async ({ page }) => {
+    expect(await finish(page, `?return=${encodeURIComponent(appUrl)}`)).toBe(`${appUrl}u/0/`);
+  });
+
+  test('the app asks for a signed-out account by its handle: its password, filled in from this browser’s list, then back to its slot', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [{ email: 'tunde@yahel.example', displayName: 'Tunde Bakare' }, { email: credentials.email, displayName: 'Amara Okafor' }] });
+    await page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
+    const handle = api.remembered().find((account) => account.email === credentials.email)!.handle;
+
+    await page.goto(at(`/signin?account=${handle}&return=${encodeURIComponent(appUrl)}`));
+    await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
+    await expect(page.getByText(credentials.email, { exact: true })).toBeVisible();
+    // The handle was used and dropped; only where to go back to is kept.
+    expect(page.url()).toBe(at(`/signin/password?return=${encodeURIComponent(appUrl)}`));
+
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.waitForURL((url) => url.origin !== accountsUrl);
+    expect(page.url()).toBe(`${appUrl}u/1/`);
+  });
+
+  for (const [name, account] of [
+    ['this browser does not know', 'handle-9-nobody'],
+    ['is not a handle at all', encodeURIComponent('nobody@nowhere.example')],
+  ]) {
+    test(`a handle that ${name} opens the chooser and is not shown`, async ({ page }) => {
+      await mockApi(page);
+      await page.goto(at(`/signin?account=${account}`));
+
+      await expect(page).toHaveURL(at('/signin/choose'));
+      await expect(page.getByRole('main')).not.toContainText(decodeURIComponent(account!));
+    });
+  }
 
   for (const [name, address] of [
     ['another site', 'https://evil.example/steal'],

@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as USlotRouteImport } from './routes/u/$slot'
 import { Route as USlotIndexRouteImport } from './routes/u/$slot/index'
 import { Route as USlotAccountRouteImport } from './routes/u/$slot/account'
@@ -18,11 +17,6 @@ import { Route as USlotAccountRouteImport } from './routes/u/$slot/account'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignInRoute = SignInRouteImport.update({
-  id: '/sign-in',
-  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const USlotRoute = USlotRouteImport.update({
@@ -43,42 +37,32 @@ const USlotAccountRoute = USlotAccountRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
   '/u/$slot': typeof USlotRouteWithChildren
   '/u/$slot/account': typeof USlotAccountRoute
   '/u/$slot/': typeof USlotIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
   '/u/$slot/account': typeof USlotAccountRoute
   '/u/$slot': typeof USlotIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/sign-in': typeof SignInRoute
   '/u/$slot': typeof USlotRouteWithChildren
   '/u/$slot/account': typeof USlotAccountRoute
   '/u/$slot/': typeof USlotIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/u/$slot' | '/u/$slot/account' | '/u/$slot/'
+  fullPaths: '/' | '/u/$slot' | '/u/$slot/account' | '/u/$slot/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/u/$slot/account' | '/u/$slot'
-  id:
-    | '__root__'
-    | '/'
-    | '/sign-in'
-    | '/u/$slot'
-    | '/u/$slot/account'
-    | '/u/$slot/'
+  to: '/' | '/u/$slot/account' | '/u/$slot'
+  id: '__root__' | '/' | '/u/$slot' | '/u/$slot/account' | '/u/$slot/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  SignInRoute: typeof SignInRoute
   USlotRoute: typeof USlotRouteWithChildren
 }
 
@@ -89,13 +73,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/u/$slot': {
@@ -136,7 +113,6 @@ const USlotRouteWithChildren = USlotRoute._addFileChildren(USlotRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  SignInRoute: SignInRoute,
   USlotRoute: USlotRouteWithChildren,
 }
 export const routeTree = rootRouteImport

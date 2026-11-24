@@ -3,7 +3,7 @@ import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import { describe, expect, it, vi } from 'vitest';
-import { loadSignInFacts, stepInsteadOf } from './route-guard';
+import { chooseByHandle, loadSignInFacts, stepInsteadOf, validateSignInSearch } from './route-guard';
 import { createSignInStore } from './store';
 
 const instant = async () => undefined;
@@ -63,5 +63,31 @@ describe('stepInsteadOf', () => {
     expect(stepInsteadOf('password', store, facts)).toBeNull();
     expect(stepInsteadOf('done', store, { ...facts, signedIn: true })).toBeNull();
     expect(stepInsteadOf('done', store, facts)).toBe('email');
+  });
+});
+
+describe('an account asked for by its handle', () => {
+  it('accepts only a handle-shaped value, and nothing else from the address', () => {
+    expect(validateSignInSearch({ account: 'handle-1-amara' })).toEqual({ account: 'handle-1-amara' });
+    for (const account of ['amara@yahel.example', 'short', 'x'.repeat(65), 42, undefined, '<script>alert(1)</script>']) expect(validateSignInSearch({ account })).toEqual({});
+  });
+
+  it('opens the password for a remembered account that is signed out, with its address from this browser’s list', async () => {
+    const shared = context({ accounts: 2 });
+    await loadSignInFacts(shared);
+
+    expect(chooseByHandle(shared, 'h-1')).toBe(true);
+    expect(shared.signIn.getState()).toMatchObject({ email: 'a1@yahel.example', fromChooser: true });
+  });
+
+  it('falls back to the chooser for a handle this browser does not know, or an account already signed in', async () => {
+    const shared = context({ accounts: 1 });
+    await loadSignInFacts(shared);
+    shared.queryClient.setQueryData(['accounts', 'on-this-device'], [{ ...remembered(1)[0]!, signedIn: true }]);
+
+    expect(chooseByHandle(shared, 'h-0')).toBe(false);
+    expect(chooseByHandle(shared, 'h-unknown')).toBe(false);
+    expect(chooseByHandle(shared, undefined)).toBe(false);
+    expect(shared.signIn.getState().email).toBeNull();
   });
 });
