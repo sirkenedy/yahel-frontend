@@ -12,8 +12,6 @@ export interface AccountMenuAccount {
   kind: AccountKind;
   initials?: string | null;
   avatarUrl?: string | null;
-  /** Under the address: the organisation, "Personal" or "Signed out". */
-  status: string;
   signedIn: boolean;
 }
 
@@ -24,12 +22,18 @@ export interface AccountMenuLabels {
   signedInAs: string;
   manage: string;
   signOut: string;
+  /** Names the list of the other accounts. */
   others: string;
+  showOthers: string;
+  hideOthers: string;
   /** Read out before an account row's visible text, saying what pressing it does: "Switch to". */
   switchTo: string;
   signInTo: string;
   signOutOf: (email: string) => string;
-  signIn: string;
+  /** The tooltip on an account's sign-out button. */
+  signOutThis: string;
+  /** After the address of an account that is signed out. */
+  signedOut: string;
   add: string;
   signOutAll: string;
   privacy: string;
@@ -37,7 +41,7 @@ export interface AccountMenuLabels {
 }
 
 export interface AccountMenuProps {
-  current: Omit<AccountMenuAccount, 'id' | 'status' | 'signedIn'> & { badge: string };
+  current: Omit<AccountMenuAccount, 'id' | 'signedIn'> & { badge: string };
   others: AccountMenuAccount[];
   labels: AccountMenuLabels;
   manageHref: string | null;
@@ -59,10 +63,13 @@ export interface AccountMenuProps {
  */
 export function AccountMenu({ current, others, labels, manageHref, privacyHref, termsHref, isBusy = false, onSignOut, onPick, onSignOutOf, onAdd, onSignOutAll }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
+  const [othersShown, setOthersShown] = useState(true);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const first = useRef<HTMLElement | null>(null);
   const panelId = useId();
+  const listId = useId();
+  const hasOthers = others.length > 0;
 
   useEffect(() => {
     if (!open) return;
@@ -101,7 +108,7 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
         <div id={panelId} className="ws-flow-menu__panel" role="dialog" aria-label={labels.panel}>
           <section className="ws-flow-menu__current" aria-label={labels.signedInAs}>
             <div className="ws-flow-menu__who">
-              <AccountFace name={current.name} email={current.email} kind={current.kind} initials={current.initials} avatarUrl={current.avatarUrl} size="large" />
+              <AccountFace name={current.name} email={current.email} kind={current.kind} initials={current.initials} avatarUrl={current.avatarUrl} size="medium" />
               <span className="ws-flow-menu__names">
                 <span className="ws-flow-menu__name">{current.name}</span>
                 <span className="ws-flow-menu__email" translate="no">
@@ -109,6 +116,13 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
                 </span>
                 <span className="ws-flow-menu__badge">{current.badge}</span>
               </span>
+              {hasOthers ? (
+                <Button className="ws-flow-menu__toggle" aria-label={othersShown ? labels.hideOthers : labels.showOthers} aria-expanded={othersShown} aria-controls={othersShown ? listId : undefined} onPress={() => setOthersShown(!othersShown)}>
+                  <span className="ws-flow-menu__glyph" title={othersShown ? labels.hideOthers : labels.showOthers}>
+                    <FlowIcon name="chevron-down" />
+                  </span>
+                </Button>
+              ) : null}
             </div>
             <div className="ws-flow-menu__actions">
               {manageHref ? (
@@ -121,36 +135,36 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
               </Button>
             </div>
           </section>
-          {others.length > 0 ? (
-            <>
-              <h2 className="ws-flow-menu__heading">{labels.others}</h2>
-              <ul className="ws-flow-menu__accounts">
-                {others.map((account) => (
-                  <li key={account.id} className="ws-flow-menu__account">
-                    <Button className="ws-flow-menu__row" onPress={then(() => onPick(account.id))} isDisabled={isBusy}>
-                      <span className="ws-flow-hidden">{account.signedIn ? labels.switchTo : labels.signInTo} </span>
-                      <AccountFace name={account.name} email={account.email} kind={account.kind} initials={account.initials} avatarUrl={account.avatarUrl} presence={account.signedIn ? 'signed-in' : 'signed-out'} />
-                      <span className="ws-flow-menu__names">
-                        <span className="ws-flow-menu__row-name">{account.name}</span>
+          {hasOthers && othersShown ? (
+            <ul id={listId} className="ws-flow-menu__accounts" aria-label={labels.others}>
+              {others.map((account) => (
+                <li key={account.id} className="ws-flow-menu__account">
+                  <Button className="ws-flow-menu__row ws-flow-menu__row--account" onPress={then(() => onPick(account.id))} isDisabled={isBusy}>
+                    <span className="ws-flow-hidden">{account.signedIn ? labels.switchTo : labels.signInTo} </span>
+                    <AccountFace name={account.name} email={account.email} kind={account.kind} initials={account.initials} avatarUrl={account.avatarUrl} size="small" presence={account.signedIn ? 'signed-in' : 'signed-out'} />
+                    <span className="ws-flow-menu__names">
+                      <span className="ws-flow-menu__row-name">{account.name}</span>
+                      <span className="ws-flow-menu__line">
                         <span className="ws-flow-menu__email" translate="no">
                           {account.email}
                         </span>
-                        <span className="ws-flow-menu__status">{account.status}</span>
+                        {account.signedIn ? null : <>
+                            <span aria-hidden="true">·</span>
+                            <span>{labels.signedOut}</span>
+                          </>}
+                      </span>
+                    </span>
+                  </Button>
+                  {account.signedIn ? (
+                    <Button className="ws-flow-menu__row-out" aria-label={labels.signOutOf(account.email)} onPress={() => onSignOutOf(account.id)} isDisabled={isBusy}>
+                      <span className="ws-flow-menu__glyph" title={labels.signOutThis}>
+                        <FlowIcon name="sign-out" />
                       </span>
                     </Button>
-                    {account.signedIn ? (
-                      <Button className="ws-flow-menu__pill" aria-label={labels.signOutOf(account.email)} onPress={() => onSignOutOf(account.id)} isDisabled={isBusy}>
-                        {labels.signOut}
-                      </Button>
-                    ) : (
-                      <span className="ws-flow-menu__hint" aria-hidden="true">
-                        {labels.signIn}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
           ) : null}
           <div className="ws-flow-menu__rule" />
           <Button className="ws-flow-menu__row ws-flow-menu__row--action" onPress={then(onAdd)} isDisabled={isBusy}>

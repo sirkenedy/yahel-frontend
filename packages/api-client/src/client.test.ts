@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MAX_RETRY_AFTER, createApiClient } from './client';
 import { ApiError } from './errors';
+import { isPhoneRequired } from './types';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
@@ -97,6 +98,8 @@ describe('createApiClient', () => {
     ['resetPassword', '/api/v1/auth/reset-password', { email: 'amara@northwind.example', token: 'A7kZq2', password: 'New-passw0rd-here' }, { message: 'Password reset successfully. Please log in again.' }],
     ['verifyEmail', '/api/v1/auth/verify-email', { email: 'amara@northwind.example', token: 'A7kZq2' }, { message: 'Email verified successfully' }],
     ['resendVerification', '/api/v1/auth/verify-email/resend', { email: 'amara@northwind.example' }, { message: 'If this email exists and is unverified, a new link has been sent' }],
+    ['phoneChallengeSend', '/api/v1/auth/phone-challenge/send', { challengeToken: 'pc-1', phone: '+2348035550142' }, { message: 'Code sent.' }],
+    ['phoneChallengeVerify', '/api/v1/auth/phone-challenge/verify', { challengeToken: 'pc-1', code: 'A7kZq2' }, { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }],
   ] as const)('auth.%s posts its body to %s without a bearer token and unwraps the result', async (method, path, body, data) => {
     const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
@@ -244,5 +247,13 @@ describe('createApiClient', () => {
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', refreshSession: () => Promise.reject(reuse), fetch: fetchMock });
 
     await expect(api.me.get()).rejects.toBe(reuse);
+  });
+});
+
+describe('isPhoneRequired', () => {
+  it('tells a phone challenge from a session or a second step', () => {
+    expect(isPhoneRequired({ phoneRequired: true, challengeToken: 'pc-1' })).toBe(true);
+    expect(isPhoneRequired({ mfaRequired: true, challengeToken: 'c-1' })).toBe(false);
+    expect(isPhoneRequired({ accessToken: 'a', expiresIn: 900, slot: 0, handle: 'h' })).toBe(false);
   });
 });

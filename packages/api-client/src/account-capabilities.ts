@@ -11,7 +11,6 @@ export interface StandIns {
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
-  domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling;
   adminAccess: AdminAccess;
 }
@@ -67,12 +66,17 @@ const addressesOf = (api: Pick<ApiClient, 'auth'>): AddressAvailability => ({
   check: (name, signal) => api.auth.addressAvailability({ name }, signal),
 });
 
-export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, standIns?: StandIns): AccountCapabilities {
+const domainClaimsOf = (api: Pick<ApiClient, 'tenants'>): DomainClaims => ({
+  check: async (domain) => (await api.tenants.checkDomainClaim({ domain })).standing,
+});
+
+export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | 'tenants'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
   const trustedContacts = trustedContactsOf(api);
   const addresses = addressesOf(api);
   const directory = accountDirectoryOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const domainClaims = domainClaimsOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -90,7 +94,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, s
     preferences: standIns.preferences,
     serviceStatus: checked(standIns.serviceStatus),
     domainMarket: standIns.domainMarket,
-    domainClaims: standIns.domainClaims,
+    domainClaims,
     workspaceBilling: standIns.workspaceBilling,
     adminAccess: standIns.adminAccess,
     standIns: Object.keys(standIns) as StandInName[],

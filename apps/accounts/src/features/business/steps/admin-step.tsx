@@ -31,7 +31,7 @@ export function AdminStep() {
   const again = useStepField({ problemOf: (value): string | null => (state.hasPassword && value === '' && password.value === '' ? null : confirmProblem(value, password.value)), label: m.confirmPassword, hasFormat: true });
   const form = useStepFields([username, password, again]);
   const score = passwordStrength(password.value, state.firstName);
-  const button = offers.billing ? m.agreeAndContinue : m.agreeAndCreate;
+  const button = m.agreeAndContinue;
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     // A revealed password is hidden again before anything else happens, so it is not left on screen.
@@ -58,7 +58,6 @@ export function AdminStep() {
             inputRef={username.inputRef}
             isRequired
           />
-          <FlowNotice title={m.codeMailboxTitle}>{m.codeMailbox(state.domain)}</FlowNotice>
           {state.hasPassword ? <FlowNotice>{m.passwordKept}</FlowNotice> : null}
           <FlowPasswordField showText={m.show} hideText={m.hide} showLabel={m.showPassword} hideLabel={m.hidePassword} isRevealed={revealed} onRevealedChange={setRevealed} autoComplete="new-password" label={m.password} name="new-password" help={m.passwordHelp} value={password.value} onChange={password.change} onBlur={password.blur} isValid={password.isValid} error={password.error} inputRef={password.inputRef} isRequired={!state.hasPassword} />
           <PasswordStrength score={score}>{m.strength(m.strengthVerdicts[score], password.value.length)}</PasswordStrength>

@@ -5,7 +5,7 @@ import { businessMessages as m } from './messages';
 
 /** What was being attempted, because the same answer means different things at different steps. */
 export type FailureContext = 'create' | 'other';
-export type BusinessField = 'domain' | 'username' | 'year' | 'code' | 'promo';
+export type BusinessField = 'domain' | 'username' | 'code' | 'promo';
 /** What the flow can offer after a failure. `retry` is the frame's own. */
 export type BusinessNext = 'retry' | 'resend' | 'answers' | 'sign-in' | 'reset-password' | 'support';
 export type BusinessFeedback = Feedback<BusinessField, BusinessNext>;
@@ -34,7 +34,7 @@ const detailsRefused = { place: 'banner', tone: 'danger', title: m.detailsRefuse
 
 /**
  * The workspace flow's rows of the feedback map. The answers that send the person back to a step (a
- * claimed or public domain, a taken address, an age the country does not allow) are handled by the flow
+ * claimed or public domain, a taken address) are handled by the flow
  * and told on that step (`refusals`), not here.
  */
 const rows: Record<FailureContext, Rows> = {
@@ -50,7 +50,6 @@ export const refusals = {
   claimed: { place: 'field', field: 'domain', text: m.domainClaimed },
   public: { place: 'field', field: 'domain', text: m.domainPublic },
   taken: { place: 'field', field: 'username', text: m.usernameTaken },
-  underage: { place: 'field', field: 'year', text: m.tooYoungForWorkspace },
 } as const satisfies Record<string, BusinessFeedback>;
 
 const told = new WeakMap<Rejection, BusinessFeedback>();

@@ -249,6 +249,18 @@ export interface CardDetails {
   expiry: string;
   securityCode: string;
   name: string;
+  /** Where the bank sends the card's statements, when it is not the business address; `null` when it is. */
+  billingAddress: CardBillingAddress | null;
+}
+
+/** The address the bank has for a card. Used to check the card, and for nothing else. */
+export interface CardBillingAddress {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
 }
 
 export interface PostalAddress {
@@ -335,7 +347,7 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -350,7 +362,7 @@ export interface AccountCapabilities {
   preferences: SignUpPreferences | null;
   serviceStatus: ServiceStatus | null;
   domainMarket: DomainMarket | null;
-  domainClaims: DomainClaims | null;
+  domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling | null;
   adminAccess: AdminAccess | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */

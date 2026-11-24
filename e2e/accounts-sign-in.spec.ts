@@ -365,6 +365,10 @@ test.describe('accounts: account menu', () => {
     await expect(menu(page).getByRole('link', { name: 'Manage your account' })).toHaveAttribute('href', 'http://localhost:5173/u/0/account');
     await expect(menu(page).getByRole('region', { name: 'Signed in as' })).toContainText('Admin · Northwind Studio');
     await expect(menu(page).getByRole('button', { name: new RegExp(`^Sign in to.*tunde@yahel\\.example`) })).toContainText('Signed out');
+    await menu(page).getByRole('button', { name: 'Hide more accounts' }).click();
+    await expect(menu(page).getByRole('list', { name: 'Other accounts on this device' })).toHaveCount(0);
+    await menu(page).getByRole('button', { name: 'Show more accounts' }).click();
+    await expect(menu(page).getByRole('list', { name: 'Other accounts on this device' })).toBeVisible();
 
     await page.keyboard.press('Escape');
     await expect(menu(page)).toHaveCount(0);

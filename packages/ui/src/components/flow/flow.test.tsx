@@ -457,6 +457,18 @@ describe('FlowStep parts for a step that asks for several things', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Card details' })).toBeInTheDocument();
   });
 
+  it('names a group of fields by its title and describes it by its lede', () => {
+    render(
+      <FlowStep.Group title="Billing address" lede="The address your bank has for this card.">
+        <input aria-label="Street address" />
+      </FlowStep.Group>,
+    );
+
+    const group = screen.getByRole('group', { name: 'Billing address' });
+    expect(group).toHaveAccessibleDescription('The address your bank has for this card.');
+    expect(group).toContainElement(screen.getByRole('textbox', { name: 'Street address' }));
+  });
+
   it('keeps two short fields side by side with the halves layout', () => {
     render(
       <FlowStep.Row layout="halves">

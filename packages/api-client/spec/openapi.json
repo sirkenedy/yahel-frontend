@@ -207,6 +207,7 @@
             "type": "object"
           },
           "kind": {
+            "description": "business when the identity is managed or holds an active membership (a founder shows as their organisation’s admin)",
             "enum": [
               "personal",
               "business"
@@ -340,6 +341,37 @@
         "required": [
           "slug",
           "displayName"
+        ],
+        "type": "object"
+      },
+      "DomainClaimDto": {
+        "properties": {
+          "domain": {
+            "description": "The company domain. A leading @, surrounding spaces and upper case are accepted and stripped.",
+            "example": "acme.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "type": "object"
+      },
+      "DomainClaimResponseDto": {
+        "properties": {
+          "standing": {
+            "description": "free — no workspace holds it; claimed — one does, and this says nothing about which or how far along it is; public — a consumer mail provider, which no workspace may claim.",
+            "enum": [
+              "free",
+              "claimed",
+              "public"
+            ],
+            "example": "free",
+            "type": "string"
+          }
+        },
+        "required": [
+          "standing"
         ],
         "type": "object"
       },
@@ -815,6 +847,124 @@
         ],
         "type": "object"
       },
+      "PhoneChallengeRequiredResponseDto": {
+        "properties": {
+          "challengeToken": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "phoneRequired": {
+            "description": "No session was issued. Text a code to a phone, then check it, to sign in.",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "phoneRequired",
+          "challengeToken"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSendDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Challenge token from register-business, login or passkey sign-in",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone to text the code to. E.164 preferred; a bare number is read against the account country.",
+            "example": "+14155552671",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "phone"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSentResponseDto": {
+        "properties": {
+          "message": {
+            "example": "Verification code sent.",
+            "type": "string"
+          },
+          "resendInSeconds": {
+            "description": "Seconds before another code can be requested",
+            "example": 30,
+            "type": "number"
+          },
+          "sendsLeft": {
+            "description": "Codes this challenge can still send",
+            "example": 4,
+            "type": "number"
+          }
+        },
+        "required": [
+          "message",
+          "resendInSeconds",
+          "sendsLeft"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSessionResponseDto": {
+        "properties": {
+          "accessToken": {
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "string"
+          },
+          "expiresIn": {
+            "description": "Access token lifetime in seconds",
+            "example": 900,
+            "type": "number"
+          },
+          "handle": {
+            "example": "k7Qd3rLm0pA2bXyZw9TcVe",
+            "type": "string"
+          },
+          "slot": {
+            "description": "This account’s slot in the browser; the refresh token is in that slot’s cookie",
+            "example": 0,
+            "type": "number"
+          },
+          "tokenType": {
+            "example": "Bearer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "tokenType",
+          "slot",
+          "handle"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeVerifyDto": {
+        "properties": {
+          "challengeToken": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "code": {
+            "description": "The 6-character code texted to the phone (letters and digits, case-sensitive)",
+            "example": "2BRGme",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Human-readable device label rendered in the sessions list",
+            "example": "Kehinde's MacBook",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "code"
+        ],
+        "type": "object"
+      },
       "PlatformSendBroadcastDto": {
         "properties": {
           "channels": {
@@ -1045,17 +1195,45 @@
         ],
         "type": "object"
       },
+      "RegisterBusinessDomainDto": {
+        "properties": {
+          "domain": {
+            "example": "acme.com",
+            "type": "string"
+          },
+          "status": {
+            "example": "pending",
+            "type": "string"
+          },
+          "verification": {
+            "description": "The DNS record to add to prove the domain",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "verification"
+        ],
+        "type": "object"
+      },
       "RegisterBusinessDto": {
         "properties": {
           "businessName": {
             "example": "Acme Corp",
             "type": "string"
           },
+          "contactEmail": {
+            "description": "A mailbox the administrator can already open. Stored as the unverified recovery email so reset links reach them while the business domain has no mail.",
+            "example": "kehinde@gmail.com",
+            "type": "string"
+          },
           "country": {
             "$ref": "#/components/schemas/CountryDto"
           },
           "dateOfBirth": {
-            "description": "ISO 8601 date of birth — required for age gating",
+            "description": "ISO 8601 date of birth — age-gated against the country when given",
             "example": "1995-08-12T00:00:00.000Z",
             "format": "date-time",
             "type": "string"
@@ -1104,9 +1282,93 @@
           "businessName",
           "slug",
           "country",
-          "dateOfBirth",
           "employeeCount",
           "domain"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessIdentityDto": {
+        "properties": {
+          "email": {
+            "example": "kehinde@acme.com",
+            "type": "string"
+          },
+          "emailVerified": {
+            "example": true,
+            "type": "boolean"
+          },
+          "id": {
+            "example": "507f1f77bcf86cd799439011",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "emailVerified"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessResponseDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Pass to POST /v1/auth/phone-challenge/send and /verify",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/RegisterBusinessDomainDto"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/RegisterBusinessIdentityDto"
+          },
+          "message": {
+            "example": "Your account is ready. Check a phone by text to sign in.",
+            "type": "string"
+          },
+          "phoneRequired": {
+            "description": "Always true: the administrator is signed in only after a phone is checked",
+            "example": true,
+            "type": "boolean"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/RegisterBusinessTenantDto"
+          }
+        },
+        "required": [
+          "message",
+          "phoneRequired",
+          "challengeToken",
+          "identity",
+          "tenant",
+          "domain"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessTenantDto": {
+        "properties": {
+          "displayName": {
+            "example": "Acme Corp",
+            "type": "string"
+          },
+          "id": {
+            "example": "507f1f77bcf86cd799439012",
+            "type": "string"
+          },
+          "slug": {
+            "example": "acme",
+            "type": "string"
+          },
+          "status": {
+            "example": "pending_setup",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "displayName",
+          "status"
         ],
         "type": "object"
       },
@@ -2051,7 +2313,21 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeSessionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeRequiredResponseDto"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "A session; or { phoneRequired, challengeToken } while the account still needs its phone check; or { mfaRequired, challengeToken } for TOTP"
           }
         },
         "summary": "Login with email and password",
@@ -2203,11 +2479,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PasskeySessionResponseDto"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PasskeySessionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeRequiredResponseDto"
+                    }
+                  ]
                 }
               }
             },
-            "description": ""
+            "description": "A session, or { phoneRequired, challengeToken } while the account still needs its phone check"
           }
         },
         "summary": "Verify the assertion and issue a session",
@@ -2356,6 +2639,70 @@
         ]
       }
     },
+    "/api/v1/auth/phone-challenge/send": {
+      "post": {
+        "operationId": "AuthController_sendPhoneChallenge",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneChallengeSendDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneChallengeSentResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Text a 6-character code to a phone for a pending phone challenge from register-business, login or passkey sign-in",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/phone-challenge/verify": {
+      "post": {
+        "operationId": "AuthController_verifyPhoneChallenge",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneChallengeVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneChallengeSessionResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check the texted code, mark the phone verified and issue the session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/phone/send-otp": {
       "post": {
         "operationId": "AuthController_sendPhoneOtp",
@@ -2482,10 +2829,17 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterBusinessResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
-        "summary": "Register a business — creates identity + tenant + owner membership + pending domain atomically",
+        "summary": "Register a business — creates identity + tenant + owner membership + pending domain atomically, then answers with a phone challenge instead of a session",
         "tags": [
           "Auth"
         ]
@@ -4059,6 +4413,38 @@
           }
         ],
         "summary": "Create a new tenant (any authenticated user)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/domain-claims/check": {
+      "post": {
+        "operationId": "TenantsController_checkDomainClaim",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainClaimResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Whether a business domain can still be claimed by a new workspace",
         "tags": [
           "Tenants"
         ]

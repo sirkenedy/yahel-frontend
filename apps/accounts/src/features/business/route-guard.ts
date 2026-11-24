@@ -14,11 +14,12 @@ export interface BusinessGuardContext {
   business: BusinessStore;
 }
 
-/** What the step guards need to know about this build: which parts of the designed flow something can answer. */
-export const businessFacts = ({ capabilities }: Pick<BusinessGuardContext, 'capabilities'>): BusinessFacts => ({
+/** What the step guards need to know: which parts of the designed flow this build can answer, and whether this tab is signed in. */
+export const businessFacts = ({ capabilities, session }: Pick<BusinessGuardContext, 'capabilities' | 'session'>): BusinessFacts => ({
   // A domain bought here is paid for at checkout, so it is offered only where there is one.
   domainsForSale: capabilities.domainMarket !== null && capabilities.workspaceBilling !== null,
   billing: capabilities.workspaceBilling !== null,
+  signedIn: session.store.getState().status === 'signed-in',
 });
 
 /** Whether this build offers workspace sign-up at all (F-78). Where it does not, the flow's addresses lead to the personal sign-up. */
@@ -58,13 +59,14 @@ export const forgetWorkspace = (store: BusinessStore, { unlessUnderway = false }
   store.dispatch({ type: 'reset' });
 };
 
-/** Reaching checkout ends any change that was being made from it, however it was reached. */
-export const arriveAtCheckout = (store: BusinessStore) => {
-  if (store.getState().editing) store.dispatch({ type: 'edit-finished' });
-};
-
-/** What a finished workspace sign-up hands to the administrator's first sign-in: the address to sign in with and the business's name. Never the password. */
-export const handoverOf = (store: BusinessStore) => {
+/**
+ * What a created workspace hands to the administrator's first steps: the address to set up, the business's name,
+ * the phone check registration answered with, the business phone to start from (given for a bought domain), and
+ * whether the plan and checkout follow. Never the password.
+ */
+export const handoverOf = (store: BusinessStore, billing: boolean) => {
   const state = store.getState();
-  return state.creation.finished ? { email: adminAddressOf(state), organisation: state.businessName } : null;
+  if (!state.creation.finished) return null;
+  const phone = state.domainSource === 'bought' && state.address?.phone ? { country: state.address.phoneCountry, number: state.address.phone } : null;
+  return { email: adminAddressOf(state), organisation: state.businessName, challengeToken: state.challengeToken, phone, continueToPlan: billing && !state.creation.settled };
 };

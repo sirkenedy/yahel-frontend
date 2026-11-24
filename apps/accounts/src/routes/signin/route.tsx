@@ -4,6 +4,7 @@ import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 import { stepOfPath, stepPath } from '../../features/sign-in/machine';
 import { dropProof, loadSignInFacts, validateSignInSearch } from '../../features/sign-in/route-guard';
+import { takePhoneChallenge } from '../../features/admin/route-guard';
 import { SignInFlowProvider } from '../../features/sign-in/sign-in-flow';
 
 export const Route = createFileRoute('/signin')({
@@ -16,7 +17,7 @@ export const Route = createFileRoute('/signin')({
 });
 
 function SignInLayout() {
-  const { session, capabilities, passkeys, signIn, config } = Route.useRouteContext();
+  const { session, capabilities, passkeys, signIn, admin, config } = Route.useRouteContext();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const router = useRouter();
@@ -56,6 +57,11 @@ function SignInLayout() {
         leave={() => window.location.assign(config.afterSignIn(search.return, session.store.getState().slot ?? 0))}
         // Sent here by the app (or another allowed address): it goes straight back once signed in, with no Done to press.
         returning={search.return !== undefined}
+        // An administrator whose phone is still unverified is signed in by the phone check, in Admin's first steps.
+        checkPhone={(email, challengeToken) => {
+          takePhoneChallenge(admin, email, challengeToken);
+          void navigate({ to: '/admin/phone' });
+        }}
         links={{ signUp: config.signUpUrl, help: config.helpUrl }}
       >
         <Outlet />

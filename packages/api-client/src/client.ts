@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, Profile, RecoveryMethods, RefreshedTokens, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -106,7 +106,11 @@ export function createApiClient(options: ApiClientOptions) {
       /** Whether a Yahel address (the part before the @) can still be had, with free ones like it. Advice only. */
       addressAvailability: (body: Schemas['AddressAvailabilityDto'], signal?: AbortSignal) => request<Schemas['AddressAvailabilityResponseDto']>('POST', '/api/v1/auth/address-availability', { body, signal }),
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
-      registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
+      registerBusiness: (body: RegisterBusinessBody) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
+      /** Texts the code for a phone challenge to `phone`. */
+      phoneChallengeSend: (body: PhoneChallengeSendBody) => request<PhoneChallengeSent>('POST', '/api/v1/auth/phone-challenge/send', { body }),
+      /** Checks the texted code; a right one issues the session, as a sign-in does. */
+      phoneChallengeVerify: (body: PhoneChallengeVerifyBody) => request<AuthTokens>('POST', '/api/v1/auth/phone-challenge/verify', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
       /** A new access token for the account in `slot`, from that slot's refresh cookie. */
       refresh: (body: Schemas['RefreshTokenDto']) => request<RefreshedTokens>('POST', '/api/v1/auth/refresh', { body }),
@@ -139,6 +143,10 @@ export function createApiClient(options: ApiClientOptions) {
         /** Invites someone the person trusts; they count once they accept from the email. */
         updateTrustedContact: (body: Schemas['UpdateTrustedContactDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/trusted-contact', { auth: true, body }),
       },
+    },
+    tenants: {
+      /** Whether a domain a business says it owns can still be claimed by a new workspace. Advice: registering decides. */
+      checkDomainClaim: (body: Schemas['DomainClaimDto'], signal?: AbortSignal) => request<Schemas['DomainClaimResponseDto']>('POST', '/api/v1/tenants/domain-claims/check', { body, signal }),
     },
   };
 }

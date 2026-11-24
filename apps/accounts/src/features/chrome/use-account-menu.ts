@@ -4,7 +4,7 @@ import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
 import { useEffect } from 'react';
 import { useStore } from 'zustand';
-import { accountsQuery, forgetAccountData, kindOf, nameOf, nextSignedIn, refreshAccounts, statusOf } from '../../flow/accounts';
+import { accountsQuery, forgetAccountData, kindOf, nameOf, nextSignedIn, refreshAccounts } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
 import { chromeMessages as m } from './messages';
 
@@ -69,7 +69,7 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
 
   return {
     current: { name: current ? nameOf(current) : profile.displayName?.trim() || [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email, email: profile.email, kind: 'person', initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: badgeOf(current) },
-    others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: kindOf(account), initials: account.initials, avatarUrl: account.avatarUrl, status: statusOf(account, m), signedIn: account.signedIn })),
+    others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: kindOf(account), initials: account.initials, avatarUrl: account.avatarUrl, signedIn: account.signedIn })),
     manageHref: manageUrl(slot),
     privacyHref: privacyUrl,
     termsHref: termsUrl,

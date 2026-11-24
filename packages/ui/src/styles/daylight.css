@@ -231,6 +231,10 @@
 .ws-flow-step__note a, .ws-flow-facts a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
 .ws-flow-step__row--phone { grid-template-columns: 2fr 3fr; }
 .ws-flow-step__subheading { margin: var(--ws-space-8) 0 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
+.ws-flow-step__group { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); padding: var(--ws-space-20); border-radius: var(--ws-radius-lg); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
+.ws-flow-step__group-head { display: flex; flex-direction: column; gap: var(--ws-space-4); }
+.ws-flow-step__group-title { margin: 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
+.ws-flow-step__group-lede { margin: 0; color: var(--ws-color-daylight-mute); font-size: calc((var(--ws-type-flow-note-size) + var(--ws-type-flow-label-size)) / 2); line-height: var(--ws-type-flow-note-line); }
 .ws-flow-step__split { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); }
 /* Wide enough for the fields and the summary side by side: the step widens and the summary stays in view. */
 @media (min-width: 1024px) {
