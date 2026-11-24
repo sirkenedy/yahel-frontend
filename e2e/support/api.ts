@@ -241,6 +241,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const candidates = last ? [`${last}.${first}`, `${first}${last}`, `${first}.${last}1`, `${first}.${last.charAt(0)}`] : [`${first}.mail`, `${first}1`, `hello.${first}`];
       return ok(route, { available: !taken(name), alternatives: candidates.filter((candidate) => candidate.length >= 4 && !taken(candidate)).slice(0, 3) }, 201);
     }
+    // Advice only, as the backend gives it (`tenants.controller.ts`, `checkDomainClaim`): the same answers register-business would give for the domain.
+    if (path === '/v1/tenants/domain-claims/check') {
+      const domain = String(body?.domain ?? '').trim().replace(/^@/, '').toLowerCase();
+      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) return fail(route, 422, 'VALIDATION_ERROR');
+      const standing = domain === publicEmailDomain || domain === mailDomain ? 'public' : tenants.some((tenant) => tenant.domain === domain) ? 'claimed' : 'free';
+      return ok(route, { standing });
+    }
     if (path === '/v1/auth/register') {
       const email = (body?.email ?? '').toLowerCase();
       const domain = email.split('@')[1] ?? '';

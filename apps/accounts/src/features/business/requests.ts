@@ -69,12 +69,12 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
   const describe = (context: FailureContext) => (error: unknown) => describeBusinessFailure(error, context);
   const billing = capabilities.workspaceBilling;
 
-  /** Asks whether the domain can be claimed, where something can say. Either way the domain is kept; a refusal is told on the step. */
+  /** Asks whether the domain can be claimed. Either way the domain is kept; a refusal is told on the step. */
   const checkDomain = useFlowRequest({
     visit,
     describe: describe('other'),
     run: async (domain: string) => {
-      const standing = capabilities.domainClaims ? await capabilities.domainClaims.check(domain) : 'free';
+      const standing = await capabilities.domainClaims.check(domain);
       store.dispatch({ type: 'owned-domain-entered', domain });
       if (standing === 'free') return 'free' as const;
       store.dispatch({ type: 'domain-refused', reason: standing });

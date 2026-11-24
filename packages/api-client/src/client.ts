@@ -144,6 +144,10 @@ export function createApiClient(options: ApiClientOptions) {
         updateTrustedContact: (body: Schemas['UpdateTrustedContactDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/trusted-contact', { auth: true, body }),
       },
     },
+    tenants: {
+      /** Whether a domain a business says it owns can still be claimed by a new workspace. Advice: registering decides. */
+      checkDomainClaim: (body: Schemas['DomainClaimDto'], signal?: AbortSignal) => request<Schemas['DomainClaimResponseDto']>('POST', '/api/v1/tenants/domain-claims/check', { body, signal }),
+    },
   };
 }
 

@@ -3,8 +3,12 @@ import { createAccountCapabilities, maskEmail, usableWindow } from './account-ca
 import { createStandIns } from './standins';
 
 const api = () =>
-  ({ auth: { forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }), accounts: vi.fn().mockResolvedValue([]), removeAccount: vi.fn().mockResolvedValue({ handle: 'h-1' }) } }) as unknown as Parameters<typeof createAccountCapabilities>[0] & {
+  ({
+    auth: { forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }), accounts: vi.fn().mockResolvedValue([]), removeAccount: vi.fn().mockResolvedValue({ handle: 'h-1' }) },
+    tenants: { checkDomainClaim: vi.fn().mockResolvedValue({ standing: 'claimed' }) },
+  }) as unknown as Parameters<typeof createAccountCapabilities>[0] & {
     auth: { forgotPassword: ReturnType<typeof vi.fn>; accounts: ReturnType<typeof vi.fn>; removeAccount: ReturnType<typeof vi.fn> };
+    tenants: { checkDomainClaim: ReturnType<typeof vi.fn> };
   };
 const instant = async () => undefined;
 
@@ -13,7 +17,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] });
+    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, adminAccess: null, standIns: [] });
     expect(capabilities.addresses).not.toBeNull();
     expect(capabilities.trustedContacts).not.toBeNull();
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
@@ -33,8 +37,8 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
-    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
+    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
   });
 
   it('sends an emailed reset code through the real endpoint even with stand-ins, and a texted one through the stand-in', async () => {
@@ -48,6 +52,16 @@ describe('createAccountCapabilities', () => {
 
     await capabilities.recovery.send('amara@northwind.example', 'email');
     expect(client.auth.forgotPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks the backend whether a domain can be claimed, in every build', async () => {
+    for (const standIns of [undefined, createStandIns(instant)]) {
+      const client = api();
+      const { domainClaims } = createAccountCapabilities(client, standIns);
+
+      await expect(domainClaims.check('northwind.example')).resolves.toBe('claimed');
+      expect(client.tenants.checkDomainClaim).toHaveBeenCalledWith({ domain: 'northwind.example' });
+    }
   });
 
   it('lists the accounts on this browser and removes one by its handle, in every build', async () => {
@@ -89,6 +103,6 @@ describe('usableWindow', () => {
   it('checks whatever answers the capability, so a bad window never reaches a screen', async () => {
     const standIns = { ...createStandIns(async () => undefined), serviceStatus: { window: async () => ({ from: 'x', until: 'y' }) } };
 
-    await expect(createAccountCapabilities({ auth: {} as never, me: {} as never }, standIns).serviceStatus!.window()).resolves.toBeNull();
+    await expect(createAccountCapabilities({ auth: {} as never, me: {} as never, tenants: {} as never }, standIns).serviceStatus!.window()).resolves.toBeNull();
   });
 });

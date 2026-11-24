@@ -52,7 +52,7 @@ const fakeSession = (status: 'signed-in' | 'signed-out' = 'signed-out') => {
       inUse = null;
     }),
     switchTo: vi.fn().mockResolvedValue(true),
-    api: { auth: {} },
+    api: { auth: {}, tenants: { checkDomainClaim: vi.fn(async ({ domain }: { domain: string }) => ({ standing: domain === 'gmail.com' ? 'public' : domain.startsWith('taken.') ? 'claimed' : 'free' })) } },
   };
 };
 
@@ -134,7 +134,7 @@ describe('BusinessFlowProvider: answering', () => {
     expect(store.getState()).toMatchObject({ domainSource: 'bought', address });
   });
 
-  it('keeps a refused domain on its step: claimed or public, as whatever checks it says', async () => {
+  it('keeps a refused domain on its step: claimed or public, as the backend says', async () => {
     const { flow, navigate, store } = setup({ ...asking, step: 'domain', events: answers.slice(0, 2) });
 
     act(() => void flow().actions.checkDomain('taken.example'));

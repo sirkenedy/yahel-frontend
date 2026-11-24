@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { at, signInWithPassword } from './support/accounts';
-import { credentials, mockApi, phoneCode, takenAddress } from './support/api';
+import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
 
@@ -84,10 +84,10 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
 
     await proceed(page);
     await expect(domain).toHaveAccessibleDescription(/Enter your domain\./);
-    await domain.fill('gmail.com');
+    await domain.fill(publicEmailDomain);
     await proceed(page);
     await expect(domain).toHaveAccessibleDescription(/Public email domains can’t be used\./);
-    await domain.fill('taken.example');
+    await domain.fill(claimedDomain);
     await proceed(page);
     await expect(domain).toHaveAccessibleDescription(/This domain is already claimed\./);
     await expect(alert(page, 'Another organisation has claimed this domain')).toBeVisible();

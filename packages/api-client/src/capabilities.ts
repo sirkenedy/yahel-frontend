@@ -335,7 +335,7 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -350,7 +350,7 @@ export interface AccountCapabilities {
   preferences: SignUpPreferences | null;
   serviceStatus: ServiceStatus | null;
   domainMarket: DomainMarket | null;
-  domainClaims: DomainClaims | null;
+  domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling | null;
   adminAccess: AdminAccess | null;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */

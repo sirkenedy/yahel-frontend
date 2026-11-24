@@ -112,21 +112,6 @@ describe('stand-ins for a new workspace', () => {
   const now = Date.UTC(2026, 10, 21);
   const naira = (amount: number) => ({ amount: amount * 100, currency: 'NGN' });
 
-  it('domain claims: a provider’s domain is public, a "taken" one claimed, the rest free, whatever the case', async () => {
-    const { domainClaims } = createStandIns(instant);
-
-    await expect(domainClaims.check('Gmail.com')).resolves.toBe('public');
-    await expect(domainClaims.check('taken.example')).resolves.toBe('claimed');
-    await expect(domainClaims.check(' northwind.example ')).resolves.toBe('free');
-  });
-
-  it('domain claims: refuses the 41st check as too many', async () => {
-    const { domainClaims } = createStandIns(instant);
-    for (let asked = 0; asked < 40; asked += 1) await domainClaims.check('northwind.example');
-
-    await expect(domainClaims.check('northwind.example')).rejects.toMatchObject({ status: 429 });
-  });
-
   it('domain market: offers four names made from the words asked about, the first marked best, at the boards’ prices', async () => {
     const { domainMarket } = createStandIns(instant);
 
