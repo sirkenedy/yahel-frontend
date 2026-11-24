@@ -8,7 +8,7 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 
 ```
 apps/
-  shell/            sign-in, home, account. Later: app launcher, account switcher
+  shell/            sign-in, home, account, the account menu; addresses carry the account's slot (/u/<slot>/). Later: app launcher
   accounts/         sign in, account recovery, personal sign-up, workspace sign-up, an administrator's first sign-in
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
@@ -112,14 +112,14 @@ apps/accounts/src/
 
 ### 3.2 Capabilities and stand-ins
 
-Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), the account chooser, a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, the two choices on the sign-up review, the window of planned maintenance, and for a new workspace whether a domain can be claimed, domains to buy, and plans, prices and checkout. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
+Some designed features have no backend endpoint yet: passkeys (signing in with one, and creating one during sign-up), a texted code, help finding an account, checking whether a Yahel address is free, a trusted contact, the two choices on the sign-up review, the window of planned maintenance, and for a new workspace whether a domain can be claimed, domains to buy, and plans, prices and checkout. Each is a small interface in `packages/api-client/src/capabilities.ts`. `createAccountCapabilities` is the one place that decides what answers each: the real endpoint, nothing (`null`, and the interface then does not offer the feature), or a stand-in.
 
 Stand-ins live in `packages/api-client/src/standins/`, each headed by the endpoint it is waiting for. They touch no network and are reachable only through the separate entry `@yahel/api-client/standins`, which an app imports behind `VITE_STAND_INS=on`. Three things keep them from shipping by accident: a normal build does not contain the module at all; a build with the flag on fails unless `VITE_STAND_INS_ALLOW_BUILD=demo` is also set (`apps/accounts/src/build/build-guards.ts`); and while any stand-in is active the app shows a fixed "Demo data" label. The stand-ins and the endpoint each needs are listed in `roadmap.md`.
 
 ## 4. Data
 
 - **Server state** lives in TanStack Query. Query keys start with the feature name and include the account context, so personal and organisation data can never share a cache entry.
-- **Session state** lives in `@yahel/auth` (a small store). The access token is held in memory only. The refresh token is in session storage, so it is gone when the tab closes. See `decisions.md`, F-4, for why and what should replace it.
+- **Session state** lives in `@yahel/auth` (a small store). A browser holds up to ten accounts; each has a **slot** (0 to 9, in app addresses as `/u/<slot>/`) and a **handle** (an opaque name for it in this browser only). The refresh token of each is an `HttpOnly` cookie set by the API (`__Host-yahel_rt_<slot>`), so no script ever holds one; every request goes with `credentials: 'include'` and `X-Yahel-Client: web`. A tab uses one slot at a time and keeps, in memory only, an access token per slot it has used. Refreshing is by slot, one at a time per slot across tabs (Web Locks); an answer naming another handle means the slot changed hands, and the tab drops it rather than carry on as someone else. Tabs tell each other of sign-ins, sign-outs and removals over a `BroadcastChannel`, never with a token. The accounts app keeps the tab's slot in session storage so a reload returns to it; nothing else about a session is stored. See `decisions.md` F-89 to F-92.
 - **Local interface state** stays in components. Add a store only when several distant components need the same state.
 - **The API client** unwraps the backend's `{ success, data, meta }` envelope, turns failures into `ApiError` (status, backend code, request id, validation errors), and retries once after refreshing an expired token.
 - **The contract.** `packages/api-client/spec/openapi.json` is a committed snapshot of the backend's description; `src/schema.d.ts` is generated from it. `pnpm api:check` fails if they drift. The backend does not yet describe response bodies, so response types in `src/types.ts` are written by hand from the backend source. Asking the backend to declare responses is on the roadmap.
@@ -153,4 +153,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: an administrator's first sign-in in a release build (it needs `GET /v1/me/workspace` and passkey registration, `decisions.md` F-82), enforcement of the passkey Admin requires (the backend's, F-81), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), a session shared between the accounts app and the others (needs the refresh token as a cookie, `decisions.md` O-1), translation and locale handling, the account switcher and app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: an administrator's first sign-in in a release build (it needs `GET /v1/me/workspace` and passkey registration, `decisions.md` F-82), enforcement of the passkey Admin requires (the backend's, F-81), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), the shell handing its sign-in to the accounts app, translation and locale handling, the app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.

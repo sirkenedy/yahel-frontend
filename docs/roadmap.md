@@ -22,7 +22,8 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Translation and locale formatting; pseudo-locale and Arabic test runs
 - [ ] UI components from specs, in the order features need them: dialog, toast, menu, list, toggle, checkbox, tabs, skeleton, empty state
 - [ ] Account: edit profile, change password, sessions and devices, recovery options, two-step set-up
-- [ ] Account switcher and personal versus organisation context
+- [x] Account switcher: several accounts per browser, the chooser and the account menu, addresses carrying the slot (`/u/<slot>/`) (`decisions.md` F-89 to F-92)
+- [ ] Personal versus organisation context
 - [ ] App launcher and the shared top bar
 - [ ] Error reporting and a top-level error boundary
 - [ ] Staging smoke test against the real backend as a required check
@@ -34,8 +35,8 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [x] Slice 2: personal account creation (15 screens): type, name, date of birth, a new Yahel address or an existing email, password, passkey, ways back in, review, creating, the emailed and texted codes, ready, trusted contact
 - [x] Slice 3: business workspace creation (13 screens): the business, the person, a domain owned or bought, the administrator’s sign-in, the plan, checkout and the bank’s code (both over stand-ins), creating, ready. Without stand-ins: a domain already owned, then the workspace
 - [x] Slice 4: an administrator's first sign-in (6 screens): the password (with the emailed code when the address is still to be confirmed), a phone and its texted code, the welcome, and the passkey Admin requires. Offered only where something answers for the workspace and for saving a passkey: a demo build today (`decisions.md` F-80 to F-85)
-- [ ] Hand the shell's sign-in over to the accounts app (needs the refresh token as a cookie on a shared parent domain)
-- [ ] "Trust this device" on the second step, "Keep me signed in", the language menu, the account menu on the signed-in screen (decisions O-10)
+- [ ] Hand the shell's sign-in over to the accounts app (the refresh token is now a cookie on the API's domain, F-89; needs the accounts address in the shell's settings)
+- [ ] "Trust this device" on the second step, "Keep me signed in", the language menu (decisions O-10). The account menu is done (F-91)
 
 ## Then: organisations
 
@@ -70,7 +71,7 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 
 - [ ] Passkey sign-in (`passkeys.ts`): `POST /v1/auth/passkeys/assertion/options` (challenge, relying-party id, allowed credentials) and `POST /v1/auth/passkeys/assertion/verify` (returns tokens as `/auth/login` does)
 - [ ] Second-step code by text (`text-codes.ts`): `POST /v1/auth/mfa/challenge/sms` for an open challenge; the code is then accepted by the existing `POST /v1/auth/mfa/challenge`
-- [ ] Accounts known on this device (`directory.ts`): `GET /v1/auth/known-accounts` and `DELETE /v1/auth/known-accounts/{email}`, scoped to the device id
+- [x] Accounts known on this device: now real, `GET /v1/auth/accounts` and `DELETE /v1/auth/accounts/{handle}`, scoped to the browser's own cookie (the stand-in is removed, F-91)
 - [ ] Recovery destinations and a texted reset code (`recovery-by-phone.ts`): `POST /v1/auth/recovery/options` returning masked destinations, identical for unknown addresses, and a `channel` on `POST /v1/auth/forgot-password`
 - [ ] Help finding an account (`help-desk.ts`): `POST /v1/auth/account-help`
 - [x] Address availability: now real, `POST /v1/auth/address-availability` (the name in the body; the stand-in is removed)
@@ -118,8 +119,7 @@ The designs' map of answers to messages (`design-system/canvas/project/accounts/
 These are requirements on the backend, written down so the stand-ins are not mistaken for the contract. The same notes head each stand-in file.
 
 - **Recovery destinations** (`POST /v1/auth/recovery/options`): for an address with no account, answer with a decoy of the same shape (the same number and kinds of destination, plausibly masked, stable for that address) and in the same time as for a real one. Otherwise the endpoint tells anyone whether an address has an account, and part of its phone number. Rate limit by address and by caller.
-- **Passkey sign-in** (`/v1/auth/passkeys/assertion/options` and `/verify`): the server uses its own relying-party id and checks the origin itself; it must ignore any id sent by the client (the interface's `rpId` argument exists only so the stand-in can echo it, and leaves when the endpoint arrives). `allowCredentials` must not differ between an address with passkeys, one without, and one with no account: return an empty list for everyone. Challenges are single use and short lived. `verify` carries the device id, as `/auth/login` does, so the session is bound to the device.
-- **Accounts known on this device** (`/v1/auth/known-accounts`): the server records an account against the device when it signs in and marks it when it signs out; the client does not assert names, addresses or kinds, so `remember` leaves the interface when the endpoint exists. The device id is the only key to the list, so it must be treated as a secret: unguessable, never logged, never in an address.
+- **Passkey sign-in** (`/v1/auth/passkeys/assertion/options` and `/verify`): the server uses its own relying-party id and checks the origin itself; it must ignore any id sent by the client (the interface's `rpId` argument exists only so the stand-in can echo it, and leaves when the endpoint arrives). `allowCredentials` must not differ between an address with passkeys, one without, and one with no account: return an empty list for everyone. Challenges are single use and short lived. `verify` issues the session the way `/auth/login` does: a slot in this browser and its refresh cookie.
 - **Address availability** (`POST /v1/auth/address-availability`): it is a way to list who has an account. Answer only `available` true or false, with no reason; take the same time either way; rate limit by caller and by device strictly enough that walking a list of names is impractical; take the name in the body, never the address; offer only alternatives the server has itself checked. It is advice: `POST /v1/auth/register` remains the one place a name is claimed.
 - **Passkey creation during sign-up**: `options` runs before the account exists, so it takes nothing that names a person, uses the server’s own relying-party id, returns a fresh random user handle and a single-use challenge that lives about 30 minutes, and is rate limited by caller. `verify` checks the origin and the challenge itself, binds the credential to the signed-in account, refuses a used or expired challenge, leaving the account without a passkey, and refuses an attestation whose authenticator data lacks the user-verified (UV) flag (the client’s `userVerification: 'required'` asks the device; it is not enforcement). The account is emailed every time a passkey is added to it.
 - **Passkey creation for someone signed in** (`POST /v1/me/passkeys/registration/options`, session): never the session-less endpoint above. It answers with the account’s own stable user handle, lists the account’s existing passkeys in `excludeCredentials` (the app passes them to the device, so one device does not hold two), and binds the challenge to the session, so `verify` accepts it only from that session. For an administrator, the rules under “Admins must use a passkey” decide whether registering is allowed at all.
