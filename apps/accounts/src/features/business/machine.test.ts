@@ -229,3 +229,25 @@ describe('progress, addresses and direction', () => {
     expect(hasWorkspaceUnderway(after(...toCheckout, { type: 'workspace-created', tenantId: null }))).toBe(true);
   });
 });
+
+describe('filling in from the personal account in use', () => {
+  const prefill = { type: 'prefilled', firstName: 'Amara', lastName: 'Okafor', contactEmail: 'amara.okafor@yahel.example', from: 'amara.okafor@yahel.example' } as const;
+
+  it('fills the empty name and address fields and says where from', () => {
+    expect(after(prefill)).toMatchObject({ firstName: 'Amara', lastName: 'Okafor', contactEmail: 'amara.okafor@yahel.example', prefilledFrom: 'amara.okafor@yahel.example' });
+  });
+
+  it('never overwrites what was typed, and never fills again, even a field cleared since', () => {
+    const typed = after({ type: 'you-entered', firstName: 'Ama', lastName: '', contactEmail: '', birth: { day: 14, month: 3, year: 1994 } }, prefill);
+    expect(typed).toMatchObject({ firstName: 'Ama', lastName: 'Okafor', contactEmail: 'amara.okafor@yahel.example' });
+
+    const cleared = reduce(reduce(after(prefill), { type: 'you-entered', firstName: '', lastName: '', contactEmail: '', birth: { day: 14, month: 3, year: 1994 } }), { ...prefill, firstName: 'Other' });
+    expect(cleared).toMatchObject({ firstName: '', lastName: '', contactEmail: '' });
+  });
+
+  it('touches nothing else: no date of birth, no administrator address', () => {
+    const filled = after(prefill);
+    expect(filled.birth).toBeNull();
+    expect({ ...filled, firstName: '', lastName: '', contactEmail: '', prefilledFrom: null }).toEqual(initialBusinessState);
+  });
+});

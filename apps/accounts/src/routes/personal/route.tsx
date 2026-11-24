@@ -7,11 +7,13 @@ import { useAccountMenu } from '../../features/chrome/use-account-menu';
 import { PageRouteError } from '../../route-error';
 import { progressOf, stepOfPath, stepPath } from '../../features/personal/machine';
 import { PersonalFlowProvider } from '../../features/personal/personal-flow';
-import { forgetSignUp, isSignedInElsewhere, personalFacts } from '../../features/personal/route-guard';
+import { forgetSignUp, isFinishedElsewhere, personalFacts } from '../../features/personal/route-guard';
 
 export const Route = createFileRoute('/personal')({
-  beforeLoad: ({ context }) => {
-    if (isSignedInElsewhere(context)) throw redirect({ to: '/signin/done', replace: true });
+  // Open whether or not this tab is signed in: creating an account is one more way to add one to this browser (F-94).
+  beforeLoad: ({ context, location }) => {
+    const step = stepOfPath(location.pathname);
+    if (step && isFinishedElsewhere(step, context)) throw redirect({ to: '/signin/done', replace: true });
     return { facts: personalFacts(context) };
   },
   // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.

@@ -17,11 +17,16 @@ export const personalFacts = ({ capabilities, registrar }: Pick<PersonalGuardCon
   contactOffered: capabilities.trustedContacts !== null,
 });
 
+/** Steps that exist only once the account does: what is shown after "Agree and create account". */
+const afterCreation: readonly PersonalStep[] = ['own-code', 'code', 'ready', 'contact'];
+
 /**
- * Someone already signed in who did not just create the account here has nothing to do in this flow:
- * they belong on the signed-in screen of sign-in.
+ * A reload on one of those steps forgets the visit, but not the session it signed in: the person belongs on
+ * sign-in's signed-in screen, not at the start of a new sign-up. Anywhere else, being signed in to an account
+ * stops nothing: creating one is one more way to add an account to this browser (F-94).
  */
-export const isSignedInElsewhere = ({ session, personal }: Pick<PersonalGuardContext, 'session' | 'personal'>) => session.store.getState().status === 'signed-in' && !personal.getState().creation.signedIn;
+export const isFinishedElsewhere = (step: PersonalStep, { session, personal }: Pick<PersonalGuardContext, 'session' | 'personal'>) =>
+  afterCreation.includes(step) && session.store.getState().status === 'signed-in' && !hasAccountUnderway(personal.getState());
 
 /** The step to show instead of `step`, or `null` when `step` itself can be shown. */
 export const stepInsteadOf = (step: PersonalStep, store: PersonalStore, facts: PersonalFacts) => {

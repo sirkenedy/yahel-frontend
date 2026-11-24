@@ -1,5 +1,7 @@
-import type { AccountCapabilities } from '@yahel/api-client';
-import type { Session } from '@yahel/auth';
+import type { QueryClient } from '@tanstack/react-query';
+import type { AccountCapabilities, ClientAccount } from '@yahel/api-client';
+import type { Session, SessionState } from '@yahel/auth';
+import { accountsQuery } from '../../flow/accounts';
 import type { AppConfig } from '../../config';
 import { adminAddressOf, hasWorkspaceUnderway, resumeStep } from './machine';
 import type { BusinessFacts, BusinessStep } from './machine';
@@ -7,6 +9,7 @@ import type { BusinessStore } from './store';
 
 export interface BusinessGuardContext {
   session: Session;
+  queryClient: QueryClient;
   capabilities: AccountCapabilities;
   business: BusinessStore;
 }
@@ -21,8 +24,24 @@ export const businessFacts = ({ capabilities }: Pick<BusinessGuardContext, 'capa
 /** Whether this build offers workspace sign-up at all (F-78). Where it does not, the flow's addresses lead to the personal sign-up. */
 export const isOffered = ({ config }: { config: Pick<AppConfig, 'businessSignUp'> }) => config.businessSignUp;
 
-/** Someone already signed in has nothing to do in this flow, which creates a workspace for someone who has no account. */
-export const isSignedIn = ({ session }: Pick<BusinessGuardContext, 'session'>) => session.store.getState().status === 'signed-in';
+/**
+ * What a workspace's sign-up may take from the account this tab is using: only a personal account's name and
+ * address, and only when this browser's list says it is personal. A business account, nobody, or a list that
+ * cannot be read gives nothing. Never the date of birth or a phone.
+ */
+export const prefillOf = ({ profile, handle }: Pick<SessionState, 'profile' | 'handle'>, accounts: readonly ClientAccount[] | null) => {
+  const current = handle ? accounts?.find((account) => account.handle === handle) : undefined;
+  if (!profile || !current || current.kind !== 'personal') return null;
+  return { firstName: profile.firstName?.trim() ?? '', lastName: profile.lastName?.trim() ?? '', contactEmail: current.email, from: current.email };
+};
+
+/** Fills the empty name and address fields from the personal account in use, the first time the flow is entered. */
+export const prefillFromAccount = async ({ session, queryClient, capabilities, business }: BusinessGuardContext) => {
+  if (business.getState().prefilledFrom !== null || session.store.getState().status !== 'signed-in') return;
+  const accounts = await queryClient.ensureQueryData(accountsQuery(capabilities.directory)).catch(() => null);
+  const prefill = prefillOf(session.store.getState(), accounts);
+  if (prefill) business.dispatch({ type: 'prefilled', ...prefill });
+};
 
 /** The step to show instead of `step`, or `null` when `step` itself can be shown. */
 export const stepInsteadOf = (step: BusinessStep, store: BusinessStore, facts: BusinessFacts) => {

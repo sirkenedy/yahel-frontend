@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys } from './support/accounts';
-import { emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
+import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo } from './support/personal';
 
@@ -517,8 +517,7 @@ test.describe('personal account: creating', () => {
 
     await page.goBack();
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
-    await page.goto(at('/personal/name'));
-    await expect(page).toHaveURL(at('/signin/done'));
+    await expect(page).toHaveURL(at('/personal/ready'));
   });
 });
 
@@ -577,14 +576,22 @@ test.describe('personal account: addresses, reload and history', () => {
     await expect(heading(page, 'Welcome back, Amara.')).toBeVisible();
   });
 
-  test('someone already signed in is taken to the signed-in screen instead', async ({ page }) => {
-    await mockApi(page);
+  test('someone signed in can create another account: it is added beside theirs, and this tab uses it', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [] });
     await signInWithPassword(page);
     await heading(page, 'Welcome back, Amara.').waitFor();
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: 'Add another account' }).click();
+    await page.getByRole('link', { name: 'Create an account' }).click();
+    await expect(heading(page, 'Create your Yahel account.')).toBeVisible();
 
-    await page.goto(at('/personal'));
+    await signUp(page);
 
-    await expect(page).toHaveURL(at('/signin/done'));
+    expect(api.remembered().map(({ slot, email, signedIn }) => [slot, email, signedIn])).toEqual([[0, credentials.email, true], [1, person.address, true]]);
+    await page.getByRole('button', { name: `Account: ${person.address}` }).click();
+    const menu = page.getByRole('dialog', { name: 'Accounts' });
+    await expect(menu.getByRole('region', { name: 'Signed in as' })).toContainText(person.address);
+    await expect(menu.getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) })).toBeVisible();
   });
 
   test('sign-in and sign-up lead to each other', async ({ page }) => {

@@ -111,20 +111,24 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
    * on an earlier visit. Anything else is someone's existing account, and the username is refused.
    */
   const ownsExisting = async () => {
-    // Only these two answers are certain to have opened no session. After anything else, a sign-in may have
-    // stored tokens before failing (loading the profile, say), so the session is closed whatever happened.
-    let opened = true;
+    // The probe may open a session for the new address. Whatever happens, that one is closed and the account this
+    // tab was using before, if any, is used again: the other accounts in this browser are never signed out.
+    const before = { slot: session.slotInUse(), handle: session.store.getState().handle };
+    const restore = async () => {
+      const opened = session.slotInUse();
+      if (opened !== null && opened !== before.slot) await session.signOut(opened).catch(() => undefined);
+      if (before.slot !== null && session.slotInUse() !== before.slot) await session.switchTo(before.slot, before.handle ?? undefined);
+    };
     try {
       await session.signIn(adminAddressOf(state()), state().password ?? '');
       // A confirmed account that the password opens was not made here. This flow signs nobody in.
       return false;
     } catch (error) {
-      if (hasCode(error, 'EMAIL_NOT_VERIFIED', 'INVALID_CREDENTIALS')) opened = false;
       if (hasCode(error, 'EMAIL_NOT_VERIFIED')) return true;
       if (hasCode(error, 'INVALID_CREDENTIALS')) return false;
       throw error;
     } finally {
-      if (opened) await session.signOut().catch(() => undefined);
+      await restore();
     }
   };
 

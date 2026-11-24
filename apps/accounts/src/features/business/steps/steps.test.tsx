@@ -133,6 +133,13 @@ describe('StartStep', () => {
 });
 
 describe('YouStep', () => {
+  it('says where the name and address were filled in from, when they were', () => {
+    setup(<YouStep />, { state: { businessName: 'Northwind Studio', firstName: 'Amara', prefilledFrom: 'amara.okafor@yahel.example' } });
+
+    expect(screen.getByText(m.prefilledFrom('amara.okafor@yahel.example'))).toBeInTheDocument();
+    expect(screen.getByLabelText(m.firstName)).toHaveValue('Amara');
+  });
+
   const fill = async (user: ReturnType<typeof userEvent.setup>) => {
     await user.type(field(m.firstName), 'Amara');
     await user.type(field(m.contactEmail), 'amara@mail.example');

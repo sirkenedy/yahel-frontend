@@ -49,6 +49,7 @@ export const businessMessages = {
   nameTooLong: 'Use 50 characters or fewer.',
   contactEmail: 'Current email',
   contactEmailHelp: 'Not your new address. One you can open today.',
+  prefilledFrom: (email: string) => `Filled in from ${email}.`,
   contactEmailInvalid: 'Enter an email address, like name@example.com.',
   birthLabel: 'Date of birth',
   birthWhy: 'We ask so we can confirm you’re old enough to run a workspace.',

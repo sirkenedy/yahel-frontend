@@ -1,12 +1,13 @@
 import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
+import { describe, expect, it, vi } from 'vitest';
+import { QueryClient } from '@tanstack/react-query';
+import type { ClientAccount, Profile } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { describe, expect, it } from 'vitest';
-import { arriveAtCheckout, businessFacts, forgetWorkspace, handoverOf, isOffered, isSignedIn, stepInsteadOf } from './route-guard';
+import { arriveAtCheckout, businessFacts, forgetWorkspace, handoverOf, isOffered, prefillFromAccount, prefillOf, stepInsteadOf } from './route-guard';
 import { createBusinessStore } from './store';
 
 const api = { auth: {} } as never;
-const sessionIn = (status: 'signed-in' | 'signed-out') => ({ session: { store: { getState: () => ({ status, profile: null }) } } as unknown as Session });
 
 describe('businessFacts', () => {
   it('offers the whole designed flow where something answers for plans and domains', () => {
@@ -27,11 +28,6 @@ describe('the guards', () => {
   it('lets the flow be shown only where this build offers it', () => {
     expect(isOffered({ config: { businessSignUp: true } })).toBe(true);
     expect(isOffered({ config: { businessSignUp: false } })).toBe(false);
-  });
-
-  it('knows when someone is already signed in', () => {
-    expect(isSignedIn(sessionIn('signed-in'))).toBe(true);
-    expect(isSignedIn(sessionIn('signed-out'))).toBe(false);
   });
 
   it('says which step to show instead, or nothing when the step can be shown', () => {
@@ -78,5 +74,39 @@ describe('the guards', () => {
     store.dispatch({ type: 'workspace-created', tenantId: 't1' });
     store.dispatch({ type: 'creation-finished' });
     expect(handoverOf(store)).toEqual({ email: 'amara@northwind.example', organisation: 'Northwind Studio' });
+  });
+});
+
+describe('filling in from the account in use', () => {
+  const profile: Profile = { id: '1', globalId: 'g', email: 'amara.okafor@yahel.example', firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+  const account = (kind: 'personal' | 'business'): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email: 'amara.okafor@yahel.example', kind, organisation: kind === 'business' ? 'Northwind Studio' : null, role: null, signedIn: true });
+
+  it('takes the name and address of a personal account in use', () => {
+    expect(prefillOf({ profile, handle: 'h-0' }, [account('personal')])).toEqual({ firstName: 'Amara', lastName: 'Okafor', contactEmail: 'amara.okafor@yahel.example', from: 'amara.okafor@yahel.example' });
+  });
+
+  it('takes nothing from a business account, from nobody, or when the list cannot say which kind it is', () => {
+    expect(prefillOf({ profile, handle: 'h-0' }, [account('business')])).toBeNull();
+    expect(prefillOf({ profile: null, handle: null }, [account('personal')])).toBeNull();
+    expect(prefillOf({ profile, handle: 'h-0' }, null)).toBeNull();
+    expect(prefillOf({ profile, handle: 'h-other' }, [account('personal')])).toBeNull();
+  });
+
+  it('fills the flow once, the first time it is entered signed in as a personal account', async () => {
+    const business = createBusinessStore();
+    const accounts = vi.fn().mockResolvedValue([account('personal')]);
+    const context = {
+      session: { store: { getState: () => ({ status: 'signed-in', profile, slot: 0, handle: 'h-0' }) } } as unknown as Session,
+      queryClient: new QueryClient(),
+      capabilities: createAccountCapabilities({ auth: { accounts } } as never),
+      business,
+    };
+
+    await prefillFromAccount(context);
+    expect(business.getState()).toMatchObject({ firstName: 'Amara', prefilledFrom: 'amara.okafor@yahel.example' });
+
+    business.dispatch({ type: 'you-entered', firstName: '', lastName: '', contactEmail: '', birth: { day: 1, month: 1, year: 1990 } });
+    await prefillFromAccount(context);
+    expect(business.getState().firstName).toBe('');
   });
 });

@@ -33,6 +33,7 @@ export function YouStep() {
           {asksEmail ? (
             <FlowTextField label={m.contactEmail} name="email" type="email" inputMode="email" autoComplete="email" spellCheck="false" help={m.contactEmailHelp} value={email.value} onChange={email.change} onBlur={email.blur} isValid={email.isValid} error={email.error} inputRef={email.inputRef} isRequired isSensitive />
           ) : null}
+          {state.prefilledFrom ? <FlowStep.Note>{m.prefilledFrom(state.prefilledFrom)}</FlowStep.Note> : null}
           {birthDate.row}
           <FlowStep.Note>{m.birthWhy}</FlowStep.Note>
         </FlowStep.Body>

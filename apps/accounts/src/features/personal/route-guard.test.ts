@@ -2,12 +2,11 @@ import { createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { describe, expect, it, vi } from 'vitest';
-import { arriveAtReview, forgetSignUp, isSignedInElsewhere, personalFacts, stepInsteadOf } from './route-guard';
+import { arriveAtReview, forgetSignUp, isFinishedElsewhere, personalFacts, stepInsteadOf } from './route-guard';
 import { createPersonalStore } from './store';
 
 const instant = async () => undefined;
 const api = { auth: { forgotPassword: vi.fn() } } as unknown as Session['api'];
-const sessionWith = (status: 'signed-in' | 'signed-out') => ({ store: { getState: () => ({ status, profile: null }) } }) as unknown as Session;
 const registrar = (supported: boolean) => ({ isSupported: () => supported }) as PasskeyRegistrar;
 
 describe('personalFacts', () => {
@@ -21,17 +20,16 @@ describe('personalFacts', () => {
   });
 });
 
-describe('isSignedInElsewhere', () => {
-  it('is true for someone signed in who did not create the account in this visit', () => {
-    expect(isSignedInElsewhere({ session: sessionWith('signed-in'), personal: createPersonalStore() })).toBe(true);
-    expect(isSignedInElsewhere({ session: sessionWith('signed-out'), personal: createPersonalStore() })).toBe(false);
+describe('isFinishedElsewhere', () => {
+  const sessionIn = (status: 'signed-in' | 'signed-out') => ({ store: { getState: () => ({ status, profile: null }) } }) as unknown as Session;
+
+  it('sends a reload of a step after creation to the signed-in screen, when the visit is gone but the session is not', () => {
+    expect(isFinishedElsewhere('ready', { session: sessionIn('signed-in'), personal: createPersonalStore() })).toBe(true);
+    expect(isFinishedElsewhere('ready', { session: sessionIn('signed-out'), personal: createPersonalStore() })).toBe(false);
   });
 
-  it('is false for the person who has just been signed in to their new account', () => {
-    const personal = createPersonalStore();
-    personal.dispatch({ type: 'signed-in' });
-
-    expect(isSignedInElsewhere({ session: sessionWith('signed-in'), personal })).toBe(false);
+  it('lets someone signed in start a new sign-up: creating an account adds one to this browser', () => {
+    for (const step of ['type', 'name', 'review'] as const) expect(isFinishedElsewhere(step, { session: sessionIn('signed-in'), personal: createPersonalStore() })).toBe(false);
   });
 });
 

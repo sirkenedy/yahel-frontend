@@ -233,6 +233,9 @@ export function createSession(options: SessionOptions) {
       reuse = null;
     },
 
+    /** The slot this tab is using right now, including one whose profile is still loading. */
+    slotInUse: () => current,
+
     /** The accounts this browser remembers, signed in or not, by slot. */
     accounts: (signal?: AbortSignal) => directory.list(signal),
 

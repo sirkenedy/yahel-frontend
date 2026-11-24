@@ -66,6 +66,8 @@ export interface BusinessState {
   lastName: string;
   /** An address the person can open today. Asked only where something can use it. */
   contactEmail: string;
+  /** The personal account in use whose name and address filled in the empty fields, once per visit. `null` until then. */
+  prefilledFrom: string | null;
   birth: BirthDate | null;
   domainSource: 'owned' | 'bought';
   /** A domain the business says it owns, as last entered. */
@@ -103,6 +105,7 @@ export const initialBusinessState: BusinessState = {
   firstName: '',
   lastName: '',
   contactEmail: '',
+  prefilledFrom: null,
   birth: null,
   domainSource: 'owned',
   ownedDomain: '',
@@ -152,6 +155,7 @@ export type BusinessEvent =
   | { type: 'creation-finished' }
   /** `returnToCheckout`: everything else stands, so once this is put right the person goes back to checkout. */
   | { type: 'answer-rejected'; rejection: Rejection; returnToCheckout: boolean }
+  | { type: 'prefilled'; firstName: string; lastName: string; contactEmail: string; from: string }
   | { type: 'reset' };
 
 const clearRejection = (state: BusinessState, ...steps: Rejection['step'][]) => (state.rejection && steps.includes(state.rejection.step) ? null : state.rejection);
@@ -214,6 +218,10 @@ export function reduce(state: BusinessState, event: BusinessEvent): BusinessStat
     case 'answer-rejected':
       // The workspace was not created, so the attempt is over and its payment with it.
       return { ...state, rejection: event.rejection, editing: event.returnToCheckout, payment: null, creation: initialCreation, ...(event.rejection.step === 'domain' ? { ownedDomainConfirmed: false } : {}), ...(event.rejection.step === 'find' ? { bought: null } : {}) };
+    case 'prefilled':
+      // Once only, and only into fields still empty: what the person typed, or cleared, is never filled again.
+      if (state.prefilledFrom !== null) return state;
+      return { ...state, firstName: state.firstName || event.firstName, lastName: state.lastName || event.lastName, contactEmail: state.contactEmail || event.contactEmail, prefilledFrom: event.from };
     case 'reset':
       return initialBusinessState;
   }

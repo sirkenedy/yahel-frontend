@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { armStepFailure, at, failNextStep } from './support/accounts';
-import { emailCode, mockApi, strictCountry } from './support/api';
+import { armStepFailure, at, failNextStep, signInWithPassword } from './support/accounts';
+import { credentials, emailCode, mockApi, strictCountry, takenAddress } from './support/api';
 import { business, card, createWorkspace, createWorkspaceTo, fillAddress, fillCard, heading, proceed, searchForBoughtDomain } from './support/business';
 
 type Api = Awaited<ReturnType<typeof mockApi>>;
@@ -827,5 +827,40 @@ test.describe('accounts: moving about in workspace sign-up', () => {
     await page.getByRole('link', { name: 'Sign in to Admin' }).focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(at('/admin/signin'));
+  });
+});
+
+test.describe('accounts: a workspace made while signed in', () => {
+  test('from a personal account, its name and address fill the empty fields once, and stay editable', async ({ page }) => {
+    await mockApi(page);
+    await signInWithPassword(page, { email: takenAddress, password: 'Harmattan-in-Ibadan-88' });
+    await heading(page, 'Welcome back, Kemi.').waitFor();
+
+    await createWorkspaceTo(page, 'you');
+
+    await expect(page.getByLabel('First name')).toHaveValue('Kemi');
+    await expect(page.getByLabel('Last name')).toHaveValue('Adeyemi');
+    await expect(page.getByLabel('Current email')).toHaveValue(takenAddress);
+    await expect(page.getByText(`Filled in from ${takenAddress}.`)).toBeVisible();
+    await expect(page.getByLabel('Day')).toHaveValue('');
+
+    await page.getByLabel('First name').fill('');
+    await page.getByRole('link', { name: 'Back' }).click();
+    await proceed(page);
+    await heading(page, 'And who are you?').waitFor();
+    await expect(page.getByLabel('Last name')).toHaveValue('Adeyemi');
+  });
+
+  test('from a business account, nothing is filled in', async ({ page }) => {
+    await mockApi(page);
+    await signInWithPassword(page);
+    await heading(page, 'Welcome back, Amara.').waitFor();
+
+    await createWorkspaceTo(page, 'you');
+
+    await expect(page.getByLabel('First name')).toHaveValue('');
+    await expect(page.getByLabel('Current email')).toHaveValue('');
+    await expect(page.getByText(/^Filled in from/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: `Account: ${credentials.email}` })).toHaveCount(0);
   });
 });

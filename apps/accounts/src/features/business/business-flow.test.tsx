@@ -35,13 +35,26 @@ const answers: BusinessEvent[] = [
   { type: 'address-entered', address },
 ];
 
-const fakeSession = () => ({
-  store: createStore(() => ({ status: 'signed-out' as const, profile: null })),
-  registerBusiness: vi.fn().mockResolvedValue(made),
-  signIn: vi.fn<Session['signIn']>().mockRejectedValue(failure(403, 'EMAIL_NOT_VERIFIED')),
-  signOut: vi.fn().mockResolvedValue(undefined),
-  api: { auth: {} },
-});
+const fakeSession = () => {
+  // The slot the tab uses: a sign-in that opens a session moves it, as the real session does.
+  let inUse: number | null = null;
+  const signIn = vi.fn<Session['signIn']>().mockRejectedValue(failure(403, 'EMAIL_NOT_VERIFIED'));
+  return {
+    store: createStore(() => ({ status: 'signed-out' as const, profile: null, slot: null, handle: null })),
+    registerBusiness: vi.fn().mockResolvedValue(made),
+    signIn: Object.assign(signIn, {
+      opens: (slot: number) => {
+        inUse = slot;
+      },
+    }),
+    slotInUse: () => inUse,
+    signOut: vi.fn(async () => {
+      inUse = null;
+    }),
+    switchTo: vi.fn().mockResolvedValue(true),
+    api: { auth: {} },
+  };
+};
 
 function Probe({ onValue, onToast }: { onValue: (value: BusinessFlowValue) => void; onToast: (toast: ReturnType<typeof useToast>) => void }) {
   onValue(useBusinessFlow());
@@ -423,18 +436,39 @@ describe('BusinessFlowProvider: creating the workspace', () => {
 
   it.each([
     ['whose password is someone else’s', () => Promise.reject(failure(401, 'INVALID_CREDENTIALS')), 0],
-    ['that is already confirmed and opens', () => Promise.resolve({ ok: true, slot: 0, handle: 'h-0' } as const), 1],
-    // Nothing was stored for a second step, but only a refusal is certain to have opened nothing: the session is closed anyway.
-    ['that asks for a second step', () => Promise.resolve({ ok: false, reason: 'mfa-required', challengeToken: 'c' } as const), 1],
+    ['that is already confirmed and opens', () => Promise.resolve({ ok: true, slot: 2, handle: 'h-2' } as const), 1],
+    // A second step issues no session, so there is nothing to close.
+    ['that asks for a second step', () => Promise.resolve({ ok: false, reason: 'mfa-required', challengeToken: 'c' } as const), 0],
   ])('refuses the username for an address that already has an account %s, and signs nobody in', async (_, answer, signOuts) => {
     const { payAndConfirm, session, navigate, store } = setup();
     session.registerBusiness.mockRejectedValueOnce(failure(409, 'EMAIL_ALREADY_EXISTS'));
-    session.signIn.mockImplementationOnce(answer);
+    session.signIn.mockImplementationOnce(async () => {
+      const result = await answer();
+      if (result.ok) session.signIn.opens(result.slot);
+      return result;
+    });
     await payAndConfirm();
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('admin', { replace: true }));
     expect(store.getState()).toMatchObject({ rejection: { step: 'admin', reason: 'taken' }, creation: { created: false } });
     expect(session.signOut).toHaveBeenCalledTimes(signOuts);
+    if (signOuts) expect(session.signOut).toHaveBeenCalledWith(2);
+  });
+
+  it('closes only the session the check opened, and goes back to the account this tab was using', async () => {
+    const { payAndConfirm, session, navigate } = setup();
+    session.signIn.opens(0);
+    session.registerBusiness.mockRejectedValueOnce(failure(409, 'EMAIL_ALREADY_EXISTS'));
+    session.signIn.mockImplementationOnce(async () => {
+      session.signIn.opens(3);
+      return { ok: true, slot: 3, handle: 'h-3' };
+    });
+    await payAndConfirm();
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('admin', { replace: true }));
+    expect(session.signOut).toHaveBeenCalledWith(3);
+    expect(session.signOut).not.toHaveBeenCalledWith(0);
+    expect(session.switchTo).toHaveBeenCalledWith(0, undefined);
   });
 
   it('takes no money when no answer named the workspace: the payment is let go, never completed', async () => {

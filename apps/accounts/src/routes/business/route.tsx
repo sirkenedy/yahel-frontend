@@ -4,7 +4,7 @@ import { isOffered as isAdminSignInOffered } from '../../features/admin/route-gu
 import { stepPath as adminStepPath } from '../../features/admin/machine';
 import { BusinessFlowProvider } from '../../features/business/business-flow';
 import { stepOfPath, stepPath } from '../../features/business/machine';
-import { businessFacts, forgetWorkspace, isOffered, isSignedIn } from '../../features/business/route-guard';
+import { businessFacts, forgetWorkspace, isOffered, prefillFromAccount } from '../../features/business/route-guard';
 import { AppFrame } from '../../features/chrome/app-frame';
 import { chromeMessages } from '../../features/chrome/messages';
 import { PageRouteError } from '../../route-error';
@@ -13,10 +13,12 @@ import { PageRouteError } from '../../route-error';
 const withoutDetails = ['domain-question', 'plan', 'creating', 'ready'];
 
 export const Route = createFileRoute('/business')({
-  beforeLoad: ({ context }) => {
+  beforeLoad: async ({ context }) => {
     // Not offered in this build (F-78): the personal sign-up's first question says so.
     if (!isOffered(context)) throw redirect({ to: '/personal', replace: true });
-    if (isSignedIn(context)) throw redirect({ to: '/signin/done', replace: true });
+    // Open whether or not this tab is signed in: a workspace is one more account for this browser (F-94). From a
+    // personal account, its name and address fill the empty fields (F-95).
+    await prefillFromAccount(context);
     return { facts: businessFacts(context) };
   },
   // Leaving sign-up, for sign-in or anywhere else in the app, forgets what was answered and the password with it.

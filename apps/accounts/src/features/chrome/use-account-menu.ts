@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AccountDirectory, ClientAccount } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
+import { useEffect } from 'react';
 import { useStore } from 'zustand';
 import { accountsQuery, forgetAccountData, kindOf, nameOf, nextSignedIn, refreshAccounts, statusOf } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
@@ -45,6 +46,10 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
   const signedIn = profile !== null && slot !== null;
   const accounts = useQuery({ ...accountsQuery(directory), enabled: signedIn }).data ?? [];
   const action = useMutation({ mutationFn: (run: () => Promise<void>) => run() });
+  // A new account in this tab (signed in, or just created by sign-up) changes the list: the old one moves to "Other accounts".
+  useEffect(() => {
+    if (handle) void refreshAccounts(queryClient);
+  }, [handle, queryClient]);
 
   if (!signedIn) return null;
   const current = accounts.find((account) => account.handle === handle);
