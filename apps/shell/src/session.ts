@@ -1,6 +1,5 @@
-import { createBrowserSession } from '@yahel/auth';
+import { accountsAppAddresses, createBrowserSession } from '@yahel/auth';
 import { config } from './config';
-import { accountsAppAddresses } from './features/account/accounts-app';
 
 export const session = createBrowserSession(config.apiUrl);
 

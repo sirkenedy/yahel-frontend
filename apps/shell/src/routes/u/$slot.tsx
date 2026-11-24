@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router';
-import { slotOf } from '../../features/account/slot';
+import { slotOf } from '@yahel/auth';
 
 export const Route = createFileRoute('/u/$slot')({
   // The slot in the address names the account. This tab uses it if it is signed in in this browser; if not, the accounts app's sign-in.
