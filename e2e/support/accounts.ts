@@ -104,7 +104,6 @@ export async function openRecoverCodeStep(page: Page) {
 export async function openNewPasswordStep(page: Page) {
   await openRecoverCodeStep(page);
   await page.getByLabel('6-character code').fill(resetCode);
-  await page.getByRole('button', { name: 'Verify' }).click();
   await page.getByRole('heading', { name: 'Choose a new password.' }).waitFor();
 }
 

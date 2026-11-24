@@ -39,7 +39,6 @@ export async function adminTo(page: Page, stop: AdminStop, { passkey = 'success'
   await heading(page, 'Enter the code.').waitFor();
   if (stop === 'code') return;
   await codeBoxes(page).fill(phoneCode);
-  await page.getByRole('button', { name: 'Verify' }).click();
 
   await heading(page, 'Welcome to your new account.').waitFor();
   if (stop === 'welcome') return;

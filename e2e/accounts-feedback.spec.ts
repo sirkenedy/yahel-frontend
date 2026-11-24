@@ -292,7 +292,6 @@ test.describe('feedback: personal sign-up', () => {
     await heading(page, 'Enter the code.').waitFor();
     api.failNext('/v1/auth/phone/verify', 429, 'TOKEN_MAX_ATTEMPTS');
     await code(page).fill('zzzzzz');
-    await proceed(page, 'Verify');
 
     const banner = page.getByRole('alert');
     await expect(banner).toContainText('This code no longer works');
@@ -300,8 +299,8 @@ test.describe('feedback: personal sign-up', () => {
     await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
     expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(2);
 
+    await code(page).clear();
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
   });
 
@@ -311,7 +310,6 @@ test.describe('feedback: personal sign-up', () => {
     await heading(page, 'Enter the code.').waitFor();
     api.failNext('/v1/auth/phone/verify', 429, undefined, { retryAfter: 45, exposed: true });
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
 
     const banner = page.getByRole('alert');
     await expect(banner).toContainText('Too many tries');
@@ -357,7 +355,6 @@ test.describe('feedback: personal sign-up', () => {
     api.failNext('/v1/auth/phone/verify', 401, 'SESSION_EXPIRED');
     api.failNext('/v1/auth/refresh', 401, 'INVALID_TOKEN');
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
 
     await expect(heading(page, 'Your session has ended.')).toBeFocused();
     await expect(page).toHaveTitle('Your session has ended · Yahel');
@@ -376,7 +373,6 @@ test.describe('feedback: personal sign-up', () => {
     api.failNext('/v1/auth/phone/verify', 401, 'SESSION_EXPIRED');
     api.failNext('/v1/auth/refresh', 401, 'TOKEN_REUSE_DETECTED');
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
 
     await expect(heading(page, 'We signed you out everywhere.')).toBeFocused();
     await expect(page.getByRole('status')).toHaveText('If this wasn’t you, change your password after you sign in.');

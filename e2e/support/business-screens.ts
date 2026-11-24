@@ -9,7 +9,6 @@ const refuseCreation = (page: Page, status: number, code: string) =>
 
 const confirmCard = async (page: Page, code = card.code) => {
   await page.getByLabel('6-digit code').fill(code);
-  await proceed(page, 'Confirm');
 };
 
 /** Workspace sign-up: its thirteen screens as drawn, then the states a refusal or a choice leads to. */

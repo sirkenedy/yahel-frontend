@@ -110,7 +110,6 @@ test.describe('accounts: sign in with a password', () => {
     page.on('framenavigated', (frame) => seen.push(frame.url()));
     await openCodeStep(page);
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
 
     const addresses = seen.join(' ');
@@ -142,7 +141,6 @@ test.describe('accounts: two-step sign-in', () => {
     await expect(page).toHaveURL(at('/signin/code'));
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
     const challenge = api.calls.find((call) => call.path === '/v1/auth/mfa/challenge');
@@ -176,8 +174,21 @@ test.describe('accounts: two-step sign-in', () => {
     await expect(page.getByText('We texted a code to +234')).toBeVisible();
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+  });
+
+  test('a complete code is sent on its own, once, and an incomplete one waits for Verify', async ({ page }) => {
+    const api = await mockApi(page);
+    await openCodeStep(page);
+    const challenges = () => api.calls.filter((call) => call.path === '/v1/auth/mfa/challenge');
+
+    await page.getByLabel('6-digit code').fill(secondStepCode.slice(0, 5));
+    await expect(page.getByRole('button', { name: 'Verify' })).toBeVisible();
+    expect(challenges()).toHaveLength(0);
+
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    expect(challenges()).toHaveLength(1);
   });
 
   test('sign-in by a backup code', async ({ page }) => {
@@ -196,9 +207,8 @@ test.describe('accounts: two-step sign-in', () => {
     await openCodeStep(page);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
+      await page.getByLabel('6-digit code').clear();
       await page.getByLabel('6-digit code').fill(`00000${attempt}`);
-      await page.getByRole('button', { name: 'Verify' }).click();
-      await expect(page.getByRole('button', { name: 'Verify' })).toBeEnabled();
       await expect(attempt < 4 ? page.getByLabel('6-digit code') : page.getByRole('alert')).toBeVisible();
       if (attempt < 4) await expect(page.getByLabel('6-digit code')).toHaveAccessibleDescription(/That code didn’t work/);
     }
@@ -394,7 +404,6 @@ test.describe('accounts: account menu', () => {
     await password(page).fill(twoStepCredentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
     expect(api.remembered().map(({ slot, signedIn }) => [slot, signedIn])).toEqual([[0, true], [1, true]]);
 
@@ -459,7 +468,6 @@ test.describe('accounts: recovery', () => {
     expect(api.calls.find((call) => call.path === '/v1/auth/forgot-password')!.body).toEqual({ email: credentials.email });
 
     await page.getByLabel('6-character code').fill(resetCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await page.getByLabel('New password', { exact: true }).fill(newPassword);
     await expect(page.getByText(/Strong · 22 characters/)).toBeVisible();
     await page.getByRole('button', { name: 'Save and sign in' }).click();
@@ -486,7 +494,6 @@ test.describe('accounts: recovery', () => {
     await page.clock.install();
     await openRecoverCodeStep(page);
     await page.getByLabel('6-character code').fill('WRONG1');
-    await page.getByRole('button', { name: 'Verify' }).click();
     await page.getByLabel('New password', { exact: true }).fill(newPassword);
     await page.getByRole('button', { name: 'Save and sign in' }).click();
 
@@ -952,7 +959,6 @@ test.describe('accounts: when things go wrong after the hard part', () => {
     );
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
     await expect(page.getByRole('alert')).toContainText('That took too long');
@@ -1081,12 +1087,11 @@ test.describe('accounts: confirming an email at sign-in', () => {
     await expect(page.getByRole('button', { name: /^Send a new code in 0:\d{2}$/ })).toHaveAttribute('aria-disabled', 'true');
 
     await codeBoxes(page).fill('WRONG1');
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(codeBoxes(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(codeBoxes(page)).toBeFocused();
 
+    await codeBoxes(page).clear();
     await codeBoxes(page).fill(emailCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Welcome back, Ngozi.' })).toBeVisible();
     expect(sent(api, '/v1/auth/verify-email').at(-1)?.body).toEqual({ email: pendingEmail, token: emailCode });
     expect(loginCalls(api)).toHaveLength(2);
