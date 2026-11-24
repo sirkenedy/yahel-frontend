@@ -494,7 +494,6 @@
           "role": {
             "default": "MEMBER",
             "enum": [
-              "OWNER",
               "ADMIN",
               "MEMBER",
               "GUEST"
@@ -532,7 +531,6 @@
           "role": {
             "default": "MEMBER",
             "enum": [
-              "OWNER",
               "ADMIN",
               "MEMBER",
               "GUEST"
@@ -1654,7 +1652,6 @@
           },
           "role": {
             "enum": [
-              "OWNER",
               "ADMIN",
               "MEMBER",
               "GUEST"
@@ -1817,7 +1814,6 @@
           },
           "defaultUserRole": {
             "enum": [
-              "OWNER",
               "ADMIN",
               "MEMBER",
               "GUEST"
@@ -1845,41 +1841,6 @@
         },
         "required": [
           "trustedContactEmail"
-        ],
-        "type": "object"
-      },
-      "UpgradeToBusinessDto": {
-        "properties": {
-          "businessName": {
-            "example": "Acme Corp",
-            "type": "string"
-          },
-          "country": {
-            "$ref": "#/components/schemas/CountryDto"
-          },
-          "deviceName": {
-            "example": "Kehinde's iPhone",
-            "type": "string"
-          },
-          "domain": {
-            "example": "acme.com",
-            "type": "string"
-          },
-          "employeeCount": {
-            "example": 10,
-            "type": "number"
-          },
-          "slug": {
-            "example": "acme",
-            "type": "string"
-          }
-        },
-        "required": [
-          "businessName",
-          "slug",
-          "country",
-          "employeeCount",
-          "domain"
         ],
         "type": "object"
       },
@@ -3008,36 +2969,6 @@
           }
         },
         "summary": "Public — decline a trusted-contact invitation using the token from the invite email",
-        "tags": [
-          "Auth"
-        ]
-      }
-    },
-    "/api/v1/auth/upgrade-to-business": {
-      "post": {
-        "operationId": "AuthController_upgradeToBusiness",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpgradeToBusinessDto"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Upgrade a personal account to a business admin — creates tenant + owner membership + pending domain and issues fresh tokens",
         "tags": [
           "Auth"
         ]

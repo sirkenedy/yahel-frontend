@@ -8,6 +8,7 @@ export const demoProfile: Profile = {
   lastName: 'Okafor',
   displayName: 'Amara Okafor',
   photo: null,
+  accountType: 'personal',
 };
 
 export const DEMO_PHONE = '+234 ••• ••• ••42';

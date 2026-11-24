@@ -19,7 +19,7 @@ const memoryStorage = (initial: Record<string, string> = {}): KeyValueStorage & 
 const ok = (data: unknown) => new Response(JSON.stringify({ success: true, data }), { status: 200 });
 const fail = (status: number, code: string) => new Response(JSON.stringify({ success: false, code, message: code }), { status });
 const tokens = (slot = 0, handle = `h-${slot}`, access = `access-${slot}`) => ({ accessToken: access, expiresIn: 900, tokenType: 'Bearer', slot, handle });
-const profile = { id: '1', globalId: 'g1', email: 'amara@northwind.example', firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+const profile = { id: '1', globalId: 'g1', email: 'amara@northwind.example', firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'personal' as const };
 const kofi = { ...profile, id: '2', globalId: 'g2', email: 'kofi@northwind.example', firstName: 'Kofi', displayName: 'Kofi Mensah' };
 
 type Handler = (body: Record<string, unknown>, init: RequestInit) => Response | Promise<Response>;

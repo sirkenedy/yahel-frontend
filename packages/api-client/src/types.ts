@@ -78,6 +78,8 @@ export interface Profile {
   status?: string;
   locale?: string | null;
   timezone?: string | null;
+  /** `personal` for a personal account; `business` for a workspace founder; `managed` for an account an organisation made. */
+  accountType: 'personal' | 'business' | 'managed';
 }
 
 /** A recovery contact that has been asked for but cannot be used yet. Values are masked by the backend. */

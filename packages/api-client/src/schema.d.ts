@@ -600,23 +600,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/upgrade-to-business": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Upgrade a personal account to a business admin — creates tenant + owner membership + pending domain and issues fresh tokens */
-        post: operations["AuthController_upgradeToBusiness"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/auth/verify-email": {
         parameters: {
             query?: never;
@@ -1698,7 +1681,7 @@ export interface components {
              * @default MEMBER
              * @enum {string}
              */
-            role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
+            role: "ADMIN" | "MEMBER" | "GUEST";
             /**
              * @default internal
              * @enum {string}
@@ -1716,7 +1699,7 @@ export interface components {
              * @default MEMBER
              * @enum {string}
              */
-            role: "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
+            role: "ADMIN" | "MEMBER" | "GUEST";
             /**
              * @default internal
              * @enum {string}
@@ -2249,7 +2232,7 @@ export interface components {
             /** @example /engineering/platform */
             ouPath?: Record<string, never> | null;
             /** @enum {string} */
-            role?: "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
+            role?: "ADMIN" | "MEMBER" | "GUEST";
         };
         UpdateOuDto: {
             /** @example Platform Engineering */
@@ -2317,7 +2300,7 @@ export interface components {
             blockPersonalEmails?: boolean;
             countSuspendedSeats?: boolean;
             /** @enum {string} */
-            defaultUserRole?: "OWNER" | "ADMIN" | "MEMBER" | "GUEST";
+            defaultUserRole?: "ADMIN" | "MEMBER" | "GUEST";
             enforceSSO?: boolean;
             mfaRequired?: boolean;
             sessionTtlHours?: number;
@@ -2325,19 +2308,6 @@ export interface components {
         UpdateTrustedContactDto: {
             /** @example parent.jane@gmail.com */
             trustedContactEmail: string;
-        };
-        UpgradeToBusinessDto: {
-            /** @example Acme Corp */
-            businessName: string;
-            country: components["schemas"]["CountryDto"];
-            /** @example Kehinde's iPhone */
-            deviceName?: string;
-            /** @example acme.com */
-            domain: string;
-            /** @example 10 */
-            employeeCount: number;
-            /** @example acme */
-            slug: string;
         };
         VerifyEmailDto: {
             /**
@@ -3132,27 +3102,6 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TrustedContactConsentResponseDto"];
                 };
-            };
-        };
-    };
-    AuthController_upgradeToBusiness: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpgradeToBusinessDto"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
             };
         };
     };

@@ -29,7 +29,7 @@ type Request = SignInFlowValue['meta']['requests']['password'];
 const clear = () => undefined;
 const idle: Request = { isPending: false, feedback: null, clear };
 const email = 'amara@northwind.example';
-const profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+const profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'personal' as const };
 
 type Overrides = { state?: Partial<SignInFlowValue['state']>; offers?: Partial<SignInFlowValue['meta']['offers']>; requests?: Partial<SignInFlowValue['meta']['requests']>; backHref?: string | null; screens?: Partial<SignInFlowValue['meta']['screens']> };
 

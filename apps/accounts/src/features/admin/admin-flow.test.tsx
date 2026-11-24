@@ -14,7 +14,7 @@ import { adminMessages as m } from './messages';
 import { createAdminStore } from './store';
 
 const email = 'amara@harbourline.example';
-const profile: Profile = { id: 'p-1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null };
+const profile: Profile = { id: 'p-1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'business' };
 const links = { admin: 'https://admin.yahel.example/', plan: '/business/plan', signIn: '/signin', resetPassword: '/signin', help: 'https://yahel.example/help', businessTerms: null, privacy: 'https://yahel.example/privacy' };
 
 const fakeSession = () => {
