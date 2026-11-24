@@ -38,32 +38,6 @@ describe('stand-ins', () => {
     await expect(createStandIns(instant).helpDesk.request({ contact: 'a@b.example' })).resolves.toBeUndefined();
   });
 
-  it('passkey registration: hands out a challenge without being told who is asking, and accepts the new passkey', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    const options = await passkeyRegistration.begin({ rpId: 'accounts.yahel.example' });
-
-    expect(options).toMatchObject({ rp: { id: 'accounts.yahel.example', name: 'Yahel' }, algorithms: [-7, -257] });
-    expect(options.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(options.userHandle).toMatch(/^[A-Za-z0-9_-]+$/);
-    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] })).resolves.toBeUndefined();
-  });
-
-  it('passkey registration for someone signed in: lists the passkey already saved so the device does not make a second', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    await expect(passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' })).resolves.toMatchObject({ excludeCredentials: [] });
-    await passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] });
-    const options = await passkeyRegistration.beginForAccount({ rpId: 'accounts.yahel.example' });
-    expect(options.excludeCredentials).toHaveLength(1);
-  });
-
-  it('passkey registration: refuses an attestation it could not verify', async () => {
-    const { passkeyRegistration } = createStandIns(instant);
-
-    await expect(passkeyRegistration.finish({ credentialId: 'id', clientDataJSON: 'c', attestationObject: '', transports: [] })).rejects.toMatchObject({ status: 400 });
-  });
-
   it('preferences: keeps the choices it was given', async () => {
     const { preferences } = createStandIns(instant);
 

@@ -16,6 +16,6 @@ export const loadCapabilities = async () => {
   return {
     capabilities,
     passkeys: createPasskeyClient(capabilities.passkeys, browserPasskeyEnvironment()),
-    registrar: capabilities.passkeyRegistration ? createPasskeyRegistrar(capabilities.passkeyRegistration, browserPasskeyEnvironment()) : null,
+    registrar: createPasskeyRegistrar(capabilities.passkeyRegistration, browserPasskeyEnvironment()),
   };
 };

@@ -5,18 +5,27 @@ import { isDismissal, toBase64Url, toBytes } from './webauthn';
 /** What creating a passkey needs of the browser: the same as signing in with one, but the means to make a credential. */
 export type PasskeyCreationEnvironment = Omit<PasskeyEnvironment, 'credentials'> & { credentials: Pick<CredentialsContainer, 'create'> | undefined };
 
+/** A passkey made on the device, with the token of the challenge it answers: `save` needs both. */
+export interface NewPasskey {
+  attestation: PasskeyAttestation;
+  challengeToken: string;
+}
+
 /**
- * `cancelled` covers dismissing the prompt and a timeout: neither is an error to show. `unprepared`: no
+ * `cancelled` covers dismissing the prompt and a timeout: neither is an error to show. `unprepared`: no fresh
  * challenge was ready at the press, so no prompt opened; one is being fetched for the next press.
  */
-export type NewPasskeyResult = { status: 'created'; attestation: PasskeyAttestation } | { status: 'cancelled' } | { status: 'unprepared' };
+export type NewPasskeyResult = ({ status: 'created' } & NewPasskey) | { status: 'cancelled' } | { status: 'unprepared' };
 
 /** How the device labels the passkey. These stay on the device; the server is not sent them. */
 export interface PasskeyOwner {
-  /** The address the person will sign in with. */
+  /** The address the person signs in with. */
   address: string;
   name: string;
 }
+
+/** The server keeps a challenge 60 seconds; one fetched ahead is used only while it has time left for the prompt. */
+const CHALLENGE_FRESH_FOR = 50_000;
 
 const describeAttestation = (credential: PublicKeyCredential): PasskeyAttestation => {
   const response = credential.response as AuthenticatorAttestationResponse;
@@ -29,32 +38,27 @@ const describeAttestation = (credential: PublicKeyCredential): PasskeyAttestatio
 };
 
 /**
- * The browser half of creating a passkey while an account is being created (WebAuthn). The passkey is made
- * on the device before the account exists and attached to it by `save` once the person is signed in; what
- * is held in between is the passkey's public half, never anything secret.
+ * The browser half of creating a passkey for the signed-in account (WebAuthn). The server binds each challenge
+ * to the session, and `save` attaches the passkey to that account.
  */
 export function createPasskeyRegistrar(registration: PasskeyRegistration, environment: PasskeyCreationEnvironment) {
-  let ready: PasskeyCreationOptions | null = null;
+  let ready: { options: PasskeyCreationOptions; at: number } | null = null;
   let latest: Promise<void> | null = null;
-  let forAccount = false;
 
   const registrar = {
     isSupported() {
       return environment.supported && environment.credentials !== undefined;
     },
     /**
-     * Fetches the server's challenge ahead of the press, so `create` can open the prompt inside it, replacing
-     * any fetched before. `account` asks for someone signed in (`beginForAccount`); a later fetch asks the
-     * same way. Settles once a challenge is ready or could not be had; never rejects.
+     * Fetches the server's challenge ahead of the press, so `create` can open the prompt inside it, replacing any
+     * fetched before. Settles once a challenge is ready or could not be had; never rejects.
      */
-    prepare(account = forAccount): Promise<void> {
+    prepare(): Promise<void> {
       if (!registrar.isSupported()) return Promise.resolve();
-      forAccount = account;
       ready = null;
-      const input = { rpId: environment.rpId };
-      const fetching: Promise<void> = (account ? registration.beginForAccount(input) : registration.begin(input)).then(
+      const fetching: Promise<void> = registration.beginForAccount().then(
         (options) => {
-          if (latest === fetching) ready = options;
+          if (latest === fetching) ready = { options, at: Date.now() };
         },
         () => undefined,
       );
@@ -62,13 +66,13 @@ export function createPasskeyRegistrar(registration: PasskeyRegistration, enviro
       return fetching;
     },
     /**
-     * Call from a press handler: browsers only show the prompt in response to a user action, so it opens at
-     * once with the challenge prepared ahead, never after waiting for one. A challenge is used once; the
-     * next is fetched as soon as this one is taken, so a retry has one ready.
+     * Call from a press handler: browsers only show the prompt in response to a user action, so it opens at once
+     * with a challenge prepared ahead, never after waiting for one. A challenge is used once; the next is fetched
+     * as soon as this one is taken, so a retry has one ready while it is fresh.
      */
     async create(owner: PasskeyOwner): Promise<NewPasskeyResult> {
       if (!environment.credentials) return { status: 'cancelled' };
-      const options = ready;
+      const options = ready && Date.now() - ready.at < CHALLENGE_FRESH_FOR ? ready.options : null;
       void registrar.prepare();
       if (!options) return { status: 'unprepared' };
       let credential: Credential | null;
@@ -90,11 +94,11 @@ export function createPasskeyRegistrar(registration: PasskeyRegistration, enviro
         throw error;
       }
       if (!credential) return { status: 'cancelled' };
-      return { status: 'created', attestation: describeAttestation(credential as PublicKeyCredential) };
+      return { status: 'created', attestation: describeAttestation(credential as PublicKeyCredential), challengeToken: options.challengeToken };
     },
-    /** Attaches a passkey made by `create` to the account that is now signed in. */
-    save(attestation: PasskeyAttestation) {
-      return registration.finish(attestation);
+    /** Attaches a passkey made by `create` to the signed-in account. */
+    save({ attestation, challengeToken }: NewPasskey) {
+      return registration.finish(challengeToken, attestation);
     },
   };
   return registrar;

@@ -6,7 +6,6 @@ export interface StandIns {
   textCodes: TextCodeSender;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
-  passkeyRegistration: PasskeyRegistration;
   preferences: SignUpPreferences;
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
@@ -97,6 +96,34 @@ export const passkeySignInOf = (api: Pick<ApiClient, 'auth'>): PasskeyCeremony =
     }),
 });
 
+/** Passkey creation for the signed-in account through `/auth/passkey/register/*`; the server verifies a `RegistrationResponseJSON`. */
+export const passkeyRegistrationOf = (api: Pick<ApiClient, 'auth'>): PasskeyRegistration => ({
+  async beginForAccount() {
+    const { options, challengeToken } = await api.auth.passkeys.registerBegin();
+    return {
+      challengeToken,
+      challenge: options.challenge,
+      rp: options.rp,
+      userHandle: options.user.id,
+      timeoutMs: options.timeout ?? 60_000,
+      algorithms: options.pubKeyCredParams.map(({ alg }) => alg),
+      excludeCredentials: (options.excludeCredentials ?? []).map(({ id }) => id),
+    };
+  },
+  async finish(challengeToken, attestation) {
+    await api.auth.passkeys.registerFinish({
+      challengeToken,
+      response: {
+        id: attestation.credentialId,
+        rawId: attestation.credentialId,
+        type: 'public-key',
+        response: { clientDataJSON: attestation.clientDataJSON, attestationObject: attestation.attestationObject, transports: attestation.transports },
+        clientExtensionResults: {},
+      },
+    });
+  },
+});
+
 const ADMIN_ROLES = new Set(['OWNER', 'ADMIN']);
 
 /**
@@ -120,7 +147,8 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | '
   const domainClaims = domainClaimsOf(api);
   const adminAccess = adminAccessOf(api);
   const passkeys = passkeySignInOf(api);
-  if (!standIns) return { passkeys, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
+  const passkeyRegistration = passkeyRegistrationOf(api);
+  if (!standIns) return { passkeys, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -132,7 +160,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | '
     directory,
     recovery,
     helpDesk: standIns.helpDesk,
-    passkeyRegistration: standIns.passkeyRegistration,
+    passkeyRegistration,
     addresses,
     trustedContacts,
     preferences: standIns.preferences,

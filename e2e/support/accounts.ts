@@ -31,7 +31,8 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
         create: async () => {
           await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
-          return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
+          // A new credential: not the one Amara already signs in with.
+          return { rawId: bytes(9, 8, 7), response: { clientDataJSON: bytes(4), attestationObject: bytes(5, 6), getTransports: () => ['internal'] } };
         },
       },
     });

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { adminAccessOf, createAccountCapabilities, passkeySignInOf, maskEmail, usableWindow } from './account-capabilities';
+import { adminAccessOf, createAccountCapabilities, passkeyRegistrationOf, passkeySignInOf, maskEmail, usableWindow } from './account-capabilities';
 import type { ApiClient } from './client';
 import type { AuthContext } from './types';
 import { createStandIns } from './standins';
@@ -19,7 +19,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, standIns: [] });
+    expect(capabilities).toMatchObject({ textCodes: null, helpDesk: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, standIns: [] });
     expect(capabilities.addresses).not.toBeNull();
     expect(capabilities.trustedContacts).not.toBeNull();
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
@@ -35,10 +35,9 @@ describe('createAccountCapabilities', () => {
 
     expect(capabilities.textCodes).toBe(standIns.textCodes);
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
-    expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['domainMarket', 'helpDesk', 'passkeyRegistration', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect([...capabilities.standIns].sort()).toEqual(['domainMarket', 'helpDesk', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
     expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, workspaceBilling: standIns.workspaceBilling });
   });
 
@@ -123,6 +122,25 @@ describe('createAccountCapabilities', () => {
 
       await passkeySignInOf(client).finish('pk-2', { ...assertion, userHandle: 'dWg' });
       expect(auth.passkeys.authenticateFinish).toHaveBeenLastCalledWith(expect.objectContaining({ response: expect.objectContaining({ response: expect.objectContaining({ userHandle: 'dWg' }) }) }));
+    });
+  });
+
+  describe('passkey creation for the signed-in account, through the real endpoints', () => {
+    const creation = { challenge: 'Y2g', rp: { name: 'Yahel', id: 'localhost' }, user: { id: 'dXNlcg', name: 'amara@northwind.example', displayName: 'Amara' }, pubKeyCredParams: [{ alg: -8, type: 'public-key' }, { alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }], timeout: 60_000, excludeCredentials: [{ id: 'b2xk', type: 'public-key', transports: ['internal'] }] };
+    const registrationApi = () => {
+      const auth = { passkeys: { registerBegin: vi.fn().mockResolvedValue({ options: creation, challengeToken: 'pk-9' }), registerFinish: vi.fn().mockResolvedValue({ credentialId: 'bmV3', aaguid: null, deviceName: null }) } };
+      return { client: { auth } as unknown as Pick<ApiClient, 'auth'>, auth };
+    };
+
+    it('maps the server’s creation options, keeping the challenge token', async () => {
+      await expect(passkeyRegistrationOf(registrationApi().client).beginForAccount()).resolves.toEqual({ challengeToken: 'pk-9', challenge: 'Y2g', rp: { name: 'Yahel', id: 'localhost' }, userHandle: 'dXNlcg', timeoutMs: 60_000, algorithms: [-8, -7, -257], excludeCredentials: ['b2xk'] });
+    });
+
+    it('sends the new passkey as the server verifies it', async () => {
+      const { client, auth } = registrationApi();
+
+      await expect(passkeyRegistrationOf(client).finish('pk-9', { credentialId: 'bmV3', clientDataJSON: 'cd', attestationObject: 'ao', transports: ['internal'] })).resolves.toBeUndefined();
+      expect(auth.passkeys.registerFinish).toHaveBeenCalledWith({ challengeToken: 'pk-9', response: { id: 'bmV3', rawId: 'bmV3', type: 'public-key', response: { clientDataJSON: 'cd', attestationObject: 'ao', transports: ['internal'] }, clientExtensionResults: {} } });
     });
   });
 

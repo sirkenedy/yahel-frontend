@@ -7,8 +7,6 @@ export interface PasskeyEnvironment {
   credentials: Pick<CredentialsContainer, 'get'> | undefined;
   /** Whether the browser has WebAuthn at all. The passkey itself may be on this device, a phone or a security key. */
   supported: boolean;
-  /** The site the passkey belongs to: this page's host name. */
-  rpId: string;
 }
 
 /**
@@ -89,5 +87,4 @@ export type PasskeyClient = ReturnType<typeof createPasskeyClient>;
 export const browserPasskeyEnvironment = () => ({
   credentials: window.navigator.credentials,
   supported: Boolean(window.PublicKeyCredential),
-  rpId: window.location.hostname,
 });

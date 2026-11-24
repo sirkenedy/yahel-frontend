@@ -3,7 +3,6 @@
 import type { StandIns } from '../account-capabilities';
 import { createDomainMarketStandIn } from './domain-market';
 import { createHelpDeskStandIn } from './help-desk';
-import { createPasskeyRegistrationStandIn } from './passkey-registration';
 import { createPreferencesStandIn } from './preferences';
 import { createRecoveryByPhoneStandIn } from './recovery-by-phone';
 import { createServiceStatusStandIn } from './service-status';
@@ -13,12 +12,10 @@ import { realDelay } from './timing';
 import type { Delay } from './timing';
 
 export const createStandIns = (delay: Delay = realDelay): StandIns => {
-  const passkeyRegistration = createPasskeyRegistrationStandIn(delay);
   return {
     textCodes: createTextCodeStandIn(delay),
     recoveryByPhone: createRecoveryByPhoneStandIn(delay),
     helpDesk: createHelpDeskStandIn(delay),
-    passkeyRegistration,
     preferences: createPreferencesStandIn(delay),
     serviceStatus: createServiceStatusStandIn(delay),
     domainMarket: createDomainMarketStandIn(delay),

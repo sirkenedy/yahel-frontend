@@ -35,7 +35,7 @@ const fakeSession = () => {
 const fakeRegistrar = (supported = true, prepare: () => Promise<void> = async () => undefined) => ({
   isSupported: vi.fn(() => supported),
   prepare: vi.fn<(account?: boolean) => Promise<void>>(() => prepare()),
-  create: vi.fn().mockResolvedValue({ status: 'created', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] } }),
+  create: vi.fn().mockResolvedValue({ status: 'created', challengeToken: 'pk-1', attestation: { credentialId: 'id', clientDataJSON: 'c', attestationObject: 'a', transports: ['internal'] } }),
   save: vi.fn().mockResolvedValue(undefined),
 });
 
@@ -183,6 +183,7 @@ describe('AdminFlowProvider: the welcome and the passkey', () => {
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('add-passkey', { replace: true }));
     expect(registrar.create).toHaveBeenCalledWith({ address: email, name: 'Amara Okafor' });
     expect(registrar.save).toHaveBeenCalledTimes(1);
+    expect(registrar.save).toHaveBeenCalledWith(expect.objectContaining({ challengeToken: 'pk-1' }));
     expect(store.getState().passkeySaved).toBe(true);
     expect(toast()?.text).toBe(m.passkeySaved);
     expect(flow().state.hasPasskey).toBe(true);
@@ -206,7 +207,7 @@ describe('AdminFlowProvider: the welcome and the passkey', () => {
     const { flow, registrar } = setup({ step: 'add-passkey', facts: ready, prepare: () => new Promise<void>((resolve) => (answer = resolve)) });
 
     await waitFor(() => expect(flow().meta.passkeyPreparing).toBe(true));
-    expect(registrar.prepare).toHaveBeenCalledWith(true);
+    expect(registrar.prepare).toHaveBeenCalled();
     await act(async () => answer());
     await waitFor(() => expect(flow().meta.passkeyPreparing).toBe(false));
   });

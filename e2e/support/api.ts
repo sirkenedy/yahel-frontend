@@ -204,6 +204,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     return challengeToken;
   };
   const base64url = /^[A-Za-z0-9_-]+$/;
+  const base64urlOf = (text: string) => Buffer.from(text, 'utf8').toString('base64url');
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
@@ -442,6 +443,24 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const membership = accounts.find((known) => known.profile === signedIn)?.membership;
       const personal = { type: 'personal', tenantId: null, displayName: null, logoUrl: null, role: null, isCurrent: !membership };
       return ok(route, membership ? [personal, { type: 'tenant', tenantId: '64f000000000000000000200', displayName: membership.organisation, logoUrl: null, role: membership.role, isCurrent: true }] : [personal]);
+    }
+    if (path === '/v1/auth/passkey/register/begin') {
+      const excludeCredentials = passkeysOf(signedIn.email).map(({ credentialId }) => ({ id: credentialId, type: 'public-key', transports: ['internal'] }));
+      const options = { challenge: 'cmVnaXN0ZXItY2hhbGxlbmdl', rp: { name: 'Yahel', id: 'localhost' }, user: { id: base64urlOf(signedIn.id), name: signedIn.email, displayName: signedIn.displayName }, pubKeyCredParams: [{ alg: -8, type: 'public-key' }, { alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }], timeout: 60000, attestation: 'none', excludeCredentials, authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' } };
+      return ok(route, { options, challengeToken: webauthnChallengeFor('registration', signedIn.email) });
+    }
+    if (path === '/v1/auth/passkey/register/finish') {
+      const sent = request.postDataJSON() as { challengeToken?: string; deviceName?: string; response?: { id?: string; rawId?: string; type?: string; response?: Record<string, unknown> } } | null;
+      const challenge = webauthnChallenges.get(sent?.challengeToken ?? '');
+      webauthnChallenges.delete(sent?.challengeToken ?? '');
+      // A challenge is bound to the session that asked for it.
+      if (challenge?.kind !== 'registration' || challenge.email !== signedIn.email) return fail(route, 400, 'PASSKEY_CHALLENGE_INVALID');
+      const answer = sent?.response;
+      const fields = [answer?.response?.clientDataJSON, answer?.response?.attestationObject];
+      if (!answer?.id || answer.id !== answer.rawId || answer.type !== 'public-key' || !base64url.test(answer.id) || !fields.every((field) => typeof field === 'string' && base64url.test(field))) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      if ([...passkeys.values()].flat().some((passkey) => passkey.credentialId === answer.id)) return fail(route, 401, 'PASSKEY_VERIFICATION_FAILED');
+      passkeysOf(signedIn.email).push({ credentialId: answer.id, deviceName: sent?.deviceName ?? null, createdAt: new Date().toISOString() });
+      return ok(route, { credentialId: answer.id, aaguid: null, deviceName: sent?.deviceName ?? null }, 201);
     }
     if (path === '/v1/auth/passkey/list') return ok(route, passkeysOf(signedIn.email).map((passkey) => ({ ...passkey, aaguid: null, transports: ['internal'], lastUsedAt: null })));
     const methods = recoveryOf(signedIn.email);

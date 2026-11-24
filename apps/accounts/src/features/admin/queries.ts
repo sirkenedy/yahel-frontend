@@ -19,16 +19,18 @@ export const phoneVerifiedQuery = (api: Pick<ApiClient, 'me'>, account: string) 
     },
   });
 
-const CHALLENGE_LIFETIME = 4 * 60_000;
+// The server keeps a challenge 60 seconds: a fresh one is fetched before that while the step is open.
+const CHALLENGE_LIFETIME = 50_000;
 
 /** Asks the server for a passkey challenge ahead of the press, and is fetching until one is ready. The challenge itself stays inside the registrar. */
 export const passkeyChallengeQuery = (registrar: PasskeyRegistrar | null) =>
   queryOptions({
     queryKey: ['admin', 'passkey-challenge'],
     queryFn: async () => {
-      await registrar?.prepare(true);
+      await registrar?.prepare();
       return true;
     },
     staleTime: CHALLENGE_LIFETIME,
+    refetchInterval: CHALLENGE_LIFETIME,
     gcTime: 0,
   });

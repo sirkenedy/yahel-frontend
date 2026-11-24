@@ -10,7 +10,7 @@ const setup = (overrides: Partial<PasskeyEnvironment> = {}, get = vi.fn()) => {
     begin: vi.fn().mockResolvedValue({ challengeToken: 'pk-1', challenge: '-_8B', rpId: 'accounts.yahel.example', timeoutMs: 60_000, allowCredentials: [{ id: 'AQID' }], userVerification: 'required' }),
     finish: vi.fn().mockResolvedValue(tokens),
   };
-  const environment: PasskeyEnvironment = { credentials: { get }, supported: true, rpId: 'accounts.yahel.example', ...overrides };
+  const environment: PasskeyEnvironment = { credentials: { get }, supported: true, ...overrides };
   return { ceremony, get, client: createPasskeyClient(ceremony, environment) };
 };
 
