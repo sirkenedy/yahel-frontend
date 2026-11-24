@@ -133,7 +133,6 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await heading(page, 'Enter the code.').waitFor();
   if (stop === 'code') return;
   await page.getByLabel('6-character code').fill(phoneCode);
-  await proceed(page, 'Verify');
   await heading(page, 'Welcome to your new account.').waitFor();
   if (stop === 'welcome') return;
   await proceed(page, 'I understand');
@@ -175,7 +174,6 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await heading(page, 'Confirm with your bank.').waitFor();
   if (stop === 'card-code') return;
   await page.getByLabel('6-digit code').fill(card.code);
-  await proceed(page, 'Confirm');
 }
 
 /** Creates a workspace all the way to the paid order. */

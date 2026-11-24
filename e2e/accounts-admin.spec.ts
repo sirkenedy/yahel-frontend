@@ -20,7 +20,6 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await expect(page.getByRole('main')).toContainText(adminPhone.masked);
     expect(sent(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: '+2348035550142' });
     await codeBoxes(page).fill(phoneCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
     await expect(page.getByRole('button', { name: `Account: ${newAdmin.email}` })).toBeVisible();
@@ -102,10 +101,9 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
 
     // Six letters or digits, case-sensitive: the boxes take letters.
     await codeBoxes(page).fill('WRONG1');
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(codeBoxes(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
+    await codeBoxes(page).clear();
     await codeBoxes(page).fill(phoneCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
   });
 
