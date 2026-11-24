@@ -131,7 +131,6 @@ test.describe('personal account: an email the person already has', () => {
       await proceed(page);
       await page.getByLabel('Password', { exact: true }).fill(person.password);
       await proceed(page);
-      await page.getByRole('button', { name: 'Not now' }).click();
       await proceed(page, 'Skip');
       await page.getByRole('button', { name: 'Agree and create account' }).click();
       await heading(page, 'Check your inbox.').waitFor();
@@ -151,7 +150,6 @@ test.describe('personal account: an email the person already has', () => {
     await proceed(page);
     await page.getByLabel('Password', { exact: true }).fill(person.password);
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
 
@@ -171,7 +169,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await proceed(page);
     // The passkey is no longer asked for before the account exists.
     await expect(heading(page, 'Ways back in.')).toBeVisible();
-    await proceed(page);
+    await proceed(page, 'Skip');
     await expect(page.getByRole('definition').filter({ hasText: /^Password$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await heading(page, 'You’re in, Amara.').waitFor();
@@ -369,7 +367,6 @@ test.describe('personal account: what each question refuses', () => {
     await expect(page.getByText('Strong · 21 characters')).toBeVisible();
     await proceed(page);
 
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page);
     await expect(page.getByText('Add a phone number or an email, or choose Skip.')).toBeVisible();
     await page.getByLabel('Mobile number').fill('803');
@@ -416,7 +413,6 @@ test.describe('personal account: the review', () => {
     await page.getByRole('button', { name: 'Edit sign-in' }).click();
     await page.getByLabel('Password', { exact: true }).fill('Harmattan in Jos 2026!');
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await heading(page, 'Everything look right?').waitFor();
 
     await page.getByRole('button', { name: 'Edit recovery' }).click();
@@ -723,7 +719,6 @@ const answerOwnEmailTo = async (page: Page, email: string) => {
   await proceed(page);
   await page.getByLabel('Password', { exact: true }).fill(person.password);
   await proceed(page);
-  await page.getByRole('button', { name: 'Not now' }).click();
   await proceed(page, 'Skip');
   await page.getByRole('button', { name: 'Agree and create account' }).click();
   await heading(page, 'Check your inbox.').waitFor();
@@ -768,7 +763,6 @@ test.describe('personal account: an address someone else registered first', () =
     await proceed(page);
     await page.getByLabel('Password', { exact: true }).fill(pendingPassword);
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await heading(page, 'Check your inbox.').waitFor();
@@ -817,14 +811,12 @@ test.describe('personal account: what is forgotten, and when', () => {
     await signUpTo(page, 'recovery');
 
     await page.getByRole('link', { name: 'Back' }).click();
-    await page.getByRole('link', { name: 'Back' }).click();
     await expect(heading(page, 'Create a password.')).toBeVisible();
     await expect(passwordField(page)).toHaveValue('');
     await expect(page.getByText('Your password is saved. Leave this empty to keep it, or type a new one.')).toBeVisible();
     expect(await page.content()).not.toContain(person.password);
 
     await proceed(page);
-    await page.getByRole('button', { name: 'Not now' }).click();
     await proceed(page, 'Skip');
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();

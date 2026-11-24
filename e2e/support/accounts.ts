@@ -23,8 +23,8 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
       configurable: true,
       value: {
         get: async () => {
-          // Long enough for the waiting screen to be seen and asserted on.
-          await new Promise((resolve) => setTimeout(resolve, 400));
+          // Long enough for the waiting screen to be seen and asserted on; `waiting` never answers.
+          await new Promise((resolve) => (result === 'waiting' ? undefined : setTimeout(resolve, 400)));
           if (result === 'cancelled') throw new DOMException('The prompt was dismissed', 'NotAllowedError');
           return { rawId: bytes(1, 2, 3), response: { clientDataJSON: bytes(4), authenticatorData: bytes(5), signature: bytes(6), userHandle: null } };
         },

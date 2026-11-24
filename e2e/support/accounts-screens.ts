@@ -177,7 +177,8 @@ const screens: Screen[] = [
   {
     name: 'accounts passkey, waiting',
     open: async (page) => {
-      await openPasskeyStep(page, 'success');
+      // The real sign-in answers at once; a device that never answers keeps the waiting screen up to be checked.
+      await openPasskeyStep(page, 'waiting');
       await page.getByText('Waiting for this device').waitFor();
     },
   },

@@ -151,6 +151,8 @@ export interface MockApiOptions {
   remembered?: RememberedAccount[];
   /** Every request fails as if the connection had dropped. */
   offline?: boolean;
+  /** Puts an account in a workspace with another role than the seeded one, by its address. */
+  memberships?: Record<string, { organisation: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' }>;
   /** Sign-in attempts are refused by the rate limiter, which answers 429 under the general code `BAD_REQUEST`. */
   rateLimited?: boolean | { retryAfter: number; exposed: boolean };
 }
@@ -189,6 +191,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun', accountType: 'business' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true, membership: { organisation: 'Northwind Studio', role: 'OWNER' } },
     { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze', accountType: 'personal' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
+  for (const account of accounts) account.membership = options.memberships?.[account.profile.email] ?? account.membership;
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
   const tenants: { id: string; slug: string; domain: string }[] = [{ id: '64f000000000000000000200', slug: 'northwind-studio', domain: claimedDomain }];
   // Each account's passkeys by credential id, as the server stores them once a registration is verified.
