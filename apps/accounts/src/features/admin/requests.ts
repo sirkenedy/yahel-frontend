@@ -1,14 +1,12 @@
-import type { QueryClient } from '@tanstack/react-query';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { internationalNumber } from '../../flow/countries';
-import { confirmAndSignIn, resendConfirmation, signInOrConfirm } from '../../flow/email-confirmation';
-import type { ConfirmedSignIn } from '../../flow/email-confirmation';
+import { hasCode } from '../../flow/feedback';
 import { flowMessages as shared } from '../../flow/messages';
 import { say } from '../../flow/toasts';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { describeAdminFailure } from './feedback';
 import type { FailureContext } from './feedback';
-import type { AdminStep } from './machine';
+import type { AdminStep, PhoneNumber } from './machine';
 import { adminMessages as m } from './messages';
 import type { AdminStore } from './store';
 
@@ -18,72 +16,32 @@ export interface AdminRequestDeps {
   session: Session;
   registrar: PasskeyRegistrar | null;
   store: AdminStore;
-  queryClient: QueryClient;
   navigate: (step: AdminStep, options?: { replace?: boolean }) => void;
-  /** The address bar shows this step, even while a navigation away from it is still loading. */
-  isShown: (step: AdminStep) => boolean;
-}
-
-export interface PhoneNumber {
-  country: string;
-  number: string;
 }
 
 /**
- * Every request an administrator's first sign-in makes and where each outcome leads. Nothing here renders;
- * the provider turns these into `actions` and `meta.requests`. After signing in, where to go is the step
- * guards' to say: the flow asks for the phone and the guards move on past what is already done.
+ * Every request an administrator's first steps make and where each outcome leads. Nothing here renders; the
+ * provider turns these into `actions` and `meta.requests`. Before the session exists the phone is checked
+ * through the challenge registration or sign-in answered with, and checking its code is what signs in; an
+ * administrator already signed in whose phone is unconfirmed confirms it on the account instead.
  */
-export function useAdminRequests({ visit, session, registrar, store, queryClient, navigate, isShown }: AdminRequestDeps) {
-  const email = () => store.getState().email ?? '';
+export function useAdminRequests({ visit, session, registrar, store, navigate }: AdminRequestDeps) {
   /** Whose account it is once signed in: the session's, which outlives a reload, before the flow's own record. */
   const account = () => session.store.getState().profile ?? null;
   const describe = (context: FailureContext) => (error: unknown) => describeAdminFailure(error, context);
+  const challenge = () => store.getState().challengeToken;
 
-  /** The plain outcome of a sign-in, with the flow told what it needs. Nothing about a second step is kept: this flow cannot take one. */
-  const settle = (result: ConfirmedSignIn) => {
-    if (result.ok) {
-      store.dispatch({ type: 'signed-in' });
-      return 'signed-in' as const;
-    }
-    store.dispatch({ type: result.reason === 'mfa-required' ? 'second-step-required' : 'email-confirmed' });
-    return 'back-to-sign-in' as const;
+  const textPhone = async ({ country, number }: PhoneNumber) => {
+    const phone = internationalNumber(country, number);
+    const token = challenge();
+    if (token) await session.sendPhoneCheck(token, phone);
+    else await session.api.me.recovery.updatePhone({ phone });
   };
 
-  const password = useFlowRequest({
-    visit,
-    describe: describe('password'),
-    run: async ({ address, password: value }: { address: string; password: string }, { isCurrent }) => {
-      store.dispatch({ type: 'email-entered', email: address });
-      const result = await signInOrConfirm(session, email(), value);
-      // Whatever the answer, it moves the person, and the proof is held, only if they are still where they
-      // asked: not left, and not on the way somewhere else while that page loads.
-      if (!isCurrent() || !isShown('signin')) return 'left' as const;
-      if (result.ok || result.reason === 'mfa-required') return settle(result);
-      store.dispatch({ type: 'email-unconfirmed', password: value });
-      return 'confirm-email' as const;
-    },
-    onDone: (outcome) => {
-      if (outcome === 'signed-in') navigate('phone', { replace: true });
-      if (outcome === 'confirm-email') navigate('confirm-email');
-    },
-  });
-
-  const confirmEmail = useFlowRequest({
-    visit,
-    describe: describe('code'),
-    run: async (code: string) => settle(await confirmAndSignIn(session, email(), code, store.getState().provenPassword, () => store.dispatch({ type: 'email-confirmed' }))),
-    onDone: (outcome) => navigate(outcome === 'signed-in' ? 'phone' : 'signin', { replace: true }),
-  });
-
-  const resendEmailCode = useFlowRequest({
-    visit,
-    describe: describe('other'),
-    run: () => resendConfirmation(session, email(), store.getState().provenPassword),
-    onDone: () => say(shared.newCodeSent),
-  });
-
-  const textPhone = ({ country, number }: PhoneNumber) => session.api.me.recovery.updatePhone({ phone: internationalNumber(country, number) });
+  /** A challenge that can no longer be met is gone for good: the person signs in again for a new one. */
+  const loseChallengeOn = (...codes: string[]) => (error: unknown) => {
+    if (challenge() && hasCode(error, ...codes)) store.dispatch({ type: 'challenge-lost' });
+  };
 
   const sendPhoneCode = useFlowRequest({
     visit,
@@ -93,6 +51,8 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
       store.dispatch({ type: 'phone-code-sent', ...phone });
     },
     onDone: () => navigate('code'),
+    // Before a code is sent, a refused challenge can only be one that has expired or been used.
+    onFailed: loseChallengeOn('INVALID_TOKEN'),
   });
 
   const resendPhoneCode = useFlowRequest({
@@ -110,10 +70,14 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
     visit,
     describe: describe('code'),
     run: async (code: string) => {
-      await session.api.me.recovery.verifyPhone({ code });
+      const token = challenge();
+      // Meeting the challenge is what signs the administrator in.
+      if (token) await session.completePhoneCheck(token, code);
+      else await session.api.me.recovery.verifyPhone({ code });
       store.dispatch({ type: 'phone-verified' });
     },
     onDone: () => navigate('welcome', { replace: true }),
+    onFailed: loseChallengeOn('TOKEN_MAX_ATTEMPTS'),
   });
 
   /** Makes the passkey on the device and saves it to the account at once: the administrator is already signed in. */
@@ -137,21 +101,7 @@ export function useAdminRequests({ visit, session, registrar, store, queryClient
     },
   });
 
-  const signOut = useFlowRequest({
-    visit,
-    describe: describe('other'),
-    run: async () => {
-      // Signing out here always succeeds; a failed server call must not keep the person signed in on this device.
-      await session.signOut().catch(() => undefined);
-    },
-    onDone: () => {
-      store.dispatch({ type: 'reset' });
-      queryClient.clear();
-      navigate('signin', { replace: true });
-    },
-  });
-
-  return { password, confirmEmail, resendEmailCode, sendPhoneCode, resendPhoneCode, verifyPhone, passkey, signOut };
+  return { sendPhoneCode, resendPhoneCode, verifyPhone, passkey };
 }
 
 export type AdminRequests = ReturnType<typeof useAdminRequests>;

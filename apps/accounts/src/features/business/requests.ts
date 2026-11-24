@@ -1,6 +1,5 @@
-import type { AccountCapabilities, BillingContact, CardDetails, OrderRequest, PostalAddress, Schemas } from '@yahel/api-client';
+import type { AccountCapabilities, BillingContact, CardDetails, OrderRequest, PostalAddress, RegisterBusinessBody } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { isoBirthDate } from '../../flow/birth-date';
 import { internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { say } from '../../flow/toasts';
@@ -44,10 +43,11 @@ const contactOf = (state: BusinessState): BillingContact => ({ businessName: sta
 
 /**
  * What the design collects, as the backend's register-business endpoint takes it. `email` is the
- * administrator's new address: it is what they will sign in with. `slug` is made here because the design
- * never asks for one; `employeeCount` is the smallest team of the size chosen.
+ * administrator's new address: it is what they will sign in with. `contactEmail` is a mailbox they can open
+ * today, for reset links and setup updates. No date of birth is asked for a business (F-100). `slug` is made
+ * here because the design never asks for one; `employeeCount` is the smallest team of the size chosen.
  */
-export const registrationOf = (state: BusinessState, slug: string): Omit<Schemas['RegisterBusinessDto'], 'deviceId' | 'deviceName'> => ({
+export const registrationOf = (state: BusinessState, slug: string): RegisterBusinessBody => ({
   email: adminAddressOf(state),
   password: state.password ?? '',
   firstName: state.firstName,
@@ -55,9 +55,9 @@ export const registrationOf = (state: BusinessState, slug: string): Omit<Schemas
   businessName: state.businessName,
   slug,
   country: countryRecord(state.country),
-  dateOfBirth: state.birth ? isoBirthDate(state.birth) : '',
   employeeCount: smallestTeam[state.size],
   domain: domainOf(state),
+  ...(state.contactEmail ? { contactEmail: state.contactEmail } : {}),
 });
 
 /**
@@ -98,37 +98,30 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
   });
 
   const reject = (rejection: Rejection): CreateOutcome => {
-    const paid = state().payment;
-    // Nothing was created, so an authorisation is let go. The real checkout does this itself (see the stand-in's header).
-    if (paid && billing) void billing.release(paid.id).catch(() => undefined);
-    store.dispatch({ type: 'answer-rejected', rejection, returnToCheckout: billing !== null });
+    store.dispatch({ type: 'answer-rejected', rejection });
     return 'rejected';
   };
 
   /**
-   * The address already has a sign-in. If the password just chosen opens it and the address is still to
-   * be confirmed, it is this person's workspace: made by an attempt whose answer was lost, or by them
-   * on an earlier visit. Anything else is someone's existing account, and the username is refused.
+   * The address already has a sign-in. If the password just chosen answers with a phone check, it is this person's
+   * administrator, made by an attempt whose answer was lost or on an earlier visit, still waiting for its phone:
+   * the check is theirs to meet. Anything else (a session, a second step, a wrong password) is someone's existing
+   * account, and the username is refused. Resolves the phone check, or `null`.
    */
-  const ownsExisting = async () => {
-    // The probe may open a session for the new address. Whatever happens, that one is closed and the account this
-    // tab was using before, if any, is used again: the other accounts in this browser are never signed out.
+  const claimExisting = async () => {
+    // A sign-in that opens a session for that address is closed again, and the account this tab was using, if any,
+    // is used again: the other accounts in this browser are never signed out.
     const before = { slot: session.slotInUse(), handle: session.store.getState().handle };
-    const restore = async () => {
+    try {
+      const result = await session.signIn(adminAddressOf(state()), state().password ?? '');
+      return !result.ok && result.reason === 'phone-required' ? result.challengeToken : null;
+    } catch (error) {
+      if (hasCode(error, 'INVALID_CREDENTIALS')) return null;
+      throw error;
+    } finally {
       const opened = session.slotInUse();
       if (opened !== null && opened !== before.slot) await session.signOut(opened).catch(() => undefined);
       if (before.slot !== null && session.slotInUse() !== before.slot) await session.switchTo(before.slot, before.handle ?? undefined);
-    };
-    try {
-      await session.signIn(adminAddressOf(state()), state().password ?? '');
-      // A confirmed account that the password opens was not made here. This flow signs nobody in.
-      return false;
-    } catch (error) {
-      if (hasCode(error, 'EMAIL_NOT_VERIFIED')) return true;
-      if (hasCode(error, 'INVALID_CREDENTIALS')) return false;
-      throw error;
-    } finally {
-      await restore();
     }
   };
 
@@ -138,17 +131,17 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     for (const [attempt, slug] of slugs.entries()) {
       try {
         const made = await session.registerBusiness(registrationOf(answers, slug));
-        store.dispatch({ type: 'workspace-created', tenantId: made.tenant.id });
+        store.dispatch({ type: 'workspace-created', tenantId: made.tenant.id, challengeToken: made.challengeToken });
         return null;
       } catch (error) {
         // Two businesses can share a name; only the short name made from it collided, so the one made from the domain is tried.
         if (hasCode(error, 'DUPLICATE_RECORD') && attempt < slugs.length - 1) continue;
-        if (hasCode(error, 'USER_UNDERAGE')) return reject({ step: 'you', reason: 'underage' });
         if (hasCode(error, 'PUBLIC_EMAIL_NOT_ALLOWED')) return reject(answers.domainSource === 'bought' ? { step: 'find', reason: 'claimed' } : { step: 'domain', reason: 'public' });
         if (hasCode(error, 'DOMAIN_CONFLICT', 'DOMAIN_ALREADY_CLAIMED')) return reject({ step: answers.domainSource === 'bought' ? 'find' : 'domain', reason: 'claimed' });
         if (!hasCode(error, 'EMAIL_ALREADY_EXISTS')) throw error;
-        if (!(await ownsExisting())) return reject({ step: 'admin', reason: 'taken' });
-        store.dispatch({ type: 'workspace-created', tenantId: null });
+        const challengeToken = await claimExisting();
+        if (!challengeToken) return reject({ step: 'admin', reason: 'taken' });
+        store.dispatch({ type: 'workspace-created', tenantId: null, challengeToken });
         return null;
       }
     }
@@ -156,25 +149,9 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
   };
 
   /**
-   * Ties the authorised payment to the workspace, once. This is when a real checkout would take money. With no
-   * workspace named (a sign-in proven this person's, which may be a personal one never confirmed, F-72) nothing
-   * is taken: the authorisation is let go.
-   */
-  const settleOrder = async () => {
-    const { payment, creation, marketing } = state();
-    if (!billing || !payment?.authorised || creation.settled) return;
-    if (creation.tenantId === null) {
-      await billing.release(payment.id);
-      store.dispatch({ type: 'order-settled' });
-      return;
-    }
-    await billing.complete(payment.id, { tenantId: creation.tenantId, domain: domainOf(state()), marketing });
-    store.dispatch({ type: 'order-settled' });
-  };
-
-  /**
-   * Creates the workspace, then settles its order, recording each as it is done. Started again after a
-   * failure it skips what is recorded, so the workspace is created once however often it is retried.
+   * Creates the workspace, recording that it is done. Started again after a failure it skips what is recorded,
+   * so the workspace is created once however often it is retried. Nothing is paid yet: that comes after the
+   * administrator's phone is checked and they are signed in.
    */
   const create = useFlowRequest({
     visit,
@@ -183,7 +160,6 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     run: async (): Promise<CreateOutcome> => {
       const stopped = state().creation.created ? null : await register();
       if (stopped) return stopped;
-      await settleOrder();
       store.dispatch({ type: 'creation-finished' });
       return 'ready';
     },
@@ -195,6 +171,15 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     if (!create.start()) return;
     store.dispatch({ type: 'creation-started' });
     navigate('creating', options);
+  };
+
+  /** Ties the authorised payment to the workspace, once: this is when a real checkout takes money and registers a bought domain. */
+  const settleOrder = async () => {
+    const { payment, creation, marketing } = state();
+    if (!billing || !payment?.authorised || creation.settled) return;
+    // A workspace whose creating answer was lost is named by the session's own tenant on the server; the stand-in takes none.
+    await billing.complete(payment.id, { tenantId: creation.tenantId ?? '', domain: domainOf(state()), marketing });
+    store.dispatch({ type: 'order-settled' });
   };
 
   /**
@@ -230,8 +215,9 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
       const outcome = await billing.confirm(payment.id, code);
       if (outcome !== 'authorised') throw new Refused(outcome === 'spent' ? 'code-spent' : outcome);
       store.dispatch({ type: 'payment-authorised' });
+      await settleOrder();
     },
-    onDone: () => startCreating({ replace: true }),
+    onDone: () => navigate('paid', { replace: true }),
   });
 
   const resendCardCode = useFlowRequest({
@@ -245,12 +231,12 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
     onDone: () => say(m.bankResent),
   });
 
-  /** Gives up on the card being confirmed and returns to checkout, where another can be typed. */
+  /** Gives up on the card being confirmed and returns to the payment page, where another can be typed. */
   const changeCard = () => {
     const payment = state().payment;
     if (payment && billing) void billing.release(payment.id).catch(() => undefined);
     store.dispatch({ type: 'payment-dropped' });
-    navigate('checkout', { replace: true });
+    navigate('gateway', { replace: true });
   };
 
   return { checkDomain, applyPromo, create, pay, confirmCard, resendCardCode, startCreating, changeCard };

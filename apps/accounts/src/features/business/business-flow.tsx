@@ -5,7 +5,6 @@ import type { FlowDirection } from '@yahel/ui';
 import { createContext, use } from 'react';
 import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
-import type { BirthDate } from '../../flow/dates';
 import type { ScreenFacts } from '../../flow/step-frame';
 import { useDebouncedValue } from '../../flow/use-debounced-value';
 import { requestStatus as status } from '../../flow/use-flow-request';
@@ -20,16 +19,14 @@ import type { BusinessRequests } from './requests';
 import type { BusinessStore } from './store';
 
 const SEARCH_DELAY = 350;
-const pricedSteps: readonly BusinessStep[] = ['plan', 'checkout', 'card-code'];
+const pricedSteps: readonly BusinessStep[] = ['plan', 'checkout', 'gateway', 'card-code', 'paid'];
 
 /** Something asked of the server while a step is on screen: still coming, arrived, or not coming. */
 export type Loaded<Value> = { status: 'loading' | 'failed'; value: null } | { status: 'ready'; value: Value };
 
-export type EditableRow = 'business' | 'domain' | 'admin' | 'plan' | 'address';
-
 export interface BusinessFlowValue {
-  /** The answers, without the password: no step is ever handed it back. */
-  state: Omit<BusinessState, 'password' | 'seats'> & {
+  /** The answers, without the password or the phone check: no step is ever handed either. */
+  state: Omit<BusinessState, 'password' | 'seats' | 'challengeToken'> & {
     step: BusinessStep;
     hasPassword: boolean;
     /** The domain the workspace will use, owned or bought. */
@@ -45,7 +42,7 @@ export interface BusinessFlowValue {
   };
   actions: {
     enterBusiness: (answers: { businessName: string; size: TeamSize; country: string }) => void;
-    enterYou: (answers: { firstName: string; lastName: string; contactEmail: string; birth: BirthDate }) => void;
+    enterYou: (answers: { firstName: string; lastName: string; contactEmail: string }) => void;
     chooseDomainSource: (source: BusinessState['domainSource']) => void;
     checkDomain: (domain: string) => void;
     confirmDomain: () => void;
@@ -62,7 +59,11 @@ export interface BusinessFlowValue {
     removePromo: () => void;
     choosePlan: () => void;
     chooseSeats: (seats: number) => void;
-    edit: (row: EditableRow) => void;
+    changePlan: () => void;
+    /** The address invoices go to, asked from checkout for a domain already owned. */
+    editContact: () => void;
+    /** From checkout to the payment partner's page. */
+    toPayment: () => void;
     /** Hands the card to the checkout. It is not kept: of it, only the network and last four digits are remembered. */
     pay: (card: CardDetails) => void;
     confirmCard: (code: string) => void;
@@ -70,6 +71,10 @@ export interface BusinessFlowValue {
     useDifferentCard: () => void;
     /** Tries again to create the workspace, carrying on from where it stopped. */
     createWorkspace: () => void;
+    /** From Ready to the phone check, which signs the administrator in. */
+    checkPhone: () => void;
+    /** From the paid order to Admin, by way of the passkey it recommends. */
+    goToAdmin: () => void;
     /** Forgets every answer and returns to the first screen. */
     startAgain: () => void;
     retryPricing: () => void;
@@ -87,8 +92,6 @@ export interface BusinessFlowValue {
 
 export interface BusinessFlowLinks {
   signIn: string;
-  /** Where the administrator signs in once the workspace exists. */
-  adminSignIn: string;
   personal: string;
   help: string | null;
   businessTerms: string | null;
@@ -112,10 +115,12 @@ export interface BusinessFlowProviderProps {
   facts: BusinessFacts;
   links: BusinessFlowLinks;
   navigate: (step: BusinessStep, options?: { replace?: boolean }) => void;
+  /** Leaves for the administrator's phone check, which workspace sign-up hands its challenge to. */
+  checkPhone: () => void;
+  /** Leaves for Admin's first steps, once the order is paid. */
+  goToAdmin: () => void;
   children: ReactNode;
 }
-
-const editSteps = { business: 'start', domain: 'domain-question', admin: 'admin', plan: 'plan', address: 'registrant' } as const satisfies Record<EditableRow, BusinessStep>;
 
 const loaded = <Value,>(query: { data: Value | undefined; isError: boolean }): Loaded<Value> => (query.data !== undefined ? { status: 'ready', value: query.data } : { status: query.isError ? 'failed' : 'loading', value: null });
 
@@ -124,9 +129,9 @@ const loaded = <Value,>(query: { data: Value | undefined; isError: boolean }): L
  * store (`machine.ts`), the requests from `requests.ts`; this component only joins them, and holds the three
  * things the server is asked while answers are being given: the plan, the order's sums and the domain search.
  */
-export function BusinessFlowProvider({ step, session, capabilities, store, facts, links, navigate, children }: BusinessFlowProviderProps) {
-  const { password, seats: chosenSeats, ...flow } = useStore(store);
-  const whole: BusinessState = { ...flow, password, seats: chosenSeats };
+export function BusinessFlowProvider({ step, session, capabilities, store, facts, links, navigate, checkPhone, goToAdmin, children }: BusinessFlowProviderProps) {
+  const { password, seats: chosenSeats, challengeToken, ...flow } = useStore(store);
+  const whole: BusinessState = { ...flow, password, seats: chosenSeats, challengeToken };
   const travel = useStepTravel(step, directionOf);
   const billing = capabilities.workspaceBilling;
   const priced = facts.billing && pricedSteps.includes(step);
@@ -178,12 +183,11 @@ export function BusinessFlowProvider({ step, session, capabilities, store, facts
       },
       typeSearch: (query) => store.dispatch({ type: 'search-typed', query }),
       pickDomain: (offer) => store.dispatch({ type: 'domain-picked', offer }),
-      continueWithDomain: () => advance('find'),
+      // From the search to the domain found, and from there to its registrant's address.
+      continueWithDomain: () => advance(step === 'found' ? 'found' : 'find'),
       enterAddress: (address) => {
         store.dispatch({ type: 'address-entered', address });
-        // A business that owns its domain is asked for its address from checkout, and goes back there.
-        if (store.getState().domainSource === 'bought') advance('registrant');
-        else navigate('checkout');
+        advance('registrant');
       },
       enterAdmin: (answers) => {
         store.dispatch({ type: 'admin-entered', ...answers });
@@ -197,15 +201,16 @@ export function BusinessFlowProvider({ step, session, capabilities, store, facts
         advance('plan');
       },
       chooseSeats: (seats) => store.dispatch({ type: 'seats-chosen', seats }),
-      edit: (row) => {
-        store.dispatch({ type: 'edit-started' });
-        navigate(editSteps[row]);
-      },
+      changePlan: () => navigate('plan'),
+      editContact: () => navigate('registrant'),
+      toPayment: () => advance('checkout'),
       pay: requests.pay.start,
       confirmCard: requests.confirmCard.start,
       resendCardCode: requests.resendCardCode.start,
       useDifferentCard: requests.changeCard,
       createWorkspace: () => requests.startCreating(),
+      checkPhone,
+      goToAdmin,
       startAgain: () => {
         store.dispatch({ type: 'reset' });
         navigate('start', { replace: true });

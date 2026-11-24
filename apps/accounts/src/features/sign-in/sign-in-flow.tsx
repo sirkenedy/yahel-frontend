@@ -93,6 +93,8 @@ export interface SignInFlowProviderProps {
   leave: () => void;
   /** Someone sent here to sign in goes back as soon as they are, instead of seeing Done. */
   returning?: boolean;
+  /** Takes a phone check sign-in answered with (an administrator whose phone is unverified) to the phone step. */
+  checkPhone?: (email: string, challengeToken: string) => void;
   /** Addresses outside the flow that a whole-screen state can lead to. */
   links?: { signUp?: string | null; help?: string | null };
   children: ReactNode;
@@ -103,7 +105,7 @@ export interface SignInFlowProviderProps {
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
  * about the session, the API or the router.
  */
-export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, isShown, leave, returning = false, links, children }: SignInFlowProviderProps) {
+export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, isShown, leave, returning = false, checkPhone = () => undefined, links, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -116,7 +118,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
 
   const travel = useStepTravel(step, directionOf);
 
-  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave: returning ? leave : null, recoveryOptions: () => recoveryOptions.data ?? [] });
+  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave: returning ? leave : null, checkPhone, recoveryOptions: () => recoveryOptions.data ?? [] });
 
   const facts = { signedIn: profile !== null, knownAccounts: accountList.isError ? null : accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
   const back = backOf(step, { ...flow, provenPassword }, facts);

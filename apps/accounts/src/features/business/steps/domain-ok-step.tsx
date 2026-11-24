@@ -7,7 +7,7 @@ export function DomainOkStep() {
   const { state, actions, meta } = useBusinessFlow();
 
   return (
-    <StepFrame title={m.domainOkTitle(state.businessName)} lede={m.domainOkLede}>
+    <StepFrame title={m.domainOkTitle} lede={m.domainOkLede(state.ownedDomain)}>
       <FlowStep.Body>
         <FlowPreview label={m.teamAddresses} tag={m.yourDomain} lead={m.anyone}>
           {state.ownedDomain}

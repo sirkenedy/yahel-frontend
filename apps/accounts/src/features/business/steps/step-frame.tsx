@@ -25,7 +25,7 @@ interface StepFrameProps {
 /** The shared step frame, given what the workspace flow knows: the way back, how far along the questions are, and where its feedback can lead. */
 export function StepFrame({ title, lede, requests, feedback, toFix, next, lead, children }: StepFrameProps) {
   const { meta } = useBusinessFlow();
-  const { links, offers } = meta;
+  const { links } = meta;
   const progress = meta.progress ? (
     <FlowProgress current={meta.progress.current} total={meta.progress.total}>
       {m.progressParts[meta.progress.part]}
@@ -41,7 +41,7 @@ export function StepFrame({ title, lede, requests, feedback, toFix, next, lead, 
       feedback={feedback}
       toFix={toFix}
       next={{
-        answers: offers.billing ? { label: m.backToCheckout, href: stepPath('checkout') } : { label: m.backToAdmin, href: stepPath('admin') },
+        answers: { label: m.backToAdmin, href: stepPath('admin') },
         'sign-in': { label: m.signIn, href: links.signIn },
         'reset-password': { label: m.resetAdminPassword, href: links.signIn },
         support: links.help ? { label: m.contactSupport, href: links.help } : null,

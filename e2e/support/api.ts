@@ -52,9 +52,9 @@ export const claimedDomain = 'northwind.example';
 
 export const requestId = 'req-e2e-7F3K2Q';
 /**
- * The administrator of the seeded workspace (`claimedDomain`), made by workspace sign-up and never confirmed:
- * the backend keeps such an identity, checks its password and then answers `EMAIL_NOT_VERIFIED`, as it does
- * for any unconfirmed registration. The admin-access stand-in names the demo workspace, Northwind Studio.
+ * The administrator of the seeded workspace (`claimedDomain`), made by workspace sign-up whose phone was never
+ * checked: the backend takes the address as verified and answers a right password with a phone challenge instead
+ * of a session, until a texted code meets it. The admin-access stand-in names the demo workspace, Northwind Studio.
  */
 export const newAdmin = { email: 'kayode@northwind.example', password: 'Northwind Admin 2026!', firstName: 'Kayode' };
 
@@ -93,6 +93,8 @@ interface Account {
   twoStep: boolean;
   emailVerified: boolean;
   suspended?: boolean;
+  /** An administrator whose phone is still to be checked: no session until a texted code meets the challenge sign-in answers with. */
+  phoneRequired?: boolean;
 }
 
 const emptyRecovery = () => ({
@@ -169,7 +171,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
     { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
     { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun' }, password: newAdmin.password, twoStep: false, emailVerified: false },
+    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true },
     { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
@@ -177,6 +179,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
+  // Phone checks: issued by register-business and by a sign-in while the phone is unverified. Each takes one number and five tries.
+  const phoneChecks = new Map<string, { account: (typeof accounts)[number]; phone: string | null; attempts: number; used: boolean }>();
+  const phoneCheckFor = (account: (typeof accounts)[number]) => {
+    const challengeToken = `phone-check-${phoneChecks.size + 1}`;
+    phoneChecks.set(challengeToken, { account, phone: null, attempts: 0, used: false });
+    return challengeToken;
+  };
 
   await page.route('**/api/v1/**', async (incoming) => {
     const request = incoming.request();
@@ -253,15 +262,17 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     }
     if (path === '/v1/auth/register-business') {
       // The order of the checks is the backend's (`auth.service.ts`, `registerBusiness`): the body, the age, a public domain, the address, the domain.
-      const sent = (request.postDataJSON() ?? {}) as { email?: string; password?: string; firstName?: string; lastName?: string; businessName?: string; slug?: string; country?: { name?: string; code?: string; currency?: string }; dateOfBirth?: string; employeeCount?: number; domain?: string };
+      const sent = (request.postDataJSON() ?? {}) as { email?: string; password?: string; firstName?: string; lastName?: string; businessName?: string; slug?: string; country?: { name?: string; code?: string; currency?: string }; dateOfBirth?: string; employeeCount?: number; domain?: string; contactEmail?: string };
       const email = (sent.email ?? '').toLowerCase();
       const domain = (sent.domain ?? '').toLowerCase();
       const wellFormed =
         /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && meetsPasswordPolicy(sent.password ?? '') && Boolean(sent.firstName) && typeof sent.lastName === 'string' && Boolean(sent.businessName) && (sent.businessName ?? '').length <= 100 &&
-        /^[a-z0-9-]{2,50}$/.test(sent.slug ?? '') && Boolean(sent.country?.name) && /^[A-Z]{2,3}$/.test(sent.country?.code ?? '') && /^[A-Z]{3}$/.test(sent.country?.currency ?? '') && !Number.isNaN(Date.parse(sent.dateOfBirth ?? '')) &&
+        /^[a-z0-9-]{2,50}$/.test(sent.slug ?? '') && Boolean(sent.country?.name) && /^[A-Z]{2,3}$/.test(sent.country?.code ?? '') && /^[A-Z]{3}$/.test(sent.country?.currency ?? '') && (sent.dateOfBirth === undefined || !Number.isNaN(Date.parse(sent.dateOfBirth))) &&
+        (sent.contactEmail === undefined || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(sent.contactEmail)) &&
         Number.isInteger(sent.employeeCount) && (sent.employeeCount ?? 0) >= 1 && /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain);
       if (!wellFormed) return fail(route, 422, 'VALIDATION_ERROR');
-      if (ageOf(sent.dateOfBirth ?? '') < (sent.country?.code === strictCountry ? 16 : MIN_AGE)) return fail(route, 403, 'USER_UNDERAGE');
+      // The date of birth is optional for a business; when given, the age is still checked.
+      if (sent.dateOfBirth !== undefined && ageOf(sent.dateOfBirth) < (sent.country?.code === strictCountry ? 16 : MIN_AGE)) return fail(route, 403, 'USER_UNDERAGE');
       if (domain === publicEmailDomain || domain === mailDomain) return fail(route, 400, 'PUBLIC_EMAIL_NOT_ALLOWED');
       if (accounts.some((known) => known.profile.email === email)) return fail(route, 409, 'EMAIL_ALREADY_EXISTS');
       if (tenants.some((tenant) => tenant.domain === domain)) return fail(route, 409, 'DOMAIN_CONFLICT');
@@ -269,8 +280,33 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (tenants.some((tenant) => tenant.slug === sent.slug)) return fail(route, 409, 'DUPLICATE_RECORD');
       const id = `64f0000000000000000002${tenants.length}0`;
       tenants.push({ id, slug: sent.slug ?? '', domain });
-      accounts.push({ profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null }, password: sent.password ?? '', twoStep: false, emailVerified: false });
-      return ok(route, { message: 'Registration successful. Verify your email to complete setup, then add the DNS record shown below.', identity: { id: `64f00000000000000000011${accounts.length - 1}`, email, emailVerified: false }, tenant: { id, slug: sent.slug, displayName: sent.businessName, status: 'pending_setup' }, domain: { domain, status: 'pending', verification: { type: 'TXT', host: `_yahel-verify.${domain}`, value: 'yahel-verify=e2e' } } }, 201);
+      // The address is taken as verified and no email is sent; the session comes once a texted code meets the phone check.
+      const made = { profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null }, password: sent.password ?? '', twoStep: false, emailVerified: true, phoneRequired: true };
+      accounts.push(made);
+      return ok(route, { message: 'Workspace created. Verify a phone number to sign in.', phoneRequired: true, challengeToken: phoneCheckFor(made), identity: { id: made.profile.id, email, emailVerified: true }, tenant: { id, slug: sent.slug, displayName: sent.businessName, status: 'pending_setup' }, domain: { domain, status: 'pending', verification: { type: 'TXT', host: `_yahel-verify.${domain}`, value: 'yahel-verify=e2e' } } }, 201);
+    }
+    if (path === '/v1/auth/phone-challenge/send') {
+      const check = phoneChecks.get(body?.challengeToken ?? '');
+      if (!check || check.used) return fail(route, 401, 'INVALID_TOKEN');
+      const digits = (body?.phone ?? '').replace(/\D/g, '');
+      if (digits.length < 8) return fail(route, 400, 'BAD_REQUEST');
+      check.phone = digits;
+      return ok(route, { message: 'Code sent.', resendInSeconds: 30, sendsLeft: 4 });
+    }
+    if (path === '/v1/auth/phone-challenge/verify') {
+      const check = phoneChecks.get(body?.challengeToken ?? '');
+      if (!check || check.used || !check.phone) return fail(route, 401, 'INVALID_TOKEN');
+      if (body?.code !== phoneCode) {
+        check.attempts += 1;
+        if (check.attempts < MAX_SECOND_STEP_ATTEMPTS) return fail(route, 401, 'INVALID_TOKEN');
+        check.used = true;
+        return fail(route, 429, 'TOKEN_MAX_ATTEMPTS');
+      }
+      check.used = true;
+      check.account.phoneRequired = false;
+      const methods = recoveryOf(check.account.profile.email);
+      methods.phone = { ...methods.phone, configured: true, verified: true, value: `***${check.phone.slice(-4)}` };
+      return tokensFor(check.account);
     }
     if (path === '/v1/auth/verify-email') {
       const account = accounts.find((known) => known.profile.email === body?.email?.toLowerCase());
@@ -286,6 +322,8 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!account) return fail(route, 401, 'INVALID_CREDENTIALS');
       if (!account.emailVerified) return fail(route, 403, 'EMAIL_NOT_VERIFIED');
       if (account.suspended) return fail(route, 403, 'FORBIDDEN');
+      // Before the second step: an administrator whose phone is unverified gets a phone check, not a session.
+      if (account.phoneRequired) return ok(route, { phoneRequired: true, challengeToken: phoneCheckFor(account) }, 201);
       if (!account.twoStep) return tokensFor(account);
       const challengeToken = `challenge-${challenges.size + 1}`;
       challenges.set(challengeToken, { account, attempts: 0 });

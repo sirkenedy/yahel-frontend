@@ -1,48 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { adminSteps, backOf, directionOf, initialAdminState, reduce, resumeStep, stepOfPath, stepPath } from './machine';
-import type { AdminEvent, AdminFacts } from './machine';
+import type { AdminEvent, AdminFacts, Handover } from './machine';
 
 const facts = (overrides: Partial<AdminFacts> = {}): AdminFacts => ({ signedIn: false, phoneVerified: false, hasPasskey: false, ...overrides });
 const signedIn = (overrides: Partial<AdminFacts> = {}) => facts({ signedIn: true, ...overrides });
 const after = (...events: AdminEvent[]) => events.reduce(reduce, initialAdminState);
-const handover = { email: 'amara@harbourline.example', organisation: 'Harbourline Studio' };
+const handover: Handover = { email: 'amara@harbourline.example', organisation: 'Harbourline Studio', challengeToken: 'pc-1', phone: { country: 'NG', number: '803 555 0142' }, continueToPlan: true };
 
 describe('admin machine: what is remembered', () => {
-  it('takes the address and the name workspace sign-up hands over, and keeps them against a typed address', () => {
-    const state = after({ type: 'handed-over', handover }, { type: 'email-entered', email: 'someone@else.example' });
-
-    expect(state).toMatchObject({ email: handover.email, organisation: handover.organisation, handedOver: true });
+  it('takes what workspace sign-up hands over: the address, the name, the phone check and a number to start from', () => {
+    expect(after({ type: 'handed-over', handover })).toMatchObject({ email: handover.email, organisation: handover.organisation, challengeToken: 'pc-1', suggestedPhone: handover.phone, continueToPlan: true, handedOver: true });
   });
 
-  it('starts again for a different typed address, and keeps everything for the same one', () => {
-    const typed = after({ type: 'email-entered', email: 'kayode@northwind.example' }, { type: 'email-unconfirmed', password: 'pw' });
+  it('takes a phone check sign-in answered with, starting afresh for that address', () => {
+    const before = after({ type: 'handed-over', handover }, { type: 'welcomed' });
 
-    expect(reduce(typed, { type: 'email-entered', email: 'kayode@northwind.example' })).toBe(typed);
-    expect(reduce(typed, { type: 'email-entered', email: 'ada@northwind.example' })).toEqual({ ...initialAdminState, email: 'ada@northwind.example' });
+    expect(reduce(before, { type: 'phone-required', email: 'kayode@northwind.example', challengeToken: 'pc-2' })).toEqual({ ...initialAdminState, email: 'kayode@northwind.example', challengeToken: 'pc-2' });
   });
 
-  it('holds a proven password only until the address is confirmed, the proof is dropped, or sign-in finishes', () => {
-    const proven = after({ type: 'handed-over', handover }, { type: 'email-unconfirmed', password: 'pw' });
-    expect(proven.provenPassword).toBe('pw');
-
-    expect(reduce(proven, { type: 'email-confirmed' })).toMatchObject({ provenPassword: null, signInPrompt: 'email-confirmed' });
-    expect(reduce(proven, { type: 'proof-dropped' }).provenPassword).toBeNull();
-    expect(reduce(proven, { type: 'signed-in' })).toMatchObject({ provenPassword: null, signInPrompt: null });
-    expect(reduce(proven, { type: 'second-step-required' })).toMatchObject({ provenPassword: null, signInPrompt: 'second-step' });
-    expect(reduce(proven, { type: 'reset' })).toBe(initialAdminState);
-  });
-
-  it('dropping a proof that is not held changes nothing', () => {
-    const state = after({ type: 'handed-over', handover });
-
-    expect(reduce(state, { type: 'proof-dropped' })).toBe(state);
-  });
-
-  it('keeps the number a code was texted to until it is confirmed', () => {
-    const sent = after({ type: 'phone-code-sent', country: 'NG', number: '803 555 0142' });
+  it('keeps the number a code was texted to until it is confirmed, and spends the check when it is', () => {
+    const sent = after({ type: 'handed-over', handover }, { type: 'phone-code-sent', country: 'NG', number: '803 555 0142' });
     expect(sent.phone).toEqual({ country: 'NG', number: '803 555 0142' });
 
-    expect(reduce(sent, { type: 'phone-verified' })).toMatchObject({ phone: null, phoneVerified: true });
+    expect(reduce(sent, { type: 'phone-verified' })).toMatchObject({ phone: null, phoneVerified: true, challengeToken: null });
+  });
+
+  it('forgets a check that can no longer be met', () => {
+    expect(after({ type: 'handed-over', handover }, { type: 'phone-code-sent', country: 'NG', number: '8035550142' }, { type: 'challenge-lost' })).toMatchObject({ challengeToken: null, phone: null });
   });
 
   it('records the welcome and the passkey', () => {
@@ -51,18 +35,17 @@ describe('admin machine: what is remembered', () => {
 });
 
 describe('admin machine: which step can honestly be shown', () => {
-  it('signed out, only sign-in, and the confirm step while a proven password is held', () => {
-    const proven = after({ type: 'email-entered', email: 'kayode@northwind.example' }, { type: 'email-unconfirmed', password: 'pw' });
+  it('with no session and no phone check, nothing here: sign-in comes first', () => {
+    for (const step of adminSteps) expect(resumeStep(step, initialAdminState, facts())).toBe('sign-in');
+  });
 
-    for (const step of adminSteps.filter((step) => step !== 'confirm-email')) expect(resumeStep(step, proven, facts())).toBe('signin');
-    expect(resumeStep('confirm-email', proven, facts())).toBe('confirm-email');
-    expect(resumeStep('confirm-email', reduce(proven, { type: 'proof-dropped' }), facts())).toBe('signin');
-    expect(resumeStep('confirm-email', initialAdminState, facts())).toBe('signin');
+  it('with a phone check and no session, only the phone, and its code once one was texted', () => {
+    const waiting = after({ type: 'handed-over', handover });
+    for (const step of adminSteps) expect(resumeStep(step, waiting, facts())).toBe('phone');
+    expect(resumeStep('code', reduce(waiting, { type: 'phone-code-sent', country: 'NG', number: '8035550142' }), facts())).toBe('code');
   });
 
   it('signed in, the phone comes first, and its code only once one was texted', () => {
-    expect(resumeStep('signin', initialAdminState, signedIn())).toBe('phone');
-    expect(resumeStep('confirm-email', initialAdminState, signedIn())).toBe('phone');
     expect(resumeStep('code', initialAdminState, signedIn())).toBe('phone');
     expect(resumeStep('code', after({ type: 'phone-code-sent', country: 'NG', number: '8035550142' }), signedIn())).toBe('code');
   });
@@ -72,13 +55,11 @@ describe('admin machine: which step can honestly be shown', () => {
     expect(resumeStep('welcome', after({ type: 'phone-verified' }), signedIn())).toBe('welcome');
     expect(resumeStep('welcome', initialAdminState, signedIn({ phoneVerified: true }))).toBe('welcome');
     expect(resumeStep('phone', initialAdminState, signedIn({ phoneVerified: true }))).toBe('welcome');
-    expect(resumeStep('code', after({ type: 'phone-code-sent', country: 'NG', number: '8035550142' }), signedIn({ phoneVerified: true }))).toBe('welcome');
   });
 
   it('nothing past the welcome can be reached around it, and the passkey prompt only once asked for', () => {
     const verified = after({ type: 'phone-verified' });
     expect(resumeStep('add-passkey', verified, signedIn())).toBe('welcome');
-    expect(resumeStep('passkey', verified, signedIn())).toBe('welcome');
 
     const welcomed = reduce(verified, { type: 'welcomed' });
     expect(resumeStep('add-passkey', welcomed, signedIn())).toBe('add-passkey');
@@ -86,26 +67,17 @@ describe('admin machine: which step can honestly be shown', () => {
     expect(resumeStep('passkey', reduce(welcomed, { type: 'passkey-started' }), signedIn())).toBe('passkey');
   });
 
-  it('once a passkey exists the prompt is not shown again: the passkey step leads on to Admin', () => {
+  it('once a passkey exists the prompt is not shown again', () => {
     const started = after({ type: 'phone-verified' }, { type: 'welcomed' }, { type: 'passkey-started' });
 
     expect(resumeStep('passkey', reduce(started, { type: 'passkey-saved' }), signedIn())).toBe('add-passkey');
     expect(resumeStep('passkey', started, signedIn({ hasPasskey: true }))).toBe('add-passkey');
-  });
-
-  it('arriving signed in at any step lands on the first thing still to do', () => {
-    const verified = signedIn({ phoneVerified: true });
-
-    expect(resumeStep('signin', initialAdminState, verified)).toBe('welcome');
-    expect(resumeStep('signin', after({ type: 'welcomed' }), verified)).toBe('add-passkey');
   });
 });
 
 describe('admin machine: addresses and directions', () => {
   it('has a Back only where there is a step to return to', () => {
     expect(adminSteps.map((step) => [step, backOf(step)])).toEqual([
-      ['signin', null],
-      ['confirm-email', 'signin'],
       ['phone', null],
       ['code', 'phone'],
       ['welcome', null],
@@ -121,7 +93,7 @@ describe('admin machine: addresses and directions', () => {
   });
 
   it('moves forward deeper into the flow and back out of it', () => {
-    expect(directionOf('signin', 'phone')).toBe('forward');
+    expect(directionOf('phone', 'code')).toBe('forward');
     expect(directionOf('code', 'phone')).toBe('back');
   });
 });

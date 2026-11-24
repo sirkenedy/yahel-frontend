@@ -63,7 +63,6 @@ describe('refusalFor', () => {
     expect(refusalFor({ step: 'domain', reason: 'claimed' }, 'domain')).toEqual(refusals.claimed);
     expect(refusalFor({ step: 'domain', reason: 'public' }, 'domain')).toEqual({ place: 'field', field: 'domain', text: m.domainPublic });
     expect(refusalFor({ step: 'admin', reason: 'taken' }, 'admin')).toEqual({ place: 'field', field: 'username', text: m.usernameTaken });
-    expect(refusalFor({ step: 'you', reason: 'underage' }, 'you')).toEqual({ place: 'field', field: 'year', text: m.tooYoungForWorkspace });
     expect(refusalFor({ step: 'admin', reason: 'taken' }, 'domain')).toBeNull();
     expect(refusalFor(null, 'domain')).toBeNull();
   });

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { at } from './accounts';
+import { phoneCode } from './api';
 
 export const business = {
   name: 'Harbourline Studio',
@@ -27,7 +28,7 @@ export const business = {
 /** Cards and codes the checkout stand-in knows: its header (`workspace-billing.ts`) says what each does. */
 export const card = { number: '4084 0840 8408 4081', lastFour: '4081', declined: '4000 0000 0000 0002', expiry: '08/31', securityCode: '123', code: '482913', wrongCode: '000000', expiredCode: '999999' };
 
-export type BusinessStop = 'start' | 'you' | 'domain-question' | 'domain' | 'domain-ok' | 'find' | 'registrant' | 'admin' | 'plan' | 'checkout' | 'card-code' | 'done';
+export type BusinessStop = 'start' | 'you' | 'domain-question' | 'domain' | 'domain-ok' | 'find' | 'found' | 'registrant' | 'admin' | 'ready' | 'phone' | 'code' | 'welcome' | 'plan' | 'checkout' | 'gateway' | 'card-code' | 'done';
 
 export interface BusinessPath {
   /** A domain the business owns, or one bought here (which brings in the search and the registrant's address). */
@@ -66,8 +67,10 @@ export async function fillCard(page: Page, number = card.number) {
 }
 
 /**
- * Answers the questions of workspace sign-up in order and stops with `stop` on screen (`done` confirms the
- * bank's code, which creates the workspace). With a domain the business owns, its address is added from checkout.
+ * Answers the questions of workspace sign-up in order and stops with `stop` on screen. The workspace is created
+ * after the admin sign-in; the phone check signs the administrator in; then the plan, checkout, the payment page
+ * and the bank's code (`done` confirms it, ending on the paid order). With a domain the business owns, its
+ * address is added from checkout.
  */
 export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain = 'owned', ownedDomain = business.domain, name = business.name, size, country, period, seats, promo, cardNumber }: BusinessPath = {}) {
   await page.goto(at('/business'));
@@ -83,32 +86,33 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await page.getByLabel('First name').fill(business.firstName);
   await page.getByLabel('Last name').fill(business.lastName);
   await page.getByLabel('Current email').fill(business.contactEmail);
-  await page.getByLabel('Day').fill(business.day);
-  await page.getByLabel('Month').selectOption({ label: business.month });
-  await page.getByLabel('Year').fill(business.year);
 
   await proceed(page);
-  await heading(page, 'Your domain.').waitFor();
+  await heading(page, 'Choose a way to set up your account.').waitFor();
   if (stop === 'domain-question') return;
   if (domain === 'bought') {
-    await page.getByRole('radio', { name: /Buy a new domain/ }).check({ force: true });
+    await page.getByRole('radio', { name: /Get a new domain/ }).check({ force: true });
     await proceed(page);
     await heading(page, 'Find your domain.').waitFor();
     if (stop === 'find') return;
     await searchForBoughtDomain(page);
     await page.getByRole('radio', { name: new RegExp(`^${business.boughtDomain.replace('.', '\\.')}`) }).check({ force: true });
     await proceed(page);
+    await heading(page, `${business.boughtDomain} is yours to take.`).waitFor();
+    if (stop === 'found') return;
+    await proceed(page);
     await heading(page, `Register ${business.boughtDomain}`).waitFor();
     if (stop === 'registrant') return;
     await fillAddress(page);
     await proceed(page);
   } else {
+    await page.getByRole('radio', { name: /Use a domain you own/ }).check({ force: true });
     await proceed(page);
     await heading(page, 'What’s your domain?').waitFor();
     if (stop === 'domain') return;
     await page.getByLabel('Your domain', { exact: true }).fill(ownedDomain);
     await proceed(page);
-    await heading(page, `Use this domain for ${name}?`).waitFor();
+    await heading(page, 'Use this domain to set up your account?').waitFor();
     if (stop === 'domain-ok') return;
     await proceed(page, 'Use this domain');
   }
@@ -118,6 +122,21 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await page.getByLabel('Password', { exact: true }).fill(business.password);
   await page.getByLabel('Confirm password').fill(business.password);
   await proceed(page, 'Agree and continue');
+
+  await heading(page, 'Your account is ready.').waitFor();
+  if (stop === 'ready') return;
+  await proceed(page);
+  await heading(page, 'Verify it’s you.').waitFor();
+  if (stop === 'phone') return;
+  if (domain === 'owned') await page.getByLabel('Mobile number').fill(business.phone);
+  await proceed(page, 'Send code');
+  await heading(page, 'Enter the code.').waitFor();
+  if (stop === 'code') return;
+  await page.getByLabel('6-character code').fill(phoneCode);
+  await proceed(page, 'Verify');
+  await heading(page, 'Welcome to your new account.').waitFor();
+  if (stop === 'welcome') return;
+  await proceed(page, 'I understand');
 
   await heading(page, /^(Try Yahel free for 14 days\.|Start Yahel Business\.)$/).waitFor();
   if (stop === 'plan') return;
@@ -139,15 +158,18 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
     await page.getByLabel('Number of people').fill(String(seats));
   }
   if (domain === 'owned') {
-    await proceed(page, 'Add business address');
+    await proceed(page, 'Add your name and address');
     await heading(page, 'Your business address').waitFor();
     await fillAddress(page);
     await proceed(page, 'Save address');
     await page.getByRole('group', { name: 'Order summary' }).waitFor();
   }
   if (stop === 'checkout') return;
+  await proceed(page, 'Continue to payment');
+  await heading(page, 'Add your card.').waitFor();
+  if (stop === 'gateway') return;
   await fillCard(page, cardNumber);
-  await page.getByRole('button', { name: /^(Start free trial|Pay .* and start( trial)?)$/ }).click();
+  await page.getByRole('button', { name: /^(Verify card|Pay .*)$/ }).click();
   if (cardNumber === card.declined) return;
 
   await heading(page, 'Confirm with your bank.').waitFor();
@@ -156,8 +178,8 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   await proceed(page, 'Confirm');
 }
 
-/** Creates a workspace all the way to the last screen. */
+/** Creates a workspace all the way to the paid order. */
 export async function createWorkspace(page: Page, path: BusinessPath = {}) {
   await createWorkspaceTo(page, 'done', path);
-  await heading(page, `${path.name ?? business.name} is ready.`).waitFor();
+  await heading(page, /^(Your free trial has started\.|Your plan has started\.)$/).waitFor();
 }

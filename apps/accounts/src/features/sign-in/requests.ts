@@ -25,11 +25,13 @@ export interface SignInRequestDeps {
   isShown: (step: SignInStep) => boolean;
   /** Where to go at once when signed in, for someone sent here to sign in; `null` shows Done. */
   leave?: (() => void) | null;
+  /** Hands a phone challenge sign-in answered with to the phone step, which signs in once it is met. */
+  checkPhone: (email: string, challengeToken: string) => void;
   /** The destinations currently offered on the recover step, to record where a code went. */
   recoveryOptions: () => RecoveryOption[];
 }
 
-type SignInOutcome = 'signed-in' | 'second-step';
+type SignInOutcome = 'signed-in' | 'second-step' | 'phone-check';
 
 const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code === 'INVALID_TOKEN';
 
@@ -37,7 +39,7 @@ const isExpiredChallenge = (error: unknown) => isApiError(error) && error.code =
  * Every request the sign-in flow makes and where each outcome leads. Nothing here renders; the provider
  * turns these into `actions` and `meta.requests`. A new flow gets its own file of this shape.
  */
-export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, recoveryOptions }: SignInRequestDeps) {
+export function useSignInRequests({ visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave = null, checkPhone, recoveryOptions }: SignInRequestDeps) {
   const email = () => store.getState().email ?? '';
   const describe = (context: FailureContext) => (error: unknown) => describeSignInFailure(error, context);
 
@@ -52,17 +54,25 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
   // The challenge goes straight into the flow state; only the plain outcome is returned and kept.
   const settle = (result: SignInResult): SignInOutcome => {
     if (result.ok) return 'signed-in';
+    // No session until the phone is checked: the challenge goes straight to the phone step, never into this flow's state.
+    if (result.reason === 'phone-required') {
+      checkPhone(email(), result.challengeToken);
+      return 'phone-check';
+    }
     store.dispatch({ type: 'second-step-required', challengeToken: result.challengeToken });
     return 'second-step';
   };
-  const afterSignIn = (outcome: SignInOutcome) => (outcome === 'signed-in' ? finish() : navigate('code'));
+  const afterSignIn = (outcome: SignInOutcome) => {
+    if (outcome === 'signed-in') finish();
+    else if (outcome === 'second-step') navigate('code');
+  };
 
   const password = useFlowRequest({
     visit,
     describe: describe('password'),
     run: async (value: string, { isCurrent }) => {
       const result = await signInOrConfirm(session, email(), value);
-      if (result.ok || result.reason === 'mfa-required') return settle(result);
+      if (result.ok || result.reason !== 'unconfirmed') return settle(result);
       // The proof is held only for the confirm step, and only if the person is still where they asked for it:
       // not left, and not on the way somewhere else while that page loads.
       if (!isCurrent() || !isShown('password')) return 'left' as const;
@@ -80,7 +90,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
     describe: describe('email-code'),
     run: async (value: string) => {
       const result = await confirmAndSignIn(session, email(), value, store.getState().provenPassword, () => store.dispatch({ type: 'email-confirmed' }));
-      return result.ok || result.reason === 'mfa-required' ? settle(result) : ('sign-in-failed' as const);
+      return result.ok || result.reason !== 'sign-in-failed' ? settle(result) : ('sign-in-failed' as const);
     },
     onDone: (outcome) => (outcome === 'sign-in-failed' ? navigate('password', { replace: true }) : afterSignIn(outcome)),
   });
