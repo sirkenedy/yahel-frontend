@@ -628,6 +628,78 @@ test.describe('accounts: addresses, history and reload', () => {
   });
 });
 
+test.describe('accounts: signing in for Admin', () => {
+  // The demo build has no Admin address, so Admin's place is taken by the app: what is tested is who may leave.
+  const appUrl = 'http://localhost:5173/';
+  const forAdmin = `?return=${encodeURIComponent(appUrl)}&for=admin`;
+  const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Sign in with an administrator account.' });
+  const admin = { email: twoStepCredentials.email, displayName: 'Kofi Mensah', kind: 'business' as const, organisation: 'Northwind Studio', role: 'ADMIN' as const, signedIn: true };
+  const personal = { email: 'amara.okafor@yahel.example', displayName: 'Amara Okafor', signedIn: true };
+  const leaveForApp = (page: Page) => page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
+
+  test('the chooser asks for an administrator account; a personal account stays, saying why; an administrator goes on', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [admin, personal] });
+    await leaveForApp(page);
+    await visit(page, `/signin${forAdmin}`);
+
+    await expect(page).toHaveURL(/\/signin\/choose\?.*for=admin/);
+    await expect(notice(page)).toContainText('To sign in to Admin, use an administrator account for a Yahel workspace.');
+    await expect(page.getByText('to continue to Admin')).toBeVisible();
+
+    await page.getByRole('button', { name: new RegExp(`^Switch to.*${personal.email}`) }).click();
+    await expect(page.getByRole('alert')).toHaveText(`${personal.email} isn’t an administrator of a workspace.`);
+    await expect(page.getByRole('button', { name: new RegExp(`^Switch to.*${personal.email}`) })).toHaveAccessibleDescription(`${personal.email} isn’t an administrator of a workspace.`);
+    await expect(page).toHaveURL(/\/signin\/choose/);
+    expect(api.calls.filter((call) => call.path === '/v1/auth/refresh')).toHaveLength(0);
+
+    await page.getByRole('button', { name: new RegExp(`^Switch to.*${admin.email}`) }).click();
+    await page.waitForURL((url) => url.origin !== accountsUrl);
+    expect(page.url()).toBe(`${appUrl}u/0/`);
+  });
+
+  test('signing in with another account that is not an administrator comes back to the chooser, saying so', async ({ page }) => {
+    await mockApi(page, { remembered: [admin] });
+    await visit(page, `/signin${forAdmin}`);
+    await page.getByRole('button', { name: 'Use another account' }).click();
+    await expect(page).toHaveURL(/\/signin\/email\?.*for=admin/);
+    await expect(notice(page)).toBeVisible();
+
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    await expect(notice(page)).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveText(`${credentials.email} isn’t an administrator of a workspace.`);
+  });
+
+  test('signing in with an administrator account goes straight on, as that account', async ({ page }) => {
+    await mockApi(page, { remembered: [], memberships: { [credentials.email]: { organisation: 'Northwind Studio', role: 'OWNER' } } });
+    await leaveForApp(page);
+    await visit(page, `/signin${forAdmin}`);
+    await expect(page).toHaveURL(/\/signin\/email/);
+    await expect(notice(page)).toBeVisible();
+
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await page.waitForURL((url) => url.origin !== accountsUrl);
+    expect(page.url()).toBe(`${appUrl}u/0/`);
+  });
+
+  test('says nothing of Admin for any other request, and never shows what the address asked', async ({ page }) => {
+    await mockApi(page);
+    await visit(page, `/signin?for=${encodeURIComponent('<b>Admin now</b>')}`);
+
+    await expect(page).toHaveURL(/\/signin\/choose/);
+    await expect(page.getByText('Sign in with an administrator account.')).toHaveCount(0);
+    await expect(page.getByRole('main')).not.toContainText('Admin now');
+  });
+});
+
 test.describe('accounts: where sign-in leads', () => {
   const appUrl = 'http://localhost:5173/';
 

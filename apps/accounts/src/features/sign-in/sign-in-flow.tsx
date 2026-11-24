@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { isWorkspaceAdmin } from '@yahel/api-client';
 import type { AccountCapabilities, ClientAccount, Profile, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
 import type { PasskeyClient, Session } from '@yahel/auth';
 import type { FlowDirection } from '@yahel/ui';
@@ -27,6 +28,8 @@ export interface SignInFlowValue {
     accounts: ClientAccount[];
     /** Whether the list of this browser's accounts is still coming, could not be read, or is here. */
     accountsStatus: 'pending' | 'error' | 'success';
+    /** Admin asked for an administrator account. */
+    adminOnly: boolean;
     recoveryOptions: RecoveryOption[] | null;
     /** The masked number a second-step code was texted to, once one has been. */
     textedTo: string | null;
@@ -93,6 +96,8 @@ export interface SignInFlowProviderProps {
   leave: () => void;
   /** Someone sent here to sign in goes back as soon as they are, instead of seeing Done. */
   returning?: boolean;
+  /** Sent by Admin: only an administrator account may leave; the chooser says so and refuses the others. */
+  adminOnly?: boolean;
   /** Takes a phone check sign-in answered with (an administrator whose phone is unverified) to the phone step. */
   checkPhone?: (email: string, challengeToken: string) => void;
   /** Addresses outside the flow that a whole-screen state can lead to. */
@@ -105,7 +110,7 @@ export interface SignInFlowProviderProps {
  * (`machine.ts`), the requests from `requests.ts`; this component only joins them. Steps know nothing
  * about the session, the API or the router.
  */
-export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, isShown, leave, returning = false, checkPhone = () => undefined, links, children }: SignInFlowProviderProps) {
+export function SignInFlowProvider({ step, session, capabilities, passkeys, store, navigate, isShown, leave, returning = false, adminOnly = false, checkPhone = () => undefined, links, children }: SignInFlowProviderProps) {
   const queryClient = useQueryClient();
   const { provenPassword, ...flow } = useStore(store);
   const profile = useStore(session.store, (snapshot) => snapshot.profile);
@@ -118,7 +123,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
 
   const travel = useStepTravel(step, directionOf);
 
-  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave: returning ? leave : null, checkPhone, recoveryOptions: () => recoveryOptions.data ?? [] });
+  const requests = useSignInRequests({ visit: travel.visit, session, capabilities, passkeys, store, queryClient, navigate, isShown, leave: returning ? leave : null, adminOnly, checkPhone, recoveryOptions: () => recoveryOptions.data ?? [] });
 
   const facts = { signedIn: profile !== null, knownAccounts: accountList.isError ? null : accounts.length, passkeysOffered: passkeyOffered, helpOffered: capabilities.helpDesk !== null };
   const back = backOf(step, { ...flow, provenPassword }, facts);
@@ -130,6 +135,7 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
       profile,
       accounts,
       accountsStatus: accountList.status,
+      adminOnly,
       recoveryOptions: recoveryOptions.data ?? null,
       textedTo: requests.textCode.outcome ?? null,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
@@ -137,6 +143,10 @@ export function SignInFlowProvider({ step, session, capabilities, passkeys, stor
     },
     actions: {
       chooseAccount: (account) => {
+        if (adminOnly && !isWorkspaceAdmin(account)) {
+          store.dispatch({ type: 'not-admin', email: account.email });
+          return;
+        }
         if (account.signedIn) {
           requests.switchAccount.start(account.handle);
           return;

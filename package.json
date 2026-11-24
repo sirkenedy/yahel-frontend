@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "pnpm --filter @yahel/shell dev",
     "dev:accounts": "pnpm --filter @yahel/accounts dev",
+    "dev:admin": "pnpm --filter @yahel/admin dev",
     "build": "nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",
     "lint": "eslint .",

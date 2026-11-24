@@ -4,6 +4,7 @@ import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
 import { useStepField } from '../../../flow/use-step-field';
 import { emailProblem } from '../validation';
+import { AdminNotice } from './admin-notice';
 import { StepFrame } from './step-frame';
 
 export function EmailStep() {
@@ -14,6 +15,7 @@ export function EmailStep() {
     <StepFrame title={m.emailTitle} lede={m.emailLede}>
       <FlowStep.Form onSubmit={email.submit}>
         <FlowStep.Body>
+          <AdminNotice />
           <FlowTextField label={m.emailLabel} name="email" type="email" inputMode="email" autoComplete="username" spellCheck="false" value={email.value} onChange={email.change} onBlur={email.blur} isValid={email.isValid} error={email.error} inputRef={email.inputRef} isRequired />
           {meta.offers.passkey ? (
             <>

@@ -36,6 +36,8 @@ export interface SignInState {
   passwordPrompt: 'challenge-expired' | 'reset-done' | 'email-confirmed' | null;
   /** The chooser is in "Remove an account" mode. */
   removing: boolean;
+  /** Asked for an administrator account (Admin sent the person here): the address of the one just refused. */
+  notAdmin: string | null;
 }
 
 export const initialSignInState: SignInState = {
@@ -51,6 +53,7 @@ export const initialSignInState: SignInState = {
   provenPassword: null,
   passwordPrompt: null,
   removing: false,
+  notAdmin: null,
 };
 
 export type SignInEvent =
@@ -70,7 +73,8 @@ export type SignInEvent =
   | { type: 'help-requested' }
   | { type: 'signed-in' }
   | { type: 'signed-out' }
-  | { type: 'removing'; on: boolean };
+  | { type: 'removing'; on: boolean }
+  | { type: 'not-admin'; email: string };
 
 export function reduce(state: SignInState, event: SignInEvent): SignInState {
   switch (event.type) {
@@ -110,6 +114,9 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
       return { ...initialSignInState, email: state.email };
     case 'removing':
       return { ...state, removing: event.on };
+    case 'not-admin':
+      // Back on the chooser, nothing of the refused sign-in is kept but whose it was.
+      return { ...initialSignInState, notAdmin: event.email };
   }
 }
 

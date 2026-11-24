@@ -1,11 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
+import { slotInPath } from '@yahel/auth';
 import '@yahel/ui/styles.css';
 import '@yahel/ui/accounts.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './app.css';
-import { slotInPath } from './features/account/slot';
 import { queryClient, router } from './router';
 import { session } from './session';
 

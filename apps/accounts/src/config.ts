@@ -32,6 +32,8 @@ const returnPolicy: ReturnAddressPolicy = {
   allowedOrigins: (env.VITE_RETURN_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean),
 };
 const appHome = (slot: number) => new URL(`u/${slot}/`, appUrl).href;
+const adminSetting = webAddress(env.VITE_ADMIN_URL);
+const adminHome = (slot: number) => new URL(`u/${slot}/`, adminSetting ?? appUrl).href;
 
 export const config = {
   apiUrl: env.VITE_API_URL ?? 'http://localhost:3200/api',
@@ -51,18 +53,21 @@ export const config = {
    */
   adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL),
   /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is the app address. */
-  adminUrl: webAddress(env.VITE_ADMIN_URL) ?? appUrl,
+  adminUrl: adminSetting ?? appUrl,
   /** Admin for the account in `slot`: like the app, its addresses carry the slot, so a new administrator opens as themselves. */
-  adminHome: (slot: number) => new URL(`u/${slot}/`, webAddress(env.VITE_ADMIN_URL) ?? appUrl).href,
+  adminHome,
   /** The app's home for the account in `slot`: its addresses carry the slot (`/u/<slot>/`), so each account opens as itself. */
   appHome,
   /**
    * Where someone goes once signed in as the account in `slot`: the return address if it is allowed, otherwise
-   * the app. The app's own home, which is what the app asks for when it sends people here, is that account's home.
+   * the app. The app's own home, which is what the app asks for when it sends people here, is that account's
+   * home; Admin's home, likewise, is Admin as that account. Admin's own address is always allowed.
    */
   afterSignIn: (candidate: string | undefined, slot: number) => {
-    const address = resolveReturnAddress(candidate, { ...returnPolicy, fallback: appHome(slot) });
-    return address === appUrl ? appHome(slot) : address;
+    const allowedOrigins = adminSetting ? [...returnPolicy.allowedOrigins, new URL(adminSetting).origin] : returnPolicy.allowedOrigins;
+    const address = resolveReturnAddress(candidate, { allowedOrigins, fallback: appHome(slot) });
+    if (address === appUrl) return appHome(slot);
+    return adminSetting && address === adminSetting ? adminHome(slot) : address;
   },
   /** Account settings for the account in `slot`, behind "Manage your account". Unset, the app's own. */
   accountSettings: (slot: number) => new URL(`u/${slot}/account`, webAddress(env.VITE_ACCOUNT_URL) ?? appUrl).href,

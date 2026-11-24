@@ -6,3 +6,6 @@ export { resolveReturnAddress } from './return-address';
 export type { ReturnAddressPolicy } from './return-address';
 export { createPasskeyRegistrar } from './passkey-registration';
 export type { NewPasskey, NewPasskeyResult, PasskeyCreationEnvironment, PasskeyOwner, PasskeyRegistrar } from './passkey-registration';
+export { slotInPath, slotOf } from './slot';
+export { accountsAppAddresses } from './accounts-app';
+export type { AccountsApp, AccountsAppAddresses } from './accounts-app';

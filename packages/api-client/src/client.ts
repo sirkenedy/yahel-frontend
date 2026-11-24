@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthContext, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
+import type { Acknowledgement, AddedDomain, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -159,6 +159,19 @@ export function createApiClient(options: ApiClientOptions) {
     tenants: {
       /** Whether a domain a business says it owns can still be claimed by a new workspace. Advice: registering decides. */
       checkDomainClaim: (body: Schemas['DomainClaimDto'], signal?: AbortSignal) => request<Schemas['DomainClaimResponseDto']>('POST', '/api/v1/tenants/domain-claims/check', { body, signal }),
+      /** The workspace, for a member of it. */
+      get: (tenantId: string, signal?: AbortSignal) => request<Workspace>('GET', '/api/v1/tenants/{tenantId}', { auth: true, params: { tenantId }, signal }),
+      /** A workspace's domains; an owner or admin only. */
+      domains: {
+        list: (tenantId: string, signal?: AbortSignal) => request<WorkspaceDomain[]>('GET', '/api/v1/tenants/{tenantId}/domains', { auth: true, params: { tenantId }, signal }),
+        add: (tenantId: string, body: Schemas['AddDomainDto']) => request<AddedDomain>('POST', '/api/v1/tenants/{tenantId}/domains', { auth: true, params: { tenantId }, body }),
+        /** Looks the record up in public DNS now. */
+        verify: (tenantId: string, domainId: string) => request<DomainVerified>('POST', '/api/v1/tenants/{tenantId}/domains/{domainId}/verify', { auth: true, params: { tenantId, domainId } }),
+        /** Only a verified domain can be primary. */
+        setPrimary: (tenantId: string, domainId: string) => request<WorkspaceDomain>('PATCH', '/api/v1/tenants/{tenantId}/domains/{domainId}/set-primary', { auth: true, params: { tenantId, domainId } }),
+        /** The primary domain cannot be removed (`PRIMARY_DOMAIN_LOCKED`). */
+        remove: (tenantId: string, domainId: string) => request<null>('DELETE', '/api/v1/tenants/{tenantId}/domains/{domainId}', { auth: true, params: { tenantId, domainId } }),
+      },
     },
   };
 }

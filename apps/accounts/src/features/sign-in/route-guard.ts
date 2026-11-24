@@ -17,12 +17,24 @@ export interface SignInGuardContext {
 /** A handle names an account in this browser only, so only its shape is checked; anything else is ignored, never shown. */
 const HANDLE = /^[A-Za-z0-9_-]{8,64}$/;
 
+/** Who an app may ask for. Anything else is ignored, never shown. */
+const PURPOSES = ['admin'] as const;
+export type SignInPurpose = (typeof PURPOSES)[number];
+
 export interface SignInSearch {
   /** One of this browser's accounts, by its handle, for which the app asks the password step. */
   account?: string;
+  /** `admin`: Admin sent the person here, and only an administrator account may go back to it. */
+  for?: SignInPurpose;
 }
 
-export const validateSignInSearch = (search: Record<string, unknown>): SignInSearch => (typeof search.account === 'string' && HANDLE.test(search.account) ? { account: search.account } : {});
+const purposeOf = (value: unknown) => PURPOSES.find((purpose) => purpose === value);
+
+export const validateSignInSearch = (search: Record<string, unknown>): SignInSearch => {
+  const account = typeof search.account === 'string' && HANDLE.test(search.account) ? search.account : undefined;
+  const purpose = purposeOf(search.for);
+  return { ...(account ? { account } : {}), ...(purpose ? { for: purpose } : {}) };
+};
 
 /**
  * Prepares the password step for the account a handle names, when it is one this browser remembers and it is

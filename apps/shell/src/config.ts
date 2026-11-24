@@ -15,4 +15,9 @@ export const config = {
   apiUrl: env.VITE_API_URL ?? 'http://localhost:3200/api',
   /** The accounts app: sign-in, adding an account and the chooser all happen there (F-93). */
   accountsUrl: webAddress(env.VITE_ACCOUNTS_URL) ?? 'http://localhost:5175/',
+  /** Admin as the account in `slot`, for an administrator's "Admin console"; `null` while Admin has no address. */
+  adminHome: (slot: number) => {
+    const admin = webAddress(env.VITE_ADMIN_URL);
+    return admin ? new URL(`u/${slot}/`, admin).href : null;
+  },
 } as const;

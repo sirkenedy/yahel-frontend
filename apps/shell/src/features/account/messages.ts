@@ -16,6 +16,7 @@ export const menuMessages = {
   signOutAll: 'Sign out of all accounts',
   privacy: 'Privacy',
   terms: 'Terms',
+  admin: 'Admin console',
 } as const;
 
 export const accountWords = {

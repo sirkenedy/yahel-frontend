@@ -1,4 +1,5 @@
 import { Button } from 'react-aria-components';
+import { useId } from 'react';
 import type { ReactNode, Ref } from 'react';
 import { FlowIcon } from './flow-icon';
 
@@ -113,14 +114,17 @@ interface AccountListAccountProps {
   actionPrefix: string;
   onPress: () => void;
   isDisabled?: boolean;
+  /** Why this account cannot be used here, under the row: "{email} isn't an administrator of a workspace." */
+  problem?: string | null;
   /** A control that sits after the row, such as "Remove". */
   children?: ReactNode;
 }
 
-function AccountListAccount({ name, email, kind = 'person', initials, avatarUrl, presence, detail, actionPrefix, onPress, isDisabled, children }: AccountListAccountProps) {
+function AccountListAccount({ name, email, kind = 'person', initials, avatarUrl, presence, detail, actionPrefix, onPress, isDisabled, problem, children }: AccountListAccountProps) {
+  const problemId = useId();
   return (
     <li className="ws-flow-accounts__item">
-      <Button className="ws-flow-accounts__row" onPress={onPress} isDisabled={isDisabled}>
+      <Button className="ws-flow-accounts__row" onPress={onPress} isDisabled={isDisabled} aria-describedby={problem ? problemId : undefined}>
         <span className="ws-flow-hidden">{actionPrefix} </span>
         <AccountFace name={name} email={email} kind={kind} initials={initials} avatarUrl={avatarUrl} presence={presence} />
         <span className="ws-flow-accounts__who">
@@ -132,6 +136,12 @@ function AccountListAccount({ name, email, kind = 'person', initials, avatarUrl,
         {detail ? <span className="ws-flow-accounts__detail">{detail}</span> : null}
       </Button>
       {children}
+      {problem ? (
+        <span id={problemId} className="ws-flow-accounts__problem" role="alert">
+          <FlowIcon name="alert" />
+          {problem}
+        </span>
+      ) : null}
     </li>
   );
 }

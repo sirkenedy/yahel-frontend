@@ -12,4 +12,10 @@ describe('assertReleaseAddresses', () => {
     expect(() => assertReleaseAddresses('build', { VITE_LOCAL_BUILD: 'local' })).not.toThrow();
     expect(() => assertReleaseAddresses('serve', {})).not.toThrow();
   });
+
+  it('refuses a release whose Admin link is not https, and lets one without Admin through', () => {
+    const secure = { VITE_API_URL: 'https://api.yahel.example/api', VITE_ACCOUNTS_URL: 'https://accounts.yahel.example' };
+    expect(() => assertReleaseAddresses('build', { ...secure, VITE_ADMIN_URL: 'http://admin.yahel.example' })).toThrow(/VITE_ADMIN_URL/);
+    expect(() => assertReleaseAddresses('build', { ...secure, VITE_ADMIN_URL: 'https://admin.yahel.example' })).not.toThrow();
+  });
 });

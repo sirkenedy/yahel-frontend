@@ -6,16 +6,21 @@ export interface AccountsAppAddresses {
   accountsUrl: string;
   /** Where the accounts app sends the person once signed in: this app's home, which it gives the account's slot. */
   home: string;
+  /**
+   * Which app is asking, when the accounts app must check who may enter: `admin` asks it for an
+   * administrator account, with a notice saying so.
+   */
+  purpose?: 'admin';
 }
 
 /**
- * The addresses in the accounts app the shell sends people to. Never an email address: only the account's
+ * The addresses in the accounts app an app sends people to. Never an email address: only the account's
  * opaque handle, which means nothing outside this browser (rulebook 4.1).
  */
-export function accountsAppAddresses({ accountsUrl, home }: AccountsAppAddresses) {
+export function accountsAppAddresses({ accountsUrl, home, purpose }: AccountsAppAddresses) {
   const at = (path: string, search: Record<string, string> = {}) => {
     const url = new URL(path, accountsUrl);
-    for (const [name, value] of Object.entries({ ...search, return: home })) url.searchParams.set(name, value);
+    for (const [name, value] of Object.entries({ ...search, return: home, ...(purpose ? { for: purpose } : {}) })) url.searchParams.set(name, value);
     return url.href;
   };
   return {
