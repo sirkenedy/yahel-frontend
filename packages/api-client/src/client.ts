@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
+import type { Acknowledgement, AuthContext, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -129,6 +129,18 @@ export function createApiClient(options: ApiClientOptions) {
       resendVerification: (body: Schemas['ResendVerificationDto']) => request<Acknowledgement>('POST', '/api/v1/auth/verify-email/resend', { body }),
       sendPhoneOtp: (body: Schemas['SendPhoneOtpDto']) => request<Acknowledgement>('POST', '/api/v1/auth/phone/send-otp', { auth: true, body }),
       verifyPhoneOtp: (body: Schemas['VerifyPhoneOtpDto']) => request<Acknowledgement>('POST', '/api/v1/auth/phone/verify', { auth: true, body }),
+      /** The personal and organisation contexts the session can act in; `isCurrent` marks the session's own. */
+      contexts: (signal?: AbortSignal) => request<AuthContext[]>('GET', '/api/v1/auth/contexts', { auth: true, signal }),
+      passkeys: {
+        /** The signed-in account's passkeys. */
+        list: (signal?: AbortSignal) => request<PasskeyItem[]>('GET', '/api/v1/auth/passkey/list', { auth: true, signal }),
+        /** A sign-in challenge. The address only shares the sign-in rate limit; the server never says which passkeys it has. */
+        authenticateBegin: (body: Schemas['PasskeyAuthenticateBeginDto']) => request<PasskeyChallenge<WebAuthnRequestOptions>>('POST', '/api/v1/auth/passkey/authenticate/begin', { body }),
+        authenticateFinish: (body: PasskeyFinishBody<AuthenticationResponseJSON>) => request<PasskeySignInResult>('POST', '/api/v1/auth/passkey/authenticate/finish', { body }),
+        /** A challenge to create a passkey for the signed-in account, bound to it. */
+        registerBegin: () => request<PasskeyChallenge<WebAuthnCreationOptions>>('POST', '/api/v1/auth/passkey/register/begin', { auth: true }),
+        registerFinish: (body: PasskeyFinishBody<RegistrationResponseJSON>) => request<PasskeyRegistered>('POST', '/api/v1/auth/passkey/register/finish', { auth: true, body }),
+      },
     },
     me: {
       get: (signal?: AbortSignal) => request<Profile>('GET', '/api/v1/me', { auth: true, signal }),

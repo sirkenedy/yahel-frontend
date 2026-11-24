@@ -12,7 +12,6 @@ export interface StandIns {
   serviceStatus: ServiceStatus;
   domainMarket: DomainMarket;
   workspaceBilling: WorkspaceBilling;
-  adminAccess: AdminAccess;
 }
 
 /** `amara@northwind.example` becomes `a•••@northwind.example`: derived from what was typed, so it reveals nothing. */
@@ -70,13 +69,29 @@ const domainClaimsOf = (api: Pick<ApiClient, 'tenants'>): DomainClaims => ({
   check: async (domain) => (await api.tenants.checkDomainClaim({ domain })).standing,
 });
 
+const ADMIN_ROLES = new Set(['OWNER', 'ADMIN']);
+
+/**
+ * The session's workspace from its contexts, and whether the account has a passkey from its list.
+ * `passkeyRequired` stays false until the server enforces "Admins must use a passkey" (F-86).
+ */
+export const adminAccessOf = (api: Pick<ApiClient, 'auth'>): AdminAccess => ({
+  async membership() {
+    const [contexts, passkeys] = await Promise.all([api.auth.contexts(), api.auth.passkeys.list()]);
+    const workspace = contexts.find((context) => context.isCurrent && context.type === 'tenant');
+    if (!workspace) return null;
+    return { organisation: workspace.displayName, administrator: workspace.role !== null && ADMIN_ROLES.has(workspace.role), hasPasskey: passkeys.length > 0, passkeyRequired: false };
+  },
+});
+
 export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | 'tenants'>, standIns?: StandIns): AccountCapabilities {
   const byEmail = emailRecovery(api);
   const trustedContacts = trustedContactsOf(api);
   const addresses = addressesOf(api);
   const directory = accountDirectoryOf(api);
   const domainClaims = domainClaimsOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const adminAccess = adminAccessOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims, workspaceBilling: null, adminAccess, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -96,7 +111,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me' | '
     domainMarket: standIns.domainMarket,
     domainClaims,
     workspaceBilling: standIns.workspaceBilling,
-    adminAccess: standIns.adminAccess,
+    adminAccess,
     standIns: Object.keys(standIns) as StandInName[],
   };
 }

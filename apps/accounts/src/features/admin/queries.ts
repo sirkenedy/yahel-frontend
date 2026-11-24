@@ -7,8 +7,7 @@ import type { PasskeyRegistrar } from '@yahel/auth';
 // flow does itself in between (a phone confirmed, a passkey saved) is in its own state.
 
 /** The workspace the session is in, and whether its administrator has a passkey yet. */
-export const membershipQuery = (access: AdminAccess | null, account: string) =>
-  queryOptions({ queryKey: ['admin', account, 'membership'], queryFn: async () => (await access?.membership()) ?? null });
+export const membershipQuery = (access: AdminAccess, account: string) => queryOptions({ queryKey: ['admin', account, 'membership'], queryFn: () => access.membership() });
 
 /** Whether a confirmed recovery phone is already on the account, as the server tells it. */
 export const phoneVerifiedQuery = (api: Pick<ApiClient, 'me'>, account: string) =>

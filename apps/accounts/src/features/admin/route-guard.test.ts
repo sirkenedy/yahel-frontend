@@ -16,7 +16,7 @@ const sessionAs = (status: 'signed-in' | 'signed-out', recovery: RecoveryMethods
   const get = vi.fn().mockResolvedValue(recovery);
   return { session: { store: { getState: () => ({ status, profile: status === 'signed-in' ? profile : null }) }, api: { me: { recovery: { get } } } } as unknown as Session, get };
 };
-const access = (membership: Awaited<ReturnType<AdminAccess['membership']>> | undefined) => ({ adminAccess: membership === undefined ? null : { membership: vi.fn().mockResolvedValue(membership) } }) as unknown as Parameters<typeof loadAdminFacts>[0]['capabilities'];
+const access = (membership: Awaited<ReturnType<AdminAccess['membership']>>) => ({ adminAccess: { membership: vi.fn().mockResolvedValue(membership) } }) as unknown as Parameters<typeof loadAdminFacts>[0]['capabilities'];
 
 describe('isOffered', () => {
   it('follows workspace sign-up, and opens in any build for a phone check sign-in is waiting on', () => {
@@ -43,11 +43,11 @@ describe('loadAdminFacts', () => {
     await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: false }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio' });
   });
 
-  it('a member who administers nothing is no administrator; where nothing can say, the server decides', async () => {
+  it('a member who administers nothing is no administrator; a session in no workspace leaves it to the server', async () => {
     const { session } = sessionAs('signed-in');
 
     await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: false }) })).resolves.toMatchObject({ administrator: false });
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(undefined) })).resolves.toMatchObject({ signedIn: true, administrator: true, organisation: null });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, administrator: true, organisation: null });
   });
 });
 

@@ -324,15 +324,15 @@ export interface WorkspaceBilling {
 
 /** The workspace a signed-in session is in, as an administrator's first sign-in needs it. */
 export interface WorkspaceMembership {
-  /** The organisation's name. */
-  organisation: string;
+  /** The organisation's name, when the server has one. */
+  organisation: string | null;
   /** The person administers the workspace (its owner or an admin), so Admin is theirs to set up. */
   administrator: boolean;
   /** The person has at least one passkey. Admin is for administrators who have one. */
   hasPasskey: boolean;
   /**
-   * The server's own statement that it enforces "Admins must use a passkey" for this workspace (every rule in
-   * the admin-access stand-in's header). Only when it is true may the interface say Admin is closed without one.
+   * The server's own statement that it enforces "Admins must use a passkey" for this workspace (docs/roadmap.md,
+   * "What each real endpoint must do"). Only when it is true may the interface say Admin is closed without one.
    */
   passkeyRequired: boolean;
 }
@@ -347,7 +347,7 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'workspaceBilling';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
@@ -364,7 +364,7 @@ export interface AccountCapabilities {
   domainMarket: DomainMarket | null;
   domainClaims: DomainClaims;
   workspaceBilling: WorkspaceBilling | null;
-  adminAccess: AdminAccess | null;
+  adminAccess: AdminAccess;
   /** The capabilities currently answered by stand-ins. Empty in a normal build. */
   standIns: readonly StandInName[];
 }

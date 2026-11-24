@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAccountCapabilities, maskEmail, usableWindow } from './account-capabilities';
+import { adminAccessOf, createAccountCapabilities, maskEmail, usableWindow } from './account-capabilities';
+import type { ApiClient } from './client';
+import type { AuthContext } from './types';
 import { createStandIns } from './standins';
 
 const api = () =>
@@ -17,7 +19,7 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, adminAccess: null, standIns: [] });
+    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, workspaceBilling: null, standIns: [] });
     expect(capabilities.addresses).not.toBeNull();
     expect(capabilities.trustedContacts).not.toBeNull();
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
@@ -37,8 +39,8 @@ describe('createAccountCapabilities', () => {
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
-    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
+    expect([...capabilities.standIns].sort()).toEqual(['domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, workspaceBilling: standIns.workspaceBilling });
   });
 
   it('sends an emailed reset code through the real endpoint even with stand-ins, and a texted one through the stand-in', async () => {
@@ -73,6 +75,24 @@ describe('createAccountCapabilities', () => {
       await expect(directory.remove('h-1')).resolves.toBeUndefined();
       expect(client.auth.removeAccount).toHaveBeenCalledWith('h-1');
     }
+  });
+
+  describe('admin access, from the session’s contexts and passkeys', () => {
+    const context = (overrides: Partial<AuthContext>): AuthContext => ({ type: 'tenant', tenantId: 't-1', displayName: 'Northwind Studio', logoUrl: null, role: 'OWNER', isCurrent: true, ...overrides });
+    const accessWith = (contexts: AuthContext[], passkeys: unknown[]) => {
+      const client = { auth: { contexts: vi.fn().mockResolvedValue(contexts), passkeys: { list: vi.fn().mockResolvedValue(passkeys) } } } as unknown as Pick<ApiClient, 'auth'>;
+      return adminAccessOf(client);
+    };
+
+    it('names the current workspace and whether its owner or admin has a passkey', async () => {
+      await expect(accessWith([context({ type: 'personal', tenantId: null, displayName: null, role: null, isCurrent: false }), context({})], []).membership()).resolves.toEqual({ organisation: 'Northwind Studio', administrator: true, hasPasskey: false, passkeyRequired: false });
+      await expect(accessWith([context({ role: 'ADMIN' })], [{ credentialId: 'c-1' }]).membership()).resolves.toMatchObject({ administrator: true, hasPasskey: true });
+      await expect(accessWith([context({ role: 'MEMBER' })], []).membership()).resolves.toMatchObject({ administrator: false });
+    });
+
+    it('answers null for a session in no workspace', async () => {
+      await expect(accessWith([context({ type: 'personal', tenantId: null, isCurrent: true }), context({ isCurrent: false })], []).membership()).resolves.toBeNull();
+    });
   });
 
   it('masks an address using only what was typed', () => {

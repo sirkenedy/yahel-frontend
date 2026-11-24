@@ -188,6 +188,9 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   ];
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
   const tenants: { id: string; slug: string; domain: string }[] = [{ id: '64f000000000000000000200', slug: 'northwind-studio', domain: claimedDomain }];
+  // Each account's passkeys by credential id, as the server stores them once a registration is verified.
+  const passkeys = new Map<string, { credentialId: string; deviceName: string | null; createdAt: string }[]>();
+  const passkeysOf = (email: string) => passkeys.get(email) ?? passkeys.set(email, []).get(email)!;
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
@@ -404,6 +407,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     const signedIn = accounts.find((known) => known.profile.email === owner)?.profile;
     if (!signedIn) return fail(route, 401, 'SESSION_EXPIRED');
     if (path === '/v1/me') return ok(route, signedIn);
+    // A member's session is in their workspace; anyone else's is personal.
+    if (path === '/v1/auth/contexts') {
+      const membership = accounts.find((known) => known.profile === signedIn)?.membership;
+      const personal = { type: 'personal', tenantId: null, displayName: null, logoUrl: null, role: null, isCurrent: !membership };
+      return ok(route, membership ? [personal, { type: 'tenant', tenantId: '64f000000000000000000200', displayName: membership.organisation, logoUrl: null, role: membership.role, isCurrent: true }] : [personal]);
+    }
+    if (path === '/v1/auth/passkey/list') return ok(route, passkeysOf(signedIn.email).map((passkey) => ({ ...passkey, aaguid: null, transports: ['internal'], lastUsedAt: null })));
     const methods = recoveryOf(signedIn.email);
     if (path === '/v1/auth/phone/send-otp') {
       if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');
