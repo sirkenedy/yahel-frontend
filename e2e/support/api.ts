@@ -8,6 +8,8 @@ export const profile = {
   lastName: 'Okafor',
   displayName: 'Amara Okafor',
   photo: null,
+  // A member of Northwind Studio, which made her account.
+  accountType: 'managed' as 'personal' | 'business' | 'managed',
 };
 
 export const credentials = { email: profile.email, password: 'correct horse battery staple' };
@@ -95,6 +97,8 @@ interface Account {
   suspended?: boolean;
   /** An administrator whose phone is still to be checked: no session until a texted code meets the challenge sign-in answers with. */
   phoneRequired?: boolean;
+  /** The workspace the account belongs to, as `/auth/accounts` reports it. */
+  membership?: { organisation: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' };
 }
 
 const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
@@ -131,6 +135,11 @@ export const rememberedByDefault: RememberedAccount[] = [
 ];
 
 const MAX_ACCOUNTS = 10;
+// As the backend decides `kind`: a membership, or an account type other than personal, makes a work account.
+const seatKindOf = (account: Account | undefined) =>
+  account && (account.membership || account.profile.accountType !== 'personal')
+    ? { kind: 'business' as const, organisation: account.membership?.organisation ?? null, role: account.membership?.role ?? null }
+    : { kind: 'personal' as const, organisation: null, role: null };
 // Opaque and base64url-shaped, as the backend's are; the address part only makes test failures readable.
 const handleFor = (slot: number, email: string) => `handle-${slot}-${email.split('@')[0]!.replace(/[^A-Za-z0-9_-]/g, '-')}`;
 
@@ -157,7 +166,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!seat) {
         const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
         const known = accounts.find((account) => account.profile.email === email);
-        seat = { email, displayName: known?.profile.displayName ?? email, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, email) };
+        seat = { email, displayName: known?.profile.displayName ?? email, ...seatKindOf(known), signedIn: false, slot, handle: handleFor(slot, email) };
         seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
       }
       seat.signedIn = true;
@@ -169,13 +178,13 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   // Which account each live access token belongs to. A slot signed out takes its tokens with it.
   const access = new Map<string, string>();
   const accounts: Account[] = [
-    { profile, password: credentials.password, twoStep: false, emailVerified: true },
-    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
-    { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
-    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true },
-    { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze' }, password: pendingPassword, twoStep: false, emailVerified: false },
+    { profile, password: credentials.password, twoStep: false, emailVerified: true, membership: { organisation: 'Northwind Studio', role: 'MEMBER' } },
+    { profile: twoStepProfile, password: twoStepCredentials.password, twoStep: true, emailVerified: true, membership: { organisation: 'Northwind Studio', role: 'MEMBER' } },
+    { profile: { ...profile, id: '64f000000000000000000006', globalId: 'g-tunde-001', email: suspendedCredentials.email, firstName: 'Tunde', lastName: 'Bakare', displayName: 'Tunde Bakare', accountType: 'personal' }, password: suspendedCredentials.password, twoStep: false, emailVerified: true, suspended: true },
+    { profile: { ...profile, id: '64f000000000000000000003', globalId: 'g-kemi-001', email: takenAddress, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi', accountType: 'personal' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000004', globalId: 'g-kemi-002', email: registeredEmail, firstName: 'Kemi', lastName: 'Adeyemi', displayName: 'Kemi Adeyemi', accountType: 'personal' }, password: 'Harmattan-in-Ibadan-88', twoStep: false, emailVerified: true },
+    { profile: { ...profile, id: '64f000000000000000000007', globalId: 'g-kayode-001', email: newAdmin.email, firstName: newAdmin.firstName, lastName: 'Balogun', displayName: 'Kayode Balogun', accountType: 'business' }, password: newAdmin.password, twoStep: false, emailVerified: true, phoneRequired: true, membership: { organisation: 'Northwind Studio', role: 'OWNER' } },
+    { profile: { ...profile, id: '64f000000000000000000005', globalId: 'g-pending-001', email: pendingEmail, firstName: 'Ngozi', lastName: 'Eze', displayName: 'Ngozi Eze', accountType: 'personal' }, password: pendingPassword, twoStep: false, emailVerified: false },
   ];
   // Workspaces that exist: the seeded one, whose short name is taken too, and any made by a test.
   const tenants: { id: string; slug: string; domain: string }[] = [{ id: '64f000000000000000000200', slug: 'northwind-studio', domain: claimedDomain }];
@@ -222,7 +231,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!seat) {
         if (seats.length >= MAX_ACCOUNTS) return null;
         const slot = [...Array(MAX_ACCOUNTS).keys()].find((free) => !seats.some((known) => known.slot === free))!;
-        seat = { email: account.profile.email, displayName: account.profile.displayName, kind: 'personal', organisation: null, role: null, signedIn: false, slot, handle: handleFor(slot, account.profile.email) };
+        seat = { email: account.profile.email, displayName: account.profile.displayName, ...seatKindOf(account), signedIn: false, slot, handle: handleFor(slot, account.profile.email) };
         seats = [...seats, seat].sort((a, b) => a.slot - b.slot);
       }
       seat.signedIn = true;
@@ -263,7 +272,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (domain !== mailDomain && domain !== publicEmailDomain) return fail(route, 400, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL');
       const displayName = body.displayName ?? `${body.firstName} ${body.lastName}`;
       accounts.push({
-        profile: { id: `64f00000000000000000010${accounts.length}`, globalId: `g-new-${accounts.length}`, email, firstName: body.firstName, lastName: body.lastName, displayName, photo: null },
+        profile: { id: `64f00000000000000000010${accounts.length}`, globalId: `g-new-${accounts.length}`, email, firstName: body.firstName, lastName: body.lastName, displayName, photo: null, accountType: 'personal' },
         password: body.password ?? '',
         twoStep: false,
         // An address on the platform's own domain is the person's by being claimed; any other has to be confirmed.
@@ -299,7 +308,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       const id = `64f0000000000000000002${tenants.length}0`;
       tenants.push({ id, slug: sent.slug ?? '', domain });
       // The address is taken as verified and no email is sent; the session comes once a texted code meets the phone check.
-      const made = { profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null }, password: sent.password ?? '', twoStep: false, emailVerified: true, phoneRequired: true };
+      const made = { profile: { id: `64f00000000000000000011${accounts.length}`, globalId: `g-admin-${accounts.length}`, email, firstName: sent.firstName ?? '', lastName: sent.lastName ?? '', displayName: `${sent.firstName} ${sent.lastName}`, photo: null, accountType: 'business' }, password: sent.password ?? '', twoStep: false, emailVerified: true, phoneRequired: true, membership: { organisation: sent.businessName ?? '', role: 'OWNER' } };
       accounts.push(made);
       return ok(route, { message: 'Workspace created. Verify a phone number to sign in.', phoneRequired: true, challengeToken: phoneCheckFor(made), identity: { id: made.profile.id, email, emailVerified: true }, tenant: { id, slug: sent.slug, displayName: sent.businessName, status: 'pending_setup' }, domain: { domain, status: 'pending', verification: { type: 'TXT', host: `_yahel-verify.${domain}`, value: 'yahel-verify=e2e' } } }, 201);
     }

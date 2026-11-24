@@ -20,5 +20,6 @@ export const menuMessages = {
 
 export const accountWords = {
   personalAccount: 'Personal account',
+  workAccount: 'Work account',
   admin: (organisation: string) => `Admin · ${organisation}`,
 } as const;

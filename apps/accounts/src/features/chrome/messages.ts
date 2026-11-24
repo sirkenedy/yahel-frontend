@@ -46,6 +46,7 @@ export const chromeMessages = {
     terms: 'Terms',
   },
   personalAccount: 'Personal account',
+  workAccount: 'Work account',
   admin: (organisation: string) => `Admin · ${organisation}`,
   switchedTo: (email: string) => `Switched to ${email}.`,
   signedOutOf: (email: string) => `Signed out of ${email}.`,

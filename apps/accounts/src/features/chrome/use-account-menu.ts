@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { currentAccountOf, standingOf } from '@yahel/api-client';
 import type { AccountDirectory, ClientAccount } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
 import { useEffect } from 'react';
 import { useStore } from 'zustand';
-import { accountsQuery, forgetAccountData, kindOf, nameOf, nextSignedIn, refreshAccounts } from '../../flow/accounts';
+import { accountsQuery, badgeOf, forgetAccountData, kindOf, kindOfStanding, nameOf, nextSignedIn, refreshAccounts } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
 import { chromeMessages as m } from './messages';
 
@@ -28,13 +29,6 @@ export interface AccountMenuOptions {
   go: AccountMenuRoutes;
 }
 
-const ADMIN_ROLES = new Set(['OWNER', 'ADMIN']);
-
-const badgeOf = (account: ClientAccount | undefined) => {
-  if (!account || account.kind === 'personal' || !account.organisation) return m.personalAccount;
-  return account.role && ADMIN_ROLES.has(account.role) ? m.admin(account.organisation) : account.organisation;
-};
-
 /**
  * Everything the account menu shows and does, for whoever this tab is signed in as; `null` when nobody is.
  * Switching, signing out and adding all go through the session, which tells the other tabs; the list is
@@ -44,7 +38,8 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
   const queryClient = useQueryClient();
   const { profile, slot, handle } = useStore(session.store);
   const signedIn = profile !== null && slot !== null;
-  const accounts = useQuery({ ...accountsQuery(directory), enabled: signedIn }).data ?? [];
+  const list = useQuery({ ...accountsQuery(directory), enabled: signedIn });
+  const accounts = list.data ?? [];
   const action = useMutation({ mutationFn: (run: () => Promise<void>) => run() });
   // A new account in this tab (signed in, or just created by sign-up) changes the list: the old one moves to "Other accounts".
   useEffect(() => {
@@ -52,8 +47,10 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
   }, [handle, queryClient]);
 
   if (!signedIn) return null;
-  const current = accounts.find((account) => account.handle === handle);
-  const others = accounts.filter((account) => account.handle !== handle);
+  const current = currentAccountOf(accounts, handle, slot);
+  const others = accounts.filter((account) => account !== current);
+  // No badge until the list has answered: a wrong "Personal account" is worse than none.
+  const standing = list.isPending ? null : standingOf(current, profile);
   const byId = (id: string) => others.find((account) => account.handle === id);
 
   const start = (run: () => Promise<void>) => {
@@ -68,7 +65,7 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
   };
 
   return {
-    current: { name: current ? nameOf(current) : profile.displayName?.trim() || [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email, email: profile.email, kind: 'person', initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: badgeOf(current) },
+    current: { name: current ? nameOf(current) : profile.displayName?.trim() || [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.email, email: profile.email, kind: kindOfStanding(standing), initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: standing && badgeOf(standing, m) },
     others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: kindOf(account), initials: account.initials, avatarUrl: account.avatarUrl, signedIn: account.signedIn })),
     manageHref: manageUrl(slot),
     privacyHref: privacyUrl,

@@ -41,7 +41,8 @@ export interface AccountMenuLabels {
 }
 
 export interface AccountMenuProps {
-  current: Omit<AccountMenuAccount, 'id' | 'signedIn'> & { badge: string };
+  /** `badge` is left out while it is not yet known which kind of account this is, rather than guessed. */
+  current: Omit<AccountMenuAccount, 'id' | 'signedIn'> & { badge?: string | null };
   others: AccountMenuAccount[];
   labels: AccountMenuLabels;
   manageHref: string | null;
@@ -114,7 +115,7 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
                 <span className="ws-flow-menu__email" translate="no">
                   {current.email}
                 </span>
-                <span className="ws-flow-menu__badge">{current.badge}</span>
+                {current.badge ? <span className="ws-flow-menu__badge">{current.badge}</span> : null}
               </span>
               {hasOthers ? (
                 <Button className="ws-flow-menu__toggle" aria-label={othersShown ? labels.hideOthers : labels.showOthers} aria-expanded={othersShown} aria-controls={othersShown ? listId : undefined} onPress={() => setOthersShown(!othersShown)}>
