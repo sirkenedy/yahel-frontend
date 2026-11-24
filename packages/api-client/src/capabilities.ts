@@ -249,6 +249,18 @@ export interface CardDetails {
   expiry: string;
   securityCode: string;
   name: string;
+  /** Where the bank sends the card's statements, when it is not the business address; `null` when it is. */
+  billingAddress: CardBillingAddress | null;
+}
+
+/** The address the bank has for a card. Used to check the card, and for nothing else. */
+export interface CardBillingAddress {
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  /** ISO 3166-1 alpha-2. */
+  country: string;
 }
 
 export interface PostalAddress {

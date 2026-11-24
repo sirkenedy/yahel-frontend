@@ -564,7 +564,7 @@ describe('GatewayStep', () => {
     await fillCard(user);
     expect(field(m.cardNumber)).toHaveValue('4084 0840 8408 4081');
     await press(m.payDue('₦18,500'));
-    expect(actions.pay).toHaveBeenCalledWith({ number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Okafor' });
+    expect(actions.pay).toHaveBeenCalledWith({ number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Okafor', billingAddress: null });
   });
 
   it('refuses a card that cannot be right, and pays nothing', async () => {
@@ -578,6 +578,34 @@ describe('GatewayStep', () => {
     expect(field(m.expiry)).toHaveAccessibleDescription(literally(m.expired));
     expect(field(m.securityCode)).toHaveAccessibleDescription(literally(m.securityCodeInvalid));
     expect(actions.pay).not.toHaveBeenCalled();
+  });
+
+  it('asks for the card’s billing address when it is not the business address, checks it, and hands it over with the card', async () => {
+    const { actions, user } = setup(<GatewayStep />, { state: { ...ready, country: 'NG' } });
+    expect(screen.queryByRole('group', { name: m.billingAddress })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: m.sameAddress }));
+    expect(screen.getByRole('group', { name: m.billingAddress })).toHaveAccessibleDescription(m.billingAddressLede);
+    expect(field(m.street)).toHaveAttribute('autocomplete', 'billing address-line1');
+
+    await fillCard(user);
+    await press(m.verifyCard);
+    expect(field(m.street)).toHaveAccessibleDescription(literally(m.streetRequired));
+    expect(field(m.city)).toHaveAccessibleDescription(literally(m.cityRequired));
+    expect(field(m.state)).toHaveAccessibleDescription(literally(m.stateRequired));
+    expect(actions.pay).not.toHaveBeenCalled();
+
+    await user.type(field(m.street), '12 Marina Road');
+    await user.type(field(m.city), 'Ikeja');
+    await user.selectOptions(field(m.state), 'Lagos');
+    await press(m.verifyCard);
+    expect(actions.pay).toHaveBeenCalledWith(expect.objectContaining({ billingAddress: { street: '12 Marina Road', city: 'Ikeja', state: 'Lagos', postalCode: '', country: 'NG' } }));
+  });
+
+  it('asks for a state or region in words outside Nigeria', async () => {
+    const { user } = setup(<GatewayStep />, { state: { ...ready, country: 'KE' } });
+    await user.click(screen.getByRole('checkbox', { name: m.sameAddress }));
+    expect(field(m.region)).toHaveAttribute('autocomplete', 'billing address-level1');
+    expect(screen.queryByRole('combobox', { name: m.state })).not.toBeInTheDocument();
   });
 
   it('tells a declined card above the form, and says it is checking the card while it is', () => {

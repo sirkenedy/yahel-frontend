@@ -179,6 +179,18 @@ test.describe('accounts: plan and checkout, once signed in', () => {
     for (const [label, autocomplete] of [['Card number', 'cc-number'], ['Expiry', 'cc-exp'], ['Security code', 'cc-csc'], ['Name on card', 'cc-name']] as const) {
       await expect(page.getByLabel(label)).toHaveAttribute('autocomplete', autocomplete);
     }
+
+    await expect(page.getByRole('group', { name: 'Billing address' })).toHaveCount(0);
+    await page.getByRole('checkbox', { name: 'Billing address is the same as my business address' }).uncheck();
+    await expect(page.getByRole('group', { name: 'Billing address' })).toHaveAccessibleDescription('The address your bank has for this card. It’s used to check the card, not for your workspace.');
+    await fillCard(page);
+    await proceed(page, 'Verify card');
+    await expect(alert(page, '3 things to fix before you continue')).toContainText('Street address, City or town and State.');
+    await page.getByLabel('Street address').fill('12 Marina Road');
+    await page.getByLabel('City or town').fill('Ikeja');
+    await page.getByLabel('State', { exact: true }).selectOption('Lagos');
+    await proceed(page, 'Verify card');
+    await expect(heading(page, 'Confirm with your bank.')).toBeVisible();
   });
 
   test('a declined card is told plainly, a wrong code beside the boxes, and another card can be tried', async ({ page }) => {

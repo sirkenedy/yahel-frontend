@@ -109,6 +109,33 @@ function FlowStepSubheading({ children }: { children: string }) {
   return <h2 className="ws-flow-step__subheading">{children}</h2>;
 }
 
+interface FlowStepGroupProps {
+  title: string;
+  /** Says what the fields are for, under the title. */
+  lede?: string;
+  children: ReactNode;
+}
+
+/** A set of fields that belong together inside a step, named by its title, on a card of its own. */
+function FlowStepGroup({ title, lede, children }: FlowStepGroupProps) {
+  const id = useId();
+  return (
+    <div className="ws-flow-step__group" role="group" aria-labelledby={`${id}-title`} aria-describedby={lede ? `${id}-lede` : undefined}>
+      <div className="ws-flow-step__group-head">
+        <h2 id={`${id}-title`} className="ws-flow-step__group-title">
+          {title}
+        </h2>
+        {lede ? (
+          <p id={`${id}-lede`} className="ws-flow-step__group-lede">
+            {lede}
+          </p>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 interface FlowStepSplitProps {
   /** What the person works on first, at the top of the main column. */
   lead: ReactNode;
@@ -185,6 +212,7 @@ export const FlowStep = Object.assign(FlowStepRoot, {
   Body: FlowStepBody,
   Row: FlowStepRow,
   Subheading: FlowStepSubheading,
+  Group: FlowStepGroup,
   Split: FlowStepSplit,
   Actions: FlowStepActions,
   Links: FlowStepLinks,

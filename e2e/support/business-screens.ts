@@ -47,6 +47,14 @@ export const businessScreens: Screen[] = [
   { name: 'business found', open: (page) => createWorkspaceTo(page, 'found', { domain: 'bought' }) },
   { name: 'business ready', open: (page) => createWorkspaceTo(page, 'ready') },
   { name: 'business gateway', open: (page) => createWorkspaceTo(page, 'gateway', { domain: 'bought' }) },
+  {
+    name: 'business gateway, billing address',
+    open: async (page) => {
+      await createWorkspaceTo(page, 'gateway', { domain: 'bought' });
+      await page.getByRole('checkbox', { name: 'Billing address is the same as my business address' }).uncheck();
+      await page.getByRole('group', { name: 'Billing address' }).waitFor();
+    },
+  },
   { name: 'business paid', open: (page) => createWorkspace(page, { domain: 'bought' }) },
   {
     name: 'business domain, claimed',

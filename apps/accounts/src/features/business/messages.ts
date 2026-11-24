@@ -260,6 +260,8 @@ export const businessMessages = {
   gatewayLedeTrial: 'We check your card now and charge it when your trial ends. Your bank may show a small hold that’s released straight away.',
   gatewayLede: 'We check your card now and charge it straight away. Your bank may ask you to approve the payment.',
   sameAddress: 'Billing address is the same as my business address',
+  billingAddress: 'Billing address',
+  billingAddressLede: 'The address your bank has for this card. It’s used to check the card, not for your workspace.',
   partnerNote: 'This page is run by our payment partner. Yahel never sees your full card number.',
   payDue: (due: string) => `Pay ${due}`,
   cardNumber: 'Card number',

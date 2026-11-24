@@ -14,6 +14,7 @@ export type {
   AdminAccess,
   BillingContact,
   BillingPeriod,
+  CardBillingAddress,
   CardDetails,
   CompletedOrder,
   DomainClaims,

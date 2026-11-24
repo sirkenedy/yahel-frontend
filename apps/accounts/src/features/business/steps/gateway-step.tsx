@@ -1,10 +1,11 @@
-import { FlowButton, FlowCheckbox, FlowNotice, FlowPreview, FlowStep, FlowTextField } from '@yahel/ui';
+import { FlowButton, FlowCheckbox, FlowNotice, FlowPreview, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
 import { useBusinessFlow } from '../business-flow';
 import { brandOf, formatCardNumber, formatExpiry, formatSecurityCode } from '../card';
+import { NIGERIA, nigerianStates } from '../countries';
 import { businessMessages as m } from '../messages';
-import { cardNumberProblem, expiryProblemOf, nameOnCardProblem, securityCodeProblem } from '../validation';
+import { cardNumberProblem, cityProblem, expiryProblemOf, nameOnCardProblem, securityCodeProblem, stateProblem, streetProblem } from '../validation';
 import { PricingUnavailable } from './pricing-unavailable';
 import { StepFrame } from './step-frame';
 
@@ -22,7 +23,12 @@ export function GatewayStep() {
   const expiry = useStepField({ problemOf: (value) => expiryProblemOf(value), label: m.expiry, hasFormat: true });
   const securityCode = useStepField({ problemOf: securityCodeProblem, label: m.securityCode, hasFormat: true });
   const cardName = useStepField({ initial: [state.firstName, state.lastName].filter(Boolean).join(' '), problemOf: nameOnCardProblem, label: m.nameOnCard });
-  const form = useStepFields([number, expiry, securityCode, cardName]);
+  const inNigeria = state.country === NIGERIA;
+  const [postalCode, setPostalCode] = useState('');
+  const street = useStepField({ problemOf: streetProblem, label: m.street });
+  const city = useStepField({ problemOf: cityProblem, label: m.city });
+  const region = useStepField<HTMLInputElement & HTMLSelectElement>({ problemOf: (value) => stateProblem(value, state.country), label: inNigeria ? m.state : m.region });
+  const form = useStepFields(sameAddress ? [number, expiry, securityCode, cardName] : [number, expiry, securityCode, cardName, street, city, region]);
 
   if (quote.status !== 'ready') {
     return (
@@ -42,9 +48,11 @@ export function GatewayStep() {
     </FlowPreview>
   );
 
+  const billingAddress = sameAddress ? null : { street: street.value.trim(), city: city.value.trim(), state: region.value.trim(), postalCode: postalCode.trim(), country: state.country };
+
   return (
     <StepFrame title={m.gatewayTitle} lede={sums.trial ? m.gatewayLedeTrial : m.gatewayLede} requests={[request]} toFix={form.toFix} lead={paying}>
-      <FlowStep.Form onSubmit={(event) => form.submit(event, () => actions.pay({ number: number.value, expiry: expiry.value, securityCode: securityCode.value, name: cardName.value.trim() }))}>
+      <FlowStep.Form onSubmit={(event) => form.submit(event, () => actions.pay({ number: number.value, expiry: expiry.value, securityCode: securityCode.value, name: cardName.value.trim(), billingAddress }))}>
         <FlowStep.Body>
           <FlowTextField
             label={m.cardNumber}
@@ -67,10 +75,30 @@ export function GatewayStep() {
             <FlowTextField label={m.securityCode} name="cc-csc" inputMode="numeric" autoComplete="cc-csc" help={m.securityCodeHelp} value={securityCode.value} onChange={(typed) => securityCode.change(formatSecurityCode(typed))} onBlur={securityCode.blur} isValid={securityCode.isValid} error={securityCode.error} inputRef={securityCode.inputRef} isRequired isSensitive />
           </FlowStep.Row>
           <FlowTextField label={m.nameOnCard} name="cc-name" autoComplete="cc-name" value={cardName.value} onChange={cardName.change} onBlur={cardName.blur} error={cardName.error} inputRef={cardName.inputRef} isRequired isSensitive />
-          {/* Drawn ticked, with nothing drawn for when it is not: the business address is the billing address either way (F-75). */}
           <FlowCheckbox isSelected={sameAddress} onChange={setSameAddress}>
             {m.sameAddress}
           </FlowCheckbox>
+          {sameAddress ? null : (
+            <FlowStep.Group title={m.billingAddress} lede={m.billingAddressLede}>
+              <FlowTextField label={m.street} name="billing-address-line1" autoComplete="billing address-line1" value={street.value} onChange={street.change} onBlur={street.blur} error={street.error} inputRef={street.inputRef} isRequired isSensitive />
+              <FlowStep.Row>
+                <FlowTextField label={m.city} name="billing-address-level2" autoComplete="billing address-level2" value={city.value} onChange={city.change} onBlur={city.blur} error={city.error} inputRef={city.inputRef} isRequired isSensitive />
+                {inNigeria ? (
+                  <FlowSelect label={m.state} name="billing-address-level1" autoComplete="billing address-level1" value={region.value} onChange={region.change} error={region.error} inputRef={region.inputRef} isSensitive>
+                    <option value="">{m.chooseState}</option>
+                    {nigerianStates.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </FlowSelect>
+                ) : (
+                  <FlowTextField label={m.region} name="billing-address-level1" autoComplete="billing address-level1" value={region.value} onChange={region.change} onBlur={region.blur} error={region.error} inputRef={region.inputRef} isRequired isSensitive />
+                )}
+              </FlowStep.Row>
+              <FlowTextField label={m.postalCode} name="billing-postal-code" inputMode={inNigeria ? 'numeric' : 'text'} autoComplete="billing postal-code" help={m.optional} value={postalCode} onChange={setPostalCode} isSensitive />
+            </FlowStep.Group>
+          )}
           <FlowNotice>{m.demoPayment}</FlowNotice>
           <FlowStep.Note>{m.partnerNote}</FlowStep.Note>
         </FlowStep.Body>

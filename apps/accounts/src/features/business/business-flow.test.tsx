@@ -18,7 +18,7 @@ import { createBusinessStore } from './store';
 
 const instant = async () => undefined;
 const password = 'Northwind Lagos 2026!';
-const card = { number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Cardholder' };
+const card = { number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Cardholder', billingAddress: null };
 const failure = (status: number, code: string) => new ApiError({ status, code, message: 'x' });
 const lost = () => failure(0, 'NETWORK_ERROR');
 const made = { phoneRequired: true, challengeToken: 'pc-1', tenant: { id: 't1', slug: 'northwind-studio', displayName: 'Northwind Studio', status: 'pending_setup' }, domain: { domain: 'northwind.example', status: 'pending' } };

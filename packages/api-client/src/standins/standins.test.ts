@@ -107,7 +107,7 @@ describe('stand-ins', () => {
 
 describe('stand-ins for a new workspace', () => {
   const order = { planId: 'business', period: 'monthly' as const, seats: 3, promoCode: null, domain: null };
-  const card = { number: '4084 0840 8408 4081', expiry: '08/29', securityCode: '123', name: 'Amara Okafor' };
+  const card = { number: '4084 0840 8408 4081', expiry: '08/29', securityCode: '123', name: 'Amara Okafor', billingAddress: null };
   const contact = { businessName: 'Northwind Studio', email: 'amara@mail.example', address: null };
   const now = Date.UTC(2026, 10, 21);
   const naira = (amount: number) => ({ amount: amount * 100, currency: 'NGN' });
