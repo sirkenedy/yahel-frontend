@@ -374,8 +374,10 @@ test.describe('accounts: account menu', () => {
     await expect(menu(page)).toHaveCount(0);
     await expect(avatar(page)).toBeFocused();
 
+    // On a phone the panel spans the screen, so the press lands in the gutter beside it rather than on the page's heading.
     await avatar(page).click();
-    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).click();
+    const panel = (await menu(page).boundingBox())!;
+    await page.mouse.click(panel.x / 2, panel.y + panel.height / 2);
     await expect(menu(page)).toHaveCount(0);
   });
 

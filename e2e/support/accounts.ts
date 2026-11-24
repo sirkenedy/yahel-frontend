@@ -41,7 +41,8 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
 
 /** Opens sign-in at the email step: past the account chooser when this browser remembers accounts, as it does by default. */
 export async function openEmailStep(page: Page, query = '') {
-  await page.goto(at(`/signin${query}`));
+  // WebKit counts the chooser's redirect, made before the page finishes loading, as a second navigation.
+  await page.goto(at(`/signin${query}`), { waitUntil: 'commit' });
   const another = page.getByRole('button', { name: 'Use another account' });
   const email = page.getByRole('heading', { name: 'Welcome back.' });
   await another.or(email).first().waitFor();

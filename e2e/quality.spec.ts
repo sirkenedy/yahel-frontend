@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsScreens } from './support/accounts-screens';
+import { accountsScreens, settled } from './support/accounts-screens';
 import { mockApi, signIn } from './support/api';
 
 // Every screen is checked in each theme the design system ships.
@@ -20,6 +20,7 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await signIn(page);
       await page.getByRole('button', { name: /^Account: / }).click();
       await page.getByRole('dialog', { name: 'Accounts' }).waitFor();
+      await settled(page);
     },
   },
   {

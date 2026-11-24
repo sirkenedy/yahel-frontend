@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, signInWithPassword } from './support/accounts';
+import { at, signInWithPassword, stubPasskeys } from './support/accounts';
 import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
@@ -18,6 +18,7 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
   test('the account is made first, the phone check signs in, then the trial is paid for and Admin opens', async ({ page }) => {
     const api = await mockApi(page);
     await stubAdmin(page);
+    await stubPasskeys(page, 'success');
     await createWorkspaceTo(page, 'ready');
 
     // No date of birth, a reachable email, and no session: nobody is signed in until the phone is checked.
