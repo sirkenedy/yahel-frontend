@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createStandIns, demoAccounts, demoProfile } from './index';
+import { createStandIns, demoProfile } from './index';
 import { quoteFor } from './workspace-billing';
 
 const instant = async () => undefined;
@@ -27,19 +27,6 @@ describe('stand-ins', () => {
 
     for (let attempt = 0; attempt < 3; attempt += 1) await expect(textCodes.send('challenge')).resolves.toEqual({ destination: '+234 ••• ••• ••42' });
     await expect(textCodes.send('challenge')).rejects.toMatchObject({ status: 429 });
-  });
-
-  it('directory: starts with the demo accounts, remembers the latest first and removes', async () => {
-    const { directory } = createStandIns(instant);
-    expect(await directory.list()).toEqual(demoAccounts);
-
-    await directory.remember({ name: 'Kofi Mensah', email: 'kofi@northwind.example', kind: 'person', signedOut: true });
-    await directory.remember({ ...demoAccounts[1]!, signedOut: true });
-    expect((await directory.list()).map((account) => account.email)).toEqual(['amara@northwind.example', 'kofi@northwind.example', 'amara.okafor@yahel.example']);
-
-    await directory.remove('kofi@northwind.example');
-    expect(await directory.list()).toHaveLength(2);
-    await expect(directory.remove('kofi@northwind.example')).rejects.toMatchObject({ status: 404 });
   });
 
   it('recovery by phone: offers every address the same masked number', async () => {

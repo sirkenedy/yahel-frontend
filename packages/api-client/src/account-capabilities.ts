@@ -5,7 +5,6 @@ import type { ApiClient } from './client';
 export interface StandIns {
   passkeys: PasskeyCeremony;
   textCodes: TextCodeSender;
-  directory: AccountDirectory;
   recoveryByPhone: Pick<RecoveryChannels, 'options' | 'send'>;
   helpDesk: AccountHelpDesk;
   passkeyRegistration: PasskeyRegistration;
@@ -56,6 +55,14 @@ const trustedContactsOf = (api: Pick<ApiClient, 'me'>): TrustedContacts => ({
   },
 });
 
+/** The account chooser, on `GET /auth/accounts` and `DELETE /auth/accounts/{handle}`. */
+export const accountDirectoryOf = (api: Pick<ApiClient, 'auth'>): AccountDirectory => ({
+  list: (signal) => api.auth.accounts(signal),
+  remove: async (handle) => {
+    await api.auth.removeAccount(handle);
+  },
+});
+
 const addressesOf = (api: Pick<ApiClient, 'auth'>): AddressAvailability => ({
   check: (name, signal) => api.auth.addressAvailability({ name }, signal),
 });
@@ -64,7 +71,8 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, s
   const byEmail = emailRecovery(api);
   const trustedContacts = trustedContactsOf(api);
   const addresses = addressesOf(api);
-  if (!standIns) return { passkeys: null, textCodes: null, directory: null, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
+  const directory = accountDirectoryOf(api);
+  if (!standIns) return { passkeys: null, textCodes: null, directory, recovery: byEmail, helpDesk: null, passkeyRegistration: null, addresses, trustedContacts, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] };
 
   const recovery: RecoveryChannels = {
     options: async (email) => [...(await standIns.recoveryByPhone.options(email)), ...(await byEmail.options(email))],
@@ -73,7 +81,7 @@ export function createAccountCapabilities(api: Pick<ApiClient, 'auth' | 'me'>, s
   return {
     passkeys: standIns.passkeys,
     textCodes: standIns.textCodes,
-    directory: standIns.directory,
+    directory,
     recovery,
     helpDesk: standIns.helpDesk,
     passkeyRegistration: standIns.passkeyRegistration,

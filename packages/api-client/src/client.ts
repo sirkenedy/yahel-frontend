@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, Profile, RecoveryMethods, RefreshedTokens, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -43,6 +43,12 @@ const retryAfterOf = (response: Response): number | undefined => {
 /** What the backend's auth guard answers, with 401, when the access token is missing, expired or revoked. */
 const ACCESS_TOKEN_REFUSED = 'SESSION_EXPIRED';
 
+/**
+ * Says this is the web client. The backend refuses to sign a browser in without it, and the custom header
+ * forces a CORS preflight that a page on another site cannot pass.
+ */
+export const CLIENT_HEADER = { 'X-Yahel-Client': 'web' } as const;
+
 export function createApiClient(options: ApiClientOptions) {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Spec paths carry the global "/api" prefix; baseUrl already ends with it.
@@ -55,8 +61,11 @@ export function createApiClient(options: ApiClientOptions) {
     try {
       response = await doFetch(url(path, request.params), {
         method,
+        // The browser's cookies (its secret and one refresh token per account) are the session; script never sees them.
+        credentials: 'include',
         headers: {
           Accept: 'application/json',
+          ...CLIENT_HEADER,
           ...(request.body === undefined ? {} : { 'Content-Type': 'application/json' }),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -99,8 +108,16 @@ export function createApiClient(options: ApiClientOptions) {
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
       registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
-      refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
-      logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),
+      /** A new access token for the account in `slot`, from that slot's refresh cookie. */
+      refresh: (body: Schemas['RefreshTokenDto']) => request<RefreshedTokens>('POST', '/api/v1/auth/refresh', { body }),
+      /** Signs the account in `slot` out of this browser. It stays listed, signed out. */
+      logout: (body: Schemas['LogoutSlotDto']) => request<Schemas['ClientSlotResponseDto']>('POST', '/api/v1/auth/logout', { body }),
+      /** Signs every account in this browser out, keeping them listed. */
+      logoutBrowser: () => request<null>('POST', '/api/v1/auth/logout-browser'),
+      /** The accounts this browser has used and not removed, by slot. Empty for a browser that never signed in. */
+      accounts: (signal?: AbortSignal) => request<ClientAccount[]>('GET', '/api/v1/auth/accounts', { signal }),
+      /** Forgets an account in this browser, signing it out first if need be. Removing one already gone succeeds. */
+      removeAccount: (handle: string) => request<Schemas['ClientRemovedResponseDto']>('DELETE', '/api/v1/auth/accounts/{handle}', { params: { handle } }),
       mfaChallenge: (body: Schemas['MfaChallengeSubmitDto']) => request<AuthTokens>('POST', '/api/v1/auth/mfa/challenge', { body }),
       forgotPassword: (body: Schemas['ForgotPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/forgot-password', { body }),
       resetPassword: (body: Schemas['ResetPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/reset-password', { body }),

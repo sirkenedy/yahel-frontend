@@ -4,11 +4,41 @@ export type Schemas = components['schemas'];
 
 // The backend's OpenAPI description does not declare response bodies yet, so these are
 // written by hand from the backend source. Replace with generated types once it does.
+/**
+ * What every token-issuing endpoint answers to a web client (login, second step, passkey, context, refresh).
+ * The refresh token never reaches script: the server keeps it in an HttpOnly cookie named after the slot.
+ */
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
   expiresIn: number;
-  tokenType: string;
+  tokenType?: string;
+  /** The account's position in this browser, 0 to 9; it appears in app addresses (`/u/<slot>/`). */
+  slot: number;
+  /** Names the account in this browser only. A slot that answers with another handle now holds another account. */
+  handle: string;
+}
+
+/** `POST /auth/refresh`. The handle is `null` for a session made before handles existed. */
+export interface RefreshedTokens extends Omit<AuthTokens, 'handle'> {
+  handle: string | null;
+}
+
+/**
+ * One account this browser has used and not removed, as `GET /auth/accounts` lists them (sorted by slot).
+ * Written by hand: the generated schema types the nullable strings as objects.
+ */
+export interface ClientAccount {
+  handle: string;
+  slot: number;
+  displayName: string | null;
+  initials: string | null;
+  avatarUrl: string | null;
+  /** The full address: this list answers only to this browser's own secret cookie. */
+  email: string;
+  kind: 'personal' | 'business';
+  organisation: string | null;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST' | null;
+  signedIn: boolean;
 }
 
 export interface MfaRequired {

@@ -1,4 +1,4 @@
-import type { AuthTokens, Profile } from './types';
+import type { AuthTokens, ClientAccount, Profile } from './types';
 
 // Things the account flows need that the backend may not offer yet. Each is a small interface so the
 // interface code never knows whether a real endpoint or a stand-in is answering. See account-capabilities.ts.
@@ -43,21 +43,11 @@ export interface TextCodeSender {
   send(challengeToken: string): Promise<{ destination: string }>;
 }
 
-export interface KnownAccount {
-  name: string;
-  email: string;
-  kind: 'person' | 'organisation';
-  /** The organisation's name, for organisation accounts. */
-  organisation?: string;
-  signedOut?: boolean;
-}
-
-/** The accounts that have signed in on this device, for the account chooser. */
+/** The accounts this browser has used, for the account chooser. The server keeps the list against the browser's own cookie. */
 export interface AccountDirectory {
-  list(): Promise<KnownAccount[]>;
-  /** Stand-in only: a real server records sign-ins itself, and this leaves the interface when it does. */
-  remember(account: KnownAccount): Promise<void>;
-  remove(email: string): Promise<void>;
+  list(signal?: AbortSignal): Promise<ClientAccount[]>;
+  /** Removes an account from this browser by its handle. Idempotent. */
+  remove(handle: string): Promise<void>;
 }
 
 export type RecoveryMethod = 'email' | 'phone';
@@ -345,13 +335,13 @@ export interface AdminAccess {
   membership(): Promise<WorkspaceMembership | null>;
 }
 
-export type StandInName = 'passkeys' | 'textCodes' | 'directory' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
+export type StandInName = 'passkeys' | 'textCodes' | 'recoveryByPhone' | 'helpDesk' | 'passkeyRegistration' | 'preferences' | 'serviceStatus' | 'domainMarket' | 'domainClaims' | 'workspaceBilling' | 'adminAccess';
 
 export interface AccountCapabilities {
   /** `null` when the feature is not available; the interface then does not offer it. */
   passkeys: PasskeyCeremony | null;
   textCodes: TextCodeSender | null;
-  directory: AccountDirectory | null;
+  directory: AccountDirectory;
   recovery: RecoveryChannels;
   helpDesk: AccountHelpDesk | null;
   passkeyRegistration: PasskeyRegistration | null;

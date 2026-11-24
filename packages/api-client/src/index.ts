@@ -1,9 +1,9 @@
-export { createApiClient } from './client';
+export { CLIENT_HEADER, createApiClient } from './client';
 export type { ApiClient, ApiClientOptions } from './client';
 export { ApiError, isApiError } from './errors';
 export { isMfaRequired } from './types';
-export type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, MfaRequired, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
-export { createAccountCapabilities, maskEmail } from './account-capabilities';
+export type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
+export { accountDirectoryOf, createAccountCapabilities, maskEmail } from './account-capabilities';
 export type { StandIns } from './account-capabilities';
 export type {
   AccountCapabilities,
@@ -31,7 +31,6 @@ export type {
   WorkspaceBilling,
   WorkspaceMembership,
   WorkspacePlan,
-  KnownAccount,
   PasskeyAssertion,
   PasskeyAssertionOptions,
   PasskeyAttestation,

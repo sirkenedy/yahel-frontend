@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { createAccountCapabilities, maskEmail, usableWindow } from './account-capabilities';
 import { createStandIns } from './standins';
 
-const api = () => ({ auth: { forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }) } }) as unknown as Parameters<typeof createAccountCapabilities>[0] & { auth: { forgotPassword: ReturnType<typeof vi.fn> } };
+const api = () =>
+  ({ auth: { forgotPassword: vi.fn().mockResolvedValue({ message: 'ok' }), accounts: vi.fn().mockResolvedValue([]), removeAccount: vi.fn().mockResolvedValue({ handle: 'h-1' }) } }) as unknown as Parameters<typeof createAccountCapabilities>[0] & {
+    auth: { forgotPassword: ReturnType<typeof vi.fn>; accounts: ReturnType<typeof vi.fn>; removeAccount: ReturnType<typeof vi.fn> };
+  };
 const instant = async () => undefined;
 
 describe('createAccountCapabilities', () => {
@@ -10,7 +13,9 @@ describe('createAccountCapabilities', () => {
     const client = api();
     const capabilities = createAccountCapabilities(client);
 
-    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, directory: null, helpDesk: null, passkeyRegistration: null, addresses: null, trustedContacts: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] });
+    expect(capabilities).toMatchObject({ passkeys: null, textCodes: null, helpDesk: null, passkeyRegistration: null, preferences: null, serviceStatus: null, domainMarket: null, domainClaims: null, workspaceBilling: null, adminAccess: null, standIns: [] });
+    expect(capabilities.addresses).not.toBeNull();
+    expect(capabilities.trustedContacts).not.toBeNull();
     expect(await capabilities.recovery.options('amara@northwind.example')).toEqual([{ method: 'email', destination: 'a•••@northwind.example' }]);
 
     await capabilities.recovery.send('amara@northwind.example', 'email');
@@ -24,12 +29,11 @@ describe('createAccountCapabilities', () => {
 
     expect(capabilities.passkeys).toBe(standIns.passkeys);
     expect(capabilities.textCodes).toBe(standIns.textCodes);
-    expect(capabilities.directory).toBe(standIns.directory);
     expect(capabilities.helpDesk).toBe(standIns.helpDesk);
     expect(capabilities.passkeyRegistration).toBe(standIns.passkeyRegistration);
     expect(capabilities.preferences).toBe(standIns.preferences);
     await expect(capabilities.serviceStatus!.window()).resolves.toEqual(await standIns.serviceStatus.window());
-    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'directory', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
+    expect([...capabilities.standIns].sort()).toEqual(['adminAccess', 'domainClaims', 'domainMarket', 'helpDesk', 'passkeyRegistration', 'passkeys', 'preferences', 'recoveryByPhone', 'serviceStatus', 'textCodes', 'workspaceBilling']);
     expect(capabilities).toMatchObject({ domainMarket: standIns.domainMarket, domainClaims: standIns.domainClaims, workspaceBilling: standIns.workspaceBilling, adminAccess: standIns.adminAccess });
   });
 
@@ -44,6 +48,17 @@ describe('createAccountCapabilities', () => {
 
     await capabilities.recovery.send('amara@northwind.example', 'email');
     expect(client.auth.forgotPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists the accounts on this browser and removes one by its handle, in every build', async () => {
+    for (const standIns of [undefined, createStandIns(instant)]) {
+      const client = api();
+      const { directory } = createAccountCapabilities(client, standIns);
+
+      await expect(directory.list()).resolves.toEqual([]);
+      await expect(directory.remove('h-1')).resolves.toBeUndefined();
+      expect(client.auth.removeAccount).toHaveBeenCalledWith('h-1');
+    }
   });
 
   it('masks an address using only what was typed', () => {
