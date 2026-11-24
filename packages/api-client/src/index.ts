@@ -1,8 +1,8 @@
 export { CLIENT_HEADER, createApiClient } from './client';
 export type { ApiClient, ApiClientOptions } from './client';
 export { ApiError, isApiError } from './errors';
-export { isMfaRequired } from './types';
-export type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
+export { isMfaRequired, isPhoneRequired } from './types';
+export type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, PhoneRequired, RegisterBusinessBody, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
 export { accountDirectoryOf, createAccountCapabilities, maskEmail } from './account-capabilities';
 export type { StandIns } from './account-capabilities';
 export type {

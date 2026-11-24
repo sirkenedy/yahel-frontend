@@ -115,6 +115,28 @@ describe('createSession: signing in', () => {
   });
 });
 
+describe('createSession: a phone checked before the session', () => {
+  it('reports a phone check instead of signing in, then signs in once the texted code is right', async () => {
+    const { session, fetchMock } = make({
+      '/api/v1/auth/login': () => ok({ phoneRequired: true, challengeToken: 'pc-1' }),
+      '/api/v1/auth/phone-challenge/send': () => ok({ message: 'sent' }),
+      '/api/v1/auth/phone-challenge/verify': (body) => (body.code === 'A7kZq2' ? ok(tokens(1)) : fail(401, 'INVALID_TOKEN')),
+      '/api/v1/me': () => ok(profile),
+    });
+
+    await expect(session.signIn(profile.email, 'p')).resolves.toEqual({ ok: false, reason: 'phone-required', challengeToken: 'pc-1' });
+    expect(session.store.getState().status).toBe('unknown');
+
+    await session.sendPhoneCheck('pc-1', '+2348035550142');
+    await expect(session.completePhoneCheck('pc-1', 'wrong1')).rejects.toMatchObject({ code: 'INVALID_TOKEN' });
+    expect(session.store.getState().status).toBe('unknown');
+    await expect(session.completePhoneCheck('pc-1', 'A7kZq2')).resolves.toEqual({ slot: 1, handle: 'h-1' });
+
+    expect(session.store.getState()).toEqual({ status: 'signed-in', profile, slot: 1, handle: 'h-1' });
+    expect(bodiesTo(fetchMock, '/api/v1/auth/phone-challenge/send')).toEqual([{ challengeToken: 'pc-1', phone: '+2348035550142' }]);
+  });
+});
+
 describe('createSession: restoring and refreshing by slot', () => {
   it('restores the slot it is given by refreshing that slot, with the browser’s cookies and no token of its own', async () => {
     const { session, fetchMock } = make({ '/api/v1/auth/refresh': () => ok(tokens(4)), '/api/v1/me': () => ok(profile) });

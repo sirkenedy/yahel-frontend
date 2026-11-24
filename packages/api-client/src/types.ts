@@ -46,7 +46,16 @@ export interface MfaRequired {
   challengeToken: string;
 }
 
-export type LoginResult = AuthTokens | MfaRequired;
+/**
+ * No session yet: the account's phone has to be checked by text first (an administrator whose phone is still
+ * unverified, at sign-up and at every sign-in until it is). The challenge goes to `/auth/phone-challenge/*`.
+ */
+export interface PhoneRequired {
+  phoneRequired: true;
+  challengeToken: string;
+}
+
+export type LoginResult = AuthTokens | MfaRequired | PhoneRequired;
 
 /** What the backend returns when the outcome is only that the request was accepted. */
 export interface Acknowledgement {
@@ -86,13 +95,26 @@ export interface RecoveryMethods {
 
 export const isMfaRequired = (result: LoginResult): result is MfaRequired => 'mfaRequired' in result && result.mfaRequired === true;
 
+export const isPhoneRequired = (result: object): result is PhoneRequired => 'phoneRequired' in result && (result as PhoneRequired).phoneRequired === true;
+
 /**
- * What `POST /auth/register-business` answers (from `auth.service.ts`, `registerBusiness`). It also carries
- * the DNS instructions for proving the domain, which nothing reads yet and so is not typed here.
+ * What `POST /auth/register-business` answers: no session, but a phone challenge. The administrator's address is
+ * taken as verified and no email is sent; the session comes once a texted code is checked. It also carries the DNS
+ * instructions for proving the domain, which nothing reads yet and so is not typed here.
  */
-export interface BusinessRegistration {
-  message: string;
-  identity: { id: string; email: string; emailVerified: boolean };
+export interface BusinessRegistration extends PhoneRequired {
   tenant: { id: string; slug: string; displayName: string; status: string };
   domain: { domain: string; status: string };
 }
+
+/** The body `POST /auth/register-business` takes: no date of birth is needed for a business, and `contactEmail` is a mailbox the person can open today. */
+export type RegisterBusinessBody = Omit<Schemas['RegisterBusinessDto'], 'deviceName'>;
+
+/** `POST /auth/phone-challenge/send`: the number to text the challenge's code to, in international form. */
+export type PhoneChallengeSendBody = Schemas['PhoneChallengeSendDto'];
+
+/** `POST /auth/phone-challenge/verify`: the texted code (six letters or digits, case-sensitive). A right one issues the session. */
+export type PhoneChallengeVerifyBody = Omit<Schemas['PhoneChallengeVerifyDto'], 'deviceName'>;
+
+/** What `POST /auth/phone-challenge/send` answers: when another code can be asked for, and how many are left. */
+export type PhoneChallengeSent = Schemas['PhoneChallengeSentResponseDto'];

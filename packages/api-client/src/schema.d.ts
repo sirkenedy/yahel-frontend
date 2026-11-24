@@ -379,6 +379,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/phone-challenge/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Text a 6-character code to a phone for a pending phone challenge from register-business, login or passkey sign-in */
+        post: operations["AuthController_sendPhoneChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/phone-challenge/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the texted code, mark the phone verified and issue the session */
+        post: operations["AuthController_verifyPhoneChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/phone/send-otp": {
         parameters: {
             query?: never;
@@ -456,7 +490,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Register a business — creates identity + tenant + owner membership + pending domain atomically */
+        /** Register a business — creates identity + tenant + owner membership + pending domain atomically, then answers with a phone challenge instead of a session */
         post: operations["AuthController_registerBusiness"];
         delete?: never;
         options?: never;
@@ -1151,6 +1185,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/domain-claims/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Whether a business domain can still be claimed by a new workspace */
+        post: operations["TenantsController_checkDomainClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{tenantId}": {
         parameters: {
             query?: never;
@@ -1523,6 +1574,7 @@ export interface components {
             /** @example JO */
             initials: Record<string, never> | null;
             /**
+             * @description business when the identity is managed or holds an active membership (a founder shows as their organisation’s admin)
              * @example personal
              * @enum {string}
              */
@@ -1577,6 +1629,21 @@ export interface components {
              * @example acme-corp
              */
             slug: string;
+        };
+        DomainClaimDto: {
+            /**
+             * @description The company domain. A leading @, surrounding spaces and upper case are accepted and stripped.
+             * @example acme.com
+             */
+            domain: string;
+        };
+        DomainClaimResponseDto: {
+            /**
+             * @description free — no workspace holds it; claimed — one does, and this says nothing about which or how far along it is; public — a consumer mail provider, which no workspace may claim.
+             * @example free
+             * @enum {string}
+             */
+            standing: "free" | "claimed" | "public";
         };
         ForgotPasswordDto: {
             /** @example jane@acme.com */
@@ -1805,6 +1872,73 @@ export interface components {
             /** @example Bearer */
             tokenType: string;
         };
+        PhoneChallengeRequiredResponseDto: {
+            /** @example 550e8400-e29b-41d4-a716-446655440000 */
+            challengeToken: string;
+            /**
+             * @description No session was issued. Text a code to a phone, then check it, to sign in.
+             * @example true
+             */
+            phoneRequired: boolean;
+        };
+        PhoneChallengeSendDto: {
+            /**
+             * @description Challenge token from register-business, login or passkey sign-in
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            /**
+             * @description Phone to text the code to. E.164 preferred; a bare number is read against the account country.
+             * @example +14155552671
+             */
+            phone: string;
+        };
+        PhoneChallengeSentResponseDto: {
+            /** @example Verification code sent. */
+            message: string;
+            /**
+             * @description Seconds before another code can be requested
+             * @example 30
+             */
+            resendInSeconds: number;
+            /**
+             * @description Codes this challenge can still send
+             * @example 4
+             */
+            sendsLeft: number;
+        };
+        PhoneChallengeSessionResponseDto: {
+            /** @example eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... */
+            accessToken: string;
+            /**
+             * @description Access token lifetime in seconds
+             * @example 900
+             */
+            expiresIn: number;
+            /** @example k7Qd3rLm0pA2bXyZw9TcVe */
+            handle: string;
+            /**
+             * @description This account’s slot in the browser; the refresh token is in that slot’s cookie
+             * @example 0
+             */
+            slot: number;
+            /** @example Bearer */
+            tokenType: string;
+        };
+        PhoneChallengeVerifyDto: {
+            /** @example 550e8400-e29b-41d4-a716-446655440000 */
+            challengeToken: string;
+            /**
+             * @description The 6-character code texted to the phone (letters and digits, case-sensitive)
+             * @example 2BRGme
+             */
+            code: string;
+            /**
+             * @description Human-readable device label rendered in the sessions list
+             * @example Kehinde's MacBook
+             */
+            deviceName?: string;
+        };
         PlatformSendBroadcastDto: {
             /** @description Override the definition default channels */
             channels?: ("in_app" | "email" | "sms" | "push")[];
@@ -1892,16 +2026,29 @@ export interface components {
              */
             slot: number;
         };
+        RegisterBusinessDomainDto: {
+            /** @example acme.com */
+            domain: string;
+            /** @example pending */
+            status: string;
+            /** @description The DNS record to add to prove the domain */
+            verification: Record<string, never> | null;
+        };
         RegisterBusinessDto: {
             /** @example Acme Corp */
             businessName: string;
+            /**
+             * @description A mailbox the administrator can already open. Stored as the unverified recovery email so reset links reach them while the business domain has no mail.
+             * @example kehinde@gmail.com
+             */
+            contactEmail?: string;
             country: components["schemas"]["CountryDto"];
             /**
              * Format: date-time
-             * @description ISO 8601 date of birth — required for age gating
+             * @description ISO 8601 date of birth — age-gated against the country when given
              * @example 1995-08-12T00:00:00.000Z
              */
-            dateOfBirth: string;
+            dateOfBirth?: string;
             /** @example Kehinde's iPhone */
             deviceName?: string;
             /**
@@ -1924,6 +2071,41 @@ export interface components {
              * @example acme
              */
             slug: string;
+        };
+        RegisterBusinessIdentityDto: {
+            /** @example kehinde@acme.com */
+            email: string;
+            /** @example true */
+            emailVerified: boolean;
+            /** @example 507f1f77bcf86cd799439011 */
+            id: string;
+        };
+        RegisterBusinessResponseDto: {
+            /**
+             * @description Pass to POST /v1/auth/phone-challenge/send and /verify
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            challengeToken: string;
+            domain: components["schemas"]["RegisterBusinessDomainDto"];
+            identity: components["schemas"]["RegisterBusinessIdentityDto"];
+            /** @example Your account is ready. Check a phone by text to sign in. */
+            message: string;
+            /**
+             * @description Always true: the administrator is signed in only after a phone is checked
+             * @example true
+             */
+            phoneRequired: boolean;
+            tenant: components["schemas"]["RegisterBusinessTenantDto"];
+        };
+        RegisterBusinessTenantDto: {
+            /** @example Acme Corp */
+            displayName: string;
+            /** @example 507f1f77bcf86cd799439012 */
+            id: string;
+            /** @example acme */
+            slug: string;
+            /** @example pending_setup */
+            status: string;
         };
         RegisterDto: {
             country?: components["schemas"]["CountryDto"];
@@ -2454,11 +2636,14 @@ export interface operations {
             };
         };
         responses: {
+            /** @description A session; or { phoneRequired, challengeToken } while the account still needs its phone check; or { mfaRequired, challengeToken } for TOTP */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSessionResponseDto"] | components["schemas"]["PhoneChallengeRequiredResponseDto"];
+                };
             };
         };
     };
@@ -2576,12 +2761,13 @@ export interface operations {
             };
         };
         responses: {
+            /** @description A session, or { phoneRequired, challengeToken } while the account still needs its phone check */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PasskeySessionResponseDto"];
+                    "application/json": components["schemas"]["PasskeySessionResponseDto"] | components["schemas"]["PhoneChallengeRequiredResponseDto"];
                 };
             };
         };
@@ -2668,6 +2854,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PasskeyRevokedResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_sendPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneChallengeSendDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSentResponseDto"];
+                };
+            };
+        };
+    };
+    AuthController_verifyPhoneChallenge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneChallengeVerifyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneChallengeSessionResponseDto"];
                 };
             };
         };
@@ -2773,7 +3005,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RegisterBusinessResponseDto"];
+                };
             };
         };
     };
@@ -3739,6 +3973,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    TenantsController_checkDomainClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DomainClaimDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DomainClaimResponseDto"];
+                };
             };
         };
     };

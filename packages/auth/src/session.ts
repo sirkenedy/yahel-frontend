@@ -1,5 +1,5 @@
-import { accountDirectoryOf, createApiClient, isApiError, isMfaRequired } from '@yahel/api-client';
-import type { ApiClient, AuthTokens, Profile, Schemas, SignedIn } from '@yahel/api-client';
+import { accountDirectoryOf, createApiClient, isApiError, isMfaRequired, isPhoneRequired } from '@yahel/api-client';
+import type { ApiClient, AuthTokens, Profile, RegisterBusinessBody, SignedIn } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
 export type SessionStatus = 'unknown' | 'signed-out' | 'signed-in';
@@ -17,7 +17,8 @@ export interface SignedInAccount {
   handle: string;
 }
 
-export type SignInResult = ({ ok: true } & SignedInAccount) | { ok: false; reason: 'mfa-required'; challengeToken: string };
+/** `phone-required`: no session until a code texted to the account's phone is checked (`completePhoneCheck`). */
+export type SignInResult = ({ ok: true } & SignedInAccount) | { ok: false; reason: 'mfa-required' | 'phone-required'; challengeToken: string };
 
 /**
  * What happened to the accounts that this tab did not do itself: in another tab, or on the server.
@@ -248,12 +249,21 @@ export function createSession(options: SessionOptions) {
     /** Signs an account in and makes it this tab's. The others in this browser stay signed in. */
     async signIn(email: string, password: string): Promise<SignInResult> {
       const result = await api.auth.login({ email, password });
+      if (isPhoneRequired(result)) return { ok: false, reason: 'phone-required', challengeToken: result.challengeToken };
       if (isMfaRequired(result)) return { ok: false, reason: 'mfa-required', challengeToken: result.challengeToken };
       return { ok: true, ...(await signedIn(result)) };
     },
 
-    /** Creates a workspace and its administrator. No session follows: the administrator's address has to be confirmed first. */
-    registerBusiness: (details: Omit<Schemas['RegisterBusinessDto'], 'deviceName'>) => api.auth.registerBusiness(details),
+    /** Creates a workspace and its administrator. No session follows: it answers with a phone challenge (`completePhoneCheck`). */
+    registerBusiness: (details: RegisterBusinessBody) => api.auth.registerBusiness(details),
+
+    /** Texts the code for a phone challenge to `phone` (international form). */
+    sendPhoneCheck: async (challengeToken: string, phone: string) => {
+      await api.auth.phoneChallengeSend({ challengeToken, phone });
+    },
+
+    /** Checks a texted code for a phone challenge. A right one signs the account in, as a password sign-in does. */
+    completePhoneCheck: async (challengeToken: string, code: string) => signedIn(await api.auth.phoneChallengeVerify({ challengeToken, code })),
 
     /** Finishes a sign-in that stopped for a second step. `trustDevice` skips that step in this browser for 30 days. */
     completeSecondStep: async (challengeToken: string, code: string, trustDevice = false) => signedIn(await api.auth.mfaChallenge({ challengeToken, code, trustDevice })),
