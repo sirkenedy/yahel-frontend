@@ -180,6 +180,10 @@ describe('AdminFlowProvider: the welcome and the passkey', () => {
     handed.session.store.setState({ status: 'signed-in', profile });
     await waitFor(() => expect(handed.flow().state).toMatchObject({ address: email, domain: 'harbourline.example', organisation: 'Harbourline Studio' }));
 
+    const fromAnotherTab = setup({ step: 'welcome', facts: ready });
+    fromAnotherTab.session.store.setState({ status: 'signed-in', profile: { ...profile, email: 'amara.okafor@personal.example', accountType: 'personal' } });
+    await waitFor(() => expect(fromAnotherTab.flow().state).toMatchObject({ address: email, domain: 'harbourline.example', organisation: 'Harbourline Studio' }));
+
     const typed = setup({ step: 'welcome', facts: ready, handedOver: false });
     expect(typed.flow().state.organisation).toBe('Northwind Studio');
   });
