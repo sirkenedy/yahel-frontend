@@ -254,6 +254,8 @@
 .ws-flow-select select { appearance: none; background-color: var(--ws-color-daylight-field); color: var(--ws-color-daylight-ink); padding-inline: var(--ws-space-16) var(--ws-space-40); border-radius: inherit; text-overflow: ellipsis; cursor: pointer; }
 .ws-flow-select .ws-flow-icon { position: absolute; inset-inline-end: var(--ws-space-12); width: var(--ws-icon-sm); height: var(--ws-icon-sm); color: var(--ws-color-daylight-mute); pointer-events: none; }
 .ws-flow[data-private] [data-sensitive]:not(:focus-within) :is(input, select) { filter: blur(var(--ws-blur-thin)); }
+/* Text the design treats as private (account addresses, a business address) blurs with the fields. */
+.ws-flow[data-private] [data-blurtext] { filter: blur(var(--ws-blur-thin)); }
 .ws-flow-suggestions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); }
 .ws-flow-button--chip { min-height: var(--ws-target-touch); padding: 0 var(--ws-space-12); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line-strong); color: var(--ws-color-daylight-ink); font-size: var(--ws-type-flow-note-size); }
 .ws-flow-button--chip:hover, .ws-flow-button--round[aria-pressed='true'] { box-shadow: inset 0 0 0 var(--ws-border-focus) var(--ws-color-daylight-accent); }

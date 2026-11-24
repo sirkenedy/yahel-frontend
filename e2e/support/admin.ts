@@ -6,8 +6,11 @@ import { newAdmin, phoneCode } from './api';
 /** A mobile number as typed, without the country code, and the masked form the code step names it by. */
 export const adminPhone = { number: '803 555 0142', masked: '+234 ••• ••• ••42' };
 
-/** Where the demo build sends an administrator once Admin is theirs: the app address, unset in the demo build. */
-export const adminAddress = 'http://localhost:5173/';
+/**
+ * Where the demo build sends an administrator once Admin is theirs: Admin (the app address, unset in the demo build)
+ * as their own account. The browser already remembers two accounts, so the administrator takes slot 2.
+ */
+export const adminAddress = 'http://localhost:5173/u/2/';
 
 export type AdminStop = 'phone' | 'code' | 'welcome' | 'add-passkey' | 'passkey' | 'saved';
 

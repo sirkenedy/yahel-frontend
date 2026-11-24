@@ -67,7 +67,7 @@ function AdminLayout() {
         links={{ admin: config.adminUrl, plan: businessStepPath('plan'), signIn: config.signInUrl, resetPassword: config.signInUrl, help: config.helpUrl, businessTerms: config.businessTermsUrl, privacy: config.privacyUrl }}
         navigate={(to, options) => void navigate({ to: stepPath(to), replace: options?.replace })}
         goTo={(href) => (href.startsWith('/') ? void navigate({ href }) : window.location.assign(href))}
-        leave={() => window.location.assign(config.adminUrl)}
+        leave={() => window.location.assign(config.adminHome(session.store.getState().slot ?? 0))}
       >
         <Outlet />
       </AdminFlowProvider>

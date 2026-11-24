@@ -15,7 +15,7 @@ export function ContactStep() {
     <StepFrame title={m.contactTitle} lede={m.contactLede} requests={[request]}>
       <FlowStep.Form onSubmit={contact.submit}>
         <FlowStep.Body>
-          <FlowTextField label={m.contactLabel} name="contact-email" type="email" inputMode="email" autoComplete="off" spellCheck="false" value={contact.value} onChange={contact.change} onBlur={contact.blur} isValid={contact.isValid} error={contact.error} inputRef={contact.inputRef} isRequired />
+          <FlowTextField label={m.contactLabel} name="contact-email" type="email" inputMode="email" autoComplete="off" spellCheck="false" value={contact.value} onChange={contact.change} onBlur={contact.blur} isValid={contact.isValid} error={contact.error} inputRef={contact.inputRef} isRequired isSensitive />
           <FlowFacts>
             {m.contactFacts.map(([lead, rest]) => (
               <FlowFacts.Item key={lead} lead={lead}>

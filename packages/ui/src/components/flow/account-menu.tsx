@@ -112,7 +112,7 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
               <AccountFace name={current.name} email={current.email} kind={current.kind} initials={current.initials} avatarUrl={current.avatarUrl} size="medium" />
               <span className="ws-flow-menu__names">
                 <span className="ws-flow-menu__name">{current.name}</span>
-                <span className="ws-flow-menu__email" translate="no">
+                <span className="ws-flow-menu__email" translate="no" data-blurtext>
                   {current.email}
                 </span>
                 {current.badge ? <span className="ws-flow-menu__badge">{current.badge}</span> : null}
@@ -146,7 +146,7 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
                     <span className="ws-flow-menu__names">
                       <span className="ws-flow-menu__row-name">{account.name}</span>
                       <span className="ws-flow-menu__line">
-                        <span className="ws-flow-menu__email" translate="no">
+                        <span className="ws-flow-menu__email" translate="no" data-blurtext>
                           {account.email}
                         </span>
                         {account.signedIn ? null : <>

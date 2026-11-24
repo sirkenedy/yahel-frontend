@@ -52,6 +52,8 @@ export const config = {
   adminSignInUrl: webAddress(env.VITE_ADMIN_SIGN_IN_URL),
   /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is the app address. */
   adminUrl: webAddress(env.VITE_ADMIN_URL) ?? appUrl,
+  /** Admin for the account in `slot`: like the app, its addresses carry the slot, so a new administrator opens as themselves. */
+  adminHome: (slot: number) => new URL(`u/${slot}/`, webAddress(env.VITE_ADMIN_URL) ?? appUrl).href,
   /** The app's home for the account in `slot`: its addresses carry the slot (`/u/<slot>/`), so each account opens as itself. */
   appHome,
   /**

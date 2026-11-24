@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit, stubApp } from './support/accounts';
+import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit, stubApp, appUrl } from './support/accounts';
 import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './support/personal';
@@ -208,6 +208,18 @@ test.describe('personal account: sign-in methods and ways back in', () => {
 
     await expect(page).not.toHaveURL(/\/personal\//);
     expect(api.calls.some((call) => call.path === '/v1/auth/passkey/register/finish')).toBe(false);
+  });
+
+  test('a new account made from the app opens the app as itself, not as the first account in the browser', async ({ page }) => {
+    const signedIn = (email: string, displayName: string) => ({ email, displayName, signedIn: true });
+    await mockApi(page, { remembered: [signedIn('first@yahel.example', 'First'), signedIn('second@yahel.example', 'Second'), signedIn('third@yahel.example', 'Third')] });
+    await stubApp(page);
+    // "Add another account" in the app sends people here with the app's own address to return to.
+    await signUpToPasskeyOffer(page, { query: `?return=${encodeURIComponent(appUrl)}` });
+
+    await page.getByRole('button', { name: 'Not now' }).click();
+
+    await expect(page).toHaveURL(`${appUrl}u/3/`);
   });
 
   test('no passkey is offered in a browser that cannot make one', async ({ page }) => {
