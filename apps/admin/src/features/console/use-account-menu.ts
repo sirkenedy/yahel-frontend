@@ -3,7 +3,7 @@ import { currentAccountOf, standingOf } from '@yahel/api-client';
 import type { AccountStanding, ClientAccount } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from 'zustand';
 import { accountWords as w } from './messages';
 
@@ -28,8 +28,11 @@ export function useCurrentAccount(session: Session) {
   const { profile, slot, handle } = useStore(session.store);
   const signedIn = profile !== null && slot !== null;
   const list = useQuery({ ...accountsQuery(session), enabled: signedIn });
+  const shownFor = useRef(handle);
   useEffect(() => {
-    if (handle) void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+    if (shownFor.current === handle) return;
+    shownFor.current = handle;
+    if (handle) void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
   }, [handle, queryClient, session]);
   const accounts = list.data ?? [];
   const current = currentAccountOf(accounts, handle, slot);
@@ -65,7 +68,7 @@ export function useAccountMenu(session: Session, go: ConsoleMenuRoutes): Omit<Ac
   // What one account's requests cached is never shown to another (rulebook 2.7).
   const forget = () => {
     queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
-    void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+    void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
   };
 
   return {
@@ -92,7 +95,7 @@ export function useAccountMenu(session: Session, go: ConsoleMenuRoutes): Omit<Ac
         const account = others.find((known) => known.handle === id);
         if (!account) return;
         await session.signOut(account.slot).catch(() => undefined);
-        await queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+        await queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
       }),
     onAdd: go.addAccount,
     onSignOutAll: () =>
