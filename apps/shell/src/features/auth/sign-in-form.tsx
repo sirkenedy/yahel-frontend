@@ -7,7 +7,8 @@ import { authMessages as m } from './messages';
 
 export interface SignInFormProps {
   session: Pick<Session, 'signIn'>;
-  onSignedIn: () => void;
+  /** Called with the slot the account was given in this browser. */
+  onSignedIn: (slot: number) => void;
 }
 
 interface FieldErrors {
@@ -50,7 +51,7 @@ export function SignInForm({ session, onSignedIn }: SignInFormProps) {
     setPending(true);
     try {
       const result = await session.signIn(email.trim(), password);
-      if (result.ok) onSignedIn();
+      if (result.ok) onSignedIn(result.slot);
       else setFailure(m.mfaNotSupported);
     } catch (error) {
       setFailure(describeFailure(error));

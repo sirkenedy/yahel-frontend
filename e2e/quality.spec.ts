@@ -35,6 +35,14 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
   },
   { name: 'home', open: signIn },
   {
+    name: 'home with the account menu open',
+    open: async (page) => {
+      await signIn(page);
+      await page.getByRole('button', { name: /^Account: / }).click();
+      await page.getByRole('dialog', { name: 'Accounts' }).waitFor();
+    },
+  },
+  {
     name: 'account',
     open: async (page) => {
       await signIn(page);

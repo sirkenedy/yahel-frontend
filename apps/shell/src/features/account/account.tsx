@@ -13,6 +13,8 @@ export const accountMessages = {
   email: 'Email',
   accountId: 'Account ID',
   notSet: 'Not set',
+  loadFailed: 'Unable to load account details. Try again in a moment.',
+  loading: 'Loading account',
 } as const;
 
 export const displayName = (profile: Profile) =>

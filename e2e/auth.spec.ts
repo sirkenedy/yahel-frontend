@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { credentials, mockApi, profile, signIn } from './support/api';
+import { credentials, mockApi, profile, signIn, takenAddress } from './support/api';
 
 test.describe('sign in', () => {
   test('a signed-out visitor is sent to sign-in', async ({ page }) => {
@@ -178,19 +178,21 @@ test.describe('sign in', () => {
     const api = await mockApi(page);
     await signIn(page);
 
-    await expect(page.getByText(profile.displayName)).toBeVisible();
-    await expect(page.getByText('Personal')).toBeVisible();
+    await expect(page).toHaveURL(/\/u\/0\/?$/);
+    await expect(page.getByRole('main').getByText(profile.displayName)).toBeVisible();
+    await expect(page.getByRole('main').getByText('Personal')).toBeVisible();
 
     await page.getByRole('link', { name: 'Manage account' }).click();
+    await expect(page).toHaveURL(/\/u\/0\/account$/);
     await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible();
     await expect(page.getByText(profile.globalId)).toBeVisible();
 
     await page.getByRole('link', { name: 'Back to home' }).click();
-    await page.getByRole('button', { name: 'Sign out' }).click();
+    await page.getByRole('main').getByRole('button', { name: 'Sign out' }).click();
     await expect(page).toHaveURL(/\/sign-in$/);
-    expect(api.calls.some((c) => c.path === '/v1/auth/logout')).toBe(true);
+    expect(api.calls.filter((c) => c.path === '/v1/auth/logout').map((c) => c.body)).toEqual([{ slot: 0 }]);
 
-    await page.goto('/account');
+    await page.goto('/u/0/account');
     await expect(page).toHaveURL(/\/sign-in$/);
   });
 
@@ -209,31 +211,54 @@ test.describe('sign in', () => {
 });
 
 test.describe('session', () => {
-  test('survives a reload by rotating the refresh token', async ({ page }) => {
+  test('survives a reload by refreshing the slot in the address', async ({ page }) => {
     const api = await mockApi(page);
     await signIn(page);
     await page.reload();
 
     await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
-    expect(api.calls.filter((c) => c.path === '/v1/auth/refresh')).toHaveLength(1);
+    const afterSignIn = api.calls.slice(api.calls.findIndex((c) => c.path === '/v1/auth/login'));
+    expect(afterSignIn.filter((c) => c.path === '/v1/auth/refresh').map((c) => c.body)).toEqual([{ slot: 0 }]);
+    expect(api.calls.every((c) => c.client === 'web')).toBe(true);
   });
 
-  test('never writes the access token to web storage', async ({ page }) => {
+  test('keeps no token of any kind in web storage', async ({ page }) => {
     await mockApi(page);
     await signIn(page);
 
-    const stored = await page.evaluate(() => JSON.stringify({ local: { ...localStorage }, session: { ...sessionStorage } }));
-    expect(stored).not.toContain('access-');
-    expect(stored).toContain('refresh-');
-    expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(['yahel.device-id']);
+    expect(await page.evaluate(() => [Object.keys(localStorage), Object.keys(sessionStorage)])).toEqual([[], []]);
   });
 
-  test('a rejected refresh token ends the session cleanly', async ({ page }) => {
-    await mockApi(page);
-    await page.addInitScript(() => sessionStorage.setItem('yahel.refresh-token', 'stale-token'));
-    await page.goto('/');
+  test('a slot whose session has ended goes to sign-in', async ({ page }) => {
+    const api = await mockApi(page);
+    await page.goto('/u/3/');
 
     await expect(page).toHaveURL(/\/sign-in$/);
-    expect(await page.evaluate(() => sessionStorage.getItem('yahel.refresh-token'))).toBeNull();
+    const refreshed = api.calls.filter((c) => c.path === '/v1/auth/refresh').map((c) => c.body);
+    expect(refreshed.length).toBeGreaterThan(0);
+    expect(refreshed.every((body) => JSON.stringify(body) === JSON.stringify({ slot: 3 }))).toBe(true);
+  });
+
+  test('each account opens at its own address, and the menu switches between them', async ({ page }) => {
+    await mockApi(page, { remembered: [{ email: credentials.email, displayName: profile.displayName, signedIn: true }, { email: takenAddress, displayName: 'Kemi Adeyemi' }] });
+    await page.goto('/u/0/');
+    await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    const menu = page.getByRole('dialog', { name: 'Accounts' });
+    await expect(menu.getByRole('link', { name: 'Manage your account' })).toBeFocused();
+    await expect(menu.getByRole('button', { name: new RegExp(`^Sign in to.*${takenAddress}`) })).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.goto('/sign-in');
+    await page.getByLabel('Email').fill(takenAddress);
+    await page.getByLabel('Password', { exact: true }).fill('Harmattan-in-Ibadan-88');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/u\/1\/?$/);
+
+    await page.getByRole('button', { name: `Account: ${takenAddress}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) }).click();
+    await expect(page).toHaveURL(/\/u\/0\/?$/);
+    await expect(page.getByRole('button', { name: `Account: ${credentials.email}` })).toBeVisible();
   });
 });

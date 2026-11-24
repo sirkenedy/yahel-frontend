@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { authMessages as m } from './messages';
 import { SignInForm } from './sign-in-form';
 
-const setup = (signIn = vi.fn().mockResolvedValue({ ok: true })) => {
+const setup = (signIn = vi.fn().mockResolvedValue({ ok: true, slot: 2, handle: 'h-2' })) => {
   const onSignedIn = vi.fn();
   render(<SignInForm session={{ signIn }} onSignedIn={onSignedIn} />);
   return { signIn, onSignedIn, user: userEvent.setup() };
@@ -24,7 +24,7 @@ describe('SignInForm', () => {
     await fill(user, ' amara@northwind.example ', 'correct horse battery');
 
     expect(signIn).toHaveBeenCalledWith('amara@northwind.example', 'correct horse battery');
-    expect(onSignedIn).toHaveBeenCalledTimes(1);
+    expect(onSignedIn).toHaveBeenCalledWith(2);
   });
 
   it('names missing fields, focuses the first, and does not call the server', async () => {

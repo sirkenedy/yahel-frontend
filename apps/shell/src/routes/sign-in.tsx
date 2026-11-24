@@ -1,14 +1,10 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Card } from '@yahel/ui';
 import { authMessages as m } from '../features/auth/messages';
 import { SignInForm } from '../features/auth/sign-in-form';
 
-export const Route = createFileRoute('/sign-in')({
-  beforeLoad: ({ context }) => {
-    if (context.session.store.getState().status === 'signed-in') throw redirect({ to: '/' });
-  },
-  component: SignInPage,
-});
+// Open whether or not this tab is signed in: signing in here adds an account to the browser.
+export const Route = createFileRoute('/sign-in')({ component: SignInPage });
 
 function SignInPage() {
   const { session } = Route.useRouteContext();
@@ -22,7 +18,7 @@ function SignInPage() {
           </h1>
           <p className="ws-subhead ws-secondary">{m.subtitle}</p>
         </div>
-        <SignInForm session={session} onSignedIn={() => void navigate({ to: '/' })} />
+        <SignInForm session={session} onSignedIn={(slot) => void navigate({ to: '/u/$slot', params: { slot: String(slot) } })} />
       </Card>
     </div>
   );
