@@ -69,7 +69,8 @@ const fail = (route: Route, status: number, code: string, retry?: { retryAfter: 
   route.fulfill({
     status,
     contentType: 'application/json',
-    headers: retry ? { 'Retry-After': String(retry.retryAfter), 'Access-Control-Allow-Origin': '*', ...(retry.exposed ? { 'Access-Control-Expose-Headers': 'Retry-After' } : {}) } : undefined,
+    // Requests carry the browser's cookies, so CORS must name the origin and allow credentials, as the backend does.
+    headers: retry ? { 'Retry-After': String(retry.retryAfter), 'Access-Control-Allow-Origin': route.request().headers()['origin'] ?? '*', 'Access-Control-Allow-Credentials': 'true', ...(retry.exposed ? { 'Access-Control-Expose-Headers': 'Retry-After' } : {}) } : undefined,
     body: JSON.stringify({ success: false, error: { code, message: `Server said: ${code}` }, meta: { requestId } }),
   });
 
@@ -205,6 +206,17 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return issuedTokens ? ok(route, issuedTokens, 201) : fail(route, 409, 'TOO_MANY_ACCOUNTS');
     };
 
+    // Advice only, as the backend gives it: whether a Yahel address is free, and checked alternatives. Names reserved
+    // by the platform read as taken; so does any name with an account. `register` is still where a name is claimed.
+    if (path === '/v1/auth/address-availability') {
+      const name = String(body?.name ?? '').toLowerCase();
+      const reserved = ['amara', 'admin', 'hello', 'info', 'okafor', 'amara.o', 'support'];
+      const taken = (candidate: string) => reserved.includes(candidate) || accounts.some((known) => known.profile.email === `${candidate}@${mailDomain}`);
+      const [first = name, ...rest] = name.split('.');
+      const last = rest.join('');
+      const candidates = last ? [`${last}.${first}`, `${first}${last}`, `${first}.${last}1`, `${first}.${last.charAt(0)}`] : [`${first}.mail`, `${first}1`, `hello.${first}`];
+      return ok(route, { available: !taken(name), alternatives: candidates.filter((candidate) => candidate.length >= 4 && !taken(candidate)).slice(0, 3) }, 201);
+    }
     if (path === '/v1/auth/register') {
       const email = (body?.email ?? '').toLowerCase();
       const domain = email.split('@')[1] ?? '';

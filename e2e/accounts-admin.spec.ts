@@ -33,7 +33,7 @@ test.describe('accounts: an administrator’s first sign-in', () => {
     await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
-    await expect(page.getByText(`Signed in as ${business.adminAddress}`)).toBeAttached();
+    await expect(page.getByRole('button', { name: `Account: ${business.adminAddress}` })).toBeVisible();
     await page.getByLabel('Mobile number').fill(adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
 

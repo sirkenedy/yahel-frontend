@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { adminScreens } from './admin-screens';
 import { businessScreens } from './business-screens';
 import { personalScreens } from './personal-screens';
-import { at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys } from './accounts';
+import { accountsUrl, at, openBrokenStep, openCodeStep, openEmailStep, openHelpStep, openNewPasswordStep, openPasswordStep, openRecoverCodeStep, openRecoverStep, setConnection, signInWithPassword, stubPasskeys } from './accounts';
 import { credentials, requestId, suspendedCredentials } from './api';
 
 const openPasskeyStep = async (page: Page, outcome: 'success' | 'cancelled') => {
@@ -46,7 +46,7 @@ const signInRefused = (heading: string, status: number, code: string, headers?: 
 const feedbackScreens: Screen[] = [
   {
     name: 'accounts state: sign-in paused, with the time',
-    open: signInRefused('You can try again at', 429, 'BAD_REQUEST', { 'Retry-After': '600', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Retry-After' }),
+    open: signInRefused('You can try again at', 429, 'BAD_REQUEST', { 'Retry-After': '600', 'Access-Control-Allow-Origin': accountsUrl, 'Access-Control-Allow-Credentials': 'true', 'Access-Control-Expose-Headers': 'Retry-After' }),
   },
   {
     name: 'accounts banner: this account cannot sign in',

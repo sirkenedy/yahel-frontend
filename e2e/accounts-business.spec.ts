@@ -460,7 +460,7 @@ test.describe('accounts: what the workspace questions refuse', () => {
     await expect(page.getByRole('link', { name: 'Sign in instead' })).toHaveAttribute('href', '/signin');
     // The password just chosen was tried against it, and opened nothing.
     expect(api.calls.filter((call) => call.path === '/v1/auth/login')).toHaveLength(1);
-    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
   });
 });
 
@@ -573,7 +573,7 @@ test.describe('accounts: the workspace is created once', () => {
     // The second request was refused because the first had worked; the password just chosen proved the workspace is this person's.
     expect(registrations(api)).toHaveLength(2);
     expect(api.calls.filter((call) => call.path === '/v1/auth/login')).toHaveLength(1);
-    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
   });
 
   test('Back and Forward while the workspace is being created stay on creating, and it is created once', async ({ page }) => {

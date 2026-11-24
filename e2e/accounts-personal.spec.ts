@@ -969,9 +969,9 @@ test.describe('personal account: fixes from review', () => {
   test('the signed-in screens say whose account it is', async ({ page }) => {
     await mockApi(page);
     await signUpTo(page, 'review', { phone: true });
-    await expect(page.getByText(/Signed in as/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
     await page.getByRole('button', { name: 'Agree and create account' }).click();
-    const account = page.getByRole('banner').getByText(`Signed in as ${person.address}`);
+    const account = page.getByRole('banner').getByRole('button', { name: `Account: ${person.address}` });
 
     await heading(page, 'Enter the code.').waitFor();
     await expect(account).toBeAttached();

@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
 import { emailCode, phoneCode, requestId } from './api';
 import { heading, person, signUp, signUpTo } from './personal';
+import { accountsUrl } from './accounts';
 
 const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();
 
@@ -40,7 +41,7 @@ const feedbackScreens: Screen[] = [
   { name: 'personal state: signed out everywhere', open: verifyRefused('We signed you out everywhere.', 401, 'SESSION_EXPIRED', 'TOKEN_REUSE_DETECTED') },
   {
     name: 'personal texted code, too many tries, counting down',
-    open: verifyRefused('Try again in', 429, 'BAD_REQUEST', undefined, { 'Retry-After': '590', 'Access-Control-Allow-Origin': '*', 'Access-Control-Expose-Headers': 'Retry-After' }),
+    open: verifyRefused('Try again in', 429, 'BAD_REQUEST', undefined, { 'Retry-After': '590', 'Access-Control-Allow-Origin': accountsUrl, 'Access-Control-Allow-Credentials': 'true', 'Access-Control-Expose-Headers': 'Retry-After' }),
   },
   { name: 'personal texted code, refused beside the code', open: verifyRefused('That code didn’t work or has expired.', 401, 'INVALID_TOKEN') },
   {
