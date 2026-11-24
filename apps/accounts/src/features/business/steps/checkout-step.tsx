@@ -153,7 +153,7 @@ export function CheckoutStep() {
           <FlowStep.Subheading>{m.contactInformation}</FlowStep.Subheading>
           <Receipt label={m.contactInformation}>
             <Receipt.Row label={state.businessName} state={address ? 'done' : 'upcoming'} action={edit(address ? m.editContact : m.addContact, actions.editContact, address ? m.edit : m.addContact)}>
-              {address ? [address.street, address.street2, address.localArea, address.city, address.state, address.postalCode].filter(Boolean).join(', ') : null}
+              {address ? <span data-blurtext>{[address.street, address.street2, address.localArea, address.city, address.state, address.postalCode].filter(Boolean).join(', ')}</span> : null}
             </Receipt.Row>
           </Receipt>
           {addressAsked && !address ? <FlowNotice tone="danger">{m.addressRequired}</FlowNotice> : null}

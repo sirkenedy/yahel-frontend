@@ -63,7 +63,7 @@ export function AccountChip({ email }: AccountChipProps) {
       <span className="ws-flow-avatar ws-flow-avatar--small" aria-hidden="true">
         {email.charAt(0).toUpperCase()}
       </span>
-      <span className="ws-flow-chip__email" translate="no">
+      <span className="ws-flow-chip__email" translate="no" data-blurtext>
         {email}
       </span>
     </div>
@@ -125,7 +125,7 @@ function AccountListAccount({ name, email, kind = 'person', initials, avatarUrl,
         <AccountFace name={name} email={email} kind={kind} initials={initials} avatarUrl={avatarUrl} presence={presence} />
         <span className="ws-flow-accounts__who">
           <span className="ws-flow-accounts__name">{name}</span>
-          <span className="ws-flow-accounts__email" translate="no">
+          <span className="ws-flow-accounts__email" translate="no" data-blurtext>
             {email}
           </span>
         </span>
