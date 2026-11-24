@@ -48,6 +48,7 @@ function Probe({ onValue, onToast }: { onValue: (value: AdminFlowValue) => void;
 const setup = ({ step = 'phone' as AdminStep, facts = { signedIn: false, phoneVerified: false, hasPasskey: false } as AdminFacts, supported = true, handedOver = true, continueToPlan = false, prepare = undefined as (() => Promise<void>) | undefined } = {}) => {
   act(() => dismissToast());
   const session = fakeSession();
+  if (facts.signedIn) session.store.setState({ status: 'signed-in', profile });
   const registrar = fakeRegistrar(supported, prepare);
   const store = createAdminStore();
   if (handedOver) store.dispatch({ type: 'handed-over', handover: { email, organisation: 'Harbourline Studio', challengeToken: 'pc-1', phone: { country: 'NG', number: '803 555 0142' }, continueToPlan } });
@@ -110,6 +111,28 @@ describe('AdminFlowProvider: the phone check, before any session', () => {
     session.completePhoneCheck.mockRejectedValueOnce(new ApiError({ status: 429, code: 'TOKEN_MAX_ATTEMPTS', message: 'x' }));
     act(() => flow().actions.verifyPhone('wrong2'));
     await waitFor(() => expect(store.getState().challengeToken).toBeNull());
+  });
+});
+
+describe('AdminFlowProvider: another account signed in to this tab', () => {
+  const personal: Profile = { ...profile, id: 'p-2', email: 'amara.okafor@personal.example', accountType: 'personal' };
+
+  it('with no check to meet, never texts or confirms that account’s phone: the check is lost and the person signs in again', async () => {
+    const { flow, session, store } = setup({ step: 'phone' });
+    act(() => {
+      session.store.setState({ status: 'signed-in', profile: personal });
+      store.dispatch({ type: 'challenge-lost' });
+    });
+
+    act(() => flow().actions.sendPhoneCode({ country: 'NG', number: '803 555 0142' }));
+    await waitFor(() => expect(flow().meta.requests.sendPhoneCode.feedback).toMatchObject({ title: m.challengeLostTitle, next: 'sign-in' }));
+
+    act(() => store.dispatch({ type: 'phone-code-sent', country: 'NG', number: '803 555 0142' }));
+    act(() => flow().actions.verifyPhone('K9mP2r'));
+    await waitFor(() => expect(flow().meta.requests.verifyPhone.feedback).toMatchObject({ title: m.challengeLostTitle, next: 'sign-in' }));
+    expect(session.api.me.recovery.updatePhone).not.toHaveBeenCalled();
+    expect(session.api.me.recovery.verifyPhone).not.toHaveBeenCalled();
+    expect(store.getState().phoneVerified).toBe(false);
   });
 });
 

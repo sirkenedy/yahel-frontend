@@ -1,4 +1,6 @@
+import { ApiError } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
+import { isSignedInAs } from '../../flow/accounts';
 import { internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { flowMessages as shared } from '../../flow/messages';
@@ -23,7 +25,8 @@ export interface AdminRequestDeps {
  * Every request an administrator's first steps make and where each outcome leads. Nothing here renders; the
  * provider turns these into `actions` and `meta.requests`. Before the session exists the phone is checked
  * through the challenge registration or sign-in answered with, and checking its code is what signs in; an
- * administrator already signed in whose phone is unconfirmed confirms it on the account instead.
+ * administrator already signed in whose phone is unconfirmed confirms it on the account instead. Another account
+ * signed in to this tab is never touched (F-109): without a challenge the check is lost, and the person signs in again.
  */
 export function useAdminRequests({ visit, session, registrar, store, navigate }: AdminRequestDeps) {
   /** Whose account it is once signed in: the session's, which outlives a reload, before the flow's own record. */
@@ -31,11 +34,18 @@ export function useAdminRequests({ visit, session, registrar, store, navigate }:
   const describe = (context: FailureContext) => (error: unknown) => describeAdminFailure(error, context);
   const challenge = () => store.getState().challengeToken;
 
+  /** With no challenge, the account's own recovery phone is used, and only while this tab is signed in as the administrator. */
+  const ownAccount = (code: 'INVALID_TOKEN' | 'TOKEN_MAX_ATTEMPTS') => {
+    if (isSignedInAs(session.store.getState(), store.getState().email)) return session.api.me.recovery;
+    store.dispatch({ type: 'challenge-lost' });
+    throw new ApiError({ status: 401, code, message: 'No phone check is waiting for this account' });
+  };
+
   const textPhone = async ({ country, number }: PhoneNumber) => {
     const phone = internationalNumber(country, number);
     const token = challenge();
     if (token) await session.sendPhoneCheck(token, phone);
-    else await session.api.me.recovery.updatePhone({ phone });
+    else await ownAccount('INVALID_TOKEN').updatePhone({ phone });
   };
 
   /** A challenge that can no longer be met is gone for good: the person signs in again for a new one. */
@@ -73,7 +83,7 @@ export function useAdminRequests({ visit, session, registrar, store, navigate }:
       const token = challenge();
       // Meeting the challenge is what signs the administrator in.
       if (token) await session.completePhoneCheck(token, code);
-      else await session.api.me.recovery.verifyPhone({ code });
+      else await ownAccount('TOKEN_MAX_ATTEMPTS').verifyPhone({ code });
       store.dispatch({ type: 'phone-verified' });
     },
     onDone: () => navigate('welcome', { replace: true }),
