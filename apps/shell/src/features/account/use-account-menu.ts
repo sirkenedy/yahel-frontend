@@ -46,6 +46,8 @@ export interface ShellMenuRoutes {
   addAccount: () => void;
   /** The accounts app's password step for a signed-out account of this browser, named by its handle. */
   signInTo: (handle: string) => void;
+  /** Admin as the account in `slot`, or `null` where there is no Admin to go to. */
+  admin?: (slot: number) => string | null;
 }
 
 /** The account menu in the app's header, for the account in this tab; `null` when nobody is signed in. */
@@ -70,6 +72,8 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
     current: { name: current ? nameOf(current) : profile.displayName?.trim() || profile.email, email: profile.email, kind: standing && standing.type !== 'personal' ? 'organisation' : 'person', initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: standing && labelOf(standing, w.personalAccount) },
     others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: account.kind === 'business' ? 'organisation' : 'person', initials: account.initials, avatarUrl: account.avatarUrl, signedIn: account.signedIn })),
     manageHref: `/u/${slot}/account`,
+    // As in Google's account menu: an administrator of the workspace gets a way into Admin. Admin checks again.
+    adminHref: standing?.type === 'admin' ? (go.admin?.(slot) ?? null) : null,
     isBusy: action.isPending,
     onSignOut: () =>
       start(async () => {

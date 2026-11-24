@@ -4,6 +4,7 @@ import { AccountMenu } from '@yahel/ui';
 import { useEffect } from 'react';
 import { menuMessages } from '../features/account/messages';
 import { accountsQuery, useAccountMenu } from '../features/account/use-account-menu';
+import { config } from '../config';
 import type { RouterContext } from '../router';
 
 export const Route = createRootRouteWithContext<RouterContext>()({ component: Root });
@@ -19,6 +20,7 @@ function Root() {
     signIn: () => window.location.assign(accountsApp.signIn()),
     addAccount: () => window.location.assign(accountsApp.addAccount()),
     signInTo: (handle) => window.location.assign(accountsApp.signInTo(handle)),
+    admin: config.adminHome,
   });
 
   // Another tab signed this account out, or gave its slot to another account: drop what it cached and let the guard decide.
