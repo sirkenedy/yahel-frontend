@@ -5,8 +5,6 @@ import { businessMessages as m } from './messages';
 
 const MAX_BUSINESS_NAME = 100;
 const MAX_NAME = 50;
-/** The lowest age the backend accepts anywhere; its own table for the country decides (`USER_UNDERAGE`). */
-export const MIN_AGE = 13;
 // One or more labels and a top-level name of letters, which is also what the backend accepts.
 const domainShape = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/;
 const usernameShape = /^[a-z0-9]+(\.[a-z0-9]+)*$/;

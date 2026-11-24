@@ -13,16 +13,12 @@ export function CreatingStep() {
   // A whole-screen state takes the step's place from the frame below; anything else is told on the step's own failed screen.
   if (feedback && feedback.place !== 'screen' && !isPending) {
     return (
-      <StepFrame title={m.creatingFailedTitle} lede={created ? m.createdButUnfinished : state.payment?.authorised ? m.creatingFailedPaid : m.creatingFailedLede} requests={[request]} next={{ retry: null }}>
+      <StepFrame title={m.creatingFailedTitle} lede={created ? m.createdButUnfinished : m.creatingFailedLede} requests={[request]} next={{ retry: null }}>
         <FlowStep.Actions>
           <FlowButton variant="primary" onPress={actions.createWorkspace}>
             {m.tryAgain}
           </FlowButton>
-          {created ? null : meta.offers.billing ? (
-            <FlowLink variant="quiet" href={stepPath('checkout')}>
-              {m.backToCheckout}
-            </FlowLink>
-          ) : (
+          {created ? null : (
             <FlowLink variant="quiet" href={stepPath('admin')}>
               {m.backToAdmin}
             </FlowLink>

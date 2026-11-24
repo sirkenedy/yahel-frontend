@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AuthTokens, BusinessRegistration, LoginResult, Profile, RecoveryMethods, Schemas } from './types';
+import type { Acknowledgement, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -43,6 +43,12 @@ const retryAfterOf = (response: Response): number | undefined => {
 /** What the backend's auth guard answers, with 401, when the access token is missing, expired or revoked. */
 const ACCESS_TOKEN_REFUSED = 'SESSION_EXPIRED';
 
+/**
+ * Says this is the web client. The backend refuses to sign a browser in without it, and the custom header
+ * forces a CORS preflight that a page on another site cannot pass.
+ */
+export const CLIENT_HEADER = { 'X-Yahel-Client': 'web' } as const;
+
 export function createApiClient(options: ApiClientOptions) {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Spec paths carry the global "/api" prefix; baseUrl already ends with it.
@@ -55,8 +61,11 @@ export function createApiClient(options: ApiClientOptions) {
     try {
       response = await doFetch(url(path, request.params), {
         method,
+        // The browser's cookies (its secret and one refresh token per account) are the session; script never sees them.
+        credentials: 'include',
         headers: {
           Accept: 'application/json',
+          ...CLIENT_HEADER,
           ...(request.body === undefined ? {} : { 'Content-Type': 'application/json' }),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -97,10 +106,22 @@ export function createApiClient(options: ApiClientOptions) {
       /** Whether a Yahel address (the part before the @) can still be had, with free ones like it. Advice only. */
       addressAvailability: (body: Schemas['AddressAvailabilityDto'], signal?: AbortSignal) => request<Schemas['AddressAvailabilityResponseDto']>('POST', '/api/v1/auth/address-availability', { body, signal }),
       register: (body: Schemas['RegisterDto']) => request<Acknowledgement>('POST', '/api/v1/auth/register', { body }),
-      registerBusiness: (body: Schemas['RegisterBusinessDto']) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
+      registerBusiness: (body: RegisterBusinessBody) => request<BusinessRegistration>('POST', '/api/v1/auth/register-business', { body }),
+      /** Texts the code for a phone challenge to `phone`. */
+      phoneChallengeSend: (body: PhoneChallengeSendBody) => request<PhoneChallengeSent>('POST', '/api/v1/auth/phone-challenge/send', { body }),
+      /** Checks the texted code; a right one issues the session, as a sign-in does. */
+      phoneChallengeVerify: (body: PhoneChallengeVerifyBody) => request<AuthTokens>('POST', '/api/v1/auth/phone-challenge/verify', { body }),
       login: (body: Schemas['LoginDto']) => request<LoginResult>('POST', '/api/v1/auth/login', { body }),
-      refresh: (body: Schemas['RefreshTokenDto']) => request<AuthTokens>('POST', '/api/v1/auth/refresh', { body }),
-      logout: () => request<null>('POST', '/api/v1/auth/logout', { auth: true }),
+      /** A new access token for the account in `slot`, from that slot's refresh cookie. */
+      refresh: (body: Schemas['RefreshTokenDto']) => request<RefreshedTokens>('POST', '/api/v1/auth/refresh', { body }),
+      /** Signs the account in `slot` out of this browser. It stays listed, signed out. */
+      logout: (body: Schemas['LogoutSlotDto']) => request<Schemas['ClientSlotResponseDto']>('POST', '/api/v1/auth/logout', { body }),
+      /** Signs every account in this browser out, keeping them listed. */
+      logoutBrowser: () => request<null>('POST', '/api/v1/auth/logout-browser'),
+      /** The accounts this browser has used and not removed, by slot. Empty for a browser that never signed in. */
+      accounts: (signal?: AbortSignal) => request<ClientAccount[]>('GET', '/api/v1/auth/accounts', { signal }),
+      /** Forgets an account in this browser, signing it out first if need be. Removing one already gone succeeds. */
+      removeAccount: (handle: string) => request<Schemas['ClientRemovedResponseDto']>('DELETE', '/api/v1/auth/accounts/{handle}', { params: { handle } }),
       mfaChallenge: (body: Schemas['MfaChallengeSubmitDto']) => request<AuthTokens>('POST', '/api/v1/auth/mfa/challenge', { body }),
       forgotPassword: (body: Schemas['ForgotPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/forgot-password', { body }),
       resetPassword: (body: Schemas['ResetPasswordDto']) => request<Acknowledgement>('POST', '/api/v1/auth/reset-password', { body }),
@@ -122,6 +143,10 @@ export function createApiClient(options: ApiClientOptions) {
         /** Invites someone the person trusts; they count once they accept from the email. */
         updateTrustedContact: (body: Schemas['UpdateTrustedContactDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/trusted-contact', { auth: true, body }),
       },
+    },
+    tenants: {
+      /** Whether a domain a business says it owns can still be claimed by a new workspace. Advice: registering decides. */
+      checkDomainClaim: (body: Schemas['DomainClaimDto'], signal?: AbortSignal) => request<Schemas['DomainClaimResponseDto']>('POST', '/api/v1/tenants/domain-claims/check', { body, signal }),
     },
   };
 }

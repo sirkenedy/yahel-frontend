@@ -94,17 +94,17 @@ describe('AppFrame', () => {
     expect(screen.queryByRole('button', { name: m.showDetails })).not.toBeInTheDocument();
   });
 
-  it('shows whose account is signed in, and nothing when nobody is', () => {
+  it('shows the account menu for whoever is signed in, and nothing when nobody is', () => {
+    const menu = { current: { name: 'Amara Okafor', email: 'amara.okafor@yahel.example', kind: 'person' as const, badge: m.personalAccount }, others: [], manageHref: null, onSignOut: vi.fn(), onPick: vi.fn(), onSignOutOf: vi.fn(), onAdd: vi.fn(), onSignOutAll: vi.fn() };
     const { rerender } = render(
-      <AppFrame links={links} account={{ name: 'Amara Okafor', email: 'amara.okafor@yahel.example' }}>
+      <AppFrame links={links} menu={menu}>
         q
       </AppFrame>,
     );
-    expect(within(screen.getByRole('banner')).getByText(m.signedInAs('amara.okafor@yahel.example'))).toBeInTheDocument();
-    expect(within(screen.getByRole('banner')).getByText('AO')).toBeInTheDocument();
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: m.menu.trigger('amara.okafor@yahel.example') })).toHaveTextContent('AO');
 
     rerender(<AppFrame links={links}>q</AppFrame>);
-    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Account:/ })).not.toBeInTheDocument();
   });
 
   it('switches between light and dark, naming the control for what it will do', async () => {

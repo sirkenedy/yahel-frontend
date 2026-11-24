@@ -13,8 +13,10 @@ const DEFAULT_COUNTRY = 'NG';
 export function PhoneStep() {
   const { state, actions, meta } = useAdminFlow();
   const request = meta.requests.sendPhoneCode;
-  const [country, setCountry] = useState(state.phone?.country ?? DEFAULT_COUNTRY);
-  const phone = useStepField({ initial: state.phone?.number ?? '', problemOf: phoneProblem, onValid: (number) => actions.sendPhoneCode({ country, number: number.trim() }), label: m.mobileNumber, hasFormat: true, refusal: forField(request.feedback, 'phone') });
+  // A number given earlier (the business phone, for a bought domain) is where the step starts.
+  const known = state.phone ?? state.suggestedPhone;
+  const [country, setCountry] = useState(known?.country ?? DEFAULT_COUNTRY);
+  const phone = useStepField({ initial: known?.number ?? '', problemOf: phoneProblem, onValid: (number) => actions.sendPhoneCode({ country, number: number.trim() }), label: m.mobileNumber, hasFormat: true, refusal: forField(request.feedback, 'phone') });
 
   return (
     <StepFrame title={m.phoneTitle} lede={m.phoneLede} requests={[request]}>

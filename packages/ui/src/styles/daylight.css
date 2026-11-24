@@ -1,6 +1,7 @@
 /* Daylight: the sign-in and sign-up flows. Paper canvas, one indigo action, Bricolage headlines.
    Loaded only by apps that show these flows. Every value is a --ws-* token (check-css-tokens.mjs). */
 @import '../../assets/fonts/bricolage-grotesque.css';
+@import './accounts.css';
 
 .ws-flow {
   display: flex;
@@ -21,8 +22,6 @@
   outline-offset: var(--ws-border-focus-offset);
 }
 
-.ws-flow-hidden { position: absolute; width: var(--ws-border-hairline); height: var(--ws-border-hairline); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.ws-flow-icon { flex-shrink: 0; width: var(--ws-icon-md); height: var(--ws-icon-md); stroke-width: var(--ws-border-focus); }
 
 /* Shell */
 .ws-flow__skip { position: absolute; inset-block-start: var(--ws-space-8); inset-inline-start: var(--ws-space-8); z-index: var(--ws-z-toast); display: inline-flex; align-items: center; min-height: var(--ws-target-touch); padding: 0 var(--ws-space-16); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-ink); color: var(--ws-color-daylight-canvas); font-size: var(--ws-type-flow-link-size); font-weight: var(--ws-type-flow-link-weight); text-decoration: none; transform: translateY(-200%); }
@@ -127,26 +126,6 @@
 .ws-flow-code__row:focus-within .ws-flow-code__box[data-current='true'] { border-color: var(--ws-color-daylight-accent); box-shadow: 0 0 0 var(--ws-border-ring) var(--ws-color-daylight-ring), inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-accent); }
 .ws-flow-code__row:has([aria-invalid='true']) .ws-flow-code__box { border-color: var(--ws-color-daylight-danger); }
 
-/* Accounts */
-.ws-flow-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--ws-flow-avatar); height: var(--ws-flow-avatar); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-accent); color: var(--ws-color-daylight-on-accent); font-size: var(--ws-type-flow-label-size); font-weight: var(--ws-weight-bold); }
-.ws-flow-avatar--small { width: var(--ws-flow-avatar-sm); height: var(--ws-flow-avatar-sm); font-size: var(--ws-type-flow-note-size); font-weight: var(--ws-weight-semibold); }
-.ws-flow-avatar--organisation { border-radius: var(--ws-radius-md); background: var(--ws-color-daylight-soft); color: var(--ws-color-daylight-canvas); }
-.ws-flow-avatar--outline { background: transparent; box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line-strong); color: var(--ws-color-daylight-accent); }
-.ws-flow-chip { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--ws-space-8); box-sizing: border-box; max-width: 100%; min-height: var(--ws-target-touch); padding: var(--ws-space-4) var(--ws-space-16) var(--ws-space-4) var(--ws-space-4); padding-inline: var(--ws-space-4) var(--ws-space-16); border-radius: var(--ws-radius-full); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); font-size: var(--ws-type-flow-link-size); line-height: var(--ws-type-flow-link-line); font-weight: var(--ws-weight-medium); }
-.ws-flow-chip__email { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ws-flow-accounts { margin: 0; padding: 0; list-style: none; overflow: hidden; border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
-.ws-flow-accounts__item { display: flex; align-items: center; gap: var(--ws-space-8); padding-inline-end: var(--ws-space-12); }
-.ws-flow-accounts__item + .ws-flow-accounts__item { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
-.ws-flow-accounts__row { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--ws-space-12); margin-inline-end: calc(var(--ws-space-12) * -1); padding: var(--ws-space-12) var(--ws-space-16); border: 0; background: transparent; color: var(--ws-color-daylight-ink); font: inherit; text-align: start; cursor: pointer; }
-.ws-flow-accounts__item:has(> :nth-child(2)) .ws-flow-accounts__row { margin-inline-end: 0; }
-.ws-flow-accounts__row:hover { background: var(--ws-color-daylight-selected); }
-.ws-flow-accounts__row:focus-visible { outline-offset: calc(var(--ws-border-focus-strong) * -1); }
-.ws-flow-accounts__row:disabled { cursor: default; }
-.ws-flow-accounts__row--action { font-size: var(--ws-type-flow-link-size); font-weight: var(--ws-type-flow-link-weight); }
-.ws-flow-accounts__who { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--ws-space-2); }
-.ws-flow-accounts__name { font-weight: var(--ws-weight-semibold); }
-.ws-flow-accounts__email { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ws-flow-accounts__detail { flex-shrink: 0; max-width: 40%; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); text-align: end; }
 
 /* Choices */
 .ws-flow-choices { display: flex; flex-direction: column; gap: var(--ws-space-8); }
@@ -252,6 +231,10 @@
 .ws-flow-step__note a, .ws-flow-facts a { padding-block: var(--ws-space-16); border-radius: var(--ws-radius-xs); color: var(--ws-color-daylight-link); }
 .ws-flow-step__row--phone { grid-template-columns: 2fr 3fr; }
 .ws-flow-step__subheading { margin: var(--ws-space-8) 0 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
+.ws-flow-step__group { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); padding: var(--ws-space-20); border-radius: var(--ws-radius-lg); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
+.ws-flow-step__group-head { display: flex; flex-direction: column; gap: var(--ws-space-4); }
+.ws-flow-step__group-title { margin: 0; font-size: var(--ws-type-flow-action-size); line-height: var(--ws-type-flow-action-line); font-weight: var(--ws-weight-bold); }
+.ws-flow-step__group-lede { margin: 0; color: var(--ws-color-daylight-mute); font-size: calc((var(--ws-type-flow-note-size) + var(--ws-type-flow-label-size)) / 2); line-height: var(--ws-type-flow-note-line); }
 .ws-flow-step__split { display: flex; flex-direction: column; gap: var(--ws-flow-body-gap); }
 /* Wide enough for the fields and the summary side by side: the step widens and the summary stays in view. */
 @media (min-width: 1024px) {

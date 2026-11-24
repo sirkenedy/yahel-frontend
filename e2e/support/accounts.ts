@@ -38,11 +38,14 @@ export async function stubPasskeys(page: Page, outcome: PasskeyOutcome) {
   }, outcome);
 }
 
-/** Opens sign-in at the email step, past the account chooser the demo data starts with. */
+/** Opens sign-in at the email step: past the account chooser when this browser remembers accounts, as it does by default. */
 export async function openEmailStep(page: Page, query = '') {
   await page.goto(at(`/signin${query}`));
-  await page.getByRole('button', { name: 'Use another account' }).click();
-  await page.getByRole('heading', { name: 'Welcome back.' }).waitFor();
+  const another = page.getByRole('button', { name: 'Use another account' });
+  const email = page.getByRole('heading', { name: 'Welcome back.' });
+  await another.or(email).first().waitFor();
+  if (await another.isVisible()) await another.click();
+  await email.waitFor();
 }
 
 export async function openPasswordStep(page: Page, email = credentials.email, query = '') {

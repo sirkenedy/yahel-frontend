@@ -30,7 +30,7 @@ export function assertReleaseAddresses(command: 'build' | 'serve', env: Record<s
     );
   }
   // These have a place inside this app when unset; set, they lead people elsewhere and must do so safely.
-  const insecure = ['VITE_SIGN_IN_URL', 'VITE_SIGN_UP_URL', 'VITE_BUSINESS_SIGN_UP_URL', 'VITE_ADMIN_SIGN_IN_URL', 'VITE_ADMIN_URL', 'VITE_BUSINESS_TERMS_URL', 'VITE_TRIAL_TERMS_URL', 'VITE_DOMAIN_TERMS_URL'].filter((name) => env[name] && !isSecureAddress(env[name]));
+  const insecure = ['VITE_SIGN_IN_URL', 'VITE_SIGN_UP_URL', 'VITE_BUSINESS_SIGN_UP_URL', 'VITE_ADMIN_SIGN_IN_URL', 'VITE_ADMIN_URL', 'VITE_ACCOUNT_URL', 'VITE_BUSINESS_TERMS_URL', 'VITE_TRIAL_TERMS_URL', 'VITE_DOMAIN_TERMS_URL'].filter((name) => env[name] && !isSecureAddress(env[name]));
   if (insecure.length > 0) throw new Error(`${insecure.join(' and ')} must be an https address in a release build, or left unset.`);
   // Where workspace sign-up is switched on, the admin flow can be offered, and its last button must lead to Admin itself, not to the app.
   if (env.VITE_BUSINESS_SIGN_UP === 'on' && !isSecureAddress(env.VITE_ADMIN_URL)) throw new Error('VITE_ADMIN_URL must be set to Admin’s https address for a release build with VITE_BUSINESS_SIGN_UP=on: "Continue to Admin" would otherwise lead to the app.');

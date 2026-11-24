@@ -7,7 +7,7 @@ import { signInMessages as m } from './messages';
 export type FailureContext = 'password' | 'passkey' | 'code' | 'email-code' | 'reset' | 'other';
 export type SignInField = 'password' | 'code';
 /** What sign-in can offer after a failure. `retry` is the frame's own. */
-export type SignInNext = 'retry' | 'reset-password' | 'sign-in-again' | 'resend' | 'support';
+export type SignInNext = 'retry' | 'reset-password' | 'sign-in-again' | 'resend' | 'support' | 'remove-account';
 export type SignInFeedback = Feedback<SignInField, SignInNext>;
 type Rows = FeedbackMap<SignInField, SignInNext>;
 
@@ -16,15 +16,18 @@ const wrongCredentials = { place: 'field', field: 'password', text: m.wrongCrede
 const wrongCode = { place: 'field', field: 'code', text: m.wrongCode } as const;
 const passkeyFailed = { place: 'banner', tone: 'danger', text: m.passkeyFailed } as const;
 const refusedPassword = { place: 'field', field: 'password', text: m.passwordRefused } as const;
+// The password was right; this browser just has no room for another account until one is removed.
+const tooManyAccounts = { place: 'banner', tone: 'warning', title: m.tooManyAccountsTitle, text: m.tooManyAccounts, next: 'remove-account' } as const;
 
 // Sign-in alone says this: it has a step to confirm the address on.
 const afterPassword = { ...afterPasswordRows, EMAIL_NOT_VERIFIED: { place: 'banner', tone: 'info', title: m.confirmEmailTitle, text: m.emailNotConfirmed } } as const satisfies Partial<Rows>;
 
 const rows: Record<FailureContext, Rows> = {
-  password: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: wrongCredentials, REFUSED: wrongCredentials },
-  passkey: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: passkeyFailed, REFUSED: passkeyFailed, CLIENT_FAULT: passkeyFailed },
+  password: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: wrongCredentials, REFUSED: wrongCredentials, TOO_MANY_ACCOUNTS: tooManyAccounts },
+  passkey: { ...commonRows, ...afterPassword, INVALID_CREDENTIALS: passkeyFailed, REFUSED: passkeyFailed, CLIENT_FAULT: passkeyFailed, TOO_MANY_ACCOUNTS: tooManyAccounts },
   code: {
     ...commonRows,
+    TOO_MANY_ACCOUNTS: tooManyAccounts,
     ...standingRows,
     MFA_INVALID: wrongCode,
     INVALID_MFA_CODE: wrongCode,
@@ -33,8 +36,8 @@ const rows: Record<FailureContext, Rows> = {
     MFA_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'sign-in-again' },
     TOKEN_MAX_ATTEMPTS: { place: 'banner', tone: 'danger', title: m.codeDeadTitle, text: m.tooManyCodes, next: 'sign-in-again' },
   },
-  'email-code': { ...commonRows, ...sentCodeRows },
-  reset: { ...commonRows, VALIDATION_ERROR: refusedPassword, REFUSED: refusedPassword },
+  'email-code': { ...commonRows, ...sentCodeRows, TOO_MANY_ACCOUNTS: tooManyAccounts },
+  reset: { ...commonRows, TOO_MANY_ACCOUNTS: tooManyAccounts, VALIDATION_ERROR: refusedPassword, REFUSED: refusedPassword },
   other: commonRows,
 };
 

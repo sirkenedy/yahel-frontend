@@ -3,11 +3,6 @@
     "schemas": {
       "AcceptInviteDto": {
         "properties": {
-          "deviceId": {
-            "description": "Client-generated UUID v4 identifying this device install",
-            "example": "550e8400-e29b-41d4-a716-446655440000",
-            "type": "string"
-          },
           "deviceName": {
             "description": "Human-readable device label rendered in the sessions list",
             "example": "Kehinde's iPhone",
@@ -19,8 +14,7 @@
           }
         },
         "required": [
-          "token",
-          "deviceId"
+          "token"
         ],
         "type": "object"
       },
@@ -60,7 +54,6 @@
             "example": "jane.o",
             "maxLength": 30,
             "minLength": 4,
-            "pattern": "^(?!\\.)(?!.*\\.\\.)[a-z0-9.]+(?<!\\.)$",
             "type": "string"
           }
         },
@@ -92,6 +85,58 @@
         "required": [
           "available",
           "alternatives"
+        ],
+        "type": "object"
+      },
+      "AuthContextItemDto": {
+        "properties": {
+          "displayName": {
+            "example": "Northwind Studio",
+            "nullable": true,
+            "type": "object"
+          },
+          "isCurrent": {
+            "description": "True for the context the caller is signed into right now",
+            "example": false,
+            "type": "boolean"
+          },
+          "logoUrl": {
+            "example": "https://cdn.example.com/northwind.png",
+            "nullable": true,
+            "type": "object"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "example": "MEMBER",
+            "nullable": true,
+            "type": "string"
+          },
+          "tenantId": {
+            "example": "507f1f77bcf86cd799439001",
+            "nullable": true,
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "personal",
+              "tenant"
+            ],
+            "example": "tenant",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "tenantId",
+          "displayName",
+          "logoUrl",
+          "role",
+          "isCurrent"
         ],
         "type": "object"
       },
@@ -131,6 +176,108 @@
         "required": [
           "currentPassword",
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "ClientAccountResponseDto": {
+        "properties": {
+          "avatarUrl": {
+            "example": "https://cdn.example.com/a.png",
+            "nullable": true,
+            "type": "object"
+          },
+          "displayName": {
+            "example": "Jane Okafor",
+            "nullable": true,
+            "type": "object"
+          },
+          "email": {
+            "description": "The full address. This is the person’s own browser, behind a secret cookie.",
+            "example": "jane.okafor@worksync.app",
+            "type": "string"
+          },
+          "handle": {
+            "description": "Stable only within this client, and meaningless outside it",
+            "example": "k7Qd3rLm0pA2bXyZw9TcVe",
+            "type": "string"
+          },
+          "initials": {
+            "example": "JO",
+            "nullable": true,
+            "type": "object"
+          },
+          "kind": {
+            "description": "business when the identity is managed or holds an active membership (a founder shows as their organisation’s admin)",
+            "enum": [
+              "personal",
+              "business"
+            ],
+            "example": "personal",
+            "type": "string"
+          },
+          "organisation": {
+            "description": "The organisation a business account belongs to",
+            "example": "Northwind Studio",
+            "nullable": true,
+            "type": "object"
+          },
+          "role": {
+            "description": "That account’s role in the organisation",
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "example": "ADMIN",
+            "nullable": true,
+            "type": "string"
+          },
+          "signedIn": {
+            "example": true,
+            "type": "boolean"
+          },
+          "slot": {
+            "description": "Position in this client, used in /u/<slot>/ addresses",
+            "example": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "handle",
+          "slot",
+          "displayName",
+          "initials",
+          "avatarUrl",
+          "email",
+          "kind",
+          "organisation",
+          "role",
+          "signedIn"
+        ],
+        "type": "object"
+      },
+      "ClientRemovedResponseDto": {
+        "properties": {
+          "handle": {
+            "example": "k7Qd3rLm0pA2bXyZw9TcVe",
+            "type": "string"
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "type": "object"
+      },
+      "ClientSlotResponseDto": {
+        "properties": {
+          "slot": {
+            "example": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "slot"
         ],
         "type": "object"
       },
@@ -197,6 +344,37 @@
         ],
         "type": "object"
       },
+      "DomainClaimDto": {
+        "properties": {
+          "domain": {
+            "description": "The company domain. A leading @, surrounding spaces and upper case are accepted and stripped.",
+            "example": "acme.com",
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain"
+        ],
+        "type": "object"
+      },
+      "DomainClaimResponseDto": {
+        "properties": {
+          "standing": {
+            "description": "free — no workspace holds it; claimed — one does, and this says nothing about which or how far along it is; public — a consumer mail provider, which no workspace may claim.",
+            "enum": [
+              "free",
+              "claimed",
+              "public"
+            ],
+            "example": "free",
+            "type": "string"
+          }
+        },
+        "required": [
+          "standing"
+        ],
+        "type": "object"
+      },
       "ForgotPasswordDto": {
         "properties": {
           "email": {
@@ -206,6 +384,96 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "IdentifyDto": {
+        "properties": {
+          "email": {
+            "example": "jane@acme.com",
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "IdentifyResponseDto": {
+        "properties": {
+          "context": {
+            "enum": [
+              "personal",
+              "tenant",
+              "sso",
+              "unknown"
+            ],
+            "example": "tenant",
+            "type": "string"
+          },
+          "methods": {
+            "example": [
+              "password",
+              "passkey"
+            ],
+            "items": {
+              "enum": [
+                "password",
+                "passkey",
+                "sso",
+                "oauth"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ssoRedirectUrl": {
+            "description": "Present only when context is sso",
+            "example": "https://api.example.com/api/v1/auth/sso/507f1f77bcf86cd799439011/initiate",
+            "type": "string"
+          },
+          "tenant": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdentifyTenantDto"
+              }
+            ],
+            "description": "Present for the tenant and sso contexts"
+          }
+        },
+        "required": [
+          "context",
+          "methods"
+        ],
+        "type": "object"
+      },
+      "IdentifyTenantDto": {
+        "properties": {
+          "displayName": {
+            "example": "Northwind Studio",
+            "type": "string"
+          },
+          "id": {
+            "example": "507f1f77bcf86cd799439011",
+            "type": "string"
+          },
+          "logoUrl": {
+            "example": "https://cdn.example.com/logos/northwind.png",
+            "nullable": true,
+            "type": "object"
+          },
+          "managed": {
+            "description": "The organisation controls accounts on this email domain",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "logoUrl",
+          "managed"
         ],
         "type": "object"
       },
@@ -287,11 +555,6 @@
       },
       "LoginDto": {
         "properties": {
-          "deviceId": {
-            "description": "Client-generated UUID v4 identifying this device install",
-            "example": "550e8400-e29b-41d4-a716-446655440000",
-            "type": "string"
-          },
           "deviceName": {
             "description": "Human-readable device label rendered in the sessions list. Falls back to a server-parsed UA string.",
             "example": "Kehinde's iPhone",
@@ -313,8 +576,22 @@
         },
         "required": [
           "email",
-          "password",
-          "deviceId"
+          "password"
+        ],
+        "type": "object"
+      },
+      "LogoutSlotDto": {
+        "properties": {
+          "slot": {
+            "description": "Which account in this browser to sign out. That slot’s cookie is what authorises it.",
+            "example": 0,
+            "maximum": 9,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "slot"
         ],
         "type": "object"
       },
@@ -330,11 +607,6 @@
             "example": "123456",
             "type": "string"
           },
-          "deviceId": {
-            "description": "Client-generated UUID v4 identifying this device install",
-            "example": "550e8400-e29b-41d4-a716-446655440000",
-            "type": "string"
-          },
           "deviceName": {
             "description": "Human-readable device label rendered in the sessions list",
             "example": "Kehinde's iPhone",
@@ -348,8 +620,7 @@
         },
         "required": [
           "challengeToken",
-          "code",
-          "deviceId"
+          "code"
         ],
         "type": "object"
       },
@@ -378,6 +649,320 @@
             "type": "number"
           }
         },
+        "type": "object"
+      },
+      "PasskeyAuthenticateBeginDto": {
+        "properties": {
+          "email": {
+            "description": "Optional. Buckets the shared sign-in rate limit alongside /login and /identify. It never selects credentials: returning an address’s credential list would reveal whether it has an account, so sign-in relies on discoverable credentials.",
+            "example": "jane@acme.com",
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PasskeyAuthenticateFinishDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Token returned by authenticate/begin",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "response": {
+            "description": "The AuthenticationResponseJSON produced by navigator.credentials.get()",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "response"
+        ],
+        "type": "object"
+      },
+      "PasskeyChallengeResponseDto": {
+        "properties": {
+          "challengeToken": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "options": {
+            "description": "PublicKeyCredentialCreationOptionsJSON or PublicKeyCredentialRequestOptionsJSON",
+            "type": "object"
+          }
+        },
+        "required": [
+          "options",
+          "challengeToken"
+        ],
+        "type": "object"
+      },
+      "PasskeyItemResponseDto": {
+        "properties": {
+          "aaguid": {
+            "example": "adce0002-35bc-c60a-648b-0b25f1f05503",
+            "nullable": true,
+            "type": "object"
+          },
+          "createdAt": {
+            "example": "2026-11-01T08:00:00.000Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "credentialId": {
+            "example": "DJlX9eKsZ0k...",
+            "type": "string"
+          },
+          "deviceName": {
+            "example": "Kehinde's iPhone",
+            "nullable": true,
+            "type": "object"
+          },
+          "lastUsedAt": {
+            "example": "2026-11-22T09:12:00.000Z",
+            "nullable": true,
+            "type": "object"
+          },
+          "transports": {
+            "example": [
+              "internal",
+              "hybrid"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "credentialId",
+          "deviceName",
+          "aaguid",
+          "transports",
+          "lastUsedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PasskeyRegisterFinishDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Token returned by register/begin",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Label shown in the passkey list",
+            "example": "Kehinde's iPhone",
+            "type": "string"
+          },
+          "response": {
+            "description": "The RegistrationResponseJSON produced by navigator.credentials.create()",
+            "type": "object"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "response"
+        ],
+        "type": "object"
+      },
+      "PasskeyRegisteredResponseDto": {
+        "properties": {
+          "aaguid": {
+            "example": "adce0002-35bc-c60a-648b-0b25f1f05503",
+            "nullable": true,
+            "type": "object"
+          },
+          "credentialId": {
+            "example": "DJlX9eKsZ0k...",
+            "type": "string"
+          },
+          "deviceName": {
+            "example": "Kehinde's iPhone",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "credentialId",
+          "deviceName"
+        ],
+        "type": "object"
+      },
+      "PasskeyRevokeDto": {
+        "properties": {
+          "password": {
+            "description": "Current account password, re-entered to confirm identity",
+            "example": "Secure@123",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
+      "PasskeyRevokedResponseDto": {
+        "properties": {
+          "credentialId": {
+            "example": "DJlX9eKsZ0k...",
+            "type": "string"
+          }
+        },
+        "required": [
+          "credentialId"
+        ],
+        "type": "object"
+      },
+      "PasskeySessionResponseDto": {
+        "properties": {
+          "accessToken": {
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "string"
+          },
+          "expiresIn": {
+            "description": "Access token lifetime in seconds",
+            "example": 900,
+            "type": "number"
+          },
+          "refreshToken": {
+            "example": "b1f0c2...",
+            "type": "string"
+          },
+          "tokenType": {
+            "example": "Bearer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn",
+          "tokenType"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeRequiredResponseDto": {
+        "properties": {
+          "challengeToken": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "phoneRequired": {
+            "description": "No session was issued. Text a code to a phone, then check it, to sign in.",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "phoneRequired",
+          "challengeToken"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSendDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Challenge token from register-business, login or passkey sign-in",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone to text the code to. E.164 preferred; a bare number is read against the account country.",
+            "example": "+14155552671",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "phone"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSentResponseDto": {
+        "properties": {
+          "message": {
+            "example": "Verification code sent.",
+            "type": "string"
+          },
+          "resendInSeconds": {
+            "description": "Seconds before another code can be requested",
+            "example": 30,
+            "type": "number"
+          },
+          "sendsLeft": {
+            "description": "Codes this challenge can still send",
+            "example": 4,
+            "type": "number"
+          }
+        },
+        "required": [
+          "message",
+          "resendInSeconds",
+          "sendsLeft"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeSessionResponseDto": {
+        "properties": {
+          "accessToken": {
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "string"
+          },
+          "expiresIn": {
+            "description": "Access token lifetime in seconds",
+            "example": 900,
+            "type": "number"
+          },
+          "handle": {
+            "example": "k7Qd3rLm0pA2bXyZw9TcVe",
+            "type": "string"
+          },
+          "slot": {
+            "description": "This account’s slot in the browser; the refresh token is in that slot’s cookie",
+            "example": 0,
+            "type": "number"
+          },
+          "tokenType": {
+            "example": "Bearer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "tokenType",
+          "slot",
+          "handle"
+        ],
+        "type": "object"
+      },
+      "PhoneChallengeVerifyDto": {
+        "properties": {
+          "challengeToken": {
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "code": {
+            "description": "The 6-character code texted to the phone (letters and digits, case-sensitive)",
+            "example": "2BRGme",
+            "type": "string"
+          },
+          "deviceName": {
+            "description": "Human-readable device label rendered in the sessions list",
+            "example": "Kehinde's MacBook",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeToken",
+          "code"
+        ],
         "type": "object"
       },
       "PlatformSendBroadcastDto": {
@@ -597,19 +1182,39 @@
       },
       "RefreshTokenDto": {
         "properties": {
-          "deviceId": {
-            "description": "Client-generated UUID v4 identifying this device install",
-            "example": "550e8400-e29b-41d4-a716-446655440000",
-            "type": "string"
-          },
-          "refreshToken": {
-            "description": "Opaque refresh token issued at login",
-            "type": "string"
+          "slot": {
+            "description": "Which account in this browser to refresh. The token itself comes from that slot’s cookie.",
+            "example": 0,
+            "maximum": 9,
+            "minimum": 0,
+            "type": "number"
           }
         },
         "required": [
-          "refreshToken",
-          "deviceId"
+          "slot"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessDomainDto": {
+        "properties": {
+          "domain": {
+            "example": "acme.com",
+            "type": "string"
+          },
+          "status": {
+            "example": "pending",
+            "type": "string"
+          },
+          "verification": {
+            "description": "The DNS record to add to prove the domain",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "domain",
+          "status",
+          "verification"
         ],
         "type": "object"
       },
@@ -619,18 +1224,18 @@
             "example": "Acme Corp",
             "type": "string"
           },
+          "contactEmail": {
+            "description": "A mailbox the administrator can already open. Stored as the unverified recovery email so reset links reach them while the business domain has no mail.",
+            "example": "kehinde@gmail.com",
+            "type": "string"
+          },
           "country": {
             "$ref": "#/components/schemas/CountryDto"
           },
           "dateOfBirth": {
-            "description": "ISO 8601 date of birth — required for age gating",
+            "description": "ISO 8601 date of birth — age-gated against the country when given",
             "example": "1995-08-12T00:00:00.000Z",
             "format": "date-time",
-            "type": "string"
-          },
-          "deviceId": {
-            "description": "Client-generated UUID v4 identifying this device install",
-            "example": "550e8400-e29b-41d4-a716-446655440000",
             "type": "string"
           },
           "deviceName": {
@@ -677,10 +1282,93 @@
           "businessName",
           "slug",
           "country",
-          "dateOfBirth",
           "employeeCount",
-          "domain",
-          "deviceId"
+          "domain"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessIdentityDto": {
+        "properties": {
+          "email": {
+            "example": "kehinde@acme.com",
+            "type": "string"
+          },
+          "emailVerified": {
+            "example": true,
+            "type": "boolean"
+          },
+          "id": {
+            "example": "507f1f77bcf86cd799439011",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "emailVerified"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessResponseDto": {
+        "properties": {
+          "challengeToken": {
+            "description": "Pass to POST /v1/auth/phone-challenge/send and /verify",
+            "example": "550e8400-e29b-41d4-a716-446655440000",
+            "type": "string"
+          },
+          "domain": {
+            "$ref": "#/components/schemas/RegisterBusinessDomainDto"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/RegisterBusinessIdentityDto"
+          },
+          "message": {
+            "example": "Your account is ready. Check a phone by text to sign in.",
+            "type": "string"
+          },
+          "phoneRequired": {
+            "description": "Always true: the administrator is signed in only after a phone is checked",
+            "example": true,
+            "type": "boolean"
+          },
+          "tenant": {
+            "$ref": "#/components/schemas/RegisterBusinessTenantDto"
+          }
+        },
+        "required": [
+          "message",
+          "phoneRequired",
+          "challengeToken",
+          "identity",
+          "tenant",
+          "domain"
+        ],
+        "type": "object"
+      },
+      "RegisterBusinessTenantDto": {
+        "properties": {
+          "displayName": {
+            "example": "Acme Corp",
+            "type": "string"
+          },
+          "id": {
+            "example": "507f1f77bcf86cd799439012",
+            "type": "string"
+          },
+          "slug": {
+            "example": "acme",
+            "type": "string"
+          },
+          "status": {
+            "example": "pending_setup",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "displayName",
+          "status"
         ],
         "type": "object"
       },
@@ -865,6 +1553,62 @@
         },
         "required": [
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "SwitchContextDto": {
+        "properties": {
+          "tenantId": {
+            "description": "Organisation to switch into. Omit to return to the personal context.",
+            "example": "507f1f77bcf86cd799439001",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SwitchContextResponseDto": {
+        "properties": {
+          "accessToken": {
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "type": "string"
+          },
+          "expiresIn": {
+            "example": 900,
+            "type": "number"
+          },
+          "refreshToken": {
+            "example": "b1f0c2...",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "OWNER",
+              "ADMIN",
+              "MEMBER",
+              "GUEST"
+            ],
+            "example": "MEMBER",
+            "nullable": true,
+            "type": "string"
+          },
+          "tenantId": {
+            "description": "Null for the personal context",
+            "example": "507f1f77bcf86cd799439001",
+            "nullable": true,
+            "type": "object"
+          },
+          "tokenType": {
+            "example": "Bearer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn",
+          "tokenType",
+          "tenantId",
+          "role"
         ],
         "type": "object"
       },
@@ -1113,10 +1857,6 @@
           "country": {
             "$ref": "#/components/schemas/CountryDto"
           },
-          "deviceId": {
-            "example": "550e8400-e29b-41d4-a716-446655440000",
-            "type": "string"
-          },
           "deviceName": {
             "example": "Kehinde's iPhone",
             "type": "string"
@@ -1139,8 +1879,7 @@
           "slug",
           "country",
           "employeeCount",
-          "domain",
-          "deviceId"
+          "domain"
         ],
         "type": "object"
       },
@@ -1241,6 +1980,62 @@
         ]
       }
     },
+    "/api/v1/auth/accounts": {
+      "get": {
+        "operationId": "AuthController_listClientAccounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClientAccountResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The accounts this browser has used and not removed",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/accounts/{handle}": {
+      "delete": {
+        "operationId": "AuthController_removeClientAccount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "handle",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientRemovedResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Remove an account from this client, signed in or not",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/address-availability": {
       "post": {
         "operationId": "AuthController_checkAddressAvailability",
@@ -1273,6 +2068,73 @@
         ]
       }
     },
+    "/api/v1/auth/context": {
+      "post": {
+        "operationId": "AuthController_switchContext",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwitchContextDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwitchContextResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Swap the current session for one in another context, without re-authenticating",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/contexts": {
+      "get": {
+        "operationId": "AuthController_listContexts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuthContextItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the personal and organisation contexts this account can act in",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/devices": {
       "get": {
         "operationId": "AuthController_listDevices",
@@ -1293,13 +2155,13 @@
         ]
       }
     },
-    "/api/v1/auth/devices/{deviceId}": {
+    "/api/v1/auth/devices/{clientId}": {
       "delete": {
         "operationId": "AuthController_revokeDevice",
         "parameters": [
           {
             "in": "path",
-            "name": "deviceId",
+            "name": "clientId",
             "required": true,
             "schema": {
               "type": "string"
@@ -1322,13 +2184,13 @@
         ]
       }
     },
-    "/api/v1/auth/devices/{deviceId}/trust": {
+    "/api/v1/auth/devices/{clientId}/trust": {
       "delete": {
         "operationId": "AuthController_untrustDevice",
         "parameters": [
           {
             "in": "path",
-            "name": "deviceId",
+            "name": "clientId",
             "required": true,
             "schema": {
               "type": "string"
@@ -1355,7 +2217,7 @@
         "parameters": [
           {
             "in": "path",
-            "name": "deviceId",
+            "name": "clientId",
             "required": true,
             "schema": {
               "type": "string"
@@ -1403,6 +2265,38 @@
         ]
       }
     },
+    "/api/v1/auth/identify": {
+      "post": {
+        "operationId": "AuthController_identify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentifyResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Resolve what an email address signs in as, before any credential is supplied",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -1419,7 +2313,21 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeSessionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeRequiredResponseDto"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "A session; or { phoneRequired, challengeToken } while the account still needs its phone check; or { mfaRequired, challengeToken } for TOTP"
           }
         },
         "summary": "Login with email and password",
@@ -1432,17 +2340,29 @@
       "post": {
         "operationId": "AuthController_logout",
         "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutSlotDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "201": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientSlotResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Logout current session",
+        "summary": "Sign one account in this browser out",
         "tags": [
           "Auth"
         ]
@@ -1468,6 +2388,21 @@
         ]
       }
     },
+    "/api/v1/auth/logout-browser": {
+      "post": {
+        "operationId": "AuthController_logoutClient",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Sign every account in this browser out, keeping them in the chooser",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/v1/auth/mfa/challenge": {
       "post": {
         "operationId": "AuthController_submitMfaChallenge",
@@ -1488,6 +2423,281 @@
           }
         },
         "summary": "Submit MFA code to complete login — accepts TOTP or backup code",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/authenticate/begin": {
+      "post": {
+        "operationId": "AuthController_passkeyAuthenticateBegin",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyAuthenticateBeginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallengeResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Start passkey sign-in — returns request options for navigator.credentials.get()",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/authenticate/finish": {
+      "post": {
+        "operationId": "AuthController_passkeyAuthenticateFinish",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyAuthenticateFinishDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/PasskeySessionResponseDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PhoneChallengeRequiredResponseDto"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "A session, or { phoneRequired, challengeToken } while the account still needs its phone check"
+          }
+        },
+        "summary": "Verify the assertion and issue a session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/list": {
+      "get": {
+        "operationId": "AuthController_listPasskeys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PasskeyItemResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the passkeys registered on the current account",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/register/begin": {
+      "post": {
+        "operationId": "AuthController_passkeyRegisterBegin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyChallengeResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start passkey registration — returns creation options for navigator.credentials.create()",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/register/finish": {
+      "post": {
+        "operationId": "AuthController_passkeyRegisterFinish",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyRegisterFinishDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyRegisteredResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify the attestation and store the passkey",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/passkey/{credentialId}": {
+      "delete": {
+        "operationId": "AuthController_revokePasskey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "credentialId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyRevokeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyRevokedResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a passkey — re-confirms identity with the account password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/phone-challenge/send": {
+      "post": {
+        "operationId": "AuthController_sendPhoneChallenge",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneChallengeSendDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneChallengeSentResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Text a 6-character code to a phone for a pending phone challenge from register-business, login or passkey sign-in",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/v1/auth/phone-challenge/verify": {
+      "post": {
+        "operationId": "AuthController_verifyPhoneChallenge",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneChallengeVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneChallengeSessionResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Check the texted code, mark the phone verified and issue the session",
         "tags": [
           "Auth"
         ]
@@ -1619,10 +2829,17 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterBusinessResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
-        "summary": "Register a business — creates identity + tenant + owner membership + pending domain atomically",
+        "summary": "Register a business — creates identity + tenant + owner membership + pending domain atomically, then answers with a phone challenge instead of a session",
         "tags": [
           "Auth"
         ]
@@ -3196,6 +4413,38 @@
           }
         ],
         "summary": "Create a new tenant (any authenticated user)",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/domain-claims/check": {
+      "post": {
+        "operationId": "TenantsController_checkDomainClaim",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainClaimDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainClaimResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Whether a business domain can still be claimed by a new workspace",
         "tags": [
           "Tenants"
         ]

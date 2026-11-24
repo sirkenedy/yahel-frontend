@@ -17,10 +17,8 @@ import { Route as SigninRouteRouteImport } from './routes/signin/route'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAddPasskeyRouteImport } from './routes/admin/add-passkey'
 import { Route as AdminCodeRouteImport } from './routes/admin/code'
-import { Route as AdminConfirmEmailRouteImport } from './routes/admin/confirm-email'
 import { Route as AdminPasskeyRouteImport } from './routes/admin/passkey'
 import { Route as AdminPhoneRouteImport } from './routes/admin/phone'
-import { Route as AdminSigninRouteImport } from './routes/admin/signin'
 import { Route as AdminWelcomeRouteImport } from './routes/admin/welcome'
 import { Route as BusinessIndexRouteImport } from './routes/business/index'
 import { Route as BusinessAdminRouteImport } from './routes/business/admin'
@@ -31,6 +29,9 @@ import { Route as BusinessDomainRouteImport } from './routes/business/domain'
 import { Route as BusinessDomainOkRouteImport } from './routes/business/domain-ok'
 import { Route as BusinessDomainQuestionRouteImport } from './routes/business/domain-question'
 import { Route as BusinessFindRouteImport } from './routes/business/find'
+import { Route as BusinessFoundRouteImport } from './routes/business/found'
+import { Route as BusinessGatewayRouteImport } from './routes/business/gateway'
+import { Route as BusinessPaidRouteImport } from './routes/business/paid'
 import { Route as BusinessPlanRouteImport } from './routes/business/plan'
 import { Route as BusinessReadyRouteImport } from './routes/business/ready'
 import { Route as BusinessRegistrantRouteImport } from './routes/business/registrant'
@@ -106,11 +107,6 @@ const AdminCodeRoute = AdminCodeRouteImport.update({
   path: '/code',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminConfirmEmailRoute = AdminConfirmEmailRouteImport.update({
-  id: '/confirm-email',
-  path: '/confirm-email',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminPasskeyRoute = AdminPasskeyRouteImport.update({
   id: '/passkey',
   path: '/passkey',
@@ -119,11 +115,6 @@ const AdminPasskeyRoute = AdminPasskeyRouteImport.update({
 const AdminPhoneRoute = AdminPhoneRouteImport.update({
   id: '/phone',
   path: '/phone',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminSigninRoute = AdminSigninRouteImport.update({
-  id: '/signin',
-  path: '/signin',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminWelcomeRoute = AdminWelcomeRouteImport.update({
@@ -174,6 +165,21 @@ const BusinessDomainQuestionRoute = BusinessDomainQuestionRouteImport.update({
 const BusinessFindRoute = BusinessFindRouteImport.update({
   id: '/find',
   path: '/find',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessFoundRoute = BusinessFoundRouteImport.update({
+  id: '/found',
+  path: '/found',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessGatewayRoute = BusinessGatewayRouteImport.update({
+  id: '/gateway',
+  path: '/gateway',
+  getParentRoute: () => BusinessRouteRoute,
+} as any)
+const BusinessPaidRoute = BusinessPaidRouteImport.update({
+  id: '/paid',
+  path: '/paid',
   getParentRoute: () => BusinessRouteRoute,
 } as any)
 const BusinessPlanRoute = BusinessPlanRouteImport.update({
@@ -355,10 +361,8 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRouteRouteWithChildren
   '/admin/add-passkey': typeof AdminAddPasskeyRoute
   '/admin/code': typeof AdminCodeRoute
-  '/admin/confirm-email': typeof AdminConfirmEmailRoute
   '/admin/passkey': typeof AdminPasskeyRoute
   '/admin/phone': typeof AdminPhoneRoute
-  '/admin/signin': typeof AdminSigninRoute
   '/admin/welcome': typeof AdminWelcomeRoute
   '/business/admin': typeof BusinessAdminRoute
   '/business/card-code': typeof BusinessCardCodeRoute
@@ -368,6 +372,9 @@ export interface FileRoutesByFullPath {
   '/business/domain-ok': typeof BusinessDomainOkRoute
   '/business/domain-question': typeof BusinessDomainQuestionRoute
   '/business/find': typeof BusinessFindRoute
+  '/business/found': typeof BusinessFoundRoute
+  '/business/gateway': typeof BusinessGatewayRoute
+  '/business/paid': typeof BusinessPaidRoute
   '/business/plan': typeof BusinessPlanRoute
   '/business/ready': typeof BusinessReadyRoute
   '/business/registrant': typeof BusinessRegistrantRoute
@@ -409,10 +416,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/add-passkey': typeof AdminAddPasskeyRoute
   '/admin/code': typeof AdminCodeRoute
-  '/admin/confirm-email': typeof AdminConfirmEmailRoute
   '/admin/passkey': typeof AdminPasskeyRoute
   '/admin/phone': typeof AdminPhoneRoute
-  '/admin/signin': typeof AdminSigninRoute
   '/admin/welcome': typeof AdminWelcomeRoute
   '/business/admin': typeof BusinessAdminRoute
   '/business/card-code': typeof BusinessCardCodeRoute
@@ -422,6 +427,9 @@ export interface FileRoutesByTo {
   '/business/domain-ok': typeof BusinessDomainOkRoute
   '/business/domain-question': typeof BusinessDomainQuestionRoute
   '/business/find': typeof BusinessFindRoute
+  '/business/found': typeof BusinessFoundRoute
+  '/business/gateway': typeof BusinessGatewayRoute
+  '/business/paid': typeof BusinessPaidRoute
   '/business/plan': typeof BusinessPlanRoute
   '/business/ready': typeof BusinessReadyRoute
   '/business/registrant': typeof BusinessRegistrantRoute
@@ -468,10 +476,8 @@ export interface FileRoutesById {
   '/signin': typeof SigninRouteRouteWithChildren
   '/admin/add-passkey': typeof AdminAddPasskeyRoute
   '/admin/code': typeof AdminCodeRoute
-  '/admin/confirm-email': typeof AdminConfirmEmailRoute
   '/admin/passkey': typeof AdminPasskeyRoute
   '/admin/phone': typeof AdminPhoneRoute
-  '/admin/signin': typeof AdminSigninRoute
   '/admin/welcome': typeof AdminWelcomeRoute
   '/business/admin': typeof BusinessAdminRoute
   '/business/card-code': typeof BusinessCardCodeRoute
@@ -481,6 +487,9 @@ export interface FileRoutesById {
   '/business/domain-ok': typeof BusinessDomainOkRoute
   '/business/domain-question': typeof BusinessDomainQuestionRoute
   '/business/find': typeof BusinessFindRoute
+  '/business/found': typeof BusinessFoundRoute
+  '/business/gateway': typeof BusinessGatewayRoute
+  '/business/paid': typeof BusinessPaidRoute
   '/business/plan': typeof BusinessPlanRoute
   '/business/ready': typeof BusinessReadyRoute
   '/business/registrant': typeof BusinessRegistrantRoute
@@ -528,10 +537,8 @@ export interface FileRouteTypes {
     | '/signin'
     | '/admin/add-passkey'
     | '/admin/code'
-    | '/admin/confirm-email'
     | '/admin/passkey'
     | '/admin/phone'
-    | '/admin/signin'
     | '/admin/welcome'
     | '/business/admin'
     | '/business/card-code'
@@ -541,6 +548,9 @@ export interface FileRouteTypes {
     | '/business/domain-ok'
     | '/business/domain-question'
     | '/business/find'
+    | '/business/found'
+    | '/business/gateway'
+    | '/business/paid'
     | '/business/plan'
     | '/business/ready'
     | '/business/registrant'
@@ -582,10 +592,8 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/add-passkey'
     | '/admin/code'
-    | '/admin/confirm-email'
     | '/admin/passkey'
     | '/admin/phone'
-    | '/admin/signin'
     | '/admin/welcome'
     | '/business/admin'
     | '/business/card-code'
@@ -595,6 +603,9 @@ export interface FileRouteTypes {
     | '/business/domain-ok'
     | '/business/domain-question'
     | '/business/find'
+    | '/business/found'
+    | '/business/gateway'
+    | '/business/paid'
     | '/business/plan'
     | '/business/ready'
     | '/business/registrant'
@@ -640,10 +651,8 @@ export interface FileRouteTypes {
     | '/signin'
     | '/admin/add-passkey'
     | '/admin/code'
-    | '/admin/confirm-email'
     | '/admin/passkey'
     | '/admin/phone'
-    | '/admin/signin'
     | '/admin/welcome'
     | '/business/admin'
     | '/business/card-code'
@@ -653,6 +662,9 @@ export interface FileRouteTypes {
     | '/business/domain-ok'
     | '/business/domain-question'
     | '/business/find'
+    | '/business/found'
+    | '/business/gateway'
+    | '/business/paid'
     | '/business/plan'
     | '/business/ready'
     | '/business/registrant'
@@ -757,13 +769,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCodeRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/confirm-email': {
-      id: '/admin/confirm-email'
-      path: '/confirm-email'
-      fullPath: '/admin/confirm-email'
-      preLoaderRoute: typeof AdminConfirmEmailRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/admin/passkey': {
       id: '/admin/passkey'
       path: '/passkey'
@@ -776,13 +781,6 @@ declare module '@tanstack/react-router' {
       path: '/phone'
       fullPath: '/admin/phone'
       preLoaderRoute: typeof AdminPhoneRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/admin/signin': {
-      id: '/admin/signin'
-      path: '/signin'
-      fullPath: '/admin/signin'
-      preLoaderRoute: typeof AdminSigninRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/welcome': {
@@ -853,6 +851,27 @@ declare module '@tanstack/react-router' {
       path: '/find'
       fullPath: '/business/find'
       preLoaderRoute: typeof BusinessFindRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/found': {
+      id: '/business/found'
+      path: '/found'
+      fullPath: '/business/found'
+      preLoaderRoute: typeof BusinessFoundRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/gateway': {
+      id: '/business/gateway'
+      path: '/gateway'
+      fullPath: '/business/gateway'
+      preLoaderRoute: typeof BusinessGatewayRouteImport
+      parentRoute: typeof BusinessRouteRoute
+    }
+    '/business/paid': {
+      id: '/business/paid'
+      path: '/paid'
+      fullPath: '/business/paid'
+      preLoaderRoute: typeof BusinessPaidRouteImport
       parentRoute: typeof BusinessRouteRoute
     }
     '/business/plan': {
@@ -1099,10 +1118,8 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAddPasskeyRoute: typeof AdminAddPasskeyRoute
   AdminCodeRoute: typeof AdminCodeRoute
-  AdminConfirmEmailRoute: typeof AdminConfirmEmailRoute
   AdminPasskeyRoute: typeof AdminPasskeyRoute
   AdminPhoneRoute: typeof AdminPhoneRoute
-  AdminSigninRoute: typeof AdminSigninRoute
   AdminWelcomeRoute: typeof AdminWelcomeRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -1110,10 +1127,8 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAddPasskeyRoute: AdminAddPasskeyRoute,
   AdminCodeRoute: AdminCodeRoute,
-  AdminConfirmEmailRoute: AdminConfirmEmailRoute,
   AdminPasskeyRoute: AdminPasskeyRoute,
   AdminPhoneRoute: AdminPhoneRoute,
-  AdminSigninRoute: AdminSigninRoute,
   AdminWelcomeRoute: AdminWelcomeRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -1131,6 +1146,9 @@ interface BusinessRouteRouteChildren {
   BusinessDomainOkRoute: typeof BusinessDomainOkRoute
   BusinessDomainQuestionRoute: typeof BusinessDomainQuestionRoute
   BusinessFindRoute: typeof BusinessFindRoute
+  BusinessFoundRoute: typeof BusinessFoundRoute
+  BusinessGatewayRoute: typeof BusinessGatewayRoute
+  BusinessPaidRoute: typeof BusinessPaidRoute
   BusinessPlanRoute: typeof BusinessPlanRoute
   BusinessReadyRoute: typeof BusinessReadyRoute
   BusinessRegistrantRoute: typeof BusinessRegistrantRoute
@@ -1148,6 +1166,9 @@ const BusinessRouteRouteChildren: BusinessRouteRouteChildren = {
   BusinessDomainOkRoute: BusinessDomainOkRoute,
   BusinessDomainQuestionRoute: BusinessDomainQuestionRoute,
   BusinessFindRoute: BusinessFindRoute,
+  BusinessFoundRoute: BusinessFoundRoute,
+  BusinessGatewayRoute: BusinessGatewayRoute,
+  BusinessPaidRoute: BusinessPaidRoute,
   BusinessPlanRoute: BusinessPlanRoute,
   BusinessReadyRoute: BusinessReadyRoute,
   BusinessRegistrantRoute: BusinessRegistrantRoute,

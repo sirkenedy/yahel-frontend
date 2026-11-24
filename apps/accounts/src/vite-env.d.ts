@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_ADMIN_SIGN_IN_URL?: string;
   /** Admin itself, where an administrator goes once their passkey is saved. Unset, it is `VITE_APP_URL`. */
   readonly VITE_ADMIN_URL?: string;
+  /** Where "Manage your account" leads; the account's slot is added as `u/<slot>/account`. Unset, it is `VITE_APP_URL`. */
+  readonly VITE_ACCOUNT_URL?: string;
   /** The agreements a workspace's administrator accepts. Unset, each is named without a link. */
   readonly VITE_BUSINESS_TERMS_URL?: string;
   readonly VITE_TRIAL_TERMS_URL?: string;

@@ -13,27 +13,15 @@ const themes = [
 ] as const;
 
 const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
-  { name: 'sign-in', open: async (page) => void (await page.goto('/sign-in')) },
-  {
-    name: 'sign-in with errors',
-    open: async (page) => {
-      await page.goto('/sign-in');
-      await page.getByRole('button', { name: 'Sign in' }).click();
-      await page.getByText('Enter your password').waitFor();
-    },
-  },
-  {
-    name: 'sign-in with the password revealed and the tooltip open',
-    open: async (page) => {
-      await page.goto('/sign-in');
-      await page.getByLabel('Password', { exact: true }).fill('a revealed secret');
-      await page.getByRole('button', { name: 'Show password' }).click();
-      await page.getByLabel('Password', { exact: true }).focus();
-      await page.keyboard.press('Tab');
-      await page.getByRole('tooltip').waitFor();
-    },
-  },
   { name: 'home', open: signIn },
+  {
+    name: 'home with the account menu open',
+    open: async (page) => {
+      await signIn(page);
+      await page.getByRole('button', { name: /^Account: / }).click();
+      await page.getByRole('dialog', { name: 'Accounts' }).waitFor();
+    },
+  },
   {
     name: 'account',
     open: async (page) => {

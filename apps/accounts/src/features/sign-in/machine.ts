@@ -34,6 +34,8 @@ export interface SignInState {
   provenPassword: string | null;
   /** Why the person has been brought back to the password step, when it was not their own doing. */
   passwordPrompt: 'challenge-expired' | 'reset-done' | 'email-confirmed' | null;
+  /** The chooser is in "Remove an account" mode. */
+  removing: boolean;
 }
 
 export const initialSignInState: SignInState = {
@@ -48,6 +50,7 @@ export const initialSignInState: SignInState = {
   helpRequested: false,
   provenPassword: null,
   passwordPrompt: null,
+  removing: false,
 };
 
 export type SignInEvent =
@@ -66,7 +69,8 @@ export type SignInEvent =
   | { type: 'reset-code-rejected'; spent?: boolean }
   | { type: 'help-requested' }
   | { type: 'signed-in' }
-  | { type: 'signed-out' };
+  | { type: 'signed-out' }
+  | { type: 'removing'; on: boolean };
 
 export function reduce(state: SignInState, event: SignInEvent): SignInState {
   switch (event.type) {
@@ -104,18 +108,21 @@ export function reduce(state: SignInState, event: SignInEvent): SignInState {
     case 'signed-in':
       // Keep only who signed in; every credential-like value is dropped the moment it has been used.
       return { ...initialSignInState, email: state.email };
+    case 'removing':
+      return { ...state, removing: event.on };
   }
 }
 
 /** What is true outside the flow's own state when a step is about to be shown. */
 export interface SignInFacts {
   signedIn: boolean;
-  knownAccounts: number;
+  /** How many accounts this browser remembers; `null` when the list could not be read, so the chooser says so. */
+  knownAccounts: number | null;
   passkeysOffered: boolean;
   helpOffered: boolean;
 }
 
-const entryStep = (facts: SignInFacts): SignInStep => (facts.knownAccounts > 0 ? 'choose' : 'email');
+const entryStep = (facts: SignInFacts): SignInStep => (facts.knownAccounts === 0 ? 'email' : 'choose');
 
 /**
  * The step that can honestly be shown when `step` is asked for: `step` itself if everything it depends
@@ -123,11 +130,12 @@ const entryStep = (facts: SignInFacts): SignInStep => (facts.knownAccounts > 0 ?
  * the Forward button land somewhere that works.
  */
 export function resumeStep(step: SignInStep, state: SignInState, facts: SignInFacts): SignInStep {
-  if (facts.signedIn) return 'done';
   const entry = entryStep(facts);
+  // Being signed in opens Done, and closes nothing: another account can always be added (multi-account, F-89).
   switch (step) {
-    case 'choose':
     case 'done':
+      return facts.signedIn ? 'done' : entry;
+    case 'choose':
       return entry;
     case 'email':
       return 'email';
@@ -160,7 +168,7 @@ export function backOf(step: SignInStep, state: SignInState, facts: SignInFacts)
     case 'help-sent':
       return null;
     case 'email':
-      return facts.knownAccounts > 0 ? 'choose' : null;
+      return facts.knownAccounts === 0 ? null : 'choose';
     case 'password':
     case 'passkey':
       return state.fromChooser ? 'choose' : 'email';

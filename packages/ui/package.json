@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/index.css",
     "./daylight.css": "./src/styles/daylight.css",
-    "./assets/*": "./assets/*"
+    "./assets/*": "./assets/*",
+    "./accounts.css": "./src/styles/accounts.css"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

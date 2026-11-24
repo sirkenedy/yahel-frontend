@@ -5,8 +5,9 @@
 //
 // The real endpoints must use the server's own relying-party id and check the origin themselves, ignoring
 // the `rpId` this stand-in echoes back; return the same (empty) `allowCredentials` for every address,
-// with or without an account; issue single-use, short-lived challenges; and take the device id in
-// `finish`, as /auth/login does.
+// with or without an account; issue single-use, short-lived challenges; and in `finish`, give the account a
+// slot in this browser and set its refresh cookie, as /auth/login does. This stand-in sets no cookie, so its
+// session lasts until the access token is refused.
 import type { PasskeyCeremony } from '../capabilities';
 import { ApiError } from '../errors';
 import { demoProfile } from './demo-data';
@@ -22,6 +23,6 @@ export const createPasskeyStandIn = (delay: Delay): PasskeyCeremony => ({
   async finish(assertion) {
     await delay(600);
     if (!assertion.signature) throw new ApiError({ status: 401, code: 'INVALID_CREDENTIALS', message: 'Passkey not recognised' });
-    return { tokens: { accessToken: 'stand-in-access', refreshToken: 'stand-in-refresh', expiresIn: 900, tokenType: 'Bearer' }, profile: demoProfile };
+    return { tokens: { accessToken: 'stand-in-access', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'stand-in-handle' }, profile: demoProfile };
   },
 });

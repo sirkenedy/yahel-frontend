@@ -18,6 +18,9 @@ import { DomainOkStep } from './domain-ok-step';
 import { DomainQuestionStep } from './domain-question-step';
 import { DomainStep } from './domain-step';
 import { FindStep } from './find-step';
+import { FoundStep } from './found-step';
+import { GatewayStep } from './gateway-step';
+import { PaidStep } from './paid-step';
 import { PlanStep } from './plan-step';
 import { ReadyStep } from './ready-step';
 import { RegistrantStep } from './registrant-step';
@@ -62,11 +65,11 @@ type Overrides = { state?: Partial<State>; offers?: Partial<BusinessFlowValue['m
 
 const fakeActions = () => ({
   enterBusiness: vi.fn(), enterYou: vi.fn(), chooseDomainSource: vi.fn(), checkDomain: vi.fn(), confirmDomain: vi.fn(), buyInstead: vi.fn(), ownInstead: vi.fn(), typeSearch: vi.fn(), pickDomain: vi.fn(), continueWithDomain: vi.fn(),
-  enterAddress: vi.fn(), enterAdmin: vi.fn(), choosePeriod: vi.fn(), applyPromo: vi.fn(), removePromo: vi.fn(), choosePlan: vi.fn(), chooseSeats: vi.fn(), edit: vi.fn(), pay: vi.fn(), confirmCard: vi.fn(), resendCardCode: vi.fn(),
-  useDifferentCard: vi.fn(), createWorkspace: vi.fn(), startAgain: vi.fn(), retryPricing: vi.fn(),
+  enterAddress: vi.fn(), enterAdmin: vi.fn(), choosePeriod: vi.fn(), applyPromo: vi.fn(), removePromo: vi.fn(), choosePlan: vi.fn(), chooseSeats: vi.fn(), changePlan: vi.fn(), editContact: vi.fn(), toPayment: vi.fn(), pay: vi.fn(), confirmCard: vi.fn(), resendCardCode: vi.fn(),
+  useDifferentCard: vi.fn(), createWorkspace: vi.fn(), checkPhone: vi.fn(), goToAdmin: vi.fn(), startAgain: vi.fn(), retryPricing: vi.fn(),
 }); // prettier-ignore
 
-const answered: Partial<State> = { businessName: 'Northwind Studio', size: 'small', firstName: 'Amara', lastName: 'Okafor', contactEmail: 'amara@mail.example', birth: { day: 14, month: 3, year: 1994 }, ownedDomain: 'northwind.example', ownedDomainConfirmed: true, domain: 'northwind.example', adminUser: 'amara', adminAddress: 'amara@northwind.example', hasPassword: true, planChosen: true };
+const answered: Partial<State> = { businessName: 'Northwind Studio', size: 'small', firstName: 'Amara', lastName: 'Okafor', contactEmail: 'amara@mail.example', ownedDomain: 'northwind.example', ownedDomainConfirmed: true, domain: 'northwind.example', adminUser: 'amara', adminAddress: 'amara@northwind.example', hasPassword: true, planChosen: true };
 
 const flowValue = (actions: BusinessFlowValue['actions'], { state, offers: offered, requests, links, backHref = null }: Overrides = {}): BusinessFlowValue => {
   return {
@@ -76,8 +79,8 @@ const flowValue = (actions: BusinessFlowValue['actions'], { state, offers: offer
       direction: 'forward',
       backHref,
       progress: { current: 1, total: 6, part: 'business' },
-      offers: { domainsForSale: true, billing: true, contactEmail: true, marketing: true, ...offered },
-      links: { signIn: '/signin', adminSignIn: '/admin/signin', personal: '/personal', help: 'https://yahel.example/help', businessTerms: 'https://yahel.example/business-terms', trialTerms: null, domainTerms: null, ...links },
+      offers: { domainsForSale: true, billing: true, signedIn: false, contactEmail: true, marketing: true, ...offered },
+      links: { signIn: '/signin', personal: '/personal', help: 'https://yahel.example/help', businessTerms: 'https://yahel.example/business-terms', trialTerms: null, domainTerms: null, ...links },
       screens: { account: null, exits: { signIn: '/signin' }, serviceStatus: null },
       requests: { checkDomain: idle, applyPromo: idle, create: idle, pay: idle, confirmCard: idle, resendCardCode: idle, ...requests },
     },
@@ -133,28 +136,29 @@ describe('StartStep', () => {
 });
 
 describe('YouStep', () => {
-  const fill = async (user: ReturnType<typeof userEvent.setup>) => {
-    await user.type(field(m.firstName), 'Amara');
-    await user.type(field(m.contactEmail), 'amara@mail.example');
-    await user.type(field(m.day), '14');
-    await user.selectOptions(field(m.month), 'March');
-    await user.type(field(m.year), '1994');
-  };
+  it('says where the name and address were filled in from, when they were', () => {
+    setup(<YouStep />, { state: { businessName: 'Northwind Studio', firstName: 'Amara', prefilledFrom: 'amara.okafor@yahel.example' } });
 
-  it('takes the name, a reachable email and the date of birth the backend requires', async () => {
+    expect(screen.getByText(m.prefilledFrom('amara.okafor@yahel.example'))).toBeInTheDocument();
+    expect(screen.getByLabelText(m.firstName)).toHaveValue('Amara');
+  });
+
+  it('takes the name and a reachable email, and asks no date of birth', async () => {
     const { actions, user } = setup(<YouStep />, { state: { businessName: 'Northwind Studio' } });
     expect(screen.getByText(m.youLedeWithEmail)).toBeInTheDocument();
-    await fill(user);
+    expect(screen.queryByRole('group', { name: /birth/i })).not.toBeInTheDocument();
+    await user.type(field(m.firstName), 'Amara');
+    await user.type(field(m.contactEmail), 'amara@mail.example');
     await press(m.continue);
 
-    expect(actions.enterYou).toHaveBeenCalledWith({ firstName: 'Amara', lastName: '', contactEmail: 'amara@mail.example', birth: { day: 14, month: 3, year: 1994 } });
+    expect(actions.enterYou).toHaveBeenCalledWith({ firstName: 'Amara', lastName: '', contactEmail: 'amara@mail.example' });
   });
 
   it('sums up several problems above the form and names each beside its field', async () => {
     const { actions } = setup(<YouStep />);
     await press(m.continue);
 
-    expect(screen.getByText(fm.thingsToFix(5))).toBeInTheDocument();
+    expect(screen.getByText(fm.thingsToFix(2))).toBeInTheDocument();
     expect(field(m.firstName)).toHaveAccessibleDescription(m.firstNameRequired);
     expect(field(m.contactEmail)).toHaveAccessibleDescription(literally(m.contactEmailInvalid));
     expect(field(m.firstName)).toHaveFocus();
@@ -167,18 +171,8 @@ describe('YouStep', () => {
     expect(screen.getByText(m.youLede)).toBeInTheDocument();
 
     await user.type(field(m.firstName), 'Amara');
-    await user.type(field(m.day), '14');
-    await user.selectOptions(field(m.month), 'March');
-    await user.type(field(m.year), '1994');
     await press(m.continue);
     expect(actions.enterYou).toHaveBeenCalledWith(expect.objectContaining({ contactEmail: '' }));
-  });
-
-  it('says beside the year when the country does not allow the age given', () => {
-    setup(<YouStep />, { state: { ...answered, rejection: { step: 'you', reason: 'underage' } } });
-
-    expect(field(m.year)).toHaveAccessibleDescription(m.tooYoungForWorkspace);
-    expect(field(m.year)).toHaveFocus();
   });
 });
 
@@ -247,9 +241,9 @@ describe('DomainStep', () => {
 describe('DomainOkStep', () => {
   it('shows what the team’s addresses will look like and takes a yes', async () => {
     const { actions } = setup(<DomainOkStep />, { state: answered });
-    expect(screen.getByRole('heading', { level: 1, name: m.domainOkTitle('Northwind Studio') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: m.domainOkTitle })).toBeInTheDocument();
     expect(screen.getByText('northwind.example').parentElement).toHaveTextContent('you@northwind.example');
-    expect(screen.getByText(m.domainOkLede)).toBeInTheDocument();
+    expect(screen.getByText(m.domainOkLede('northwind.example'))).toBeInTheDocument();
 
     await press(m.useThisDomain);
     expect(actions.confirmDomain).toHaveBeenCalledTimes(1);
@@ -367,12 +361,9 @@ describe('AdminStep', () => {
     expect(actions.enterAdmin).toHaveBeenCalledWith({ adminUser: 'amara', password, marketing: { productNews: true, teamTips: false } });
   });
 
-  it('says plainly that the confirmation code goes to the new address, which must be a mailbox that can be opened now', () => {
+  it('asks for no mailbox on the new domain: no code is emailed to it', () => {
     setup(<AdminStep />, { state: { ...answered, hasPassword: false } });
-    const note = screen.getByRole('status');
-    expect(note).toHaveTextContent(m.codeMailboxTitle);
-    expect(note).toHaveTextContent(m.codeMailbox('northwind.example'));
-    expect(note).toHaveTextContent(/don’t continue yet/);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('refuses a username that is not one, a weak password and a different second password', async () => {
@@ -410,10 +401,10 @@ describe('AdminStep', () => {
     expect(screen.getByRole('link', { name: m.signInInstead })).toHaveAttribute('href', '/signin');
   });
 
-  it('without a checkout, creates the workspace from here and asks for nothing that has nowhere to go', () => {
+  it('without a checkout, asks for nothing that has nowhere to go', () => {
     setup(<AdminStep />, { state: answered, offers: { billing: false, marketing: false }, links: { businessTerms: null } });
 
-    expect(screen.getByRole('button', { name: m.agreeAndCreate })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: m.agreeAndContinue })).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByText(literally(m.trialTerms))).not.toBeInTheDocument();
     expect(screen.getByText(literally(m.businessAgreement)).closest('a')).toBeNull();
@@ -487,156 +478,172 @@ describe('PlanStep', () => {
 
 describe('CheckoutStep', () => {
   const ready: Partial<State> = { ...answered, address };
+
+  it('shows the order as the server priced it, the workspace as made, and the trial’s terms', () => {
+    setup(<CheckoutStep />, { state: ready });
+    const summary = screen.getByRole('group', { name: m.orderSummary });
+    expect(summary).toHaveTextContent('Monthly plan · 3 people');
+    expect(within(summary).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['TodayFree trial starts₦0', 'From 5 Dec 2026Monthly plan₦15,000 / month']);
+    expect(summary).toHaveTextContent('Due today₦0 + VAT');
+    expect(screen.getByText(m.checkoutLedeTrial('5 Dec 2026'))).toBeInTheDocument();
+
+    const recap = screen.getByRole('group', { name: m.yourOrder });
+    expect(recap).toHaveTextContent('Northwind Studio2–9 people · Nigeria');
+    expect(recap).toHaveTextContent(`northwind.example${m.domainOwned}`);
+    expect(recap).toHaveTextContent(`amara@northwind.example${m.adminDetail}`);
+    expect(within(recap).queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: m.contactInformation })).toHaveTextContent('12 Admiralty Way, Lekki, Lagos, 106104');
+    expect(screen.getByText(m.cardNextPage)).toBeInTheDocument();
+    expect(screen.queryByLabelText(m.cardNumber)).not.toBeInTheDocument();
+  });
+
+  it('goes on to the payment page once there is an address to bill', async () => {
+    const { actions } = setup(<CheckoutStep />, { state: ready });
+    await press(m.toPayment);
+    expect(actions.toPayment).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for the name and address before going on, and leads to them', async () => {
+    const { actions } = setup(<CheckoutStep />, { state: answered });
+    await press(m.toPayment);
+
+    expect(screen.getByRole('alert')).toHaveTextContent(m.addressRequired);
+    expect(actions.toPayment).not.toHaveBeenCalled();
+    await press(m.addContact);
+    expect(actions.editContact).toHaveBeenCalledTimes(1);
+  });
+
+  it('changes how many people with a chip, and for a team too big for the trial says what is due today', async () => {
+    const { actions, user } = setup(<CheckoutStep />, { state: { ...ready, seats: 12, quote: { status: 'ready', value: paidQuote } } });
+    expect(screen.getByRole('alert')).toHaveTextContent(m.noTrialTitle(10));
+    expect(screen.getByText(m.checkoutLede(10))).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: '7' }));
+    expect(actions.chooseSeats).toHaveBeenLastCalledWith(7);
+    await press(m.tryWith(10));
+    expect(actions.chooseSeats).toHaveBeenLastCalledWith(10);
+  });
+
+  it('says that only the domain is paid today when one is bought here', () => {
+    const domain = { name: 'example.com', yearly: naira(18_500) };
+    setup(<CheckoutStep />, { state: { ...ready, domainSource: 'bought', domain: domain.name, quote: { status: 'ready', value: { ...trialQuote, domain, dueToday: naira(18_500) } } } });
+
+    expect(screen.getByRole('group', { name: m.orderSummary })).toHaveTextContent('₦18,500 / year');
+    expect(screen.getByText(literally(m.cardNextPageDetail(true)))).toBeInTheDocument();
+    expect(screen.getByText(literally(m.domainAgreement))).toBeInTheDocument();
+  });
+
+  it('leads to the plan from the summary', async () => {
+    const { actions } = setup(<CheckoutStep />, { state: ready });
+    await press(m.changePlan);
+    expect(actions.changePlan).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows no price while the order has not been priced', () => {
+    setup(<CheckoutStep />, { state: { ...ready, quote: { status: 'loading', value: null } } });
+    expect(screen.getByText(m.planLoading)).toBeInTheDocument();
+  });
+});
+
+describe('GatewayStep', () => {
+  const ready: Partial<State> = { ...answered, address };
   const fillCard = async (user: ReturnType<typeof userEvent.setup>, number = '4084084084084081') => {
     await user.type(field(m.cardNumber), number);
     await user.type(field(m.expiry), '0831');
     await user.type(field(m.securityCode), '737');
   };
 
-  it('shows the order as the server priced it, what was answered, and the trial’s terms', () => {
-    setup(<CheckoutStep />, { state: ready });
-    const summary = screen.getByRole('group', { name: m.orderSummary });
-    expect(summary).toHaveTextContent('Monthly plan · 3 people');
-    expect(within(summary).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['TodayFree trial starts₦0', 'From 5 Dec 2026Monthly plan₦15,000 / month']);
-    expect(summary).toHaveTextContent('Due today₦0 + VAT');
-    expect(summary).toHaveTextContent(m.seatsNote(3, 7.5));
-    expect(screen.getByText(m.checkoutLedeTrial('5 Dec 2026'))).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: '3' })).toBeChecked();
-
-    const recap = screen.getByRole('group', { name: m.yourOrder });
-    expect(recap).toHaveTextContent('Northwind Studio2–9 people · Nigeria');
-    expect(recap).toHaveTextContent(`northwind.example${m.domainOwned}`);
-    expect(recap).toHaveTextContent('amara@northwind.example');
-    expect(recap).toHaveTextContent('12 Admiralty Way, Lekki, Lagos, 106104');
-    expect(screen.getByRole('button', { name: m.startTrial })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.demoPayment);
-  });
-
-  it('hands the card to the flow once, formatted as typed, with the right hints for the browser', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: ready });
+  it('names who is paid and how much today, and hands the card to the flow once, formatted as typed', async () => {
+    const { actions, user } = setup(<GatewayStep />, { state: { ...ready, quote: { status: 'ready', value: { ...trialQuote, dueToday: naira(18_500) } } } });
+    expect(screen.getByText(m.securePage)).toBeInTheDocument();
+    expect(screen.getByText(literally(m.payee('Northwind Studio')))).toBeInTheDocument();
+    expect(screen.getByText(m.gatewayLedeTrial)).toBeInTheDocument();
     for (const [label, autocomplete] of [[m.cardNumber, 'cc-number'], [m.expiry, 'cc-exp'], [m.securityCode, 'cc-csc'], [m.nameOnCard, 'cc-name']] as const) expect(field(label)).toHaveAttribute('autocomplete', autocomplete);
-    for (const label of [m.cardNumber, m.expiry, m.securityCode]) expect(field(label)).toHaveAttribute('inputmode', 'numeric');
     expect(field(m.nameOnCard)).toHaveValue('Amara Okafor');
+    expect(screen.getByRole('checkbox', { name: m.sameAddress })).toBeChecked();
 
     await fillCard(user);
     expect(field(m.cardNumber)).toHaveValue('4084 0840 8408 4081');
-    expect(field(m.expiry)).toHaveValue('08/31');
-    expect(screen.getByText('Visa')).toBeInTheDocument();
-    await press(m.startTrial);
-
-    expect(actions.pay).toHaveBeenCalledTimes(1);
-    expect(actions.pay).toHaveBeenCalledWith({ number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Okafor' });
+    await press(m.payDue('₦18,500'));
+    expect(actions.pay).toHaveBeenCalledWith({ number: '4084 0840 8408 4081', expiry: '08/31', securityCode: '737', name: 'Amara Okafor', billingAddress: null });
   });
 
-  it('refuses a card that cannot be right and a missing address, and pays for nothing', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: answered });
+  it('refuses a card that cannot be right, and pays nothing', async () => {
+    const { actions, user } = setup(<GatewayStep />, { state: ready });
     await user.type(field(m.cardNumber), '4084084084084082');
     await user.type(field(m.expiry), '0120');
     await user.type(field(m.securityCode), '12');
-    await user.clear(field(m.nameOnCard));
-    await press(m.startTrial);
+    await press(m.verifyCard);
 
     expect(field(m.cardNumber)).toHaveAccessibleDescription(literally(m.cardNumberInvalid));
     expect(field(m.expiry)).toHaveAccessibleDescription(literally(m.expired));
     expect(field(m.securityCode)).toHaveAccessibleDescription(literally(m.securityCodeInvalid));
-    expect(field(m.nameOnCard)).toHaveAccessibleDescription(m.nameOnCardRequired);
-    expect(screen.getAllByRole('alert').map((alert) => alert.textContent)).toEqual(expect.arrayContaining([expect.stringContaining(m.addressRequired) as string]));
     expect(actions.pay).not.toHaveBeenCalled();
-
-    await press(m.addAddress);
-    expect(actions.edit).toHaveBeenCalledWith('address');
   });
 
-  it('does not pay without an address even when the card is fine', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: answered });
+  it('asks for the card’s billing address when it is not the business address, checks it, and hands it over with the card', async () => {
+    const { actions, user } = setup(<GatewayStep />, { state: { ...ready, country: 'NG' } });
+    expect(screen.queryByRole('group', { name: m.billingAddress })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: m.sameAddress }));
+    expect(screen.getByRole('group', { name: m.billingAddress })).toHaveAccessibleDescription(m.billingAddressLede);
+    expect(field(m.street)).toHaveAttribute('autocomplete', 'billing address-line1');
+
     await fillCard(user);
-    await press(m.startTrial);
-
-    expect(screen.getByRole('alert')).toHaveTextContent(m.addressRequired);
-    expect(actions.pay).not.toHaveBeenCalled();
-  });
-
-  it('changes how many people with a chip, and takes a larger team as a number', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: ready });
-    await user.click(screen.getByRole('radio', { name: '7' }));
-    expect(actions.chooseSeats).toHaveBeenLastCalledWith(7);
-    await user.click(screen.getByRole('radio', { name: m.moreSeats(11) }));
-    expect(actions.chooseSeats).toHaveBeenLastCalledWith(11);
-  });
-
-  it('for a team too big for the trial, says what is due today and offers the trial with ten', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: { ...ready, seats: 12, quote: { status: 'ready', value: paidQuote } } });
-    expect(screen.getByRole('radio', { name: m.moreSeats(11) })).toBeChecked();
-    expect(field(m.seatsMoreLabel)).toHaveValue('12');
-    const notice = screen.getByRole('alert');
-    expect(notice).toHaveTextContent(m.noTrialTitle(10));
-    expect(notice).toHaveTextContent(m.noTrialText(12, '₦60,000', 14));
-    expect(screen.getByRole('button', { name: m.payAndStart('₦60,000') })).toBeInTheDocument();
-    expect(screen.getByText(m.checkoutLede(10))).toBeInTheDocument();
-
-    await user.clear(field(m.seatsMoreLabel));
-    await user.type(field(m.seatsMoreLabel), '25');
-    expect(actions.chooseSeats).toHaveBeenLastCalledWith(25);
-    await user.clear(field(m.seatsMoreLabel));
-    await user.type(field(m.seatsMoreLabel), '4');
-    await user.tab();
-    expect(field(m.seatsMoreLabel)).toHaveAccessibleDescription(m.seatsMoreInvalid(11));
-
-    await press(m.tryWith(10));
-    expect(actions.chooseSeats).toHaveBeenLastCalledWith(10);
-  });
-
-  it('Enter in the number of people checks the number and never starts the payment', async () => {
-    const { actions, user } = setup(<CheckoutStep />, { state: { ...ready, seats: 12, quote: { status: 'ready', value: paidQuote } } });
-    await fillCard(user);
-
-    await user.clear(field(m.seatsMoreLabel));
-    await user.type(field(m.seatsMoreLabel), '25{Enter}');
-    expect(actions.pay).not.toHaveBeenCalled();
-    await user.clear(field(m.seatsMoreLabel));
-    await user.type(field(m.seatsMoreLabel), '4{Enter}');
-    expect(field(m.seatsMoreLabel)).toHaveAccessibleDescription(m.seatsMoreInvalid(11));
+    await press(m.verifyCard);
+    expect(field(m.street)).toHaveAccessibleDescription(literally(m.streetRequired));
+    expect(field(m.city)).toHaveAccessibleDescription(literally(m.cityRequired));
+    expect(field(m.state)).toHaveAccessibleDescription(literally(m.stateRequired));
     expect(actions.pay).not.toHaveBeenCalled();
 
-    await press(m.payAndStart('₦60,000'));
-    await user.clear(field(m.seatsMoreLabel));
-    await user.type(field(m.seatsMoreLabel), '25');
-    await press(m.payAndStart('₦60,000'));
-    expect(actions.pay).toHaveBeenCalledTimes(1);
+    await user.type(field(m.street), '12 Marina Road');
+    await user.type(field(m.city), 'Ikeja');
+    await user.selectOptions(field(m.state), 'Lagos');
+    await press(m.verifyCard);
+    expect(actions.pay).toHaveBeenCalledWith(expect.objectContaining({ billingAddress: { street: '12 Marina Road', city: 'Ikeja', state: 'Lagos', postalCode: '', country: 'NG' } }));
   });
 
-  it('adds a domain bought here to the order, to what is due and to what paying agrees to', () => {
-    const domain = { name: 'example.com', yearly: naira(18_500) };
-    setup(<CheckoutStep />, { state: { ...ready, domainSource: 'bought', domain: domain.name, quote: { status: 'ready', value: { ...trialQuote, domain, dueToday: naira(18_500) } } } });
-
-    const summary = screen.getByRole('group', { name: m.orderSummary });
-    expect(summary).toHaveTextContent('example.com');
-    expect(summary).toHaveTextContent('₦18,500 / year');
-    expect(screen.getByRole('button', { name: m.payAndStartTrial('₦18,500') })).toBeInTheDocument();
-    expect(screen.getByText(literally(m.domainAgreement))).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: m.yourOrder })).toHaveTextContent(m.domainBought);
-  });
-
-  it('leads back to each answer from its line, and to the plan from the summary', async () => {
-    const { actions } = setup(<CheckoutStep />, { state: ready });
-    for (const [name, row] of [[m.editBusiness, 'business'], [m.editDomain, 'domain'], [m.editAdmin, 'admin'], [m.editAddress, 'address'], [m.changePlan, 'plan']] as const) {
-      await press(name);
-      expect(actions.edit).toHaveBeenLastCalledWith(row);
-    }
+  it('asks for a state or region in words outside Nigeria', async () => {
+    const { user } = setup(<GatewayStep />, { state: { ...ready, country: 'KE' } });
+    await user.click(screen.getByRole('checkbox', { name: m.sameAddress }));
+    expect(field(m.region)).toHaveAttribute('autocomplete', 'billing address-level1');
+    expect(screen.queryByRole('combobox', { name: m.state })).not.toBeInTheDocument();
   });
 
   it('tells a declined card above the form, and says it is checking the card while it is', () => {
-    setup(<CheckoutStep />, { state: ready, requests: { pay: failing({ place: 'banner', tone: 'danger', title: m.cardDeclinedTitle, text: m.cardDeclined }, { isPending: true }) } });
-
+    setup(<GatewayStep />, { state: ready, requests: { pay: failing({ place: 'banner', tone: 'danger', title: m.cardDeclinedTitle, text: m.cardDeclined }, { isPending: true }) } });
     expect(screen.getByRole('alert')).toHaveTextContent(m.cardDeclinedTitle);
     expect(screen.getByRole('button', { name: m.checkingCard })).toBeInTheDocument();
   });
+});
 
-  it('shows no price and takes no card while the order has not been priced', () => {
-    setup(<CheckoutStep />, { state: { ...ready, quote: { status: 'loading', value: null } } });
+describe('FoundStep', () => {
+  it('holds the domain picked, says what it gives and when it is paid for, and offers one already owned instead', async () => {
+    const { actions } = setup(<FoundStep />, { state: { ...answered, domainSource: 'bought', bought: offers[0]!, domain: 'example.com' } });
+    expect(screen.getByRole('heading', { level: 1, name: m.foundTitle('example.com') })).toBeInTheDocument();
+    expect(screen.getByText(m.foundLede)).toBeInTheDocument();
+    expect(screen.getByText(m.available)).toBeInTheDocument();
+    expect(screen.getByText('₦18,500 / year')).toBeInTheDocument();
+    expect(screen.getByRole('list')).toHaveTextContent(m.foundTeamLead('example.com'));
 
-    expect(screen.getByText(m.planLoading)).toBeInTheDocument();
-    expect(screen.queryByLabelText(m.cardNumber)).not.toBeInTheDocument();
+    await press(m.continue);
+    expect(actions.continueWithDomain).toHaveBeenCalledTimes(1);
+    await press(m.ownInsteadLong);
+    expect(actions.ownInstead).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PaidStep', () => {
+  it('says the trial has started, what was paid today, when the next charge comes, and goes to Admin', async () => {
+    const domain = { name: 'example.com', yearly: naira(18_500) };
+    const { actions } = setup(<PaidStep />, { state: { ...answered, quote: { status: 'ready', value: { ...trialQuote, domain, dueToday: naira(18_500) } } } });
+    expect(screen.getByRole('heading', { level: 1, name: m.paidTitleTrial })).toBeInTheDocument();
+    expect(screen.getByText(`${m.paidLedeTrial(14, 'Yahel Business')}${m.paidDomain('example.com')}`)).toBeInTheDocument();
+    const summary = screen.getByRole('group', { name: m.paidSummary });
+    expect(summary).toHaveTextContent('Yahel Business3 people');
+    expect(summary).toHaveTextContent(`₦18,500${m.domainRegistration}`);
+    expect(summary).toHaveTextContent(`${m.afterTrial(14)}${m.cancelInAdmin}`);
+
+    await press(m.goToAdmin);
+    expect(actions.goToAdmin).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -684,7 +691,7 @@ describe('CardCodeStep', () => {
 });
 
 describe('CreatingStep', () => {
-  const creating: Partial<State> = { ...answered, creation: { started: true, created: false, tenantId: null, settled: false, finished: false } };
+  const creating: Partial<State> = { ...answered, creation: { started: true, created: false, tenantId: null, finished: false, settled: false } };
 
   it('says what is being made while it is', () => {
     setup(<CreatingStep />, { state: creating, requests: { create: { ...idle, isPending: true } } });
@@ -692,7 +699,6 @@ describe('CreatingStep', () => {
     expect(screen.getByRole('heading', { level: 1, name: m.creatingTitle('Northwind Studio') })).toBeInTheDocument();
     expect(screen.getByText(m.creatingLede('amara@northwind.example'))).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(m.almostThere);
-    expect(screen.queryByText(m.nothingHappening)).not.toBeInTheDocument();
   });
 
   it('says so when nothing is happening', () => {
@@ -700,14 +706,12 @@ describe('CreatingStep', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(m.nothingHappening);
   });
 
-  it('after a failure offers another try, the way back and a fresh start, and says a card approved was not charged', async () => {
+  it('after a failure offers another try, the way back to the admin sign-in and a fresh start', async () => {
     const failed = failing({ place: 'banner', tone: 'danger', title: fm.serverErrorTitle, text: fm.serverErrorText, next: 'retry' });
-    const { actions } = setup(<CreatingStep />, { state: { ...creating, payment: { id: 'pay_1', card: { brand: 'Visa', lastFour: '4081' }, sentTo: null, authorised: true } }, requests: { create: failed } });
+    const { actions } = setup(<CreatingStep />, { state: creating, requests: { create: failed } });
     expect(screen.getByRole('heading', { level: 1, name: m.creatingFailedTitle })).toBeInTheDocument();
-    expect(screen.getByText(m.creatingFailedPaid)).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(fm.serverErrorTitle);
-    expect(screen.getByRole('link', { name: m.backToCheckout })).toHaveAttribute('href', '/business/checkout');
-    // The banner's own retry is left out: the step's button is the retry.
+    expect(screen.getByText(m.creatingFailedLede)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: m.backToAdmin })).toHaveAttribute('href', '/business/admin');
     expect(screen.getAllByRole('button', { name: m.tryAgain })).toHaveLength(1);
 
     await press(m.tryAgain);
@@ -716,17 +720,12 @@ describe('CreatingStep', () => {
     expect(actions.startAgain).toHaveBeenCalledTimes(1);
   });
 
-  it('once the workspace exists, offers only to finish, and without a checkout leads back to the admin sign-in', () => {
+  it('once the workspace exists, offers only to finish', () => {
     const failed = failing({ place: 'banner', tone: 'offline', title: fm.unreachableTitle, text: fm.unreachableText, next: 'retry' });
-    const first = setup(<CreatingStep />, { state: { ...creating, creation: { ...creating.creation!, created: true } }, requests: { create: failed } });
+    setup(<CreatingStep />, { state: { ...creating, creation: { ...creating.creation!, created: true } }, requests: { create: failed } });
     expect(screen.getByText(m.createdButUnfinished)).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: m.backToCheckout })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: m.backToAdmin })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: m.startAgain })).not.toBeInTheDocument();
-    first.container.remove();
-
-    setup(<CreatingStep />, { state: creating, requests: { create: failed }, offers: { billing: false } });
-    expect(screen.getByText(m.creatingFailedLede)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: m.backToAdmin })).toHaveAttribute('href', '/business/admin');
   });
 
   it('gives way to a whole-screen state when the service is down', () => {
@@ -736,24 +735,21 @@ describe('CreatingStep', () => {
 });
 
 describe('ReadyStep', () => {
-  it('promises no workspace when no answer named one, and says nothing was charged', () => {
-    setup(<ReadyStep />, { state: { ...answered, payment: { id: 'p1', card: { brand: 'Visa', lastFour: '4081' }, sentTo: null, authorised: true }, creation: { started: true, created: true, tenantId: null, settled: true, finished: true } } });
+  it('says the account is ready, shows the address as the admin sign-in, says the phone check and the trial come next, and goes on', async () => {
+    const { actions } = setup(<ReadyStep />, { state: { ...answered, creation: { started: true, created: true, tenantId: 't1', finished: true, settled: false } } });
 
-    expect(screen.getByRole('heading', { level: 1, name: m.unsureTitle })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: m.readyTitle('Northwind Studio') })).not.toBeInTheDocument();
-    expect(screen.getByText(`${m.unsureLede('Northwind Studio')} ${m.unsureNotCharged}`)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: m.readyTitle })).toBeInTheDocument();
+    expect(screen.getByText(m.readyLedeTrial)).toBeInTheDocument();
+    expect(screen.getByText(m.adminSignIn)).toBeInTheDocument();
+    expect(screen.getByText('amara@northwind.example')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: m.back })).not.toBeInTheDocument();
+    await press(m.continue);
+    expect(actions.checkPhone).toHaveBeenCalledTimes(1);
   });
 
-  it('names the workspace and the administrator’s sign-in, says a code will be asked for, and leads to signing in', () => {
-    setup(<ReadyStep />, { state: { ...answered, creation: { started: true, created: true, tenantId: 't1', settled: true, finished: true } } });
-
-    expect(screen.getByRole('heading', { level: 1, name: m.readyTitle('Northwind Studio') })).toBeInTheDocument();
+  it('without a checkout, promises no trial', () => {
+    setup(<ReadyStep />, { state: answered, offers: { billing: false } });
     expect(screen.getByText(m.readyLede)).toBeInTheDocument();
-    expect(screen.getByText('amara@northwind.example')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent(m.readyCodeTitle);
-    expect(screen.getByRole('status')).toHaveTextContent(m.readyCodeNote('amara@northwind.example', 'northwind.example'));
-    expect(screen.getByRole('status')).toHaveTextContent(/Sign in only once that mailbox is one you can open/);
-    expect(screen.getByRole('link', { name: m.signInToAdmin })).toHaveAttribute('href', '/admin/signin');
-    expect(screen.queryByRole('link', { name: m.back })).not.toBeInTheDocument();
   });
 });

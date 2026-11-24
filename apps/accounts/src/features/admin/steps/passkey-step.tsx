@@ -12,7 +12,7 @@ export function PasskeyStep() {
     <StepFrame title={m.passkeyTitle} lede={m.passkeyLede} requests={[request]} next={{ retry: null }}>
       <FlowStep.Body>
         {request.isPending ? <FlowWaiting title={m.passkeyWaiting}>{m.passkeyWaitingDetail(state.address ?? '')}</FlowWaiting> : null}
-        {state.passkeyCancelled && !request.isPending ? <FlowNotice>{state.passkeyRequired ? m.passkeyCancelled : m.passkeyCancelledAdvised}</FlowNotice> : null}
+        {state.passkeyCancelled && !request.isPending ? <FlowNotice>{m.passkeyCancelledAdvised}</FlowNotice> : null}
         {state.passkeyUnprepared && !request.isPending ? <FlowNotice>{shared.passkeyUnprepared}</FlowNotice> : null}
       </FlowStep.Body>
       {request.isPending ? null : (
