@@ -5,6 +5,7 @@ import type { Request } from '@playwright/test';
 const CANCELLED = /ERR_ABORTED|NS_BINDING_ABORTED|cancelled/i;
 
 const isApi = (url: string) => new URL(url).pathname.startsWith('/api/');
+const nameOf = (request: Request) => `${request.method()} ${request.url()}`;
 
 export interface RequestGuard {
   /**
@@ -15,26 +16,26 @@ export interface RequestGuard {
 }
 
 /**
- * Every test fails when the app cancels a request to the API, as when cached data is cleared during the
- * navigation or mount that is loading it: the request shows as cancelled and is sent again (CLAUDE.md).
+ * Every test fails when the app cancels a request to the API and then sends it again, as when cached data is
+ * cleared during the navigation or mount that is loading it (CLAUDE.md). A request abandoned because the page
+ * is leaving for another document is not sent again, so it does not count, whatever order the browser reports
+ * the two in (WebKit reports the cancel before the next document's request).
  */
 export const test = base.extend<{ requestGuard: RequestGuard }>({
   requestGuard: [
     async ({ page }, use) => {
-      const cancelled: string[] = [];
+      const repeated: string[] = [];
       let allowed = false;
-      // While the page loads another document, what the old one had under way is abandoned with it, not sent again: it does not count.
-      let leaving = false;
+      // What the current document has cancelled and not yet sent again; a new document starts empty.
+      let cancelled = new Set<string>();
       const sent = (request: Request) => {
-        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) leaving = true;
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) cancelled = new Set();
+        else if (isApi(request.url()) && cancelled.delete(nameOf(request))) repeated.push(nameOf(request));
       };
-      const arrived = () => void (leaving = false);
       const failed = (request: Request) => {
-        if (leaving || !isApi(request.url())) return;
-        if (CANCELLED.test(request.failure()?.errorText ?? '')) cancelled.push(`${request.method()} ${request.url()}`);
+        if (isApi(request.url()) && CANCELLED.test(request.failure()?.errorText ?? '')) cancelled.add(nameOf(request));
       };
       page.on('request', sent);
-      page.on('domcontentloaded', arrived);
       page.on('requestfailed', failed);
       await use({
         allowCancelledRequests: (reason) => {
@@ -43,9 +44,8 @@ export const test = base.extend<{ requestGuard: RequestGuard }>({
         },
       });
       page.off('request', sent);
-      page.off('domcontentloaded', arrived);
       page.off('requestfailed', failed);
-      if (!allowed) expect(cancelled, 'API requests the app cancelled (and so sent twice)').toEqual([]);
+      if (!allowed) expect(repeated, 'API requests the app cancelled and sent again').toEqual([]);
     },
     { auto: true },
   ],
