@@ -375,6 +375,100 @@
         ],
         "type": "object"
       },
+      "DomainListItemDto": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "autoProvisionMode": {
+            "enum": [
+              "off",
+              "domain_match",
+              "sso_verified"
+            ],
+            "type": "string"
+          },
+          "autoProvisionRole": {
+            "enum": [
+              "MEMBER",
+              "GUEST"
+            ],
+            "type": "string"
+          },
+          "claimedAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "lastCheckedAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "method": {
+            "enum": [
+              "TXT",
+              "CNAME"
+            ],
+            "type": "string"
+          },
+          "mxConfigured": {
+            "type": "boolean"
+          },
+          "reverificationRequiredAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "verified",
+              "failed",
+              "revoked",
+              "reverification_required",
+              "suspended",
+              "released"
+            ],
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "verificationToken": {
+            "description": "The TXT value admins paste into DNS. Returned only while the domain is still pending or re-verification required; verified / released rows omit it.",
+            "nullable": true,
+            "type": "object"
+          },
+          "verifiedAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "verifyHost": {
+            "nullable": true,
+            "type": "object"
+          },
+          "verifyTarget": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "_id",
+          "tenantId",
+          "domain",
+          "method",
+          "status",
+          "autoProvisionMode",
+          "autoProvisionRole",
+          "isPrimary",
+          "mxConfigured"
+        ],
+        "type": "object"
+      },
       "ForgotPasswordDto": {
         "properties": {
           "email": {
@@ -4489,6 +4583,16 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DomainListItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -4497,7 +4601,7 @@
             "bearer": []
           }
         ],
-        "summary": "List all domains for the tenant",
+        "summary": "List all domains for the tenant; pending rows include the TXT verificationToken",
         "tags": [
           "Tenants"
         ]

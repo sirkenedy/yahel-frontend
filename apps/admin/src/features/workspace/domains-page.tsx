@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { DomainVerificationRecord, WorkspaceDomain } from '@yahel/api-client';
+import type { WorkspaceDomain } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import { Banner, Button, Card, TextField } from '@yahel/ui';
 import { useState } from 'react';
 import { recordOf, needsRecord } from './domain-record';
 import { failureOf } from './feedback';
 import { domainMessages as m } from './messages';
-import { domainsQuery, issuedRecordsQuery, keepIssuedRecord } from './queries';
+import { domainsQuery } from './queries';
 
 export interface DomainsPageProps {
   session: Session;
@@ -21,7 +21,6 @@ type Notice = { tone: 'neutral' | 'danger'; text: string } | null;
 /** The workspace's domains: each one's state, the record a pending one needs, and verifying, making primary, adding and removing. */
 export function DomainsPage({ session, tenantId }: DomainsPageProps) {
   const domains = useQuery(domainsQuery(session, tenantId));
-  const issued = useQuery(issuedRecordsQuery(tenantId));
   const [notice, setNotice] = useState<Notice>(null);
 
   return (
@@ -47,7 +46,7 @@ export function DomainsPage({ session, tenantId }: DomainsPageProps) {
       ) : (
         <ul className="domains" aria-label={m.list}>
           {domains.data.map((domain) => (
-            <DomainItem key={domain._id} session={session} tenantId={tenantId} domain={domain} issued={issued.data[domain._id]} onNotice={setNotice} />
+            <DomainItem key={domain._id} session={session} tenantId={tenantId} domain={domain} onNotice={setNotice} />
           ))}
         </ul>
       )}
@@ -60,11 +59,10 @@ interface DomainItemProps {
   session: Session;
   tenantId: string;
   domain: WorkspaceDomain;
-  issued: DomainVerificationRecord | undefined;
   onNotice: (notice: Notice) => void;
 }
 
-function DomainItem({ session, tenantId, domain, issued, onNotice }: DomainItemProps) {
+function DomainItem({ session, tenantId, domain, onNotice }: DomainItemProps) {
   const queryClient = useQueryClient();
   const [problem, setProblem] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -104,7 +102,7 @@ function DomainItem({ session, tenantId, domain, issued, onNotice }: DomainItemP
     },
   });
   const busy = verify.isPending || primary.isPending || remove.isPending;
-  const record = needsRecord(domain) ? recordOf(domain, issued) : null;
+  const record = needsRecord(domain) ? recordOf(domain) : null;
   const status = m.status[domain.status] ?? domain.status;
 
   return (
@@ -117,7 +115,7 @@ function DomainItem({ session, tenantId, domain, issued, onNotice }: DomainItemP
           {domain.isPrimary ? <span className="ws-tag ws-tag--accent">{m.primary}</span> : null}
           <span className={`ws-tag ${domain.status === 'verified' ? 'ws-tag--success' : 'ws-tag--warning'}`}>{status}</span>
         </div>
-        {record ? <RecordDetails domain={domain.domain} record={record} /> : null}
+        {record ? <RecordDetails domain={domain.domain} record={record} recheck={domain.status === 'reverification_required'} /> : null}
         {problem ? <Banner tone="danger">{problem}</Banner> : null}
         {confirming ? (
           <div className="stack">
@@ -155,11 +153,11 @@ function DomainItem({ session, tenantId, domain, issued, onNotice }: DomainItemP
   );
 }
 
-function RecordDetails({ domain, record }: { domain: string; record: ReturnType<typeof recordOf> }) {
+function RecordDetails({ domain, record, recheck }: { domain: string; record: ReturnType<typeof recordOf>; recheck: boolean }) {
   return (
     <section className="stack record" aria-label={m.recordTitle}>
       <h3 className="ws-headline">{m.recordTitle}</h3>
-      <p className="ws-secondary">{m.recordSteps(domain)}</p>
+      <p className="ws-secondary">{recheck ? m.recordRecheck(domain) : m.recordSteps(domain)}</p>
       <dl className="details">
         <div>
           <dt>{m.type}</dt>
@@ -172,17 +170,15 @@ function RecordDetails({ domain, record }: { domain: string; record: ReturnType<
             <CopyButton what={m.host} text={record.host ?? '@'} />
           </dd>
         </div>
-        <div>
-          <dt>{m.value}</dt>
-          {record.value ? (
+        {record.value ? (
+          <div>
+            <dt>{m.value}</dt>
             <dd className="row">
               <code className="grow record__value">{record.value}</code>
               <CopyButton what={m.value} text={record.value} />
             </dd>
-          ) : (
-            <dd>{m.valueUnknown}</dd>
-          )}
-        </div>
+          </div>
+        ) : null}
       </dl>
     </section>
   );
@@ -214,7 +210,6 @@ function AddDomain({ session, tenantId, onNotice }: { session: Session; tenantId
   const add = useMutation({
     mutationFn: (domain: string) => session.api.tenants.domains.add(tenantId, { domain, method: 'TXT', autoProvisionMode: 'off' }),
     onSuccess: (added) => {
-      keepIssuedRecord(queryClient, tenantId, added.domain._id, added.instructions);
       setValue('');
       onNotice({ tone: 'neutral', text: m.added(added.domain.domain) });
       return queryClient.invalidateQueries({ queryKey: domainsQuery(session, tenantId).queryKey });

@@ -79,13 +79,25 @@ describe('DomainsPage', () => {
     expect(item).not.toHaveTextContent('No matching TXT verification record');
   });
 
-  it('says a TXT value it cannot know is not shown again', async () => {
-    setup([{ ...pending, method: 'TXT', verifyHost: null, verifyTarget: null }]);
+  it('shows a pending TXT domain’s record from the list, with copy buttons', async () => {
+    setup([{ ...pending, method: 'TXT', verifyHost: null, verifyTarget: null, verificationToken: 'worksync-site-verification=tok' }]);
 
-    expect(within(await itemFor('northwind.example')).getByRole('region', { name: m.recordTitle })).toHaveTextContent(m.valueUnknown);
+    const record = within(await itemFor('northwind.example')).getByRole('region', { name: m.recordTitle });
+    expect(record).toHaveTextContent('TXT');
+    expect(record).toHaveTextContent('worksync-site-verification=tok');
+    expect(within(record).getByRole('button', { name: m.copy(m.host) })).toBeInTheDocument();
+    expect(within(record).getByRole('button', { name: m.copy(m.value) })).toBeInTheDocument();
   });
 
-  it('adds a domain and shows the record its answer carries', async () => {
+  it('asks a domain needing re-verification to keep its record and offers Verify', async () => {
+    setup([{ ...pending, method: 'TXT', status: 'reverification_required', verifyHost: null, verifyTarget: null, verificationToken: 'worksync-site-verification=tok' }]);
+
+    const item = await itemFor('northwind.example');
+    expect(within(item).getByRole('region', { name: m.recordTitle })).toHaveTextContent(m.recordRecheck('northwind.example'));
+    expect(within(item).getByRole('button', { name: m.verify })).toBeInTheDocument();
+  });
+
+  it('adds a domain, including one released earlier, and lists its record', async () => {
     const { api, user, add } = setup([verified]);
     await itemFor('studio.example');
 
@@ -96,7 +108,7 @@ describe('DomainsPage', () => {
 
     await user.clear(screen.getByRole('textbox', { name: m.addLabel }));
     await user.type(screen.getByRole('textbox', { name: m.addLabel }), ' New.Example ');
-    add({ _id: 'd-3', domain: 'new.example', method: 'TXT', status: 'pending', isPrimary: false });
+    add({ _id: 'd-3', domain: 'new.example', method: 'TXT', status: 'pending', isPrimary: false, verificationToken: 'worksync-site-verification=tok' });
     await user.click(screen.getByRole('button', { name: m.add }));
 
     expect(api.tenants.domains.add).toHaveBeenCalledWith('t-1', { domain: 'new.example', method: 'TXT', autoProvisionMode: 'off' });

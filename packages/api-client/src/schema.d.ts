@@ -1211,7 +1211,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List all domains for the tenant */
+        /** List all domains for the tenant; pending rows include the TXT verificationToken */
         get: operations["TenantsController_listDomains"];
         put?: never;
         /** Add a domain and initiate verification */
@@ -1627,6 +1627,29 @@ export interface components {
              * @enum {string}
              */
             standing: "free" | "claimed" | "public";
+        };
+        DomainListItemDto: {
+            _id: string;
+            /** @enum {string} */
+            autoProvisionMode: "off" | "domain_match" | "sso_verified";
+            /** @enum {string} */
+            autoProvisionRole: "MEMBER" | "GUEST";
+            claimedAt?: Record<string, never> | null;
+            domain: string;
+            isPrimary: boolean;
+            lastCheckedAt?: Record<string, never> | null;
+            /** @enum {string} */
+            method: "TXT" | "CNAME";
+            mxConfigured: boolean;
+            reverificationRequiredAt?: Record<string, never> | null;
+            /** @enum {string} */
+            status: "pending" | "verified" | "failed" | "revoked" | "reverification_required" | "suspended" | "released";
+            tenantId: string;
+            /** @description The TXT value admins paste into DNS. Returned only while the domain is still pending or re-verification required; verified / released rows omit it. */
+            verificationToken?: Record<string, never> | null;
+            verifiedAt?: Record<string, never> | null;
+            verifyHost?: Record<string, never> | null;
+            verifyTarget?: Record<string, never> | null;
         };
         ForgotPasswordDto: {
             /** @example jane@acme.com */
@@ -4024,7 +4047,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DomainListItemDto"][];
+                };
             };
         };
     };
