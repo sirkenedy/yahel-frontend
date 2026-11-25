@@ -561,8 +561,9 @@ describe('RecoveryStep', () => {
     const { actions, user } = setup(<RecoveryStep />, { state: answered });
     const country = screen.getByLabelText(m.country);
 
-    expect(country).toHaveValue('NG');
-    await user.selectOptions(country, '🇬🇭 +233 Ghana');
+    expect(country).toHaveTextContent('🇳🇬 +234');
+    await user.click(country);
+    await user.click(screen.getByRole('option', { name: 'Ghana +233' }));
     await press(m.continue);
 
     expect(actions.enterRecovery).toHaveBeenCalledWith({ country: 'GH', phone: '803 555 0142', email: 'amara.o@personal.example' });

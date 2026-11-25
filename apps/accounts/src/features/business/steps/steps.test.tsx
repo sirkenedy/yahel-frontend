@@ -106,12 +106,13 @@ describe('StartStep', () => {
     expect(screen.getByRole('heading', { level: 1, name: m.startTitle })).toBeInTheDocument();
     expect(screen.getByText(/^01 \/ 06 · Your business$/)).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: m.sizes.medium })).toBeChecked();
-    expect(field(m.country)).toHaveValue('NG');
+    expect(field(m.country)).toHaveTextContent('🇳🇬 Nigeria');
     expect(field(m.businessName)).toHaveAttribute('autocomplete', 'organization');
 
     await user.type(field(m.businessName), ' Northwind Studio ');
     await user.click(screen.getByRole('radio', { name: m.sizes.small }));
-    await user.selectOptions(field(m.country), '🇰🇪 Kenya');
+    await user.click(field(m.country));
+    await user.click(screen.getByRole('option', { name: 'Kenya KE' }));
     await press(m.continue);
 
     expect(actions.enterBusiness).toHaveBeenCalledWith({ businessName: 'Northwind Studio', size: 'small', country: 'KE' });
@@ -130,13 +131,13 @@ describe('StartStep', () => {
     const resolved = Intl.DateTimeFormat().resolvedOptions();
     const zone = vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ ...resolved, timeZone: 'Africa/Accra' });
     setup(<StartStep />, { state: { country: '' } });
-    expect(field(m.country)).toHaveValue('GH');
+    expect(field(m.country)).toHaveTextContent('🇬🇭 Ghana');
     cleanup();
 
     zone.mockReturnValue({ ...resolved, timeZone: 'Asia/Tokyo' });
     const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('ja-JP');
     const { actions } = setup(<StartStep />, { state: { businessName: 'Northwind Studio', country: '' } });
-    expect(field(m.country)).toHaveValue('');
+    expect(field(m.country)).toHaveTextContent(fm.chooseCountry);
     await press(m.continue);
     expect(field(m.country)).toHaveAccessibleDescription(fm.countryRequired);
     expect(actions.enterBusiness).not.toHaveBeenCalled();
@@ -149,7 +150,7 @@ describe('StartStep', () => {
 
     expect(field(m.businessName)).toHaveValue('Northwind Studio');
     expect(screen.getByRole('radio', { name: m.sizes.huge })).toBeChecked();
-    expect(field(m.country)).toHaveValue('GH');
+    expect(field(m.country)).toHaveTextContent('🇬🇭 Ghana');
     expect(screen.getByRole('link', { name: m.personalInstead })).toHaveAttribute('href', '/personal');
   });
 });
@@ -323,7 +324,7 @@ describe('RegistrantStep', () => {
     const { actions, user } = setup(<RegistrantStep />, { state: buying });
     expect(screen.getByRole('heading', { level: 1, name: m.registrantTitle('example.com') })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(m.privacyOn('example.com'));
-    expect(field(m.phoneCountry)).toHaveValue('NG');
+    expect(field(m.phoneCountry)).toHaveTextContent('🇳🇬 +234');
 
     await user.type(field(m.street), '12 Admiralty Way');
     await user.type(field(m.city), 'Lekki');

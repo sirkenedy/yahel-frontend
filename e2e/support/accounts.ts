@@ -5,9 +5,16 @@ import { credentials, resetCode, twoStepCredentials } from './api';
 export const accountsUrl = 'http://localhost:4175';
 export const at = (path: string) => `${accountsUrl}${path}`;
 
+/** Opens a country list, searches it for the country and picks it, as a person does (F-114). `field` is the label. */
+export async function chooseCountry(page: Page, field: string | RegExp, country: string) {
+  await page.getByRole('combobox', { name: typeof field === 'string' ? new RegExp(`^${field} `) : field }).click();
+  await page.getByRole('textbox', { name: /^Search country/ }).fill(country);
+  await page.getByRole('option', { name: new RegExp(`^${country}\\b`) }).click();
+}
+
 /** Types a mobile number with its country chosen, rather than left to where the test machine happens to be (F-113). */
-export async function fillMobile(page: Page, number: string, country = 'NG') {
-  await page.getByRole('combobox', { name: /^Country( code)?$/ }).selectOption(country);
+export async function fillMobile(page: Page, number: string, country = 'Nigeria') {
+  await chooseCountry(page, /^Country( code)? /, country);
   await page.getByLabel('Mobile number').fill(number);
 }
 

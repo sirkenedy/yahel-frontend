@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, fillMobile, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { at, chooseCountry, fillMobile, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
@@ -213,14 +213,47 @@ test.describe('accounts: countries from the backend', () => {
   test('every country the backend lists is offered A to Z with its flag, starting on where the browser is, and one without states asks for the state in words', async ({ page }) => {
     await mockApi(page);
     await createWorkspaceTo(page, 'start');
-    const country = page.getByLabel('Country or region');
-    await expect(country).toHaveValue('NG');
-    await expect(country.getByRole('option')).toHaveText(['🇨🇦 Canada', '🇬🇭 Ghana', '🇯🇲 Jamaica', '🇰🇪 Kenya', '🇳🇬 Nigeria', '🇬🇧 United Kingdom', '🇺🇸 United States']);
+    const country = page.getByRole('combobox', { name: /^Country or region/ });
+    await expect(country).toHaveText('🇳🇬 Nigeria');
+    await country.click();
+    await expect(page.getByRole('option')).toHaveText(['🇨🇦Canada CA', '🇬🇭Ghana GH', '🇯🇲Jamaica JM', '🇰🇪Kenya KE', '🇳🇬Nigeria NG', '🇬🇧United Kingdom GB', '🇺🇸United States US']);
+    await expect(page.getByRole('option', { name: 'Nigeria NG' })).toHaveAttribute('aria-selected', 'true');
 
-    await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: '🇰🇪 Kenya' });
+    await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: 'Kenya' });
     await expect(page.getByRole('textbox', { name: 'State or region' })).toBeVisible();
-    await expect(page.getByLabel('Country code')).toHaveValue('KE');
-    await expect(page.getByLabel('Country code').locator('option:checked')).toHaveText('🇰🇪 +254 Kenya');
+    await expect(page.getByRole('combobox', { name: /^Country code/ })).toHaveText('🇰🇪 +254');
+  });
+
+  test('the country list is a compact panel with a search: a dialling code finds the country, the keyboard picks it, and Escape gives focus back', async ({ page }) => {
+    await mockApi(page);
+    await createWorkspaceTo(page, 'start');
+    const country = page.getByRole('combobox', { name: /^Country or region/ });
+
+    await country.focus();
+    await page.keyboard.press('ArrowDown');
+    const search = page.getByRole('textbox', { name: 'Search country' });
+    await expect(search).toBeFocused();
+    const listbox = page.getByRole('listbox', { name: 'Country or region' });
+    // The list scrolls inside a panel no taller than its 296 px list, the search and the panel's padding: it never fills the page.
+    const panel = await listbox.locator('..').boundingBox();
+    expect(panel?.height).toBeLessThanOrEqual(296 + 46 + 40);
+    expect((await listbox.boundingBox())?.height).toBeLessThanOrEqual(296);
+
+    await search.fill('233');
+    await expect(page.getByRole('option')).toHaveText(['🇬🇭Ghana GH']);
+    await search.fill('');
+    await search.pressSequentially('ken');
+    await page.keyboard.press('Enter');
+    await expect(listbox).toBeHidden();
+    await expect(country).toBeFocused();
+    await expect(country).toHaveText('🇰🇪 Kenya');
+
+    await page.keyboard.press('Enter');
+    await expect(search).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(listbox).toBeHidden();
+    await expect(country).toBeFocused();
+    await expect(country).toHaveText('🇰🇪 Kenya');
   });
 
   test.describe('in another country', () => {
@@ -229,10 +262,10 @@ test.describe('accounts: countries from the backend', () => {
     test('the country starts on the one the browser’s time zone is in, and the person can change it', async ({ page }) => {
       await mockApi(page);
       await createWorkspaceTo(page, 'start');
-      const country = page.getByLabel('Country or region');
-      await expect(country).toHaveValue('CA');
-      await country.selectOption('GH');
-      await expect(country).toHaveValue('GH');
+      const country = page.getByRole('combobox', { name: /^Country or region/ });
+      await expect(country).toHaveText('🇨🇦 Canada');
+      await chooseCountry(page, 'Country or region', 'Ghana');
+      await expect(country).toHaveText('🇬🇭 Ghana');
     });
   });
 
@@ -244,7 +277,7 @@ test.describe('accounts: countries from the backend', () => {
 
     await page.unroute('**/api/v1/countries/public');
     await page.getByRole('button', { name: 'Try again' }).click();
-    await expect(page.getByLabel('Country or region')).toHaveValue('NG');
+    await expect(page.getByRole('combobox', { name: /^Country or region/ })).toHaveText('🇳🇬 Nigeria');
   });
 });
 

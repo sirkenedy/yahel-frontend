@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { accountsScreens, settled } from './support/accounts-screens';
 import { mockApi, signIn } from './support/api';
+import { createWorkspaceTo } from './support/business';
 
 // Every screen is checked in each theme the design system ships.
 const themes = [
@@ -29,6 +30,15 @@ const screens: { name: string; open: (page: Page) => Promise<void> }[] = [
       await signIn(page);
       await page.getByRole('link', { name: 'Manage account' }).click();
       await page.getByRole('heading', { name: 'Account' }).waitFor();
+    },
+  },
+  {
+    name: 'business start with the country list open',
+    open: async (page) => {
+      await createWorkspaceTo(page, 'start');
+      await page.getByRole('combobox', { name: /^Country or region/ }).click();
+      await page.getByRole('listbox', { name: 'Country or region' }).waitFor();
+      await settled(page);
     },
   },
   ...accountsScreens,

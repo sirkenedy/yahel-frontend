@@ -13,7 +13,7 @@ export function PhoneStep() {
   const request = meta.requests.sendPhoneCode;
   // A number given earlier (the business phone, for a bought domain) is where the step starts.
   const known = state.phone ?? state.suggestedPhone;
-  const country = useStepField<HTMLSelectElement>({ initial: known?.country ?? '', problemOf: countryProblem, label: m.country });
+  const country = useStepField<HTMLButtonElement>({ initial: known?.country ?? '', problemOf: countryProblem, label: m.country });
   const phone = useStepField({ initial: known?.number ?? '', problemOf: phoneProblem, label: m.mobileNumber, hasFormat: true, refusal: forField(request.feedback, 'phone') });
 
   const form = useStepFields([country, phone]);

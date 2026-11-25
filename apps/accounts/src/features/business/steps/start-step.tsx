@@ -13,7 +13,7 @@ export function StartStep() {
   const { state, actions, meta } = useBusinessFlow();
   const [size, setSize] = useState(state.size);
   const name = useStepField({ initial: state.businessName, problemOf: businessNameProblem, label: m.businessName });
-  const country = useStepField<HTMLSelectElement>({ initial: state.country, problemOf: countryProblem, label: m.country });
+  const country = useStepField<HTMLButtonElement>({ initial: state.country, problemOf: countryProblem, label: m.country });
   const form = useStepFields([name, country]);
 
   return (

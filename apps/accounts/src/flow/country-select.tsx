@@ -1,4 +1,4 @@
-import { FlowSelect } from '@yahel/ui';
+import { FlowSearchSelect } from '@yahel/ui';
 import { useEffect, useMemo } from 'react';
 import type { Ref } from 'react';
 import { browserPlace, detectCountry, namedCountries, useCountries } from './countries';
@@ -13,15 +13,27 @@ export interface CountrySelectProps {
   value: string;
   onChange: (iso: string) => void;
   error?: string;
-  inputRef?: Ref<HTMLSelectElement>;
-  /** The country of a phone number: each choice shows its dialling code. */
+  inputRef?: Ref<HTMLButtonElement>;
+  /** The country of a phone number: each choice shows its dialling code, and the closed field shows the flag and code. */
   forPhone?: boolean;
 }
 
-/** A country from the backend's list, A to Z, each flagged and named in the reader's language. It starts on where the person is. */
+/** A country from the backend's list, A to Z, each flagged and named in the reader's language, searchable by name, ISO code or dialling code. It starts on where the person is. */
 export function CountrySelect({ label, locale, value, onChange, error, inputRef, forPhone = false }: CountrySelectProps) {
   const countries = useCountries();
-  const named = useMemo(() => countries.data && namedCountries(countries.data, locale), [countries.data, locale]);
+  const items = useMemo(
+    () =>
+      countries.data &&
+      namedCountries(countries.data, locale).map((country) => ({
+        id: country.iso,
+        label: country.name,
+        leading: country.flag,
+        detail: forPhone ? country.dial : country.iso,
+        display: forPhone ? country.dial : undefined,
+        textValue: `${country.name} ${country.iso} ${country.dial}`,
+      })),
+    [countries.data, locale, forPhone],
+  );
 
   // A choice already made, in this step or an earlier visit to it, is never replaced.
   useEffect(() => {
@@ -29,16 +41,20 @@ export function CountrySelect({ label, locale, value, onChange, error, inputRef,
     if (detected) onChange(detected);
   }, [value, countries.data, onChange]);
 
-  if (!named) return <ListUnavailable label={label} failed={countries.isError} onRetry={() => void countries.refetch()} />;
+  if (!items) return <ListUnavailable label={label} failed={countries.isError} onRetry={() => void countries.refetch()} />;
   return (
-    <FlowSelect label={label} name={forPhone ? 'tel-country-code' : 'country'} autoComplete={forPhone ? 'tel-country-code' : 'country'} value={value} onChange={onChange} error={error} inputRef={inputRef} isSensitive={forPhone}>
-      {value === '' ? <option value="">{m.chooseCountry}</option> : null}
-      {/* The dialling code comes before the name so it stays in view when the closed field is too narrow for the whole name. */}
-      {named.map((country) => (
-        <option key={country.iso} value={country.iso}>
-          {forPhone ? `${country.flag} ${country.dial} ${country.name}` : `${country.flag} ${country.name}`}
-        </option>
-      ))}
-    </FlowSelect>
+    <FlowSearchSelect
+      label={label}
+      items={items}
+      value={value}
+      onChange={onChange}
+      placeholder={m.chooseCountry}
+      searchLabel={forPhone ? m.searchCountryCode : m.searchCountry}
+      searchPlaceholder={m.search}
+      emptyText={m.noMatches}
+      error={error}
+      inputRef={inputRef}
+      isSensitive={forPhone}
+    />
   );
 }

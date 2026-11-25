@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { fillMobile, visit } from './accounts';
+import { chooseCountry, fillMobile, visit } from './accounts';
 import { phoneCode } from './api';
 
 export const business = {
@@ -78,7 +78,7 @@ export async function createWorkspaceTo(page: Page, stop: BusinessStop, { domain
   if (stop === 'start') return;
   await page.getByLabel('Business name').fill(name);
   if (size) await page.getByRole('radio', { name: size, exact: true }).check({ force: true });
-  await page.getByLabel('Country or region').selectOption(country ? { label: country } : 'NG');
+  await chooseCountry(page, 'Country or region', country ?? 'Nigeria');
 
   await proceed(page);
   await heading(page, 'And who are you?').waitFor();

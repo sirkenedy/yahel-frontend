@@ -14,7 +14,7 @@ export function RecoveryStep() {
   const phone = useStepField({ initial: state.recovery.phone, problemOf: (value): string | null => problems({ phone: value }).phone ?? null, label: m.mobileNumber, hasFormat: true });
   const email = useStepField({ initial: state.recovery.email, problemOf: (value): string | null => problems({ email: value }).email ?? null, label: m.recoveryEmail, hasFormat: true });
   // A country is needed only with a number.
-  const country = useStepField<HTMLSelectElement>({ initial: state.recovery.country, problemOf: (value) => (phone.value.trim() ? countryProblem(value) : null), label: m.country });
+  const country = useStepField<HTMLButtonElement>({ initial: state.recovery.country, problemOf: (value) => (phone.value.trim() ? countryProblem(value) : null), label: m.country });
   const form = useStepFields([country, phone, email]);
 
   return (

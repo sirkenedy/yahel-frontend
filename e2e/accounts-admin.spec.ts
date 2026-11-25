@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { fillMobile, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { chooseCountry, fillMobile, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { adminAddress, adminPhone, adminTo, codeBoxes, heading, stubAdmin } from './support/admin';
 import { credentials, mockApi, newAdmin, phoneCode, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
@@ -93,7 +93,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(number).toHaveAccessibleDescription(/This number can’t be used\. Try another one\./);
 
-    await page.getByLabel('Country code').selectOption('GH');
+    await chooseCountry(page, 'Country code', 'Ghana');
     await number.fill('024 555 0142');
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(heading(page, 'Enter the code.')).toBeVisible();

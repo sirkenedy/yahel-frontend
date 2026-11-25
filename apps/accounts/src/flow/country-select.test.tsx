@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { countriesQuery } from './countries';
@@ -23,15 +23,17 @@ const loaded = () => {
   return queryClient;
 };
 
+const field = () => screen.getByRole('combobox', { name: /^Country code/ });
+
 describe('CountrySelect', () => {
-  it('offers every country A to Z, each flagged with its dialling code, and keeps a choice already made', () => {
+  it('offers every country A to Z, each flagged with its dialling code, and keeps a choice already made', async () => {
     const onChange = vi.fn();
     renderSelect(loaded(), true, onChange);
 
-    const select = screen.getByLabelText('Country code');
-    expect(select).toHaveValue('NG');
-    expect(select).toHaveAttribute('autocomplete', 'tel-country-code');
-    expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭 +233 Ghana', '🇯🇲 +1 Jamaica', '🇰🇪 +254 Kenya', '🇳🇬 +234 Nigeria', '🇬🇧 +44 United Kingdom']);
+    expect(field()).toHaveAccessibleName('Country code 🇳🇬 +234');
+    await userEvent.setup().click(field());
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭Ghana +233', '🇯🇲Jamaica +1', '🇰🇪Kenya +254', '🇳🇬Nigeria +234', '🇬🇧United Kingdom +44']);
+    expect(screen.getByRole('option', { name: 'Nigeria +234' })).toHaveAttribute('aria-selected', 'true');
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -45,18 +47,23 @@ describe('CountrySelect', () => {
     zone.mockRestore();
   });
 
-  it('names a country without a dialling code when it is not a phone’s', () => {
+  it('names a country, with its ISO code in the list, when it is not a phone’s', async () => {
     renderSelect(loaded(), false);
 
-    expect(screen.getByLabelText('Country code')).toHaveAttribute('autocomplete', 'country');
-    expect(screen.getByRole('option', { name: '🇬🇭 Ghana' })).toBeInTheDocument();
+    expect(field()).toHaveAccessibleName('Country code 🇳🇬 Nigeria');
+    await userEvent.setup().click(field());
+    expect(screen.getByRole('option', { name: 'Ghana GH' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: m.searchCountry })).toHaveAttribute('placeholder', m.search);
   });
 
-  it('says which country was chosen', async () => {
+  it('finds a country by its dialling code and says which was chosen', async () => {
     const onChange = vi.fn();
+    const user = userEvent.setup();
     renderSelect(loaded(), true, onChange);
 
-    await userEvent.setup().selectOptions(screen.getByLabelText('Country code'), 'KE');
+    await user.click(field());
+    await user.type(screen.getByRole('textbox', { name: m.searchCountryCode }), '254');
+    await user.keyboard('{Enter}');
     expect(onChange).toHaveBeenCalledWith('KE');
   });
 
@@ -67,6 +74,6 @@ describe('CountrySelect', () => {
 
     expect(await screen.findByText(m.listFailed)).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole('button', { name: m.tryAgain }));
-    expect(await screen.findByRole('option', { name: '🇳🇬 +234 Nigeria' })).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Country code 🇳🇬 +234' })).toBeInTheDocument();
   });
 });
