@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { currentAccountOf, standingOf } from '@yahel/api-client';
 import type { AccountDirectory, ClientAccount } from '@yahel/api-client';
+import { forgetAccountData, refreshAccounts } from '@yahel/auth';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
 import { useEffect, useRef } from 'react';
 import { useStore } from 'zustand';
-import { accountsQuery, badgeOf, forgetAccountData, kindOf, kindOfStanding, nameOf, nextSignedIn, refreshAccounts } from '../../flow/accounts';
+import { accountsQuery, badgeOf, kindOf, kindOfStanding, nameOf, nextSignedIn } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
 import { chromeMessages as m } from './messages';
 

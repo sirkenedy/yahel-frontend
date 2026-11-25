@@ -9,3 +9,4 @@ export type { NewPasskey, NewPasskeyResult, PasskeyCreationEnvironment, PasskeyO
 export { slotInPath, slotOf } from './slot';
 export { accountsAppAddresses } from './accounts-app';
 export type { AccountsApp, AccountsAppAddresses } from './accounts-app';
+export { ACCOUNTS_KEY, forgetAccountData, keepAccountDataFor, refreshAccounts } from './account-cache';

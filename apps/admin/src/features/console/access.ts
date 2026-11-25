@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import type { AuthContext } from '@yahel/api-client';
-import { slotOf } from '@yahel/auth';
+import { keepAccountDataFor, slotOf } from '@yahel/auth';
 import type { AccountsApp, Session } from '@yahel/auth';
 
 /** The workspace this account administers in Admin, from its current context. */
@@ -26,22 +26,6 @@ export const workspaceOf = (contexts: readonly AuthContext[]): ConsoleWorkspace 
   return { tenantId: current.tenantId, name: current.displayName ?? '', role: current.role };
 };
 
-const loadedFor = new WeakMap<QueryClient, string>();
-
-/** Drops what another account's requests cached, and the note of whose they were. */
-export const forgetAccountData = (queryClient: QueryClient) => {
-  loadedFor.delete(queryClient);
-  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
-};
-
-/** Clears the cache only when this tab's account is not the one its data was loaded for: the tab's own first switch changes nothing. */
-const keepCacheFor = (queryClient: QueryClient, handle: string | null) => {
-  if (!handle) return;
-  const before = loadedFor.get(queryClient);
-  if (before !== undefined && before !== handle) forgetAccountData(queryClient);
-  loadedFor.set(queryClient, handle);
-};
-
 export type ConsoleEntry = { to: 'slot'; slot: number } | { to: 'accounts'; href: string } | { to: 'console'; workspace: ConsoleWorkspace };
 
 export interface ConsoleEntryContext {
@@ -63,7 +47,7 @@ export async function enterConsole({ session, queryClient, accountsApp }: Consol
   if (!(status === 'signed-in' && using === slot)) {
     if (!(await session.switchTo(slot))) return { to: 'accounts', href: accountsApp.signIn() };
   }
-  keepCacheFor(queryClient, session.store.getState().handle);
+  keepAccountDataFor(queryClient, session.store.getState().handle);
   const contexts = await queryClient.fetchQuery(contextsQuery(session, session.store.getState().handle));
   const workspace = workspaceOf(contexts);
   return workspace ? { to: 'console', workspace } : { to: 'accounts', href: accountsApp.signIn() };

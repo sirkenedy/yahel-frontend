@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router';
-import { slotOf } from '@yahel/auth';
+import { keepAccountDataFor, slotOf } from '@yahel/auth';
 
 export const Route = createFileRoute('/u/$slot')({
   // The slot in the address names the account. This tab uses it if it is signed in in this browser; if not, the accounts app's sign-in.
@@ -7,9 +7,8 @@ export const Route = createFileRoute('/u/$slot')({
     const slot = slotOf(params.slot);
     if (slot === null) throw redirect({ to: '/u/$slot', params: { slot: '0' }, replace: true });
     const { status, slot: using } = context.session.store.getState();
-    if (status === 'signed-in' && using === slot) return;
-    if (!(await context.session.switchTo(slot))) throw redirect({ href: context.accountsApp.signIn() });
-    context.queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
+    if (!(status === 'signed-in' && using === slot) && !(await context.session.switchTo(slot))) throw redirect({ href: context.accountsApp.signIn() });
+    keepAccountDataFor(context.queryClient, context.session.store.getState().handle);
   },
   component: Outlet,
 });

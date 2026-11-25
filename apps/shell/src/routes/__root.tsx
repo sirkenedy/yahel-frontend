@@ -1,9 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { Link, Outlet, createRootRouteWithContext, useNavigate, useRouter } from '@tanstack/react-router';
+import { forgetAccountData, refreshAccounts } from '@yahel/auth';
 import { AccountMenu } from '@yahel/ui';
 import { useEffect } from 'react';
 import { menuMessages } from '../features/account/messages';
-import { accountsQuery, useAccountMenu } from '../features/account/use-account-menu';
+import { useAccountMenu } from '../features/account/use-account-menu';
 import { config } from '../config';
 import type { RouterContext } from '../router';
 
@@ -27,9 +28,12 @@ function Root() {
   useEffect(
     () =>
       session.subscribe((event) => {
-        if (event.type !== 'accounts-changed') queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
-        void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
-        if (event.type !== 'accounts-changed') void router.invalidate();
+        if (event.type === 'accounts-changed') {
+          void refreshAccounts(queryClient);
+          return;
+        }
+        forgetAccountData(queryClient);
+        void router.invalidate();
       }),
     [session, queryClient, router],
   );

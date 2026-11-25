@@ -1,8 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { currentAccountOf, isApiError, isWorkspaceAdmin } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
+import { forgetAccountData } from '@yahel/auth';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
-import { accountsQuery, forgetAccountData } from '../../flow/accounts';
+import { accountsQuery } from '../../flow/accounts';
 import { confirmAndSignIn, resendConfirmation, signInOrConfirm } from '../../flow/email-confirmation';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { say } from '../../flow/toasts';
