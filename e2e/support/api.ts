@@ -242,7 +242,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     const accessFor = (seat: Seat) => {
       const token = `access-${++issued}`;
       access.set(token, seat.email);
-      return { accessToken: token, expiresIn: 900, tokenType: 'Bearer', slot: seat.slot, handle: seat.handle };
+      return { accessToken: token, expiresIn: 3600, tokenType: 'Bearer', slot: seat.slot, handle: seat.handle };
     };
     const signOutSeat = (seat: Seat) => {
       seat.signedIn = false;

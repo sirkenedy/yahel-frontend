@@ -15,7 +15,7 @@ import { createSignInStore } from './store';
 
 const email = 'amara@northwind.example';
 const profile: Profile = { id: '1', globalId: 'g', email, firstName: 'Amara', lastName: 'Okafor', displayName: 'Amara Okafor', photo: null, accountType: 'personal' };
-const tokens = { accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' };
+const tokens = { accessToken: 'a', expiresIn: 3600, tokenType: 'Bearer', slot: 0, handle: 'h-0' };
 const known = (overrides: Partial<ClientAccount> = {}): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email, kind: 'personal', organisation: null, role: null, signedIn: false, ...overrides });
 const instant = async () => undefined;
 
