@@ -10,9 +10,7 @@ export const countriesFixture: Country[] = [
   country('GH', 'Ghana', '🇬🇭', '233', 'GHS', 'Africa/Accra'),
   country('KE', 'Kenya', '🇰🇪', '254', 'KES', 'Africa/Nairobi'),
   country('GB', 'United Kingdom', '🇬🇧', '44', 'GBP', 'Europe/London'),
-  country('MU', 'Mauritius', '🇲🇺', '230', 'MUR', 'Indian/Mauritius'),
   country('JM', 'Jamaica', '🇯🇲', '+1-876', 'JMD', 'America/Jamaica'),
-  { ...country('ES', 'Spain', '🇪🇸', '34', 'EUR', 'Africa/Ceuta'), timezones: [{ zoneName: 'Africa/Ceuta' }, { zoneName: 'Europe/Madrid' }] },
 ];
 
 export const nigerianStatesFixture: CountryState[] = [

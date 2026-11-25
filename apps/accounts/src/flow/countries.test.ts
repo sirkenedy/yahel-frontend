@@ -23,16 +23,15 @@ describe('countries', () => {
     expect(maskedNumber(undefined, '803 555 0142')).toBe('••• ••• ••42');
   });
 
-  it('groups the suggested country, then Africa by its time zones (islands included, Spain not), then the rest, named in the reader’s language', () => {
+  it('puts the suggested country first, then every other A to Z, named in the reader’s language', () => {
     const grouped = groupedCountries(countriesFixture, 'en-NG', 'NG');
     expect(grouped.suggested).toEqual([{ iso: 'NG', name: 'Nigeria', flag: '🇳🇬', dial: '+234' }]);
-    expect(grouped.africa.map((country) => country.iso)).toEqual(['GH', 'KE', 'MU']);
-    expect(grouped.world.map((country) => country.name)).toEqual(['Jamaica', 'Spain', 'United Kingdom']);
-    expect(groupedCountries(countriesFixture, 'fr', 'NG').world.map((country) => country.name)).toContain('Espagne');
+    expect(grouped.all.map((country) => country.name)).toEqual(['Ghana', 'Jamaica', 'Kenya', 'United Kingdom']);
+    expect(groupedCountries(countriesFixture, 'fr', 'NG').all.map((country) => country.name)).toEqual(['Ghana', 'Jamaïque', 'Kenya', 'Royaume-Uni']);
   });
 
   it('falls back to the backend’s name where the browser has none', () => {
     const unnamed = { ...countriesFixture[3]!, isoCode: 'XZ', name: 'Somewhere' };
-    expect(groupedCountries([unnamed], 'en', '').world[0]?.name).toBe('Somewhere');
+    expect(groupedCountries([unnamed], 'en', '').all[0]?.name).toBe('Somewhere');
   });
 });

@@ -7,7 +7,7 @@ import { ListUnavailable } from './list-unavailable';
 export interface CountrySelectProps {
   label: string;
   /** The names of the three groups, in the flow's words. */
-  groups: { suggested: string; africa: string; world: string };
+  groups: { suggested: string; all: string };
   /** The locale country names are given in. */
   locale: string;
   /** The country offered first. */
@@ -18,7 +18,7 @@ export interface CountrySelectProps {
   forPhone?: boolean;
 }
 
-/** A country from the backend's list: the suggested one, then Africa, then the rest of the world, each flagged and named in the reader's language. */
+/** A country from the backend's list: the suggested one, then every other A to Z, each flagged and named in the reader's language. */
 export function CountrySelect({ label, groups, locale, suggested, value, onChange, forPhone = false }: CountrySelectProps) {
   const countries = useCountries();
   const grouped = useMemo(() => countries.data && groupedCountries(countries.data, locale, suggested), [countries.data, locale, suggested]);
@@ -34,8 +34,7 @@ export function CountrySelect({ label, groups, locale, suggested, value, onChang
   return (
     <FlowSelect label={label} name={forPhone ? 'tel-country-code' : 'country'} autoComplete={forPhone ? 'tel-country-code' : 'country'} value={value} onChange={onChange} isSensitive={forPhone}>
       <optgroup label={groups.suggested}>{options(grouped.suggested)}</optgroup>
-      <optgroup label={groups.africa}>{options(grouped.africa)}</optgroup>
-      <optgroup label={groups.world}>{options(grouped.world)}</optgroup>
+      <optgroup label={groups.all}>{options(grouped.all)}</optgroup>
     </FlowSelect>
   );
 }

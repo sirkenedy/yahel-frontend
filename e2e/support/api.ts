@@ -108,8 +108,7 @@ const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(
 // The backend reads a `+` number as itself, and any other against `countryCode`; without one it refuses a national number.
 const wellFormedPhone = (body: Record<string, string> | null) => Boolean(body?.phone?.startsWith('+') || body?.countryCode) && (body?.phone ?? '').replace(/\D/g, '').length >= 8;
 
-// A handful of what `GET /v1/countries/public` lists, enough for every grouping: Africa by its time zones, the rest of the world,
-// a territory whose calling code carries an area code, and a country with no states.
+// A handful of what `GET /v1/countries/public` lists, among them a territory whose calling code carries an area code and a country with no states.
 const country = (isoCode: string, name: string, flag: string, phonecode: string, currency: string, zoneName: string) => ({ name, isoCode, flag, phonecode, currency, latitude: '0', longitude: '0', timezones: [{ zoneName, gmtOffset: 0, gmtOffsetName: 'UTC', abbreviation: 'UTC', tzName: zoneName }] });
 const countries = [
   country('NG', 'Nigeria', '🇳🇬', '234', 'NGN', 'Africa/Lagos'),

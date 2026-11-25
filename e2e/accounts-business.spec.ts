@@ -207,14 +207,14 @@ test.describe('accounts: plan and checkout, once signed in', () => {
 });
 
 test.describe('accounts: countries from the backend', () => {
-  test('every country the backend lists is offered with its flag, grouped, and one without states asks for the state in words', async ({ page }) => {
+  test('every country the backend lists is offered with its flag, the suggested one first and the rest A to Z, and one without states asks for the state in words', async ({ page }) => {
     await mockApi(page);
     await createWorkspaceTo(page, 'start');
     const country = page.getByLabel('Country or region');
     await expect(country).toHaveValue('NG');
     // A native select's groups are not exposed as roles, so they are found by their labels.
-    await expect(country.locator('optgroup[label="Africa"] option')).toHaveText(['🇬🇭 Ghana', '🇰🇪 Kenya']);
-    await expect(country.locator('optgroup[label="Rest of the world"] option', { hasText: '🇯🇲 Jamaica' })).toBeAttached();
+    await expect(country.locator('optgroup[label="Suggested"] option')).toHaveText(['🇳🇬 Nigeria']);
+    await expect(country.locator('optgroup[label="All countries"] option')).toHaveText(['🇨🇦 Canada', '🇬🇭 Ghana', '🇯🇲 Jamaica', '🇰🇪 Kenya', '🇬🇧 United Kingdom', '🇺🇸 United States']);
 
     await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: '🇰🇪 Kenya' });
     await expect(page.getByRole('textbox', { name: 'State or region' })).toBeVisible();

@@ -31,17 +31,10 @@ export interface NamedCountry {
   dial: string;
 }
 
-// The backend gives no region, so Africa is read from time zones: an Africa/ zone and no Europe/ one (Spain has Africa/Ceuta), or one of the
-// island states, whose zones are Atlantic/ or Indian/ (Cape Verde, Comoros, Madagascar, Mauritius, Seychelles).
-const africanIslands = new Set(['Atlantic/Cape_Verde', 'Indian/Comoro', 'Indian/Antananarivo', 'Indian/Mauritius', 'Indian/Mahe']);
-const isAfrican = ({ timezones }: Country) =>
-  timezones.some(({ zoneName }) => zoneName.startsWith('Africa/') || africanIslands.has(zoneName)) && !timezones.some(({ zoneName }) => zoneName.startsWith('Europe/'));
-
-/** The suggested country, then Africa, then the rest of the world, each named in the reader's language and sorted by that name. */
+/** The suggested country, then every other country A to Z, named in the reader's language (as Google's pickers do). */
 export function groupedCountries(countries: readonly Country[], locale: string, suggested: string) {
   const names = new Intl.DisplayNames(locale, { type: 'region', fallback: 'none' });
   const named = (list: Country[]): NamedCountry[] =>
     list.map((country) => ({ iso: country.isoCode, name: names.of(country.isoCode) ?? country.name, flag: country.flag, dial: dialCodeOf(country) })).sort((a, b) => a.name.localeCompare(b.name, locale));
-  const others = countries.filter((country) => country.isoCode !== suggested);
-  return { suggested: named(countries.filter((country) => country.isoCode === suggested)), africa: named(others.filter(isAfrican)), world: named(others.filter((country) => !isAfrican(country))) };
+  return { suggested: named(countries.filter((country) => country.isoCode === suggested)), all: named(countries.filter((country) => country.isoCode !== suggested)) };
 }

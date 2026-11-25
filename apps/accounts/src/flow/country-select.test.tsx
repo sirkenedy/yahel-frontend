@@ -10,7 +10,7 @@ import { flowMessages as m } from './messages';
 const countries = vi.hoisted(() => vi.fn());
 vi.mock('../session', () => ({ session: { api: { reference: { countries } } } }));
 
-const groups = { suggested: 'Suggested', africa: 'Africa', world: 'Rest of the world' };
+const groups = { suggested: 'Suggested', all: 'All countries' };
 
 const renderSelect = (queryClient: QueryClient, forPhone: boolean, onChange = vi.fn()) =>
   render(
@@ -26,16 +26,15 @@ const loaded = () => {
 };
 
 describe('CountrySelect', () => {
-  it('offers the suggested country first, then Africa without it, then the rest of the world, each flagged with its dialling code', () => {
+  it('offers the suggested country first, then every other country A to Z, each flagged with its dialling code', () => {
     renderSelect(loaded(), true);
 
     const select = screen.getByLabelText('Country code');
     expect(select).toHaveValue('NG');
     expect(select).toHaveAttribute('autocomplete', 'tel-country-code');
-    const [suggested, africa, world] = within(select).getAllByRole('group');
+    const [suggested, all] = within(select).getAllByRole('group');
     expect(within(suggested!).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇳🇬 +234 Nigeria']);
-    expect(within(africa!).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭 +233 Ghana', '🇰🇪 +254 Kenya', '🇲🇺 +230 Mauritius']);
-    expect(within(world!).getByRole('option', { name: '🇬🇧 +44 United Kingdom' })).toBeInTheDocument();
+    expect(within(all!).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭 +233 Ghana', '🇯🇲 +1 Jamaica', '🇰🇪 +254 Kenya', '🇬🇧 +44 United Kingdom']);
   });
 
   it('names a country without a dialling code when it is not a phone’s', () => {
