@@ -4,6 +4,7 @@ import type { AccountsApp, Session } from '@yahel/auth';
 import { AccountMenu, Button, Card, FlowIcon } from '@yahel/ui';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { forgetAccountData } from './access';
 import type { ConsoleWorkspace } from './access';
 import { consoleMessages as m, menuMessages } from './messages';
 import { accountsQuery, useAccountMenu } from './use-account-menu';
@@ -37,7 +38,7 @@ export function ConsoleFrame({ session, accountsApp, appHome, workspace, slot, c
   useEffect(
     () =>
       session.subscribe((event) => {
-        if (event.type !== 'accounts-changed') queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
+        if (event.type !== 'accounts-changed') forgetAccountData(queryClient);
         void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
         if (event.type !== 'accounts-changed') void router.invalidate();
       }),

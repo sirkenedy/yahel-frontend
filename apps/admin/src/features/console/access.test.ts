@@ -64,3 +64,43 @@ describe('enterConsole', () => {
     await expect(enter(sessionWith({ contexts: new Error('offline') }))).rejects.toThrow('offline');
   });
 });
+
+describe('enterConsole and the cache', () => {
+  const setup = () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const tenant = vi.fn(async () => ({ id: 't-1' }));
+    const load = () => queryClient.fetchQuery({ queryKey: ['tenant', 't-1'], queryFn: tenant, staleTime: 60_000 });
+    const session = sessionWith({ signedIn: false });
+    const enterAs = (slot: number) => enterConsole({ session, queryClient, accountsApp }, String(slot));
+    return { queryClient, tenant, load, session, enterAs };
+  };
+
+  it('loads the workspace once: the tab’s own first switch, and a repeat visit, leave what was loaded alone', async () => {
+    const { queryClient, tenant, load, session, enterAs } = setup();
+    await enterAs(3);
+    await load();
+    await Promise.all([enterAs(3), enterAs(3)]);
+    await load();
+    expect(tenant).toHaveBeenCalledTimes(1);
+    expect(queryClient.getQueryData(['tenant', 't-1'])).toEqual({ id: 't-1' });
+    expect(session.api.auth.contexts).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the workspace data, and loads it again, when the tab’s account changes', async () => {
+    const { queryClient, tenant, load, enterAs } = setup();
+    await enterAs(0);
+    await load();
+    await enterAs(1);
+    expect(queryClient.getQueryData(['tenant', 't-1'])).toBeUndefined();
+    await load();
+    expect(tenant).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the accounts list when the account changes', async () => {
+    const { queryClient, enterAs } = setup();
+    queryClient.setQueryData(['accounts', 'on-this-device'], [{ handle: 'h-0' }]);
+    await enterAs(0);
+    await enterAs(1);
+    expect(queryClient.getQueryData(['accounts', 'on-this-device'])).toEqual([{ handle: 'h-0' }]);
+  });
+});
