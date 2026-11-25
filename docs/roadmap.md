@@ -61,7 +61,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 
 - [ ] Refresh token as an `HttpOnly` cookie
 - [ ] Response bodies declared in the OpenAPI description
-- [ ] A pending TXT domain's record that can be shown again: `GET /tenants/{id}/domains` never carries the value (the token is stored hashed), so Admin can show it only in the page session that added the domain. Either keep the plaintext value (it is published in DNS anyway) or add a `POST …/domains/{domainId}/reissue` that answers with new instructions
+- [x] A pending TXT domain's record that can be shown again: the list now carries `verificationToken` on pending and re-verification rows, and Admin shows it (backend #62, `decisions.md` F-111)
 - [ ] A dispatch to this repository when the API changes, so the contract watcher runs immediately
 - [ ] `POST /v1/auth/register-business` and the workspace design brought into line (`decisions.md` O-16): the short name, an idempotency key, the display name, and the address checked before the domain remain. Done: `contactEmail` with the address taken as verified and a phone check before any session (F-96, F-97, F-99), no date of birth (F-100), and a domain check before creating (F-101). Business sign-up stays off in release builds unless `VITE_BUSINESS_SIGN_UP=on` (F-78) until O-16 (8) is met
 - [ ] Registration that cannot be used to take over an address: a new registration replaces a pending one, or each emailed code is bound to the registration that issued it; unconfirmed identities expire; the answer does not depend on whether the address has an account, including for domains outside the public-provider list (`decisions.md` O-12, F-50)

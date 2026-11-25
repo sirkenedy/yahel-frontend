@@ -109,8 +109,8 @@ export type DomainStatus = 'pending' | 'verified' | 'failed' | 'revoked' | 'reve
 
 /**
  * One of a workspace's domains, as `GET /tenants/{tenantId}/domains` lists it (the `VerifiedDomain` schema).
- * The TXT token is stored hashed and never listed, so a TXT record's value is known only from the answer to
- * adding the domain (or registering the business). A CNAME's alias and target are listed.
+ * While the domain is `pending` or `reverification_required`, the list also carries the TXT record's value as
+ * `verificationToken`; other rows omit it. A CNAME's alias and target are listed.
  */
 export interface WorkspaceDomain {
   _id: string;
@@ -120,6 +120,7 @@ export interface WorkspaceDomain {
   isPrimary: boolean;
   verifyHost?: string | null;
   verifyTarget?: string | null;
+  verificationToken?: string | null;
   verifiedAt?: string | null;
   lastCheckedAt?: string | null;
 }
