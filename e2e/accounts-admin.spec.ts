@@ -4,6 +4,9 @@ import { adminAddress, adminPhone, adminTo, codeBoxes, heading, stubAdmin } from
 import { credentials, mockApi, newAdmin, phoneCode, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 
+// Pickers start on the browser's location (F-113): these tests are set in Lagos.
+test.use({ timezoneId: 'Africa/Lagos' });
+
 const sent = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
 
 test.describe('accounts: an administrator whose phone is still to be checked', () => {

@@ -16,7 +16,6 @@ export const adminMessages = {
   phoneTitle: 'Verify it’s you.',
   phoneLede: 'It’s your first time in Admin, so we’ll text you a code. We use this number only for your account’s security.',
   country: 'Country code',
-  countryGroups: { suggested: 'Suggested', all: 'All countries' },
   mobileNumber: 'Mobile number',
   phoneRequired: 'Enter a mobile number that can get texts.',
   phoneInvalid: 'Check the number. Use digits only, without the country code.',

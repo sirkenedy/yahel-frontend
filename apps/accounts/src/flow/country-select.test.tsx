@@ -10,12 +10,10 @@ import { flowMessages as m } from './messages';
 const countries = vi.hoisted(() => vi.fn());
 vi.mock('../session', () => ({ session: { api: { reference: { countries } } } }));
 
-const groups = { suggested: 'Suggested', all: 'All countries' };
-
-const renderSelect = (queryClient: QueryClient, forPhone: boolean, onChange = vi.fn()) =>
+const renderSelect = (queryClient: QueryClient, forPhone: boolean, onChange = vi.fn(), value = 'NG') =>
   render(
     <QueryClientProvider client={queryClient}>
-      <CountrySelect label="Country code" groups={groups} locale="en-NG" suggested="NG" value="NG" onChange={onChange} forPhone={forPhone} />
+      <CountrySelect label="Country code" locale="en-NG" value={value} onChange={onChange} forPhone={forPhone} />
     </QueryClientProvider>,
   );
 
@@ -26,15 +24,25 @@ const loaded = () => {
 };
 
 describe('CountrySelect', () => {
-  it('offers the suggested country first, then every other country A to Z, each flagged with its dialling code', () => {
-    renderSelect(loaded(), true);
+  it('offers every country A to Z, each flagged with its dialling code, and keeps a choice already made', () => {
+    const onChange = vi.fn();
+    renderSelect(loaded(), true, onChange);
 
     const select = screen.getByLabelText('Country code');
     expect(select).toHaveValue('NG');
     expect(select).toHaveAttribute('autocomplete', 'tel-country-code');
-    const [suggested, all] = within(select).getAllByRole('group');
-    expect(within(suggested!).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇳🇬 +234 Nigeria']);
-    expect(within(all!).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭 +233 Ghana', '🇯🇲 +1 Jamaica', '🇰🇪 +254 Kenya', '🇬🇧 +44 United Kingdom']);
+    expect(within(select).getAllByRole('option').map((option) => option.textContent)).toEqual(['🇬🇭 +233 Ghana', '🇯🇲 +1 Jamaica', '🇰🇪 +254 Kenya', '🇳🇬 +234 Nigeria', '🇬🇧 +44 United Kingdom']);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('starts on where the browser says the person is, when nothing has been chosen', () => {
+    const resolved = Intl.DateTimeFormat().resolvedOptions();
+    const zone = vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ ...resolved, timeZone: 'Africa/Nairobi' });
+    const onChange = vi.fn();
+    renderSelect(loaded(), true, onChange, '');
+
+    expect(onChange).toHaveBeenCalledWith('KE');
+    zone.mockRestore();
   });
 
   it('names a country without a dialling code when it is not a phone’s', () => {

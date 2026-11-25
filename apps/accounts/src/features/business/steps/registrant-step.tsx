@@ -38,7 +38,7 @@ export function RegistrantStep() {
             <RegionField region={region} name="address-level1" autoComplete="address-level1" />
           </FlowStep.Row>
           <FlowStep.Row layout="phone">
-            <CountrySelect label={m.phoneCountry} groups={m.countryGroups} locale={m.locale} suggested={state.country} value={phoneCountry} onChange={setPhoneCountry} forPhone />
+            <CountrySelect label={m.phoneCountry} locale={m.locale} value={phoneCountry} onChange={setPhoneCountry} forPhone />
             <FlowTextField label={m.phone} name="tel-national" type="tel" inputMode="tel" autoComplete="tel-national" value={phone.value} onChange={phone.change} onBlur={phone.blur} isValid={phone.isValid} error={phone.error} inputRef={phone.inputRef} isRequired isSensitive />
           </FlowStep.Row>
           <FlowButton variant="link" aria-expanded={more} onPress={() => setMore(!more)}>

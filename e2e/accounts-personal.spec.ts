@@ -5,6 +5,9 @@ import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCo
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './support/personal';
 
+// Pickers start on the browser's location (F-113): these tests are set in Lagos.
+test.use({ timezoneId: 'Africa/Lagos' });
+
 const calls = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
 const registrations = (api: MockApi) => calls(api, '/v1/auth/register');
 const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();

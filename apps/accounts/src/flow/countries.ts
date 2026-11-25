@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import type { Country } from '@yahel/api-client';
 import { session } from '../session';
+import { flowMessages as m } from './messages';
 
 // Public lists that change with a backend release, not while a page is open: every step reads one cached copy (F-113).
 export const countriesQuery = queryOptions({ queryKey: ['countries'], queryFn: ({ signal }) => session.api.reference.countries(signal), staleTime: Infinity });
@@ -9,6 +10,8 @@ export const countriesQuery = queryOptions({ queryKey: ['countries'], queryFn: (
 export const statesQuery = (country: string) => queryOptions({ queryKey: ['countries', country, 'states'], queryFn: ({ signal }) => session.api.reference.states(country, signal), staleTime: Infinity });
 
 export const useCountries = () => useQuery(countriesQuery);
+
+export const countryProblem = (iso: string) => (iso ? null : m.countryRequired);
 
 export const countryOf = (countries: readonly Country[] | undefined, iso: string) => countries?.find((country) => country.isoCode === iso);
 
@@ -31,10 +34,31 @@ export interface NamedCountry {
   dial: string;
 }
 
-/** The suggested country, then every other country A to Z, named in the reader's language (as Google's pickers do). */
-export function groupedCountries(countries: readonly Country[], locale: string, suggested: string) {
+/** Every country A to Z by its name in the reader's language, as Google's pickers list them. */
+export function namedCountries(countries: readonly Country[], locale: string): NamedCountry[] {
   const names = new Intl.DisplayNames(locale, { type: 'region', fallback: 'none' });
-  const named = (list: Country[]): NamedCountry[] =>
-    list.map((country) => ({ iso: country.isoCode, name: names.of(country.isoCode) ?? country.name, flag: country.flag, dial: dialCodeOf(country) })).sort((a, b) => a.name.localeCompare(b.name, locale));
-  return { suggested: named(countries.filter((country) => country.isoCode === suggested)), all: named(countries.filter((country) => country.isoCode !== suggested)) };
+  return countries.map((country) => ({ iso: country.isoCode, name: names.of(country.isoCode) ?? country.name, flag: country.flag, dial: dialCodeOf(country) })).sort((a, b) => a.name.localeCompare(b.name, locale));
 }
+
+export interface BrowserPlace {
+  timeZone?: string;
+  language?: string;
+}
+
+const regionOf = (language: string) => {
+  try {
+    return new Intl.Locale(language).region;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Where the person probably is, with no prompt and no request: the country that lists the browser's time zone, else its language's region, else none. */
+export function detectCountry(countries: readonly Country[], { timeZone, language }: BrowserPlace) {
+  const byZone = timeZone ? countries.find((country) => country.timezones.some((zone) => zone.zoneName === timeZone)) : undefined;
+  if (byZone) return byZone.isoCode;
+  const region = language ? regionOf(language) : undefined;
+  return region && countries.some((country) => country.isoCode === region) ? region : '';
+}
+
+export const browserPlace = (): BrowserPlace => ({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, language: globalThis.navigator?.language });

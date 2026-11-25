@@ -5,6 +5,9 @@ import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, take
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
 
+// Pickers start on the browser's location (F-113): these tests are set in Lagos.
+test.use({ timezoneId: 'Africa/Lagos' });
+
 type Api = Awaited<ReturnType<typeof mockApi>>;
 const registrations = (api: Api) => api.calls.filter((call) => call.path === '/v1/auth/register-business');
 const sentBy = (api: Api, index = 0) => registrations(api)[index]!.body as Record<string, unknown>;
@@ -207,19 +210,30 @@ test.describe('accounts: plan and checkout, once signed in', () => {
 });
 
 test.describe('accounts: countries from the backend', () => {
-  test('every country the backend lists is offered with its flag, the suggested one first and the rest A to Z, and one without states asks for the state in words', async ({ page }) => {
+  test('every country the backend lists is offered A to Z with its flag, starting on where the browser is, and one without states asks for the state in words', async ({ page }) => {
     await mockApi(page);
     await createWorkspaceTo(page, 'start');
     const country = page.getByLabel('Country or region');
     await expect(country).toHaveValue('NG');
-    // A native select's groups are not exposed as roles, so they are found by their labels.
-    await expect(country.locator('optgroup[label="Suggested"] option')).toHaveText(['🇳🇬 Nigeria']);
-    await expect(country.locator('optgroup[label="All countries"] option')).toHaveText(['🇨🇦 Canada', '🇬🇭 Ghana', '🇯🇲 Jamaica', '🇰🇪 Kenya', '🇬🇧 United Kingdom', '🇺🇸 United States']);
+    await expect(country.getByRole('option')).toHaveText(['🇨🇦 Canada', '🇬🇭 Ghana', '🇯🇲 Jamaica', '🇰🇪 Kenya', '🇳🇬 Nigeria', '🇬🇧 United Kingdom', '🇺🇸 United States']);
 
     await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: '🇰🇪 Kenya' });
     await expect(page.getByRole('textbox', { name: 'State or region' })).toBeVisible();
     await expect(page.getByLabel('Country code')).toHaveValue('KE');
     await expect(page.getByLabel('Country code').locator('option:checked')).toHaveText('🇰🇪 +254 Kenya');
+  });
+
+  test.describe('in another country', () => {
+    test.use({ timezoneId: 'America/Toronto', locale: 'en-CA' });
+
+    test('the country starts on the one the browser’s time zone is in, and the person can change it', async ({ page }) => {
+      await mockApi(page);
+      await createWorkspaceTo(page, 'start');
+      const country = page.getByLabel('Country or region');
+      await expect(country).toHaveValue('CA');
+      await country.selectOption('GH');
+      await expect(country).toHaveValue('GH');
+    });
   });
 
   test('a list that does not load says so beside the field, and Try again loads it', async ({ page }) => {

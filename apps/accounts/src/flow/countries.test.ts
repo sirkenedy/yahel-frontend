@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countryOf, dialCodeOf, groupedCountries, internationalNumber, maskedNumber } from './countries';
+import { countryOf, detectCountry, dialCodeOf, internationalNumber, maskedNumber, namedCountries } from './countries';
 import { countriesFixture } from './countries.fixture';
 
 const of = (iso: string) => countryOf(countriesFixture, iso);
@@ -23,15 +23,23 @@ describe('countries', () => {
     expect(maskedNumber(undefined, '803 555 0142')).toBe('••• ••• ••42');
   });
 
-  it('puts the suggested country first, then every other A to Z, named in the reader’s language', () => {
-    const grouped = groupedCountries(countriesFixture, 'en-NG', 'NG');
-    expect(grouped.suggested).toEqual([{ iso: 'NG', name: 'Nigeria', flag: '🇳🇬', dial: '+234' }]);
-    expect(grouped.all.map((country) => country.name)).toEqual(['Ghana', 'Jamaica', 'Kenya', 'United Kingdom']);
-    expect(groupedCountries(countriesFixture, 'fr', 'NG').all.map((country) => country.name)).toEqual(['Ghana', 'Jamaïque', 'Kenya', 'Royaume-Uni']);
+  it('lists every country A to Z by its name in the reader’s language', () => {
+    expect(namedCountries(countriesFixture, 'en-NG')[0]).toEqual({ iso: 'GH', name: 'Ghana', flag: '🇬🇭', dial: '+233' });
+    expect(namedCountries(countriesFixture, 'en-NG').map((country) => country.name)).toEqual(['Ghana', 'Jamaica', 'Kenya', 'Nigeria', 'United Kingdom']);
+    expect(namedCountries(countriesFixture, 'fr').map((country) => country.name)).toEqual(['Ghana', 'Jamaïque', 'Kenya', 'Nigeria', 'Royaume-Uni']);
   });
 
   it('falls back to the backend’s name where the browser has none', () => {
     const unnamed = { ...countriesFixture[3]!, isoCode: 'XZ', name: 'Somewhere' };
-    expect(groupedCountries([unnamed], 'en', '').all[0]?.name).toBe('Somewhere');
+    expect(namedCountries([unnamed], 'en')[0]?.name).toBe('Somewhere');
+  });
+
+  it('finds where the person is from the browser’s time zone, then its language’s region, else nowhere', () => {
+    expect(detectCountry(countriesFixture, { timeZone: 'Africa/Accra', language: 'en-NG' })).toBe('GH');
+    expect(detectCountry(countriesFixture, { timeZone: 'UTC', language: 'en-KE' })).toBe('KE');
+    expect(detectCountry(countriesFixture, { language: 'en-GB' })).toBe('GB');
+    expect(detectCountry(countriesFixture, { timeZone: 'Asia/Tokyo', language: 'ja-JP' })).toBe('');
+    expect(detectCountry(countriesFixture, { timeZone: 'UTC', language: 'en' })).toBe('');
+    expect(detectCountry(countriesFixture, { language: 'not a language' })).toBe('');
   });
 });

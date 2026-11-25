@@ -562,7 +562,6 @@ describe('RecoveryStep', () => {
     const country = screen.getByLabelText(m.country);
 
     expect(country).toHaveValue('NG');
-    expect(within(country).getByRole('group', { name: m.countryGroups.all })).toBeInTheDocument();
     await user.selectOptions(country, '🇬🇭 +233 Ghana');
     await press(m.continue);
 
