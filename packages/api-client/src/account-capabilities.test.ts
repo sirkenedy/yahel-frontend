@@ -98,7 +98,7 @@ describe('createAccountCapabilities', () => {
       const auth = {
         passkeys: {
           authenticateBegin: vi.fn().mockResolvedValue({ challengeToken: 'pk-1', options: { challenge: 'Y2hhbGxlbmdl', timeout: 60_000, rpId: 'localhost', userVerification: 'required' } }),
-          authenticateFinish: vi.fn().mockResolvedValue({ accessToken: 'a', expiresIn: 900, tokenType: 'Bearer', slot: 0, handle: 'h-0' }),
+          authenticateFinish: vi.fn().mockResolvedValue({ accessToken: 'a', expiresIn: 3600, tokenType: 'Bearer', slot: 0, handle: 'h-0' }),
         },
       };
       return { client: { auth } as unknown as Pick<ApiClient, 'auth'>, auth };
