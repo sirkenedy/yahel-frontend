@@ -20,7 +20,8 @@ export const settled = async (page: Page) => {
         .getAnimations()
         // A paused animation (a toast held under focus) never finishes, so it is not waited for either.
         .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity && animation.playState === 'running')
-        .map((animation) => animation.finished),
+        // A cancelled animation (WebKit restarts entrances when the direction flips) rejects instead of finishing: it is settled too.
+        .map((animation) => animation.finished.catch(() => undefined)),
     ),
   );
 };
