@@ -1,6 +1,5 @@
 import { isEmailShaped, newPasswordProblem } from '../../flow/credentials';
 import { cardDigits, expiryProblem, isCardNumber, isSecurityCode } from './card';
-import { NIGERIA } from './countries';
 import { businessMessages as m } from './messages';
 
 const MAX_BUSINESS_NAME = 100;
@@ -32,7 +31,8 @@ export const confirmProblem = (again: string, password: string) => (again === ''
 
 export const streetProblem = (street: string) => (street.trim() === '' ? m.streetRequired : null);
 export const cityProblem = (city: string) => (city.trim() === '' ? m.cityRequired : null);
-export const stateProblem = (state: string, country: string) => (state.trim() === '' ? (country === NIGERIA ? m.stateRequired : m.regionRequired) : null);
+/** `listed`: the state is chosen from the country's list rather than typed. */
+export const stateProblem = (state: string, listed: boolean) => (state.trim() === '' ? (listed ? m.stateRequired : m.regionRequired) : null);
 export const phoneProblem = (phone: string) => (phone.replace(/\D/g, '').length < 7 ? m.phoneInvalid : null);
 
 /** A team larger than the chips go: a whole number above the largest chip. */

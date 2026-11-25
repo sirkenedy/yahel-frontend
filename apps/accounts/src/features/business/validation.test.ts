@@ -72,10 +72,10 @@ describe('the address', () => {
     expect([streetProblem('12 Admiralty Way'), cityProblem('Lekki'), phoneProblem('803 555 0142')]).toEqual([null, null, null]);
   });
 
-  it('words a missing state for the country', () => {
-    expect(stateProblem('', 'NG')).toBe(m.stateRequired);
-    expect(stateProblem('', 'KE')).toBe(m.regionRequired);
-    expect(stateProblem('Lagos', 'NG')).toBeNull();
+  it('words a missing state as a choice where the country lists its states, and as typing elsewhere', () => {
+    expect(stateProblem('', true)).toBe(m.stateRequired);
+    expect(stateProblem('', false)).toBe(m.regionRequired);
+    expect(stateProblem('Lagos', true)).toBeNull();
   });
 });
 

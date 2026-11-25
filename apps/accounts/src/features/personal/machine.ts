@@ -85,7 +85,6 @@ export interface PersonalState {
 
 const initialCreation: Creation = { started: false, stage: 'account', created: false, conflicted: false, emailCode: 'not-needed', signedIn: false, settled: [], unsaved: [], phoneCodeAwaited: false, finished: false };
 
-export const DEFAULT_PHONE_COUNTRY = 'NG';
 
 export const initialPersonalState: PersonalState = {
   firstName: '',
@@ -99,7 +98,7 @@ export const initialPersonalState: PersonalState = {
   password: null,
   passkeySaved: false,
   passkeyStarted: false,
-  recovery: { country: DEFAULT_PHONE_COUNTRY, phone: '', email: '' },
+  recovery: { country: '', phone: '', email: '' },
   recoveryAnswered: false,
   preferences: { productNews: false, activityHistory: false },
   editing: false,

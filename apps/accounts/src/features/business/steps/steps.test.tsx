@@ -1,6 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../../flow/countries.fixture';
 import type { OrderQuote, WorkspacePlan } from '@yahel/api-client';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -73,7 +74,7 @@ const answered: Partial<State> = { businessName: 'Northwind Studio', size: 'smal
 
 const flowValue = (actions: BusinessFlowValue['actions'], { state, offers: offered, requests, links, backHref = null }: Overrides = {}): BusinessFlowValue => {
   return {
-    state: { ...initialBusinessState, step: 'start', hasPassword: false, domain: '', adminAddress: '', seats: 3, offers: { status: 'idle', value: null }, plan: { status: 'ready', value: plan }, quote: { status: 'ready', value: trialQuote }, ...state },
+    state: { ...initialBusinessState, country: 'NG', step: 'start', hasPassword: false, domain: '', adminAddress: '', seats: 3, offers: { status: 'idle', value: null }, plan: { status: 'ready', value: plan }, quote: { status: 'ready', value: trialQuote }, ...state },
     actions,
     meta: {
       direction: 'forward',
@@ -90,7 +91,7 @@ const flowValue = (actions: BusinessFlowValue['actions'], { state, offers: offer
 const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
   const { container } = render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={withCountries()}>
       <BusinessFlowContext value={flowValue(actions, overrides)}>{ui}</BusinessFlowContext>
     </QueryClientProvider>,
   );
@@ -105,12 +106,13 @@ describe('StartStep', () => {
     expect(screen.getByRole('heading', { level: 1, name: m.startTitle })).toBeInTheDocument();
     expect(screen.getByText(/^01 \/ 06 · Your business$/)).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: m.sizes.medium })).toBeChecked();
-    expect(field(m.country)).toHaveValue('NG');
+    expect(field(m.country)).toHaveTextContent('🇳🇬 Nigeria');
     expect(field(m.businessName)).toHaveAttribute('autocomplete', 'organization');
 
     await user.type(field(m.businessName), ' Northwind Studio ');
     await user.click(screen.getByRole('radio', { name: m.sizes.small }));
-    await user.selectOptions(field(m.country), 'Kenya');
+    await user.click(field(m.country));
+    await user.click(screen.getByRole('option', { name: 'Kenya KE' }));
     await press(m.continue);
 
     expect(actions.enterBusiness).toHaveBeenCalledWith({ businessName: 'Northwind Studio', size: 'small', country: 'KE' });
@@ -125,12 +127,30 @@ describe('StartStep', () => {
     expect(actions.enterBusiness).not.toHaveBeenCalled();
   });
 
+  it('starts on where the browser says the business is, and asks for a country where it says nothing', async () => {
+    const resolved = Intl.DateTimeFormat().resolvedOptions();
+    const zone = vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({ ...resolved, timeZone: 'Africa/Accra' });
+    setup(<StartStep />, { state: { country: '' } });
+    expect(field(m.country)).toHaveTextContent('🇬🇭 Ghana');
+    cleanup();
+
+    zone.mockReturnValue({ ...resolved, timeZone: 'Asia/Tokyo' });
+    const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('ja-JP');
+    const { actions } = setup(<StartStep />, { state: { businessName: 'Northwind Studio', country: '' } });
+    expect(field(m.country)).toHaveTextContent(fm.chooseCountry);
+    await press(m.continue);
+    expect(field(m.country)).toHaveAccessibleDescription(fm.countryRequired);
+    expect(actions.enterBusiness).not.toHaveBeenCalled();
+    zone.mockRestore();
+    language.mockRestore();
+  });
+
   it('starts from what was answered before, and leads to a personal account instead', () => {
     setup(<StartStep />, { state: { businessName: 'Northwind Studio', size: 'huge', country: 'GH' } });
 
     expect(field(m.businessName)).toHaveValue('Northwind Studio');
     expect(screen.getByRole('radio', { name: m.sizes.huge })).toBeChecked();
-    expect(field(m.country)).toHaveValue('GH');
+    expect(field(m.country)).toHaveTextContent('🇬🇭 Ghana');
     expect(screen.getByRole('link', { name: m.personalInstead })).toHaveAttribute('href', '/personal');
   });
 });
@@ -304,7 +324,7 @@ describe('RegistrantStep', () => {
     const { actions, user } = setup(<RegistrantStep />, { state: buying });
     expect(screen.getByRole('heading', { level: 1, name: m.registrantTitle('example.com') })).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(m.privacyOn('example.com'));
-    expect(field(m.phoneCountry)).toHaveValue('NG');
+    expect(field(m.phoneCountry)).toHaveTextContent('🇳🇬 +234');
 
     await user.type(field(m.street), '12 Admiralty Way');
     await user.type(field(m.city), 'Lekki');

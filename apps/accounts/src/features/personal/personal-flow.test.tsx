@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../flow/countries.fixture';
 import { ApiError, createAccountCapabilities } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
@@ -78,7 +79,7 @@ const setup = ({ step = 'review' as PersonalStep, standIns = true, passkeys = tr
   const navigate = vi.fn();
   const leave = vi.fn();
   const leaveForBusiness = vi.fn();
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const queryClient = withCountries(new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }));
   let latest: PersonalFlowValue | undefined;
   let said: string | null = null;
   const tree = (current: PersonalStep) => (
@@ -603,7 +604,7 @@ describe('PersonalFlowProvider: confirming the recovery phone', () => {
 
     await create('code');
     expect(session.api.auth.register).toHaveBeenCalledWith(expect.objectContaining({ phone: '+2348035550142' }));
-    expect(session.api.auth.sendPhoneOtp).toHaveBeenCalledWith({ phone: '+2348035550142' });
+    expect(session.api.auth.sendPhoneOtp).toHaveBeenCalledWith({ phone: '0803 555 0142', countryCode: 'NG' });
     expect(store.getState().creation).toMatchObject({ phoneCodeAwaited: true, finished: false });
 
     act(() => flow().actions.verifyPhone('K9mP2r'));

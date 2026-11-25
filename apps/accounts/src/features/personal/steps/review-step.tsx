@@ -1,7 +1,7 @@
 import { FlowButton, FlowCheckbox, FlowIcon, FlowStep, Receipt } from '@yahel/ui';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { maskedNumber } from '../../../flow/countries';
+import { useMaskedNumber } from '../../../flow/countries';
 import { writtenDate } from '../../../flow/dates';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
@@ -21,7 +21,8 @@ export function ReviewStep() {
   const [shown, setShown] = useState(false);
   const { recovery, preferences } = state;
   const { terms, privacy } = meta.links;
-  const ways = [recovery.phone ? maskedNumber(recovery.country, recovery.phone) : '', recovery.email].filter(Boolean);
+  const masked = useMaskedNumber(recovery.country, recovery.phone);
+  const ways = [recovery.phone ? masked : '', recovery.email].filter(Boolean);
 
   const rows: [ReviewRow, ReactNode][] = [
     ['name', state.fullName],

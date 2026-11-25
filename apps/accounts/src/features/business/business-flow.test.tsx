@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../flow/countries.fixture';
 import { ApiError, createAccountCapabilities } from '@yahel/api-client';
 import type { WorkspaceBilling } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
@@ -72,7 +73,7 @@ const setup = ({ step = 'gateway' as BusinessStep, standIns = true, signedIn = t
   const navigate = vi.fn();
   const checkPhone = vi.fn();
   const goToAdmin = vi.fn();
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const queryClient = withCountries(new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }));
   let latest: BusinessFlowValue | undefined;
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: BusinessStep) => (
