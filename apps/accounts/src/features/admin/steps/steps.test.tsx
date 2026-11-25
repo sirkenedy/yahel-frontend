@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../../flow/countries.fixture';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
@@ -44,7 +45,7 @@ const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
   // A whole-screen state asks the query client for a maintenance window, so every step is rendered inside one.
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={withCountries()}>
       <AdminFlowContext value={flowValue(actions, overrides)}>{ui}</AdminFlowContext>
     </QueryClientProvider>,
   );

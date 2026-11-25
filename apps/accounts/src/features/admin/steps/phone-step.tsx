@@ -1,7 +1,7 @@
 import { FlowButton, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { forField } from '../../../flow/feedback';
-import { PhoneCountrySelect } from '../../../flow/phone-country-select';
+import { CountrySelect } from '../../../flow/country-select';
 import { useStepField } from '../../../flow/use-step-field';
 import { useAdminFlow } from '../admin-flow';
 import { adminMessages as m } from '../messages';
@@ -23,7 +23,7 @@ export function PhoneStep() {
       <FlowStep.Form onSubmit={phone.submit}>
         <FlowStep.Body>
           <FlowStep.Row layout="phone">
-            <PhoneCountrySelect label={m.country} groups={m.countryGroups} locale={m.locale} suggested={DEFAULT_COUNTRY} value={country} onChange={setCountry} />
+            <CountrySelect label={m.country} groups={m.countryGroups} locale={m.locale} suggested={DEFAULT_COUNTRY} value={country} onChange={setCountry} forPhone />
             <FlowTextField label={m.mobileNumber} name="tel-national" type="tel" inputMode="tel" autoComplete="tel-national" value={phone.value} onChange={phone.change} onBlur={phone.blur} isValid={phone.isValid} error={phone.error} inputRef={phone.inputRef} isSensitive isRequired />
           </FlowStep.Row>
         </FlowStep.Body>

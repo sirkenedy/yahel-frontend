@@ -1,31 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { africanCountries, dialCodeOf, internationalNumber, maskedNumber, namedCountries, otherCountries } from './countries';
+import { countryOf, dialCodeOf, groupedCountries, internationalNumber, maskedNumber } from './countries';
+import { countriesFixture } from './countries.fixture';
+
+const of = (iso: string) => countryOf(countriesFixture, iso);
 
 describe('countries', () => {
-  it('lists each country once with a dialling code', () => {
-    const all = [...africanCountries, ...otherCountries];
-    expect(africanCountries).toHaveLength(54);
-    expect(new Set(all.map((country) => country.iso)).size).toBe(all.length);
-    for (const country of all) expect(country.dial).toMatch(/^\+\d{1,3}$/);
-    expect(dialCodeOf('NG')).toBe('+234');
-    expect(dialCodeOf('ZA')).toBe('+27');
-    expect(dialCodeOf('??')).toBe('');
+  it('dials the calling code alone, even for a territory listed with its area code', () => {
+    expect(dialCodeOf(of('NG'))).toBe('+234');
+    expect(dialCodeOf(of('JM'))).toBe('+1');
+    expect(dialCodeOf(of('??'))).toBe('');
   });
 
-  it('writes a number the way the backend wants it', () => {
-    expect(internationalNumber('NG', '803 555 0142')).toBe('+2348035550142');
-    expect(internationalNumber('NG', '0803-555-0142')).toBe('+2348035550142');
-    expect(internationalNumber('GB', '(07700) 900123')).toBe('+447700900123');
+  it('writes a number in international form for the fields that take no country', () => {
+    expect(internationalNumber(of('NG'), '803 555 0142')).toBe('+2348035550142');
+    expect(internationalNumber(of('NG'), '0803-555-0142')).toBe('+2348035550142');
+    expect(internationalNumber(of('GB'), '(07700) 900123')).toBe('+447700900123');
+    expect(internationalNumber(of('JM'), '876 555 0142')).toBe('+18765550142');
   });
 
-  it('masks a number down to its country and last two digits', () => {
-    expect(maskedNumber('NG', '803 555 0142')).toBe('+234 ••• ••• ••42');
+  it('masks a number down to its calling code and last two digits, and to the digits until the list is in', () => {
+    expect(maskedNumber(of('NG'), '803 555 0142')).toBe('+234 ••• ••• ••42');
+    expect(maskedNumber(undefined, '803 555 0142')).toBe('••• ••• ••42');
   });
 
-  it('names countries in the reader’s language, in that language’s order', () => {
-    const named = namedCountries(africanCountries, 'en-NG');
-    expect(named.find((country) => country.iso === 'NG')?.name).toBe('Nigeria');
-    expect(named.map((country) => country.name)).toEqual([...named.map((country) => country.name)].sort((a, b) => a.localeCompare(b, 'en-NG')));
-    expect(namedCountries(africanCountries, 'fr').find((country) => country.iso === 'ZA')?.name).toBe('Afrique du Sud');
+  it('groups the suggested country, then Africa by its time zones (islands included, Spain not), then the rest, named in the reader’s language', () => {
+    const grouped = groupedCountries(countriesFixture, 'en-NG', 'NG');
+    expect(grouped.suggested).toEqual([{ iso: 'NG', name: 'Nigeria', flag: '🇳🇬', dial: '+234' }]);
+    expect(grouped.africa.map((country) => country.iso)).toEqual(['GH', 'KE', 'MU']);
+    expect(grouped.world.map((country) => country.name)).toEqual(['Jamaica', 'Spain', 'United Kingdom']);
+    expect(groupedCountries(countriesFixture, 'fr', 'NG').world.map((country) => country.name)).toContain('Espagne');
+  });
+
+  it('falls back to the backend’s name where the browser has none', () => {
+    const unnamed = { ...countriesFixture[3]!, isoCode: 'XZ', name: 'Somewhere' };
+    expect(groupedCountries([unnamed], 'en', '').world[0]?.name).toBe('Somewhere');
   });
 });

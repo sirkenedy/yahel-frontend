@@ -2,7 +2,8 @@ import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import type { ReactElement } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../../flow/countries.fixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flowMessages as shared } from '../../../flow/messages';
 import type { FlowRequest } from '../../../flow/use-flow-request';
@@ -111,7 +112,7 @@ const flowValue = (actions: PersonalFlowValue['actions'], { state, offers, links
 const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
   // A whole-screen state asks the query client about the service, so every step is given one.
-  const queryClient = new QueryClient();
+  const queryClient = withCountries();
   const within = (next: Overrides) => (
     <QueryClientProvider client={queryClient}>
       <PersonalFlowContext value={flowValue(actions, next)}>{ui}</PersonalFlowContext>
@@ -562,7 +563,7 @@ describe('RecoveryStep', () => {
 
     expect(country).toHaveValue('NG');
     expect(within(country).getByRole('group', { name: m.countryGroups.africa })).toBeInTheDocument();
-    await user.selectOptions(country, '+233 Ghana');
+    await user.selectOptions(country, '🇬🇭 +233 Ghana');
     await press(m.continue);
 
     expect(actions.enterRecovery).toHaveBeenCalledWith({ country: 'GH', phone: '803 555 0142', email: 'amara.o@personal.example' });

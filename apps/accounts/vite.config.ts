@@ -33,7 +33,7 @@ export default defineConfig(({ command, mode }) => {
               // With the provider and its requests: they are used by nothing else.
               { name: 'admin-steps', test: /features\/admin\/(steps\/|admin-flow|requests|feedback|messages|validation)|routes\/admin\/.*tsr-split=component/ },
               // What only steps are built from, the whole-screen states among them: one file beside the first flow shown, not a dozen.
-              { name: 'step-kit', test: /src\/flow\/(email-confirmation|step-frame|state-screen|resend-link|use-step-field|credentials|use-debounced-value|emailed-code-form|phone-country-select|birth-fields|birth-date|countries|dates)|ui\/src\/components\/flow\/(flow-field|code-input|choice|flow-select|progress|suggestions)\./ },
+              { name: 'step-kit', test: /src\/flow\/(email-confirmation|step-frame|state-screen|resend-link|use-step-field|credentials|use-debounced-value|emailed-code-form|country-select|list-unavailable|birth-fields|birth-date|countries|dates)|ui\/src\/components\/flow\/(flow-field|code-input|choice|flow-select|progress|suggestions)\./ },
             ],
           },
         },

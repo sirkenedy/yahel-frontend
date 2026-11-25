@@ -1,7 +1,7 @@
 import { FlowButton, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { useStepFields, useStepField } from '../../../flow/use-step-field';
-import { PhoneCountrySelect } from '../../../flow/phone-country-select';
+import { CountrySelect } from '../../../flow/country-select';
 import { DEFAULT_PHONE_COUNTRY } from '../machine';
 import { personalMessages as m } from '../messages';
 import { usePersonalFlow } from '../personal-flow';
@@ -22,7 +22,7 @@ export function RecoveryStep() {
       <FlowStep.Form onSubmit={(event) => form.submit(event, () => actions.enterRecovery({ country, phone: phone.value.trim(), email: email.value.trim().toLowerCase() }))}>
         <FlowStep.Body>
           <FlowStep.Row layout="phone">
-            <PhoneCountrySelect label={m.country} groups={m.countryGroups} locale={m.locale} suggested={DEFAULT_PHONE_COUNTRY} value={country} onChange={setCountry} />
+            <CountrySelect label={m.country} groups={m.countryGroups} locale={m.locale} suggested={DEFAULT_PHONE_COUNTRY} value={country} onChange={setCountry} forPhone />
             <FlowTextField label={m.mobileNumber} name="tel-national" type="tel" inputMode="tel" autoComplete="tel-national" value={phone.value} onChange={phone.change} onBlur={phone.blur} isValid={phone.isValid} error={phone.error} inputRef={phone.inputRef} isSensitive />
           </FlowStep.Row>
           <FlowTextField label={m.recoveryEmail} name="recovery-email" type="email" inputMode="email" autoComplete="email" spellCheck="false" help={m.recoveryEmailHelp} value={email.value} onChange={email.change} onBlur={email.blur} isValid={email.isValid} error={email.error} inputRef={email.inputRef} isSensitive />

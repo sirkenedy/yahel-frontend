@@ -1,11 +1,11 @@
-import type { AccountCapabilities, BillingContact, CardDetails, OrderRequest, PostalAddress, RegisterBusinessBody } from '@yahel/api-client';
+import { useQueryClient } from '@tanstack/react-query';
+import type { AccountCapabilities, BillingContact, CardDetails, Country, OrderRequest, PostalAddress, RegisterBusinessBody } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { internationalNumber } from '../../flow/countries';
+import { countriesQuery, countryOf, internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { say } from '../../flow/toasts';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { brandOf, cardDigits } from './card';
-import { countryRecord } from './countries';
 import { Refused, describeBusinessFailure } from './feedback';
 import type { FailureContext } from './feedback';
 import { adminAddressOf, domainOf, seatsOf, smallestTeam } from './machine';
@@ -36,10 +36,17 @@ export const orderOf = (state: BusinessState, planId: string): OrderRequest => (
   domain: state.domainSource === 'bought' ? (state.bought?.domain ?? null) : null,
 });
 
-const postalAddressOf = ({ address, country }: BusinessState): PostalAddress | null =>
-  address ? { street: address.street, street2: address.street2, city: address.city, state: address.state, localArea: address.localArea, postalCode: address.postalCode, country, phone: internationalNumber(address.phoneCountry, address.phone) } : null;
+const postalAddressOf = ({ address, country }: BusinessState, countries: readonly Country[]): PostalAddress | null =>
+  address ? { street: address.street, street2: address.street2, city: address.city, state: address.state, localArea: address.localArea, postalCode: address.postalCode, country, phone: internationalNumber(countryOf(countries, address.phoneCountry), address.phone) } : null;
 
-const contactOf = (state: BusinessState): BillingContact => ({ businessName: state.businessName, email: state.contactEmail, address: postalAddressOf(state) });
+const contactOf = (state: BusinessState, countries: readonly Country[]): BillingContact => ({ businessName: state.businessName, email: state.contactEmail, address: postalAddressOf(state, countries) });
+
+/** The country as the backend records it. The backend's names are English, whatever language the page is in, so records read alike. */
+const countryRecordOf = (countries: readonly Country[], iso: string) => {
+  const country = countryOf(countries, iso);
+  if (!country) throw new Error(`${iso} is not a country the backend lists`);
+  return { name: country.name, code: country.isoCode, currency: country.currency };
+};
 
 /**
  * What the design collects, as the backend's register-business endpoint takes it. `email` is the
@@ -47,14 +54,14 @@ const contactOf = (state: BusinessState): BillingContact => ({ businessName: sta
  * today, for reset links and setup updates. No date of birth is asked for a business (F-100). `slug` is made
  * here because the design never asks for one; `employeeCount` is the smallest team of the size chosen.
  */
-export const registrationOf = (state: BusinessState, slug: string): RegisterBusinessBody => ({
+export const registrationOf = (state: BusinessState, slug: string, countries: readonly Country[]): RegisterBusinessBody => ({
   email: adminAddressOf(state),
   password: state.password ?? '',
   firstName: state.firstName,
   lastName: state.lastName,
   businessName: state.businessName,
   slug,
-  country: countryRecord(state.country),
+  country: countryRecordOf(countries, state.country),
   employeeCount: smallestTeam[state.size],
   domain: domainOf(state),
   ...(state.contactEmail ? { contactEmail: state.contactEmail } : {}),
@@ -65,6 +72,7 @@ export const registrationOf = (state: BusinessState, slug: string): RegisterBusi
  * turns these into `actions` and `meta.requests`.
  */
 export function useBusinessRequests({ visit, session, capabilities, store, navigate, planId }: BusinessRequestDeps) {
+  const queryClient = useQueryClient();
   const state = () => store.getState();
   const describe = (context: FailureContext) => (error: unknown) => describeBusinessFailure(error, context);
   const billing = capabilities.workspaceBilling;
@@ -127,10 +135,11 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
 
   const register = async (): Promise<CreateOutcome | null> => {
     const answers = state();
+    const countries = await queryClient.ensureQueryData(countriesQuery);
     const slugs = [...new Set([slugOf(answers.businessName, domainOf(answers)), slugOfDomain(domainOf(answers))])];
     for (const [attempt, slug] of slugs.entries()) {
       try {
-        const made = await session.registerBusiness(registrationOf(answers, slug));
+        const made = await session.registerBusiness(registrationOf(answers, slug, countries));
         store.dispatch({ type: 'workspace-created', tenantId: made.tenant.id, challengeToken: made.challengeToken });
         return null;
       } catch (error) {
@@ -198,7 +207,7 @@ export function useBusinessRequests({ visit, session, capabilities, store, navig
         store.dispatch({ type: 'payment-dropped' });
         void billing.release(previous.id).catch(() => undefined);
       }
-      const started = await billing.pay(orderOf(state(), plan), card, contactOf(state()));
+      const started = await billing.pay(orderOf(state(), plan), card, contactOf(state(), await queryClient.ensureQueryData(countriesQuery)));
       if (started.status === 'declined') throw new Refused('card-declined');
       store.dispatch({ type: 'payment-started', payment: { id: started.paymentId, card: { brand: brandOf(card.number), lastFour: cardDigits(card.number).slice(-4) }, sentTo: started.sentTo } });
       return 'code-needed' as const;

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../flow/countries.fixture';
 import { ApiError } from '@yahel/api-client';
 import type { Profile } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
@@ -55,7 +56,7 @@ const setup = ({ step = 'phone' as AdminStep, facts = { signedIn: false, phoneVe
   const navigate = vi.fn();
   const leave = vi.fn();
   const goTo = vi.fn();
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const queryClient = withCountries(new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } }));
   let latest: AdminFlowValue | undefined;
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: AdminStep, currentFacts: AdminFacts) => (
@@ -81,7 +82,7 @@ describe('AdminFlowProvider: the phone check, before any session', () => {
 
     act(() => flow().actions.sendPhoneCode({ country: 'NG', number: '0803 555 0142' }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith('code'));
-    expect(session.sendPhoneCheck).toHaveBeenCalledWith('pc-1', '+2348035550142');
+    expect(session.sendPhoneCheck).toHaveBeenCalledWith('pc-1', { phone: '0803 555 0142', countryCode: 'NG' });
     expect(session.api.me.recovery.updatePhone).not.toHaveBeenCalled();
 
     act(() => flow().actions.verifyPhone('K9mP2r'));

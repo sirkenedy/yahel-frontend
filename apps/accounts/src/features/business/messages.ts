@@ -36,7 +36,7 @@ export const businessMessages = {
   sizeLabel: 'How many people, including you?',
   sizes: { solo: 'Just me', small: '2–9', medium: '10–99', large: '100–299', huge: '300+' },
   country: 'Country or region',
-  countryGroups: { suggested: 'Suggested', africa: 'Africa', other: 'Rest of the world' },
+  countryGroups: { suggested: 'Suggested', africa: 'Africa', world: 'Rest of the world' },
   countryHelp: 'Sets your currency and billing. It can’t be changed after sign-up.',
   personalInstead: 'Create a personal account instead',
 

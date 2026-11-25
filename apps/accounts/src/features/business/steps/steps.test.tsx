@@ -1,4 +1,5 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { withCountries } from '../../../flow/countries.fixture';
 import type { OrderQuote, WorkspacePlan } from '@yahel/api-client';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -90,7 +91,7 @@ const flowValue = (actions: BusinessFlowValue['actions'], { state, offers: offer
 const setup = (ui: ReactElement, overrides: Overrides = {}) => {
   const actions = fakeActions();
   const { container } = render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={withCountries()}>
       <BusinessFlowContext value={flowValue(actions, overrides)}>{ui}</BusinessFlowContext>
     </QueryClientProvider>,
   );
@@ -110,7 +111,7 @@ describe('StartStep', () => {
 
     await user.type(field(m.businessName), ' Northwind Studio ');
     await user.click(screen.getByRole('radio', { name: m.sizes.small }));
-    await user.selectOptions(field(m.country), 'Kenya');
+    await user.selectOptions(field(m.country), '🇰🇪 Kenya');
     await press(m.continue);
 
     expect(actions.enterBusiness).toHaveBeenCalledWith({ businessName: 'Northwind Studio', size: 'small', country: 'KE' });

@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { forgetAccountData, isSignedInAs } from '../../flow/accounts';
-import { internationalNumber } from '../../flow/countries';
+import { countriesQuery, countryOf, internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { flowMessages as shared } from '../../flow/messages';
 import { say } from '../../flow/toasts';
@@ -43,11 +43,11 @@ export function useAdminRequests({ visit, session, registrar, store, navigate }:
     throw new ApiError({ status: 401, code, message: 'No phone check is waiting for this account' });
   };
 
+  /** The recovery phone takes no `countryCode`, so it is given the number in international form. */
   const textPhone = async ({ country, number }: PhoneNumber) => {
-    const phone = internationalNumber(country, number);
     const token = challenge();
-    if (token) await session.sendPhoneCheck(token, phone);
-    else await ownAccount('INVALID_TOKEN').updatePhone({ phone });
+    if (token) await session.sendPhoneCheck(token, { phone: number, countryCode: country });
+    else await ownAccount('INVALID_TOKEN').updatePhone({ phone: internationalNumber(countryOf(await queryClient.ensureQueryData(countriesQuery), country), number) });
   };
 
   /** A challenge that can no longer be met is gone for good: the person signs in again for a new one. */

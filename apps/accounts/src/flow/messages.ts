@@ -28,6 +28,8 @@ export const flowMessages = {
   dismiss: 'Dismiss',
   slow: 'Still working. Your connection seems slow, so this is taking longer than usual.',
   tryAgain: 'Try again',
+  listLoading: 'Loading…',
+  listFailed: 'This list didn’t load. Try again in a moment.',
   tooManyAccountsTitle: 'This device has 10 accounts on it',
   tooManyAccountsText: 'That’s as many as one device can hold. On the sign-in page, choose “Remove an account” to make room, then sign in again.',
   serverErrorTitle: 'Something went wrong on our side',
