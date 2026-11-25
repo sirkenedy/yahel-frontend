@@ -61,7 +61,6 @@ describe('PhoneStep', () => {
     const { actions, user } = setup(<PhoneStep />, { state: { ...handedOver, step: 'phone' } });
 
     expect(heading(m.phoneTitle)).toBeInTheDocument();
-    expect(screen.getByLabelText(m.country)).toHaveValue('NG');
     await user.selectOptions(screen.getByLabelText(m.country), 'GH');
     await user.type(screen.getByLabelText(m.mobileNumber), '024 555 0142{Enter}');
     expect(actions.sendPhoneCode).toHaveBeenCalledWith({ country: 'GH', number: '024 555 0142' });

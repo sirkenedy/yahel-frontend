@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { accountsUrl, armStepFailure, at, failNextStep, openPasswordStep, signInWithPassword, stubPasskeys, visit, stubApp, appUrl } from './support/accounts';
+import { accountsUrl, appUrl, armStepFailure, at, failNextStep, fillMobile, openPasswordStep, signInWithPassword, stubApp, stubPasskeys, visit } from './support/accounts';
 import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
 import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './support/personal';
-
-// Pickers start on the browser's location (F-113): these tests are set in Lagos.
-test.use({ timezoneId: 'Africa/Lagos' });
 
 const calls = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
 const registrations = (api: MockApi) => calls(api, '/v1/auth/register');
@@ -384,7 +381,7 @@ test.describe('personal account: what each question refuses', () => {
 
     await proceed(page);
     await expect(page.getByText('Add a phone number or an email, or choose Skip.')).toBeVisible();
-    await page.getByLabel('Mobile number').fill('803');
+    await fillMobile(page, '803');
     await page.getByLabel('Recovery email').fill(person.ownEmail);
     await proceed(page);
     await expect(page.getByText('Check the number, or leave it empty.')).toBeVisible();

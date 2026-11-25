@@ -1,12 +1,9 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { at, fillMobile, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
-
-// Pickers start on the browser's location (F-113): these tests are set in Lagos.
-test.use({ timezoneId: 'Africa/Lagos' });
 
 type Api = Awaited<ReturnType<typeof mockApi>>;
 const registrations = (api: Api) => api.calls.filter((call) => call.path === '/v1/auth/register-business');
@@ -35,7 +32,7 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
 
     await proceed(page);
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: business.phone, countryCode: 'NG' });
@@ -210,6 +207,9 @@ test.describe('accounts: plan and checkout, once signed in', () => {
 });
 
 test.describe('accounts: countries from the backend', () => {
+  // These are about the default, which comes from where the browser is.
+  test.use({ timezoneId: 'Africa/Lagos' });
+
   test('every country the backend lists is offered A to Z with its flag, starting on where the browser is, and one without states asks for the state in words', async ({ page }) => {
     await mockApi(page);
     await createWorkspaceTo(page, 'start');
@@ -297,7 +297,7 @@ test.describe('accounts: what the workspace questions refuse', () => {
     // The address already existed: the password just chosen was answered with this person's phone check.
     expect(calls(api, '/v1/auth/login')).toHaveLength(1);
     await proceed(page);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toMatchObject({ challengeToken: 'phone-check-2' });
   });
@@ -324,7 +324,7 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
     await expect(page.getByRole('main')).toContainText('Next, we’ll check it’s you.');
     await expect(page.getByRole('note')).toHaveCount(0);
     await proceed(page);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await page.getByLabel('6-character code').fill(phoneCode);
     await proceed(page, 'I understand');
@@ -390,7 +390,7 @@ test.describe('accounts: a workspace made while signed in', () => {
     await proceed(page);
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);

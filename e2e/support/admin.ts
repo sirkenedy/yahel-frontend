@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { openPasswordStep, stubPasskeys } from './accounts';
+import { fillMobile, openPasswordStep, stubPasskeys } from './accounts';
 import type { PasskeyOutcome } from './accounts';
 import { newAdmin, phoneCode } from './api';
 
@@ -33,7 +33,7 @@ export async function adminTo(page: Page, stop: AdminStop, { passkey = 'success'
 
   await heading(page, 'Verify it’s you.').waitFor();
   if (stop === 'phone') return;
-  await page.getByLabel('Mobile number').fill(adminPhone.number);
+  await fillMobile(page, adminPhone.number);
   await page.getByRole('button', { name: 'Send code' }).click();
 
   await heading(page, 'Enter the code.').waitFor();

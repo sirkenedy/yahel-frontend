@@ -5,9 +5,6 @@ import { credentials, mockApi, phoneCode, requestId, suspendedCredentials } from
 import type { MockApi } from './support/api';
 import { heading, person, signUpTo } from './support/personal';
 
-// Pickers start on the browser's location (F-113): these tests are set in Lagos.
-test.use({ timezoneId: 'Africa/Lagos' });
-
 // Every server answer of the design's feedback map, driven through the mock, for sign-in and for personal sign-up.
 
 const calls = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);

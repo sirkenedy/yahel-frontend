@@ -1,11 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { fillMobile, openPasswordStep, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { adminAddress, adminPhone, adminTo, codeBoxes, heading, stubAdmin } from './support/admin';
 import { credentials, mockApi, newAdmin, phoneCode, takenAddress } from './support/api';
 import type { MockApi } from './support/api';
-
-// Pickers start on the browser's location (F-113): these tests are set in Lagos.
-test.use({ timezoneId: 'Africa/Lagos' });
 
 const sent = (api: MockApi, path: string) => api.calls.filter((call) => call.path === path);
 
@@ -18,7 +15,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
     expect(sent(api, '/v1/auth/refresh')).toHaveLength(0);
 
-    await page.getByLabel('Mobile number').fill(adminPhone.number);
+    await fillMobile(page, adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(page.getByRole('main')).toContainText(adminPhone.masked);
     expect(sent(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: adminPhone.number, countryCode: 'NG' });
@@ -44,7 +41,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await adminTo(page, 'phone');
     await expect(page.getByRole('main')).toContainText(newAdmin.email);
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
-    await page.getByLabel('Mobile number').fill(adminPhone.number);
+    await fillMobile(page, adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
     // A complete code sends itself.
     await codeBoxes(page).fill(phoneCode);
@@ -114,7 +111,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     const api = await mockApi(page);
     await adminTo(page, 'phone');
     api.failNext('/v1/auth/phone-challenge/send', 401, 'INVALID_TOKEN');
-    await page.getByLabel('Mobile number').fill(adminPhone.number);
+    await fillMobile(page, adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
 
     const ended = page.getByRole('alert').filter({ hasText: 'This check has ended' });
@@ -184,7 +181,7 @@ test.describe('accounts: the admin steps cannot be walked around', () => {
 
     await visit(page, '/admin');
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
-    await page.getByLabel('Mobile number').fill(adminPhone.number);
+    await fillMobile(page, adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     expect(sent(api, '/v1/me/recovery/phone')).toHaveLength(1);

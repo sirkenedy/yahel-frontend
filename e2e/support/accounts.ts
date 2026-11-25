@@ -5,6 +5,12 @@ import { credentials, resetCode, twoStepCredentials } from './api';
 export const accountsUrl = 'http://localhost:4175';
 export const at = (path: string) => `${accountsUrl}${path}`;
 
+/** Types a mobile number with its country chosen, rather than left to where the test machine happens to be (F-113). */
+export async function fillMobile(page: Page, number: string, country = 'NG') {
+  await page.getByRole('combobox', { name: /^Country( code)?$/ }).selectOption(country);
+  await page.getByLabel('Mobile number').fill(number);
+}
+
 /**
  * Opens a page of the accounts app. WebKit reports a navigation as interrupted when the page being left is still
  * finishing a redirect of its own (to the account chooser, say), so the address is asked for once more. A second
