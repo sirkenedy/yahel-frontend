@@ -2,7 +2,7 @@ export { CLIENT_HEADER, createApiClient } from './client';
 export type { ApiClient, ApiClientOptions } from './client';
 export { ApiError, isApiError } from './errors';
 export { isMfaRequired, isPhoneRequired } from './types';
-export type { Acknowledgement, AddedDomain, AuthContext, DomainStatus, DomainVerificationRecord, DomainVerified, Workspace, WorkspaceDomain, AuthTokens, BusinessRegistration, ClientAccount, RefreshedTokens, LoginResult, MfaRequired, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, PhoneRequired, PasskeySignInResult, RegisterBusinessBody, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
+export type { Acknowledgement, AddedDomain, AuthContext, DomainStatus, DomainVerificationRecord, DomainVerified, Workspace, WorkspaceDomain, AuthTokens, BusinessRegistration, ClientAccount, City, Country, CountryState, RefreshedTokens, LoginResult, MfaRequired, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, PhoneRequired, PasskeySignInResult, RegisterBusinessBody, PendingRecoveryContact, Profile, ProfilePhoto, RecoveryMethods, Schemas } from './types';
 export { accountDirectoryOf, createAccountCapabilities, maskEmail } from './account-capabilities';
 export type { StandIns } from './account-capabilities';
 export { currentAccountOf, isWorkspaceAdmin, standingOf } from './account-standing';

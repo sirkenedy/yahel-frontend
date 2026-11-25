@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { at, signInWithPassword, stubPasskeys, visit } from './support/accounts';
+import { at, chooseCountry, fillMobile, signInWithPassword, stubPasskeys, visit } from './support/accounts';
 import { claimedDomain, credentials, mockApi, phoneCode, publicEmailDomain, takenAddress } from './support/api';
 import { business, card, createWorkspaceTo, fillAddress, fillCard, heading, proceed } from './support/business';
 import { stubAdmin } from './support/admin';
@@ -32,10 +32,10 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
 
     await proceed(page);
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await expect(heading(page, 'Enter the code.')).toBeVisible();
-    expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: '+2348035550142' });
+    expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: business.phone, countryCode: 'NG' });
     await page.getByLabel('6-character code').fill(phoneCode);
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
     await expect(page.getByRole('button', { name: `Account: ${business.adminAddress}` })).toBeVisible();
@@ -206,6 +206,81 @@ test.describe('accounts: plan and checkout, once signed in', () => {
   });
 });
 
+test.describe('accounts: countries from the backend', () => {
+  // These are about the default, which comes from where the browser is.
+  test.use({ timezoneId: 'Africa/Lagos' });
+
+  test('every country the backend lists is offered A to Z with its flag, starting on where the browser is, and one without states asks for the state in words', async ({ page }) => {
+    await mockApi(page);
+    await createWorkspaceTo(page, 'start');
+    const country = page.getByRole('combobox', { name: /^Country or region/ });
+    await expect(country).toHaveText('🇳🇬 Nigeria');
+    await country.click();
+    await expect(page.getByRole('option')).toHaveText(['🇨🇦Canada CA', '🇬🇭Ghana GH', '🇯🇲Jamaica JM', '🇰🇪Kenya KE', '🇳🇬Nigeria NG', '🇬🇧United Kingdom GB', '🇺🇸United States US']);
+    await expect(page.getByRole('option', { name: 'Nigeria NG' })).toHaveAttribute('aria-selected', 'true');
+
+    await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: 'Kenya' });
+    await expect(page.getByRole('textbox', { name: 'State or region' })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: /^Country code/ })).toHaveText('🇰🇪 +254');
+  });
+
+  test('the country list is a compact panel with a search: a dialling code finds the country, the keyboard picks it, and Escape gives focus back', async ({ page }) => {
+    await mockApi(page);
+    await createWorkspaceTo(page, 'start');
+    const country = page.getByRole('combobox', { name: /^Country or region/ });
+
+    await country.focus();
+    await page.keyboard.press('ArrowDown');
+    const search = page.getByRole('textbox', { name: 'Search country' });
+    await expect(search).toBeFocused();
+    const listbox = page.getByRole('listbox', { name: 'Country or region' });
+    // The list scrolls inside a panel no taller than its 296 px list, the search and the panel's padding: it never fills the page.
+    const panel = await listbox.locator('..').boundingBox();
+    expect(panel?.height).toBeLessThanOrEqual(296 + 46 + 40);
+    expect((await listbox.boundingBox())?.height).toBeLessThanOrEqual(296);
+
+    await search.fill('233');
+    await expect(page.getByRole('option')).toHaveText(['🇬🇭Ghana GH']);
+    await search.fill('');
+    await search.pressSequentially('ken');
+    await page.keyboard.press('Enter');
+    await expect(listbox).toBeHidden();
+    await expect(country).toBeFocused();
+    await expect(country).toHaveText('🇰🇪 Kenya');
+
+    await page.keyboard.press('Enter');
+    await expect(search).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(listbox).toBeHidden();
+    await expect(country).toBeFocused();
+    await expect(country).toHaveText('🇰🇪 Kenya');
+  });
+
+  test.describe('in another country', () => {
+    test.use({ timezoneId: 'America/Toronto', locale: 'en-CA' });
+
+    test('the country starts on the one the browser’s time zone is in, and the person can change it', async ({ page }) => {
+      await mockApi(page);
+      await createWorkspaceTo(page, 'start');
+      const country = page.getByRole('combobox', { name: /^Country or region/ });
+      await expect(country).toHaveText('🇨🇦 Canada');
+      await chooseCountry(page, 'Country or region', 'Ghana');
+      await expect(country).toHaveText('🇬🇭 Ghana');
+    });
+  });
+
+  test('a list that does not load says so beside the field, and Try again loads it', async ({ page }) => {
+    await mockApi(page);
+    await page.route('**/api/v1/countries/public', (route) => route.abort('internetdisconnected'));
+    await createWorkspaceTo(page, 'start');
+    await expect(page.getByText('This list didn’t load. Try again in a moment.')).toBeVisible();
+
+    await page.unroute('**/api/v1/countries/public');
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('combobox', { name: /^Country or region/ })).toHaveText('🇳🇬 Nigeria');
+  });
+});
+
 test.describe('accounts: what the workspace questions refuse', () => {
   test('the business, the person and the administrator’s sign-in each say what is missing; no date of birth is asked', async ({ page }) => {
     await mockApi(page);
@@ -255,7 +330,7 @@ test.describe('accounts: what the workspace questions refuse', () => {
     // The address already existed: the password just chosen was answered with this person's phone check.
     expect(calls(api, '/v1/auth/login')).toHaveLength(1);
     await proceed(page);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toMatchObject({ challengeToken: 'phone-check-2' });
   });
@@ -282,7 +357,7 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
     await expect(page.getByRole('main')).toContainText('Next, we’ll check it’s you.');
     await expect(page.getByRole('note')).toHaveCount(0);
     await proceed(page);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await page.getByLabel('6-character code').fill(phoneCode);
     await proceed(page, 'I understand');
@@ -348,7 +423,7 @@ test.describe('accounts: a workspace made while signed in', () => {
     await proceed(page);
     await expect(heading(page, 'Verify it’s you.')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
-    await page.getByLabel('Mobile number').fill(business.phone);
+    await fillMobile(page, business.phone);
     await proceed(page, 'Send code');
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);

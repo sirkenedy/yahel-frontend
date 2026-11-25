@@ -206,6 +206,22 @@ describe('createApiClient', () => {
     expect(JSON.parse(init.body)).toEqual({ domain: 'studio.example', method: 'TXT', autoProvisionMode: 'off' });
   });
 
+  it.each([
+    ['countries', (api: ReturnType<typeof createApiClient>) => api.reference.countries(), '/api/v1/countries/public'],
+    ['states', (api: ReturnType<typeof createApiClient>) => api.reference.states('NG'), '/api/v1/countries/public/NG/states'],
+    ['cities', (api: ReturnType<typeof createApiClient>) => api.reference.cities('NG', 'LA'), '/api/v1/countries/public/NG/states/LA/cities'],
+  ] as const)('reference.%s asks for its list without a session', async (_, call, path) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data: [{ name: 'Nigeria' }] }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(call(api)).resolves.toEqual([{ name: 'Nigeria' }]);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe('GET');
+    expect(init.headers.Authorization).toBeUndefined();
+  });
+
   const assertion: AuthenticationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', authenticatorData: 'ad', signature: 'sig', userHandle: 'uh' }, clientExtensionResults: {} };
   const attestation: RegistrationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', attestationObject: 'ao', transports: ['internal'] }, clientExtensionResults: {} };
 

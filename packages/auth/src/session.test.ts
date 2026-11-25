@@ -126,13 +126,13 @@ describe('createSession: a phone checked before the session', () => {
     await expect(session.signIn(profile.email, 'p')).resolves.toEqual({ ok: false, reason: 'phone-required', challengeToken: 'pc-1' });
     expect(session.store.getState().status).toBe('unknown');
 
-    await session.sendPhoneCheck('pc-1', '+2348035550142');
+    await session.sendPhoneCheck('pc-1', { phone: '803 555 0142', countryCode: 'NG' });
     await expect(session.completePhoneCheck('pc-1', 'wrong1')).rejects.toMatchObject({ code: 'INVALID_TOKEN' });
     expect(session.store.getState().status).toBe('unknown');
     await expect(session.completePhoneCheck('pc-1', 'A7kZq2')).resolves.toEqual({ slot: 1, handle: 'h-1' });
 
     expect(session.store.getState()).toEqual({ status: 'signed-in', profile, slot: 1, handle: 'h-1' });
-    expect(bodiesTo(fetchMock, '/api/v1/auth/phone-challenge/send')).toEqual([{ challengeToken: 'pc-1', phone: '+2348035550142' }]);
+    expect(bodiesTo(fetchMock, '/api/v1/auth/phone-challenge/send')).toEqual([{ challengeToken: 'pc-1', phone: '803 555 0142', countryCode: 'NG' }]);
   });
 });
 

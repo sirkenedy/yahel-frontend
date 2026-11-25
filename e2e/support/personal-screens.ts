@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
 import { emailCode, phoneCode, requestId } from './api';
 import { heading, person, signUp, signUpTo, signUpToPasskeyOffer } from './personal';
-import { accountsUrl } from './accounts';
+import { accountsUrl, fillMobile } from './accounts';
 
 const proceed = (page: Page, name = 'Continue') => page.getByRole('button', { name, exact: true }).click();
 
@@ -179,7 +179,7 @@ export const personalScreens: Screen[] = [
     name: 'personal recovery, filled',
     open: async (page) => {
       await signUpTo(page, 'recovery');
-      await page.getByLabel('Mobile number').fill(person.phone);
+      await fillMobile(page, person.phone);
       await page.getByLabel('Recovery email').fill(person.recoveryEmail);
     },
   },
@@ -187,7 +187,7 @@ export const personalScreens: Screen[] = [
     name: 'personal recovery with errors',
     open: async (page) => {
       await signUpTo(page, 'recovery');
-      await page.getByLabel('Mobile number').fill('803');
+      await fillMobile(page, '803');
       await page.getByLabel('Recovery email').fill('amara@');
       await proceed(page);
       await page.getByText('Check the number, or leave it empty.').waitFor();
