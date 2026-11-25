@@ -62,6 +62,8 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Refresh token as an `HttpOnly` cookie
 - [ ] Response bodies declared in the OpenAPI description
 - [x] A pending TXT domain's record that can be shown again: the list now carries `verificationToken` on pending and re-verification rows, and Admin shows it (backend #62, `decisions.md` F-111)
+- [x] Countries from the backend: `GET /v1/countries/public` (with flag, dialling code, currency and time zones) and its states, for every country picker, the phone country and the state field; a phone is sent as typed with its `countryCode` (backend #64, `decisions.md` F-113)
+- [ ] A region (continent) on each country, so the pickers' Africa group need not be read from time zones (F-113)
 - [ ] A dispatch to this repository when the API changes, so the contract watcher runs immediately
 - [ ] `POST /v1/auth/register-business` and the workspace design brought into line (`decisions.md` O-16): the short name, an idempotency key, the display name, and the address checked before the domain remain. Done: `contactEmail` with the address taken as verified and a phone check before any session (F-96, F-97, F-99), no date of birth (F-100), and a domain check before creating (F-101). Business sign-up stays off in release builds unless `VITE_BUSINESS_SIGN_UP=on` (F-78) until O-16 (8) is met
 - [ ] Registration that cannot be used to take over an address: a new registration replaces a pending one, or each emailed code is bound to the registration that issued it; unconfirmed identities expire; the answer does not depend on whether the address has an account, including for domains outside the public-provider list (`decisions.md` O-12, F-50)
@@ -97,7 +99,7 @@ Everything below is copied from the design boards into the stand-ins (`workspace
 - [ ] The promo code LAUNCH: 20% off for 3 months
 - [ ] Domain prices a year: .com ₦18,500, .ng ₦9,000, .africa ₦22,000
 - [ ] "Over 300 people? Talk to us about Enterprise" (the link goes to the help address)
-- [ ] The currency for each country (the app sends an ISO 4217 code with the country; prices exist in naira only)
+- [x] The currency for each country: now the backend's, from `GET /v1/countries/public` (F-113); prices still exist in naira only
 
 ### Signals the feedback states need
 
