@@ -321,7 +321,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || /^\.|\.\.|\.@/.test(email) || !body?.firstName || typeof body.lastName !== 'string' || Number.isNaN(Date.parse(body.dateOfBirth ?? '')) || !meetsPasswordPolicy(body.password ?? '')) {
         return fail(route, 422, 'VALIDATION_ERROR');
       }
-      if ((body.recoveryEmail !== undefined && !body.recoveryEmail.includes('@')) || (body.phone !== undefined && !wellFormedPhone(body.phone))) return fail(route, 422, 'VALIDATION_ERROR');
+      if ((body.recoveryEmail !== undefined && !body.recoveryEmail.includes('@')) || (body.phone !== undefined && !wellFormedPhone({ phone: body.phone }))) return fail(route, 422, 'VALIDATION_ERROR');
       if (ageOf(body.dateOfBirth ?? '') < MIN_AGE) return fail(route, 403, 'USER_UNDERAGE');
       if (accounts.some((known) => known.profile.email === email)) return fail(route, 409, 'EMAIL_ALREADY_EXISTS');
       if (domain !== mailDomain && domain !== publicEmailDomain) return fail(route, 400, 'PERSONAL_SIGNUP_REQUIRES_PUBLIC_EMAIL');
