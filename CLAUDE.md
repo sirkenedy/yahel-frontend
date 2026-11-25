@@ -12,6 +12,12 @@ Agents merge their own work here once every check passes. Nobody may read your c
 4. `design-system/docs/`: principles, foundations, patterns and one spec per component. Read the ones your change touches.
 5. `docs/agents.md`: how the agent pipeline works, if you are running inside it.
 
+## Before you start a task
+
+1. **Ask what is unclear.** If the request leaves a decision open (scope, behaviour, wording, which flow), ask before writing code. A short question costs less than a wrong pull request.
+2. **Plan, then build.** Write down the approach, the files it touches and how you will check it, and share it before a change that spans more than one file or one decision.
+3. **Compare with Google Workspace.** Yahel is what Workspace is, and Google has already met most of our product questions. Say what Workspace does in the question, the plan and the pull request, and say why when we differ: a deliberate difference is fine, an accidental one is a bug. Reach the same outcome; do not copy its workarounds.
+
 ## Commands
 
 ```bash
