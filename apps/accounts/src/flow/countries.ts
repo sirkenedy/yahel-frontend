@@ -1,29 +1,64 @@
-/** A country a phone number can belong to: its ISO code and what is dialled first. Names come from the browser, in the reader's language. */
-export interface PhoneCountry {
+import { queryOptions, useQuery } from '@tanstack/react-query';
+import type { Country } from '@yahel/api-client';
+import { session } from '../session';
+import { flowMessages as m } from './messages';
+
+// Public lists that change with a backend release, not while a page is open: every step reads one cached copy (F-113).
+export const countriesQuery = queryOptions({ queryKey: ['countries'], queryFn: ({ signal }) => session.api.reference.countries(signal), staleTime: Infinity });
+
+/** A country's states; none for a country that is not divided into them. */
+export const statesQuery = (country: string) => queryOptions({ queryKey: ['countries', country, 'states'], queryFn: ({ signal }) => session.api.reference.states(country, signal), staleTime: Infinity });
+
+export const useCountries = () => useQuery(countriesQuery);
+
+export const countryProblem = (iso: string) => (iso ? null : m.countryRequired);
+
+export const countryOf = (countries: readonly Country[] | undefined, iso: string) => countries?.find((country) => country.isoCode === iso);
+
+/** What is dialled first. A territory listed as "+1-876" has the calling code +1; the 876 is part of its national numbers. */
+export const dialCodeOf = (country: Country | undefined) => (country ? `+${/\d+/.exec(country.phonecode)?.[0] ?? ''}` : '');
+
+/** The number in international form, for the fields that take no `countryCode`: the calling code, then the digits without a leading zero. */
+export const internationalNumber = (country: Country | undefined, national: string) => `${dialCodeOf(country)}${national.replace(/\D/g, '').replace(/^0+/, '')}`;
+
+/** Enough to recognise the number, not enough to learn it. */
+export const maskedNumber = (country: Country | undefined, national: string) => `${dialCodeOf(country)} ••• ••• ••${national.replace(/\D/g, '').slice(-2)}`.trim();
+
+/** The number masked, with its calling code once the list of countries is in. */
+export const useMaskedNumber = (iso: string, national: string) => maskedNumber(countryOf(useCountries().data, iso), national);
+
+export interface NamedCountry {
   iso: string;
+  name: string;
+  flag: string;
   dial: string;
 }
 
-const parse = (list: string): PhoneCountry[] => list.split(' ').map((entry) => ({ iso: entry.slice(0, 2), dial: `+${entry.slice(2)}` }));
-
-export const africanCountries = parse(
-  'DZ213 AO244 BJ229 BW267 BF226 BI257 CV238 CM237 CF236 TD235 KM269 CG242 CI225 CD243 DJ253 EG20 GQ240 ER291 SZ268 ET251 GA241 GM220 GH233 GN224 GW245 KE254 LS266 LR231 LY218 MG261 MW265 ML223 MR222 MU230 MA212 MZ258 NA264 NE227 NG234 RW250 ST239 SN221 SC248 SL232 SO252 ZA27 SS211 SD249 TZ255 TG228 TN216 UG256 ZM260 ZW263',
-);
-
-export const otherCountries = parse('AU61 BR55 CA1 CN86 FR33 DE49 IN91 IE353 IT39 JM1 JP81 NL31 PT351 QA974 SA966 ES34 TT1 TR90 AE971 GB44 US1');
-
-const all = [...africanCountries, ...otherCountries];
-
-export const dialCodeOf = (iso: string) => all.find((country) => country.iso === iso)?.dial ?? '';
-
-/** The number as the backend wants it: `+`, the country's code, then the digits without a leading zero. */
-export const internationalNumber = (iso: string, national: string) => `${dialCodeOf(iso)}${national.replace(/\D/g, '').replace(/^0+/, '')}`;
-
-/** Enough to recognise the number, not enough to learn it. */
-export const maskedNumber = (iso: string, national: string) => `${dialCodeOf(iso)} ••• ••• ••${national.replace(/\D/g, '').slice(-2)}`;
-
-/** Names the countries in the reader's language and sorts them by that name. */
-export function namedCountries(countries: readonly PhoneCountry[], locale: string) {
-  const names = new Intl.DisplayNames(locale, { type: 'region' });
-  return countries.map((country) => ({ ...country, name: names.of(country.iso) ?? country.iso })).sort((a, b) => a.name.localeCompare(b.name, locale));
+/** Every country A to Z by its name in the reader's language, as Google's pickers list them. */
+export function namedCountries(countries: readonly Country[], locale: string): NamedCountry[] {
+  const names = new Intl.DisplayNames(locale, { type: 'region', fallback: 'none' });
+  return countries.map((country) => ({ iso: country.isoCode, name: names.of(country.isoCode) ?? country.name, flag: country.flag, dial: dialCodeOf(country) })).sort((a, b) => a.name.localeCompare(b.name, locale));
 }
+
+export interface BrowserPlace {
+  timeZone?: string;
+  language?: string;
+}
+
+const regionOf = (language: string) => {
+  try {
+    return new Intl.Locale(language).region;
+  } catch {
+    return undefined;
+  }
+};
+
+/** Where the person probably is, with no prompt and no request: the country that lists the browser's time zone, else its language's region, else none. */
+export function detectCountry(countries: readonly Country[], { timeZone, language }: BrowserPlace) {
+  const byZone = timeZone ? countries.find((country) => country.timezones.some((zone) => zone.zoneName === timeZone)) : undefined;
+  if (byZone) return byZone.isoCode;
+  const region = language ? regionOf(language) : undefined;
+  return region && countries.some((country) => country.isoCode === region) ? region : '';
+}
+
+export const browserPlace = (): BrowserPlace => ({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, language: globalThis.navigator?.language });

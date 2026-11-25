@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Screen } from './accounts-screens';
-import { stubPasskeys } from './accounts';
+import { fillMobile, stubPasskeys } from './accounts';
 import { adminTo, codeBoxes } from './admin';
 import { requestId } from './api';
 import { createWorkspaceTo } from './business';
@@ -46,7 +46,7 @@ export const adminScreens: Screen[] = [
     open: async (page) => {
       await adminTo(page, 'phone');
       await refuseOnce(page, '/v1/auth/phone-challenge/send', 409, 'PHONE_ALREADY_IN_USE');
-      await page.getByLabel('Mobile number').fill('803 555 0142');
+      await fillMobile(page, '803 555 0142');
       await page.getByRole('button', { name: 'Send code' }).click();
       await page.getByText('This number can’t be used. Try another one.').waitFor();
     },

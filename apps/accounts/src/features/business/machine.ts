@@ -95,12 +95,13 @@ export interface BusinessState {
 
 const initialCreation: Creation = { started: false, created: false, tenantId: null, finished: false, settled: false };
 
-export const DEFAULT_COUNTRY = 'NG';
+/** Nigerian addresses have a local government area and numeric postal codes. */
+export const NIGERIA = 'NG';
 
 export const initialBusinessState: BusinessState = {
   businessName: '',
   size: 'medium',
-  country: DEFAULT_COUNTRY,
+  country: '',
   firstName: '',
   lastName: '',
   contactEmail: '',

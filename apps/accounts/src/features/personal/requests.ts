@@ -1,8 +1,9 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@yahel/api-client';
-import type { AccountCapabilities, Schemas } from '@yahel/api-client';
+import type { AccountCapabilities, Country, Schemas } from '@yahel/api-client';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
 import { useFlowRequest } from '../../flow/use-flow-request';
-import { internationalNumber } from '../../flow/countries';
+import { countriesQuery, countryOf, internationalNumber } from '../../flow/countries';
 import { say } from '../../flow/toasts';
 import { describePersonalFailure, hasCode, isRefusal } from './feedback';
 import type { FailureContext } from './feedback';
@@ -33,8 +34,8 @@ export type CreateOutcome = 'ready' | 'confirm-email' | 'confirm-phone' | 'rejec
 // The backend takes any text for gender and gives "female" as its example.
 const genderForApi = { woman: 'female', man: 'male', another: 'other' } as const;
 
-/** What the design collects, as the backend's register endpoint takes it. */
-export const registrationOf = (state: PersonalState, email: string): Schemas['RegisterDto'] => ({
+/** What the design collects, as the backend's register endpoint takes it. Its `phone` takes no `countryCode`, so it goes in international form. */
+export const registrationOf = (state: PersonalState, email: string, countries: readonly Country[] = []): Schemas['RegisterDto'] => ({
   email,
   firstName: state.firstName,
   lastName: state.lastName,
@@ -45,7 +46,7 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
   ...(state.gender === 'unspecified' ? {} : { gender: genderForApi[state.gender] }),
   // The ways back in travel with the account, so it is created with them in one call.
   ...(state.recovery.email ? { recoveryEmail: state.recovery.email } : {}),
-  ...(state.recovery.phone ? { phone: internationalNumber(state.recovery.country, state.recovery.phone) } : {}),
+  ...(state.recovery.phone ? { phone: internationalNumber(countryOf(countries, state.recovery.country), state.recovery.phone) } : {}),
 });
 
 /**
@@ -53,6 +54,7 @@ export const registrationOf = (state: PersonalState, email: string): Schemas['Re
  * turns these into `actions` and `meta.requests`.
  */
 export function usePersonalRequests({ visit, session, capabilities, registrar, store, mailDomain, navigate, pause = realPause }: PersonalRequestDeps) {
+  const queryClient = useQueryClient();
   const state = () => store.getState();
   const address = () => addressOf(state(), mailDomain);
   const describe = (context: FailureContext) => (error: unknown) => describePersonalFailure(error, context);
@@ -107,7 +109,8 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
   const register = async (): Promise<CreateOutcome | null> => {
     stage('account');
     try {
-      await session.api.auth.register(registrationOf(state(), address()));
+      const countries = state().recovery.phone ? await queryClient.ensureQueryData(countriesQuery) : [];
+      await session.api.auth.register(registrationOf(state(), address(), countries));
       store.dispatch({ type: 'account-created' });
     } catch (error) {
       if (hasCode(error, 'USER_UNDERAGE')) return reject({ step: 'birth', reason: 'underage' });
@@ -148,14 +151,12 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     return awaitEmailCode(false);
   };
 
-  const phoneNumber = () => internationalNumber(state().recovery.country, state().recovery.phone);
-
   /** Texts a code to the phone given at registration. It is settled later, when the code is entered or skipped. */
   const sendPhoneCode = async () => {
     const { recovery, creation } = state();
     if (!recovery.phone || creation.phoneCodeAwaited || creation.settled.includes('phone')) return;
     try {
-      await session.api.auth.sendPhoneOtp({ phone: phoneNumber() });
+      await session.api.auth.sendPhoneOtp({ phone: recovery.phone, countryCode: recovery.country });
       store.dispatch({ type: 'phone-code-sent' });
     } catch (error) {
       if (!isRefusal(error)) throw error;
@@ -237,7 +238,9 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('code'),
     run: async (code: string) => {
-      await session.api.auth.verifyPhoneOtp({ phone: phoneNumber(), code });
+      // Checking the code takes no `countryCode`, so the number goes in international form.
+      const { country, phone } = state().recovery;
+      await session.api.auth.verifyPhoneOtp({ phone: internationalNumber(countryOf(await queryClient.ensureQueryData(countriesQuery), country), phone), code });
       store.dispatch({ type: 'setup-settled', part: 'phone', outcome: 'saved' });
     },
     onDone: finish,
@@ -247,7 +250,8 @@ export function usePersonalRequests({ visit, session, capabilities, registrar, s
     visit,
     describe: describe('other'),
     run: async () => {
-      await session.api.auth.sendPhoneOtp({ phone: phoneNumber() });
+      const { country, phone } = state().recovery;
+      await session.api.auth.sendPhoneOtp({ phone, countryCode: country });
       return 'sent' as const;
     },
     onDone: () => say(m.newCodeSent),

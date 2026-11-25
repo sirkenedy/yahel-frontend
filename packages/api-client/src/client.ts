@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AddedDomain, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, ClientAccount, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
+import type { Acknowledgement, AddedDomain, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, City, ClientAccount, Country, CountryState, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -155,6 +155,13 @@ export function createApiClient(options: ApiClientOptions) {
         /** Invites someone the person trusts; they count once they accept from the email. */
         updateTrustedContact: (body: Schemas['UpdateTrustedContactDto']) => request<RecoveryMethods>('PATCH', '/api/v1/me/recovery/trusted-contact', { auth: true, body }),
       },
+    },
+    /** Countries, their states and their cities; public. An unknown country has no states. */
+    reference: {
+      countries: (signal?: AbortSignal) => request<Country[]>('GET', '/api/v1/countries/public', { signal }),
+      states: (country: string, signal?: AbortSignal) => request<CountryState[]>('GET', '/api/v1/countries/public/{countryIsoCode}/states', { params: { countryIsoCode: country }, signal }),
+      cities: (country: string, state: string, signal?: AbortSignal) =>
+        request<City[]>('GET', '/api/v1/countries/public/{countryIsoCode}/states/{stateIsoCode}/cities', { params: { countryIsoCode: country, stateIsoCode: state }, signal }),
     },
     tenants: {
       /** Whether a domain a business says it owns can still be claimed by a new workspace. Advice: registering decides. */

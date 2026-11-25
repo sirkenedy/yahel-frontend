@@ -38,6 +38,8 @@ export { FlowProgress, Receipt } from './components/flow/progress';
 export type { FlowProgressProps, ReceiptProps, ReceiptRowProps, ReceiptRowState } from './components/flow/progress';
 export { FlowSelect } from './components/flow/flow-select';
 export type { FlowSelectProps } from './components/flow/flow-select';
+export { FlowSearchSelect } from './components/flow/flow-search-select';
+export type { FlowSearchSelectItem, FlowSearchSelectProps } from './components/flow/flow-search-select';
 export { FlowSuggestions } from './components/flow/suggestions';
 export type { FlowSuggestionsProps } from './components/flow/suggestions';
 export { FlowIcon } from './components/flow/flow-icon';
