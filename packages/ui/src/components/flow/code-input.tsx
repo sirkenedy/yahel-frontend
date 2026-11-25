@@ -31,18 +31,14 @@ export interface CodeInputProps {
  */
 export function CodeInput({ label, value, onChange, length = 6, characters = 'digits', help, error, name = 'code', isDisabled, inputRef, submitWhenFull = true }: CodeInputProps) {
   const current = Math.min(value.length, length - 1);
-  const input = useRef<HTMLInputElement | null>(null);
-  const attach = (element: HTMLInputElement | null) => {
-    input.current = element;
-    if (typeof inputRef === 'function') inputRef(element);
-    else if (inputRef) inputRef.current = element;
-  };
+  // The boxes' row, to find the form without taking over the input's own ref.
+  const row = useRef<HTMLDivElement>(null);
   const change = (typed: string) => {
     const next = typed.replace(disallowed[characters], '').slice(0, length);
     onChange(next);
     // Only the change that completes the code sends it, so a code that was refused is not sent again until it is edited.
     // After React has applied the new value, so the form reads the whole code.
-    if (submitWhenFull && next.length === length && value.length < length) setTimeout(() => input.current?.form?.requestSubmit(), 0);
+    if (submitWhenFull && next.length === length && value.length < length) setTimeout(() => row.current?.closest('form')?.requestSubmit(), 0);
   };
   return (
     <AriaTextField
@@ -57,13 +53,13 @@ export function CodeInput({ label, value, onChange, length = 6, characters = 'di
       inputMode={characters === 'digits' ? 'numeric' : 'text'}
     >
       <Label className="ws-flow-field__label">{label}</Label>
-      <div className="ws-flow-code__row">
+      <div ref={row} className="ws-flow-code__row">
         {Array.from({ length }, (_, index) => (
           <span key={index} className="ws-flow-code__box" data-current={index === current} aria-hidden="true">
             {value.charAt(index)}
           </span>
         ))}
-        <Input ref={attach} className="ws-flow-code__input" spellCheck={false} autoCapitalize="off" autoCorrect="off" />
+        <Input ref={inputRef} className="ws-flow-code__input" spellCheck={false} autoCapitalize="off" autoCorrect="off" />
       </div>
       <FieldError className="ws-flow-field__error">
         <FlowIcon name="alert" />
