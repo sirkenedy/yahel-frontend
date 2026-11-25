@@ -43,8 +43,8 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
     await page.getByLabel('Mobile number').fill(adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
+    // A complete code sends itself.
     await codeBoxes(page).fill(phoneCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
     const main = page.getByRole('main');
