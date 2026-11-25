@@ -61,7 +61,11 @@ export function FlowSearchSelect({ label, items, value, onChange, placeholder, s
   const keyed = useMemo(() => items.map((item) => ({ item, key: folded(item.textValue ?? item.label) })), [items]);
   const shown = useMemo(() => {
     const wanted = folded(query.trim());
-    return wanted ? keyed.filter(({ key }) => key.includes(wanted)).map(({ item }) => item) : items;
+    if (!wanted) return items;
+    // A word that starts with the search comes first ("gha" finds Ghana before Afghanistan), each part keeping the list's order.
+    const found = keyed.filter(({ key }) => key.includes(wanted));
+    const leading = found.filter(({ key }) => key.split(/\s+/).some((word) => word.startsWith(wanted)));
+    return [...leading, ...found.filter((entry) => !leading.includes(entry))].map(({ item }) => item);
   }, [keyed, items, query]);
   const chosen = items.find((item) => item.id === value);
   const optionId = (item: FlowSearchSelectItem) => `${id}o${item.id}`;

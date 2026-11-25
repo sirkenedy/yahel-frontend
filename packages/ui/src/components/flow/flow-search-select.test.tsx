@@ -59,6 +59,20 @@ describe('FlowSearchSelect', () => {
     expect(screen.getByRole('option', { name: 'Côte d’Ivoire +225' })).toBeInTheDocument();
   });
 
+  it('puts names that start with the search before names that only contain it', async () => {
+    const user = userEvent.setup();
+    const list = [
+      { id: 'AF', label: 'Afghanistan', textValue: 'Afghanistan AF +93' },
+      { id: 'GH', label: 'Ghana', textValue: 'Ghana GH +233' },
+    ];
+    render(<FlowSearchSelect label="Country" items={list} value="" onChange={vi.fn()} placeholder="Choose a country" searchLabel="Search countries" searchPlaceholder="Search" emptyText="No matches." />);
+
+    await user.click(screen.getByRole('combobox', { name: /^Country/ }));
+    await user.type(screen.getByRole('textbox', { name: 'Search countries' }), 'gha');
+
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Ghana', 'Afghanistan']);
+  });
+
   it('says when nothing matches', async () => {
     const user = userEvent.setup();
     render(<Codes />);
