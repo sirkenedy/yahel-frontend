@@ -1,12 +1,13 @@
-import { FlowButton, FlowCheckbox, FlowNotice, FlowPreview, FlowSelect, FlowStep, FlowTextField } from '@yahel/ui';
+import { FlowButton, FlowCheckbox, FlowNotice, FlowPreview, FlowStep, FlowTextField } from '@yahel/ui';
 import { useState } from 'react';
 import { useStepField, useStepFields } from '../../../flow/use-step-field';
 import { useBusinessFlow } from '../business-flow';
 import { brandOf, formatCardNumber, formatExpiry, formatSecurityCode } from '../card';
-import { NIGERIA, nigerianStates } from '../countries';
+import { NIGERIA } from '../machine';
 import { businessMessages as m } from '../messages';
-import { cardNumberProblem, cityProblem, expiryProblemOf, nameOnCardProblem, securityCodeProblem, stateProblem, streetProblem } from '../validation';
+import { cardNumberProblem, cityProblem, expiryProblemOf, nameOnCardProblem, securityCodeProblem, streetProblem } from '../validation';
 import { PricingUnavailable } from './pricing-unavailable';
+import { RegionField, useRegion } from './region-field';
 import { StepFrame } from './step-frame';
 
 /**
@@ -27,8 +28,8 @@ export function GatewayStep() {
   const [postalCode, setPostalCode] = useState('');
   const street = useStepField({ problemOf: streetProblem, label: m.street });
   const city = useStepField({ problemOf: cityProblem, label: m.city });
-  const region = useStepField<HTMLInputElement & HTMLSelectElement>({ problemOf: (value) => stateProblem(value, state.country), label: inNigeria ? m.state : m.region });
-  const form = useStepFields(sameAddress ? [number, expiry, securityCode, cardName] : [number, expiry, securityCode, cardName, street, city, region]);
+  const region = useRegion(state.country);
+  const form = useStepFields(sameAddress ? [number, expiry, securityCode, cardName] : [number, expiry, securityCode, cardName, street, city, region.field]);
 
   if (quote.status !== 'ready') {
     return (
@@ -48,7 +49,7 @@ export function GatewayStep() {
     </FlowPreview>
   );
 
-  const billingAddress = sameAddress ? null : { street: street.value.trim(), city: city.value.trim(), state: region.value.trim(), postalCode: postalCode.trim(), country: state.country };
+  const billingAddress = sameAddress ? null : { street: street.value.trim(), city: city.value.trim(), state: region.field.value.trim(), postalCode: postalCode.trim(), country: state.country };
 
   return (
     <StepFrame title={m.gatewayTitle} lede={sums.trial ? m.gatewayLedeTrial : m.gatewayLede} requests={[request]} toFix={form.toFix} lead={paying}>
@@ -83,18 +84,7 @@ export function GatewayStep() {
               <FlowTextField label={m.street} name="billing-address-line1" autoComplete="billing address-line1" value={street.value} onChange={street.change} onBlur={street.blur} error={street.error} inputRef={street.inputRef} isRequired isSensitive />
               <FlowStep.Row>
                 <FlowTextField label={m.city} name="billing-address-level2" autoComplete="billing address-level2" value={city.value} onChange={city.change} onBlur={city.blur} error={city.error} inputRef={city.inputRef} isRequired isSensitive />
-                {inNigeria ? (
-                  <FlowSelect label={m.state} name="billing-address-level1" autoComplete="billing address-level1" value={region.value} onChange={region.change} error={region.error} inputRef={region.inputRef} isSensitive>
-                    <option value="">{m.chooseState}</option>
-                    {nigerianStates.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </FlowSelect>
-                ) : (
-                  <FlowTextField label={m.region} name="billing-address-level1" autoComplete="billing address-level1" value={region.value} onChange={region.change} onBlur={region.blur} error={region.error} inputRef={region.inputRef} isRequired isSensitive />
-                )}
+                <RegionField region={region} name="billing-address-level1" autoComplete="billing address-level1" />
               </FlowStep.Row>
               <FlowTextField label={m.postalCode} name="billing-postal-code" inputMode={inNigeria ? 'numeric' : 'text'} autoComplete="billing postal-code" help={m.optional} value={postalCode} onChange={setPostalCode} isSensitive />
             </FlowStep.Group>

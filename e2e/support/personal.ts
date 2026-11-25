@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { stubPasskeys, visit } from './accounts';
+import { fillMobile, stubPasskeys, visit } from './accounts';
 import type { PasskeyOutcome } from './accounts';
 import { mailDomain, publicEmailDomain } from './api';
 
@@ -79,7 +79,7 @@ export async function signUpTo(page: Page, stop: PersonalStop, { address = 'yahe
   await next(page);
   await heading(page, 'Ways back in.').waitFor();
   if (stop === 'recovery') return;
-  if (phone) await page.getByLabel('Mobile number').fill(person.phone);
+  if (phone) await fillMobile(page, person.phone);
   if (recoveryEmail) await page.getByLabel('Recovery email').fill(person.recoveryEmail);
   await next(page, phone || recoveryEmail ? 'Continue' : 'Skip');
 

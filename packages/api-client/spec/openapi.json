@@ -179,6 +179,29 @@
         ],
         "type": "object"
       },
+      "CityResponseDto": {
+        "properties": {
+          "countryCode": {
+            "example": "NG",
+            "type": "string"
+          },
+          "name": {
+            "description": "Hyphenated where the source name contains spaces",
+            "example": "Ikeja",
+            "type": "string"
+          },
+          "stateCode": {
+            "example": "LA",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "countryCode",
+          "stateCode"
+        ],
+        "type": "object"
+      },
       "ClientAccountResponseDto": {
         "properties": {
           "avatarUrl": {
@@ -297,6 +320,57 @@
           "name",
           "code",
           "currency"
+        ],
+        "type": "object"
+      },
+      "CountryResponseDto": {
+        "properties": {
+          "currency": {
+            "description": "ISO 4217",
+            "example": "NGN",
+            "type": "string"
+          },
+          "flag": {
+            "example": "🇳🇬",
+            "type": "string"
+          },
+          "isoCode": {
+            "description": "ISO 3166-1 alpha-2",
+            "example": "NG",
+            "type": "string"
+          },
+          "latitude": {
+            "example": "9.0820",
+            "type": "string"
+          },
+          "longitude": {
+            "example": "8.6753",
+            "type": "string"
+          },
+          "name": {
+            "example": "Nigeria",
+            "type": "string"
+          },
+          "phonecode": {
+            "description": "Dialling code, for the phone field beside the picker",
+            "example": "+234",
+            "type": "string"
+          },
+          "timezones": {
+            "example": "Africa/Lagos",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "isoCode",
+          "phonecode",
+          "currency",
+          "flag",
+          "timezones"
         ],
         "type": "object"
       },
@@ -964,9 +1038,14 @@
             "example": "550e8400-e29b-41d4-a716-446655440000",
             "type": "string"
           },
+          "countryCode": {
+            "description": "ISO 3166-1 alpha-2 country of the number, from the same picker the forms use. Send it whenever phone is a national number.",
+            "example": "NG",
+            "type": "string"
+          },
           "phone": {
-            "description": "Phone to text the code to. E.164 preferred; a bare number is read against the account country.",
-            "example": "+14155552671",
+            "description": "Phone to text the code to. Either a full international number, or a national number with countryCode.",
+            "example": "+2348012345678",
             "type": "string"
           }
         },
@@ -1623,9 +1702,14 @@
       },
       "SendPhoneOtpDto": {
         "properties": {
+          "countryCode": {
+            "description": "ISO 3166-1 alpha-2 country of the number, from the same picker the forms use. Send it whenever phone is a national number.",
+            "example": "NG",
+            "type": "string"
+          },
           "phone": {
-            "description": "Phone number to verify. E.164 format preferred; bare numbers are normalized against the account country.",
-            "example": "+14155552671",
+            "description": "The phone to verify. Either a full international number, or a national number with countryCode.",
+            "example": "+2348012345678",
             "type": "string"
           }
         },
@@ -1645,6 +1729,28 @@
         },
         "required": [
           "newPassword"
+        ],
+        "type": "object"
+      },
+      "StateResponseDto": {
+        "properties": {
+          "countryCode": {
+            "example": "NG",
+            "type": "string"
+          },
+          "isoCode": {
+            "example": "LA",
+            "type": "string"
+          },
+          "name": {
+            "example": "Lagos",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "isoCode",
+          "countryCode"
         ],
         "type": "object"
       },
@@ -3115,6 +3221,107 @@
         "summary": "Resend email verification link",
         "tags": [
           "Auth"
+        ]
+      }
+    },
+    "/api/v1/countries/public": {
+      "get": {
+        "operationId": "CountriesController_getCountries",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CountryResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Every country, for a country picker",
+        "tags": [
+          "Countries"
+        ]
+      }
+    },
+    "/api/v1/countries/public/{countryIsoCode}/states": {
+      "get": {
+        "operationId": "CountriesController_getStates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "countryIsoCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StateResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The states or regions of one country",
+        "tags": [
+          "Countries"
+        ]
+      }
+    },
+    "/api/v1/countries/public/{countryIsoCode}/states/{stateIsoCode}/cities": {
+      "get": {
+        "operationId": "CountriesController_getCities",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "countryIsoCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "stateIsoCode",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CityResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The cities of one state — local government areas for Nigeria",
+        "tags": [
+          "Countries"
         ]
       }
     },

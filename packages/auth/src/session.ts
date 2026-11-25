@@ -1,5 +1,5 @@
 import { accountDirectoryOf, createApiClient, isApiError, isMfaRequired, isPhoneRequired } from '@yahel/api-client';
-import type { ApiClient, AuthTokens, Profile, RegisterBusinessBody } from '@yahel/api-client';
+import type { ApiClient, AuthTokens, PhoneChallengeSendBody, Profile, RegisterBusinessBody } from '@yahel/api-client';
 import { createStore } from 'zustand/vanilla';
 
 export type SessionStatus = 'unknown' | 'signed-out' | 'signed-in';
@@ -257,9 +257,9 @@ export function createSession(options: SessionOptions) {
     /** Creates a workspace and its administrator. No session follows: it answers with a phone challenge (`completePhoneCheck`). */
     registerBusiness: (details: RegisterBusinessBody) => api.auth.registerBusiness(details),
 
-    /** Texts the code for a phone challenge to `phone` (international form). */
-    sendPhoneCheck: async (challengeToken: string, phone: string) => {
-      await api.auth.phoneChallengeSend({ challengeToken, phone });
+    /** Texts the code for a phone challenge: an international number, or a national one with its `countryCode`. */
+    sendPhoneCheck: async (challengeToken: string, number: Omit<PhoneChallengeSendBody, 'challengeToken'>) => {
+      await api.auth.phoneChallengeSend({ challengeToken, ...number });
     },
 
     /** Checks a texted code for a phone challenge. A right one signs the account in, as a password sign-in does. */

@@ -634,6 +634,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/countries/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every country, for a country picker */
+        get: operations["CountriesController_getCountries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/countries/public/{countryIsoCode}/states": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The states or regions of one country */
+        get: operations["CountriesController_getStates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/countries/public/{countryIsoCode}/states/{stateIsoCode}/cities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The cities of one state — local government areas for Nigeria */
+        get: operations["CountriesController_getCities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1539,6 +1590,17 @@ export interface components {
              */
             revokeOtherSessions: boolean;
         };
+        CityResponseDto: {
+            /** @example NG */
+            countryCode: string;
+            /**
+             * @description Hyphenated where the source name contains spaces
+             * @example Ikeja
+             */
+            name: string;
+            /** @example LA */
+            stateCode: string;
+        };
         ClientAccountResponseDto: {
             /** @example https://cdn.example.com/a.png */
             avatarUrl: Record<string, never> | null;
@@ -1593,6 +1655,33 @@ export interface components {
             code: string;
             currency: string;
             name: string;
+        };
+        CountryResponseDto: {
+            /**
+             * @description ISO 4217
+             * @example NGN
+             */
+            currency: string;
+            /** @example 🇳🇬 */
+            flag: string;
+            /**
+             * @description ISO 3166-1 alpha-2
+             * @example NG
+             */
+            isoCode: string;
+            /** @example 9.0820 */
+            latitude?: string;
+            /** @example 8.6753 */
+            longitude?: string;
+            /** @example Nigeria */
+            name: string;
+            /**
+             * @description Dialling code, for the phone field beside the picker
+             * @example +234
+             */
+            phonecode: string;
+            /** @example Africa/Lagos */
+            timezones: Record<string, never>[];
         };
         CreateOuDto: {
             /** @example Engineering */
@@ -1894,8 +1983,13 @@ export interface components {
              */
             challengeToken: string;
             /**
-             * @description Phone to text the code to. E.164 preferred; a bare number is read against the account country.
-             * @example +14155552671
+             * @description ISO 3166-1 alpha-2 country of the number, from the same picker the forms use. Send it whenever phone is a national number.
+             * @example NG
+             */
+            countryCode?: string;
+            /**
+             * @description Phone to text the code to. Either a full international number, or a national number with countryCode.
+             * @example +2348012345678
              */
             phone: string;
         };
@@ -2197,8 +2291,13 @@ export interface components {
         };
         SendPhoneOtpDto: {
             /**
-             * @description Phone number to verify. E.164 format preferred; bare numbers are normalized against the account country.
-             * @example +14155552671
+             * @description ISO 3166-1 alpha-2 country of the number, from the same picker the forms use. Send it whenever phone is a national number.
+             * @example NG
+             */
+            countryCode?: string;
+            /**
+             * @description The phone to verify. Either a full international number, or a national number with countryCode.
+             * @example +2348012345678
              */
             phone: string;
         };
@@ -2208,6 +2307,14 @@ export interface components {
              * @example Secure@123
              */
             newPassword: string;
+        };
+        StateResponseDto: {
+            /** @example NG */
+            countryCode: string;
+            /** @example LA */
+            isoCode: string;
+            /** @example Lagos */
+            name: string;
         };
         SwitchContextDto: {
             /**
@@ -3167,6 +3274,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    CountriesController_getCountries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountryResponseDto"][];
+                };
+            };
+        };
+    };
+    CountriesController_getStates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countryIsoCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StateResponseDto"][];
+                };
+            };
+        };
+    };
+    CountriesController_getCities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                countryIsoCode: string;
+                stateIsoCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CityResponseDto"][];
+                };
             };
         };
     };

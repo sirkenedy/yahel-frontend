@@ -102,7 +102,6 @@ export const personalMessages = {
   recoveryTitle: 'Ways back in.',
   recoveryLede: 'If you ever get locked out, we’ll send a code to one of these. They’re used only for your account’s security.',
   country: 'Country',
-  countryGroups: { suggested: 'Suggested', africa: 'Africa', world: 'Rest of the world' },
   mobileNumber: 'Mobile number',
   recoveryEmail: 'Recovery email',
   recoveryEmailHelp: 'An address that isn’t your new Yahel one.',
