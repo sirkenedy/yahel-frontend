@@ -4,10 +4,11 @@ import { session } from '../session';
 import { flowMessages as m } from './messages';
 
 // Public lists that change with a backend release, not while a page is open: every step reads one cached copy (F-113).
-export const countriesQuery = queryOptions({ queryKey: ['countries'], queryFn: ({ signal }) => session.api.reference.countries(signal), staleTime: Infinity });
+// No abort signal: a step that unmounts while the list is loading would cancel it, and the next step would ask again.
+export const countriesQuery = queryOptions({ queryKey: ['countries'], queryFn: () => session.api.reference.countries(), staleTime: Infinity });
 
 /** A country's states; none for a country that is not divided into them. */
-export const statesQuery = (country: string) => queryOptions({ queryKey: ['countries', country, 'states'], queryFn: ({ signal }) => session.api.reference.states(country, signal), staleTime: Infinity });
+export const statesQuery = (country: string) => queryOptions({ queryKey: ['countries', country, 'states'], queryFn: () => session.api.reference.states(country), staleTime: Infinity });
 
 export const useCountries = () => useQuery(countriesQuery);
 
