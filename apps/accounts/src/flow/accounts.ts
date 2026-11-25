@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import type { AccountDirectory, AccountStanding, ClientAccount } from '@yahel/api-client';
+import type { SessionState } from '@yahel/auth';
 import type { AccountKind } from '@yahel/ui';
 
 // The accounts this browser remembers belong to the browser, not to any one account, so the key carries
@@ -17,14 +18,21 @@ export const accountsQuery = (directory: AccountDirectory) =>
     retryOnMount: false,
   });
 
-/** The list changed: read it again wherever it is shown. */
-export const refreshAccounts = (queryClient: QueryClient) => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY });
+/** The list changed: read it again wherever it is shown. A read already under way is the one that answers; it is not cancelled and restarted. */
+export const refreshAccounts = (queryClient: QueryClient) => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }, { cancelRefetch: false });
 
 /** The tab's account changed: nothing one account's requests left in the cache may be seen by another (rulebook 2.7). */
 export const forgetAccountData = (queryClient: QueryClient) => {
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== ACCOUNTS_KEY[0] });
   void refreshAccounts(queryClient);
 };
+
+/**
+ * Whether this tab is signed in as `email`: a flow setting up one account counts nobody else's session as its own
+ * (F-109). With no address to set up, any session counts.
+ */
+export const isSignedInAs = ({ status, profile }: Pick<SessionState, 'status' | 'profile'>, email: string | null) =>
+  status === 'signed-in' && profile !== null && (email === null || profile.email.toLowerCase() === email.toLowerCase());
 
 export const nameOf = (account: Pick<ClientAccount, 'displayName' | 'email'>) => account.displayName?.trim() || account.email;
 

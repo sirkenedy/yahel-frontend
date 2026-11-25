@@ -88,7 +88,6 @@ test.describe('personal account: an email the person already has', () => {
     await expect(heading(page, 'Check your inbox.')).toBeVisible();
     await expect(page.getByText(`Enter the 6-character code we sent to ${person.ownEmail}.`)).toBeVisible();
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     await expect(page.getByText(`${person.ownEmail} is ready.`)).toBeVisible();
@@ -106,7 +105,6 @@ test.describe('personal account: an email the person already has', () => {
     await proceed(page, 'Verify');
     await expect(page.getByText('Enter all 6 characters.')).toBeVisible();
     await code(page).fill('zzzzzz');
-    await proceed(page, 'Verify');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
 
@@ -117,8 +115,8 @@ test.describe('personal account: an email the person already has', () => {
     await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
     expect(calls(api, '/v1/auth/verify-email/resend')[0]!.body).toEqual({ email: person.ownEmail });
 
+    await code(page).clear();
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
   });
 
@@ -243,7 +241,6 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     expect(calls(api, '/v1/auth/phone/send-otp')[0]!.body).toEqual({ phone: person.internationalPhone });
 
     await code(page).fill('zzzzzz');
-    await proceed(page, 'Verify');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
     await page.clock.fastForward(31_000);
@@ -251,8 +248,8 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await expect(page.getByText('New code sent. Older codes no longer work.')).toBeVisible();
     expect(calls(api, '/v1/auth/phone/send-otp')).toHaveLength(2);
 
+    await code(page).clear();
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     await expect(page.getByText('Your recovery phone isn’t confirmed yet.')).toHaveCount(0);
   });
@@ -748,14 +745,12 @@ test.describe('personal account: an address someone else registered first', () =
 
     // The code that registration mailed to the owner is right as far as the backend is concerned.
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
     await page.clock.fastForward(31_000);
     await page.getByRole('button', { name: 'Send a new code', exact: true }).click();
     await expect(page.getByText('If a new code can be sent to this address, it’s on its way.')).toBeVisible();
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
 
@@ -784,7 +779,6 @@ test.describe('personal account: an address someone else registered first', () =
     expect(calls(api, '/v1/auth/verify-email/resend')).toHaveLength(1);
 
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
   });
@@ -803,7 +797,6 @@ test.describe('personal account: an address someone else registered first', () =
     await page.getByRole('button', { name: 'Agree and create account' }).click();
     await heading(page, 'Check your inbox.').waitFor();
     await code(page).fill(emailCode);
-    await proceed(page, 'Verify');
 
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
     expect(registrations(api).map((call) => (call.body as { email: string }).email)).toEqual(['amra.okafor@mail.example', person.ownEmail]);
@@ -924,14 +917,13 @@ test.describe('personal account: fixes from review', () => {
     await heading(page, 'Enter the code.').waitFor();
 
     await code(page).fill('zzzzzz');
-    await proceed(page, 'Verify');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(code(page)).toBeFocused();
 
     expect(calls(api, '/v1/auth/phone/verify')).toHaveLength(1);
     expect(calls(api, '/v1/auth/refresh')).toHaveLength(0);
+    await code(page).clear();
     await code(page).fill(phoneCode);
-    await proceed(page, 'Verify');
     await expect(heading(page, 'You’re in, Amara.')).toBeVisible();
   });
 

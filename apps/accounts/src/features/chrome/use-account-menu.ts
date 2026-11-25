@@ -3,7 +3,7 @@ import { currentAccountOf, standingOf } from '@yahel/api-client';
 import type { AccountDirectory, ClientAccount } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from 'zustand';
 import { accountsQuery, badgeOf, forgetAccountData, kindOf, kindOfStanding, nameOf, nextSignedIn, refreshAccounts } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
@@ -42,7 +42,11 @@ export function useAccountMenu({ session, directory, manageUrl, privacyUrl, term
   const accounts = list.data ?? [];
   const action = useMutation({ mutationFn: (run: () => Promise<void>) => run() });
   // A new account in this tab (signed in, or just created by sign-up) changes the list: the old one moves to "Other accounts".
+  // Mounting reads the cache; only a change of account after that reads the list again.
+  const shownFor = useRef(handle);
   useEffect(() => {
+    if (shownFor.current === handle) return;
+    shownFor.current = handle;
     if (handle) void refreshAccounts(queryClient);
   }, [handle, queryClient]);
 

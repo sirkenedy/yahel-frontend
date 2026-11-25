@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { kindOf, nameOf, statusOf } from '../../../flow/accounts';
 import { signInMessages as m } from '../messages';
 import { useSignInFlow } from '../sign-in-flow';
+import { AdminNotice } from './admin-notice';
 import { StepFrame } from './step-frame';
 
 export function ChooseStep() {
@@ -30,8 +31,9 @@ export function ChooseStep() {
   }, [accounts]);
 
   return (
-    <StepFrame title={m.chooseTitle} lede={m.chooseLede} requests={[removeAccount, switchAccount]} next={{ retry: null }}>
+    <StepFrame title={m.chooseTitle} lede={state.adminOnly ? m.chooseAdminLede : m.chooseLede} requests={[removeAccount, switchAccount]} next={{ retry: null }}>
       <FlowStep.Body>
+        <AdminNotice />
         {state.accountsStatus === 'pending' ? <FlowWaiting title={m.accountsLoading}>{null}</FlowWaiting> : null}
         {state.accountsStatus === 'error' ? (
           <FlowNotice
@@ -60,6 +62,7 @@ export function ChooseStep() {
               actionPrefix={account.signedIn ? m.switchTo : m.signInTo}
               onPress={() => actions.chooseAccount(account)}
               isDisabled={removing || switchAccount.isPending}
+              problem={state.notAdmin === account.email ? m.notAdmin(account.email) : null}
             >
               {removing ? (
                 <FlowButton

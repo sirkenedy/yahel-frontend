@@ -55,7 +55,8 @@ function AdminLayout() {
     <AppFrame
       links={{ home: '/admin', homeLabel: chromeMessages.brandAdminSignIn, help: config.helpUrl, privacy: config.privacyUrl, terms: config.termsUrl }}
       privacy={step === 'phone' ? { isOn: detailsHidden, onToggle: () => setDetailsHidden(!detailsHidden) } : null}
-      menu={menu}
+      // Before the phone check signs the administrator in, this tab may still be another account: no menu shows it mid-setup (F-109).
+      menu={step === 'phone' || step === 'code' ? null : menu}
     >
       <AdminFlowProvider
         step={step}

@@ -5,17 +5,18 @@ import { createBusinessStore } from './features/business/store';
 import { createPersonalStore } from './features/personal/store';
 import { forgetOnRetry } from './route-error';
 
-const sessionIn = (status: 'signed-in' | 'signed-out') => ({ store: { getState: () => ({ status }) } }) as unknown as Session;
+const sessionAs = (email: string | null) => ({ store: { getState: () => ({ status: email ? 'signed-in' : 'signed-out', profile: email ? { email } : null }) } }) as unknown as Session;
 
 describe('forgetOnRetry', () => {
-  it('forgets the admin flow, its address and its phone check, as well as the sign-ups, unless someone is signed in', () => {
+  it('forgets the admin flow, its address and its phone check, as well as the sign-ups, unless the tab is signed in as that administrator', () => {
     const admin = createAdminStore();
     admin.dispatch({ type: 'handed-over', handover: { email: 'amara@harbourline.example', organisation: 'Harbourline Studio', challengeToken: 'pc-1', phone: null, continueToPlan: true } });
 
-    forgetOnRetry({ personal: createPersonalStore(), business: createBusinessStore(), admin, session: sessionIn('signed-in') });
+    forgetOnRetry({ personal: createPersonalStore(), business: createBusinessStore(), admin, session: sessionAs('amara@harbourline.example') });
     expect(admin.getState().email).toBe('amara@harbourline.example');
 
-    forgetOnRetry({ personal: createPersonalStore(), business: createBusinessStore(), admin, session: sessionIn('signed-out') });
+    // Signed in as someone else is no different from signed out: the administrator's flow is not theirs.
+    forgetOnRetry({ personal: createPersonalStore(), business: createBusinessStore(), admin, session: sessionAs('kemi.adeyemi@yahel.example') });
     expect(admin.getState()).toMatchObject({ email: null, handedOver: false, challengeToken: null });
   });
 });

@@ -33,21 +33,41 @@ describe('loadAdminFacts', () => {
   it('asks the server nothing while nobody is signed in', async () => {
     const { session, get } = sessionAs('signed-out');
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin: createAdminStore(), capabilities: access(null) })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null });
     expect(get).not.toHaveBeenCalled();
   });
 
   it('reads the workspace and whether a phone is confirmed, for the signed-in account', async () => {
     const { session } = sessionAs('signed-in', phone({ configured: true, verified: true }));
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: false }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio' });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin: createAdminStore(), capabilities: access({ organisation: 'Northwind Studio', administrator: true, hasPasskey: true, passkeyRequired: false }) })).resolves.toEqual({ signedIn: true, phoneVerified: true, hasPasskey: true, administrator: true, organisation: 'Northwind Studio' });
   });
 
   it('a member who administers nothing is no administrator; a session in no workspace leaves it to the server', async () => {
     const { session } = sessionAs('signed-in');
 
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: false }) })).resolves.toMatchObject({ administrator: false });
-    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, administrator: true, organisation: null });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin: createAdminStore(), capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: false, passkeyRequired: false }) })).resolves.toMatchObject({ administrator: false });
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin: createAdminStore(), capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, administrator: true, organisation: null });
+  });
+});
+
+describe('loadAdminFacts while another account is in this tab', () => {
+  it('counts a session as signed in only as the address being set up, whatever its own phone and workspace say', async () => {
+    const { session, get } = sessionAs('signed-in', phone({ configured: true, verified: true }));
+    const admin = createAdminStore();
+    receiveHandover(admin, handover);
+
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin, capabilities: access({ organisation: 'Northwind Studio', administrator: false, hasPasskey: true, passkeyRequired: false }) })).resolves.toEqual({ signedIn: false, phoneVerified: false, hasPasskey: false, administrator: true, organisation: null });
+    expect(get).not.toHaveBeenCalled();
+    expect(stepInsteadOf('welcome', admin, { signedIn: false, phoneVerified: false, hasPasskey: false })).toBe('phone');
+  });
+
+  it('matches the address whatever its case', async () => {
+    const { session } = sessionAs('signed-in', phone({ configured: true, verified: true }));
+    const admin = createAdminStore();
+    receiveHandover(admin, { ...handover, email: profile.email.toUpperCase() });
+
+    await expect(loadAdminFacts({ session, queryClient: new QueryClient(), admin, capabilities: access(null) })).resolves.toMatchObject({ signedIn: true, phoneVerified: true });
   });
 });
 
@@ -67,7 +87,11 @@ describe('the store between steps', () => {
     const store = createAdminStore();
     receiveHandover(store, handover);
     forgetAdmin(store, sessionAs('signed-in').session);
-    expect(store.getState().email).toBe(handover.email);
+    expect(store.getState().email).toBeNull();
+
+    receiveHandover(store, { ...handover, email: profile.email });
+    forgetAdmin(store, sessionAs('signed-in').session);
+    expect(store.getState().email).toBe(profile.email);
 
     forgetAdmin(store, sessionAs('signed-out').session);
     expect(store.getState().email).toBeNull();

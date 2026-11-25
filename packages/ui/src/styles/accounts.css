@@ -22,6 +22,9 @@
 .ws-flow-accounts__who { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--ws-space-2); }
 .ws-flow-accounts__name { font-weight: var(--ws-weight-semibold); }
 .ws-flow-accounts__email { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); line-height: var(--ws-type-flow-label-line); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-flow-accounts__item:has(> .ws-flow-accounts__problem) { flex-wrap: wrap; padding-block-end: var(--ws-space-12); }
+.ws-flow-accounts__problem { flex-basis: 100%; display: flex; align-items: flex-start; gap: var(--ws-space-8); padding-inline: var(--ws-space-16); color: var(--ws-color-daylight-danger); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-semibold); }
+.ws-flow-accounts__problem .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); margin-block-start: var(--ws-space-2); }
 .ws-flow-accounts__detail { flex-shrink: 0; max-width: 40%; color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); text-align: end; }
 .ws-flow-avatar--large { width: var(--ws-flow-avatar-lg); height: var(--ws-flow-avatar-lg); font-family: var(--ws-font-display); font-size: var(--ws-type-title-2-size); font-weight: var(--ws-type-flow-display-weight); }
 .ws-flow-avatar--tint { background: var(--ws-color-daylight-tint); color: var(--ws-color-daylight-accent); }
@@ -60,8 +63,9 @@
 .ws-flow-menu__accounts { display: flex; flex-direction: column; max-height: var(--ws-flow-menu-list); overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: var(--ws-space-4) 0 0; list-style: none; }
 .ws-flow-menu__account { position: relative; display: flex; align-items: center; border-radius: var(--ws-radius-md); }
 .ws-flow-menu__row { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: var(--ws-space-12); box-sizing: border-box; width: 100%; min-height: var(--ws-target-touch); padding: calc(var(--ws-space-4) + var(--ws-space-2)) calc(var(--ws-space-8) + var(--ws-space-2)); border: 0; border-radius: var(--ws-radius-md); background: transparent; color: var(--ws-color-daylight-ink); font: inherit; font-size: calc((var(--ws-type-flow-label-size) + var(--ws-type-flow-link-size)) / 2); font-weight: var(--ws-weight-semibold); text-align: start; cursor: pointer; transition: background-color var(--ws-duration-quick) var(--ws-easing-standard); }
-.ws-flow-menu__row[data-hovered], .ws-flow-menu__row[data-focus-visible] { background: var(--ws-color-daylight-selected); }
+.ws-flow-menu__row[data-hovered], .ws-flow-menu__row[data-focus-visible], a.ws-flow-menu__row:hover, a.ws-flow-menu__row:focus-visible { background: var(--ws-color-daylight-selected); }
 .ws-flow-menu__row[data-disabled], .ws-flow-menu__row-out[data-disabled], .ws-flow-menu__button[data-disabled] { cursor: default; }
+a.ws-flow-menu__row { text-decoration: none; }
 .ws-flow-menu__row--account { min-height: calc(var(--ws-target-touch) + var(--ws-space-8)); padding-inline-end: var(--ws-target-touch); }
 .ws-flow-menu__row .ws-flow-avatar--organisation { border-radius: calc(var(--ws-radius-sm) + var(--ws-space-2)); }
 .ws-flow-menu__row .ws-flow-face__presence { width: calc(var(--ws-flow-presence) - var(--ws-space-2)); height: calc(var(--ws-flow-presence) - var(--ws-space-2)); }

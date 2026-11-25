@@ -64,7 +64,7 @@ function Probe({ onValue, onToast }: { onValue: (value: SignInFlowValue) => void
   return null;
 }
 
-const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[], returning = false, checkPhone = undefined as ((email: string, challengeToken: string) => void) | undefined } = {}) => {
+const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null as PasskeyClient | null, remembered = [] as ClientAccount[], returning = false, adminOnly = false, checkPhone = undefined as ((email: string, challengeToken: string) => void) | undefined } = {}) => {
   act(() => dismissToast());
   const session = fakeSession(remembered);
   const capabilities: AccountCapabilities = createAccountCapabilities(session.api as unknown as Session['api'], standIns ? createStandIns(instant) : undefined);
@@ -77,7 +77,7 @@ const setup = ({ step = 'email' as SignInStep, standIns = true, passkeys = null 
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: SignInStep) => (
     <QueryClientProvider client={queryClient}>
-      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave} returning={returning} checkPhone={checkPhone}>
+      <SignInFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} passkeys={passkeys} store={store} navigate={navigate} isShown={(at) => at === shown} leave={leave} returning={returning} adminOnly={adminOnly} checkPhone={checkPhone}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </SignInFlowProvider>
     </QueryClientProvider>
@@ -528,6 +528,49 @@ describe('SignInFlowProvider', () => {
 
     await waitFor(() => expect(leave).toHaveBeenCalledTimes(1));
     expect(navigate).not.toHaveBeenCalledWith('done', { replace: true });
+  });
+
+  it('for Admin, refuses an account that is not an administrator where it is listed, without signing in', () => {
+    const { flow, store, navigate, session } = setup({ step: 'choose', returning: true, adminOnly: true });
+
+    act(() => flow().actions.chooseAccount(known({ signedIn: true })));
+    act(() => flow().actions.chooseAccount(known({ handle: 'h-1', email: 'kofi@northwind.example', kind: 'business', organisation: 'Northwind Studio', role: 'MEMBER' })));
+
+    expect(store.getState().notAdmin).toBe('kofi@northwind.example');
+    expect(flow().state.notAdmin).toBe('kofi@northwind.example');
+    expect(navigate).not.toHaveBeenCalled();
+    expect(session.switchTo).not.toHaveBeenCalled();
+  });
+
+  it('for Admin, opens an administrator account as usual', async () => {
+    const admin = known({ signedIn: true, kind: 'business', organisation: 'Northwind Studio', role: 'OWNER' });
+    const { flow, leave, session } = setup({ step: 'choose', returning: true, adminOnly: true, remembered: [admin] });
+
+    act(() => flow().actions.chooseAccount(admin));
+
+    await waitFor(() => expect(leave).toHaveBeenCalledTimes(1));
+    expect(session.switchTo).toHaveBeenCalledWith(0, 'h-0');
+  });
+
+  it('for Admin, brings someone who signed in with an account that is not an administrator back to the chooser, saying so', async () => {
+    const { flow, navigate, store, leave } = setup({ step: 'password', returning: true, adminOnly: true, remembered: [known({ signedIn: true })] });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    act(() => flow().actions.signInWithPassword('secret'));
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('choose', { replace: true }));
+    expect(store.getState().notAdmin).toBe(email);
+    expect(leave).not.toHaveBeenCalled();
+  });
+
+  it('for Admin, lets an administrator who signed in go straight back', async () => {
+    const { flow, navigate, store, leave } = setup({ step: 'password', returning: true, adminOnly: true, remembered: [known({ signedIn: true, kind: 'business', organisation: 'Northwind Studio', role: 'ADMIN' })] });
+    act(() => store.dispatch({ type: 'email-entered', email }));
+
+    act(() => flow().actions.signInWithPassword('secret'));
+
+    await waitFor(() => expect(leave).toHaveBeenCalledTimes(1));
+    expect(navigate).not.toHaveBeenCalledWith('choose', { replace: true });
   });
 
   it('leaves for the app on request', () => {

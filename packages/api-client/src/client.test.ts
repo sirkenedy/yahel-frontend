@@ -175,6 +175,37 @@ describe('createApiClient', () => {
     expect(init.headers.Authorization).toBe('Bearer token-1');
   });
 
+  it.each([
+    ['get', (api: ReturnType<typeof createApiClient>) => api.tenants.get('t-1'), 'GET', '/api/v1/tenants/t-1', { _id: 't-1', slug: 'northwind', displayName: 'Northwind Studio', status: 'pending_setup', primaryDomainId: null }],
+    ['domains.list', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.list('t-1'), 'GET', '/api/v1/tenants/t-1/domains', [{ _id: 'd-1', domain: 'northwind.example', method: 'TXT', status: 'pending', isPrimary: false }]],
+    ['domains.verify', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.verify('t-1', 'd-1'), 'POST', '/api/v1/tenants/t-1/domains/d-1/verify', { domain: { _id: 'd-1' }, verified: true, becamePrimary: true, tenantActivated: true }],
+    ['domains.setPrimary', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.setPrimary('t-1', 'd-1'), 'PATCH', '/api/v1/tenants/t-1/domains/d-1/set-primary', { _id: 'd-1', isPrimary: true }],
+    ['domains.remove', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.remove('t-1', 'd-1'), 'DELETE', '/api/v1/tenants/t-1/domains/d-1', null],
+  ] as const)('tenants.%s sends %s to the workspace as the signed-in person', async (_, call, method, path, data) => {
+    const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(call(api)).resolves.toEqual(data);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe(`http://api.test${path}`);
+    expect(init.method).toBe(method);
+    expect(init.headers.Authorization).toBe('Bearer token-1');
+  });
+
+  it('adds a domain with its verification method and keeps the record the answer carries', async () => {
+    const added = { domain: { _id: 'd-2', domain: 'studio.example', method: 'TXT', status: 'pending', isPrimary: false }, verificationToken: 'tok', instructions: { method: 'TXT', host: '@', value: 'worksync-site-verification=tok', ttlSeconds: 3600 } };
+    const fetchMock = vi.fn().mockResolvedValue(json(201, { success: true, data: added }));
+    const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });
+
+    await expect(api.tenants.domains.add('t-1', { domain: 'studio.example', method: 'TXT', autoProvisionMode: 'off' })).resolves.toEqual(added);
+
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('http://api.test/api/v1/tenants/t-1/domains');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body)).toEqual({ domain: 'studio.example', method: 'TXT', autoProvisionMode: 'off' });
+  });
+
   const assertion: AuthenticationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', authenticatorData: 'ad', signature: 'sig', userHandle: 'uh' }, clientExtensionResults: {} };
   const attestation: RegistrationResponseJSON = { id: 'cred-1', rawId: 'cred-1', type: 'public-key', response: { clientDataJSON: 'cd', attestationObject: 'ao', transports: ['internal'] }, clientExtensionResults: {} };
 

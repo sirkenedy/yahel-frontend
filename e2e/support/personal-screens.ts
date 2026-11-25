@@ -22,7 +22,6 @@ const verifyRefused = (shown: string, status: number, code: string, refresh?: st
   await refuse(page, '/auth/phone/verify', status, code, headers);
   if (refresh) await refuse(page, '/auth/refresh', 401, refresh);
   await page.getByLabel('6-character code').fill(phoneCode);
-  await proceed(page, 'Verify');
   await page.getByText(shown).first().waitFor();
 };
 

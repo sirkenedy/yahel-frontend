@@ -155,6 +155,8 @@ export interface MockApiOptions {
   memberships?: Record<string, { organisation: string; role: 'OWNER' | 'ADMIN' | 'MEMBER' }>;
   /** Sign-in attempts are refused by the rate limiter, which answers 429 under the general code `BAD_REQUEST`. */
   rateLimited?: boolean | { retryAfter: number; exposed: boolean };
+  /** Accounts, by address, whose phone is already confirmed. */
+  verifiedPhones?: string[];
 }
 
 /** Stands in for the backend. Tokens rotate on every refresh so tests can tell them apart. */
@@ -210,6 +212,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
   const base64urlOf = (text: string) => Buffer.from(text, 'utf8').toString('base64url');
   const recovery = new Map<string, ReturnType<typeof emptyRecovery>>();
   const recoveryOf = (email: string) => recovery.get(email) ?? recovery.set(email, emptyRecovery()).get(email)!;
+  for (const email of options.verifiedPhones ?? []) recoveryOf(email).phone = { ...emptyRecovery().phone, configured: true, verified: true, value: '***0199' };
   const challenges = new Map<string, { account: (typeof accounts)[number]; attempts: number }>();
   // Phone checks: issued by register-business and by a sign-in while the phone is unverified. Each takes one number and five tries.
   const phoneChecks = new Map<string, { account: (typeof accounts)[number]; phone: string | null; attempts: number; used: boolean }>();

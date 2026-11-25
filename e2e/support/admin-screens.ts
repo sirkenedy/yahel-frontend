@@ -38,7 +38,6 @@ export const adminScreens: Screen[] = [
       await adminTo(page, 'code');
       await refuseOnce(page, '/v1/auth/phone-challenge/verify', 429, 'TOKEN_MAX_ATTEMPTS');
       await codeBoxes(page).fill('WRONG1');
-      await page.getByRole('button', { name: 'Verify' }).click();
       await page.getByText('This check has ended').waitFor();
     },
   },

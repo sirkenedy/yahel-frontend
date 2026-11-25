@@ -1,0 +1,30 @@
+{
+  "name": "@yahel/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "VITE_LOCAL_BUILD=local vite build",
+    "preview": "vite preview --port 4177 --strictPort",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "build:release": "vite build"
+  },
+  "nx": {
+    "tags": [
+      "type:app"
+    ]
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "^1.170.46",
+    "@yahel/api-client": "workspace:*",
+    "@yahel/auth": "workspace:*",
+    "@yahel/tokens": "workspace:*",
+    "@yahel/ui": "workspace:*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.1.0"
+  }
+}

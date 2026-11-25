@@ -104,7 +104,8 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
   const travel = useStepTravel(step, directionOf);
   const requests = useAdminRequests({ visit: travel.visit, session, registrar, store, navigate });
   const back = backOf(step);
-  const address = profile?.email ?? flow.email;
+  // The account being set up, not whichever account this tab was signed in as when it started (F-109).
+  const address = flow.email ?? profile?.email ?? null;
   const whole = { ...flow, challengeToken };
   const passkeyDone = hasPasskey(whole, facts);
 
@@ -114,8 +115,8 @@ export function AdminFlowProvider({ step, session, registrar, store, facts, orga
       step,
       address,
       domain: address?.split('@')[1] ?? null,
-      // What the person named their business moments ago, for the address it was made with; otherwise what the server says.
-      organisation: flow.handedOver && flow.email === address ? flow.organisation : organisation,
+      // What the person named their business moments ago, for the address it was made with (the one shown); otherwise what the server says.
+      organisation: flow.handedOver ? flow.organisation : organisation,
       hasPasskey: passkeyDone,
       passkeyCancelled: requests.passkey.outcome === 'cancelled',
       passkeyUnprepared: requests.passkey.outcome === 'unprepared',

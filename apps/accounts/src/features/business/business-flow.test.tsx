@@ -3,7 +3,7 @@ import { ApiError, createAccountCapabilities } from '@yahel/api-client';
 import type { WorkspaceBilling } from '@yahel/api-client';
 import { createStandIns } from '@yahel/api-client/standins';
 import { createSession } from '@yahel/auth';
-import type { Session } from '@yahel/auth';
+import type { Session, SessionState } from '@yahel/auth';
 import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createStore } from 'zustand/vanilla';
@@ -40,7 +40,7 @@ const fakeSession = (status: 'signed-in' | 'signed-out' = 'signed-out') => {
   let inUse: number | null = null;
   const signIn = vi.fn<Session['signIn']>().mockResolvedValue({ ok: false, reason: 'phone-required', challengeToken: 'pc-2' });
   return {
-    store: createStore(() => ({ status, profile: null, slot: null, handle: null })),
+    store: createStore(() => ({ status, profile: status === 'signed-in' ? ({ email: 'amara@northwind.example' } as SessionState['profile']) : null, slot: null, handle: null })),
     registerBusiness: vi.fn().mockResolvedValue(made),
     signIn: Object.assign(signIn, {
       opens: (slot: number) => {
@@ -77,7 +77,7 @@ const setup = ({ step = 'gateway' as BusinessStep, standIns = true, signedIn = t
   let said: ReturnType<typeof useToast> = null;
   const tree = (current: BusinessStep) => (
     <QueryClientProvider client={queryClient}>
-      <BusinessFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} store={store} facts={businessFacts({ capabilities, session: session as unknown as Session })} links={links} navigate={navigate} checkPhone={checkPhone} goToAdmin={goToAdmin}>
+      <BusinessFlowProvider step={current} session={session as unknown as Session} capabilities={capabilities} store={store} facts={businessFacts({ capabilities, session: session as unknown as Session, business: store })} links={links} navigate={navigate} checkPhone={checkPhone} goToAdmin={goToAdmin}>
         <Probe onValue={(value) => (latest = value)} onToast={(toast) => (said = toast)} />
       </BusinessFlowProvider>
     </QueryClientProvider>

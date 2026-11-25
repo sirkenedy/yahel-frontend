@@ -7,6 +7,7 @@ export const signInMessages = {
 
   chooseTitle: 'Choose an account.',
   chooseLede: 'to continue to Yahel',
+  chooseAdminLede: 'to continue to Admin',
   accountsLabel: 'Accounts on this device',
   switchTo: 'Switch to',
   signInTo: 'Sign in to',
@@ -25,6 +26,10 @@ export const signInMessages = {
   remove: 'Remove',
   removeLabel: (email: string) => `Remove ${email} from this device`,
   removed: (email: string) => `${email} removed from this device.`,
+  adminNoticeTitle: 'Sign in with an administrator account.',
+  adminNotice: 'To sign in to Admin, use an administrator account for a Yahel workspace.',
+  adminLearnMore: 'Learn more',
+  notAdmin: (email: string) => `${email} isn’t an administrator of a workspace.`,
 
   emailTitle: 'Welcome back.',
   emailLede: 'Sign in once and every Yahel app opens.',

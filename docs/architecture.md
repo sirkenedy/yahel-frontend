@@ -10,6 +10,8 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 apps/
   shell/            home, account, the account menu; addresses carry the account's slot (/u/<slot>/); signing in is the accounts app's (VITE_ACCOUNTS_URL). Later: app launcher
   accounts/         sign in, account recovery, personal sign-up, workspace sign-up, an administrator's first sign-in
+  admin/            Admin (admin.yahel.com): Home and Domains for an owner or admin of the session's workspace (from /auth/contexts);
+                    addresses carry the slot (/u/<slot>/); signing in, and anyone who is not an administrator, go to the accounts app's chooser with for=admin (F-110)
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
@@ -26,6 +28,8 @@ scripts/            deterministic checks used by CI and agents
 .claude/            agent definitions, skills, permissions and hooks
 .github/            CI and the agent workflows
 ```
+
+Each app has its own address: the main app (`app.yahel.com`, `VITE_APP_URL`, 5173 locally), the accounts app (`accounts.yahel.com`, `VITE_ACCOUNTS_URL`, 5175) and Admin (`admin.yahel.com`, `VITE_ADMIN_URL`, 5177). The main app and Admin send people to the accounts app to sign in with `?return=` their own home; the accounts app sends them back as the account just signed in to (`/u/<slot>/`), accepting only the origins it is told of.
 
 One app per product keeps bundles small and failures contained: a broken Sheets build cannot stop Mail shipping. Apps share everything through packages and never import each other. Runtime micro-frontends are deliberately not used; build-time packages give the same independence with far less machinery.
 
@@ -153,4 +157,4 @@ Every pull request must pass all of these. They are what makes unattended mergin
 
 ## 7. Not built yet
 
-Recorded so nobody assumes otherwise: any enforcement of passkeys for Admin (the backend's, F-81, F-98), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), translation and locale handling, the app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.
+Recorded so nobody assumes otherwise: Admin's users, groups, billing and settings (only Home and Domains exist), Admin's browser tests and bundle budget (`playwright.config.ts` and `scripts/check-bundle-budget.mjs` are a maintainer's to change), any enforcement of passkeys for Admin (the backend's, F-81, F-98), payment for a workspace (the checkout is a design stand-in, `decisions.md` F-73), translation and locale handling, the app launcher, offline storage, real-time (Socket.IO) wiring, error reporting, and every product app. They are in `roadmap.md`.

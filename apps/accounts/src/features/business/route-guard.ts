@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { AccountCapabilities, ClientAccount } from '@yahel/api-client';
 import type { Session, SessionState } from '@yahel/auth';
-import { accountsQuery } from '../../flow/accounts';
+import { accountsQuery, isSignedInAs } from '../../flow/accounts';
 import type { AppConfig } from '../../config';
 import { adminAddressOf, hasWorkspaceUnderway, resumeStep } from './machine';
 import type { BusinessFacts, BusinessStep } from './machine';
@@ -14,12 +14,15 @@ export interface BusinessGuardContext {
   business: BusinessStore;
 }
 
-/** What the step guards need to know: which parts of the designed flow this build can answer, and whether this tab is signed in. */
-export const businessFacts = ({ capabilities, session }: Pick<BusinessGuardContext, 'capabilities' | 'session'>): BusinessFacts => ({
+/**
+ * What the step guards need to know: which parts of the designed flow this build can answer, and whether this tab is
+ * signed in. Once the workspace exists, only as its administrator counts (F-109): a personal account in this tab is not it.
+ */
+export const businessFacts = ({ capabilities, session, business }: Pick<BusinessGuardContext, 'capabilities' | 'session' | 'business'>): BusinessFacts => ({
   // A domain bought here is paid for at checkout, so it is offered only where there is one.
   domainsForSale: capabilities.domainMarket !== null && capabilities.workspaceBilling !== null,
   billing: capabilities.workspaceBilling !== null,
-  signedIn: session.store.getState().status === 'signed-in',
+  signedIn: isSignedInAs(session.store.getState(), business.getState().creation.created ? adminAddressOf(business.getState()) : null),
 });
 
 /** Whether this build offers workspace sign-up at all (F-78). Where it does not, the flow's addresses lead to the personal sign-up. */

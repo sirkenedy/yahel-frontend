@@ -1,7 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createRouter } from '@tanstack/react-router';
-import type { Session } from '@yahel/auth';
-import type { AccountsApp } from './features/account/accounts-app';
+import type { AccountsApp, Session } from '@yahel/auth';
 import { routeTree } from './routeTree.gen';
 import { accountsApp, session } from './session';
 

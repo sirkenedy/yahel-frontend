@@ -92,6 +92,61 @@ export interface AuthContext {
   isCurrent: boolean;
 }
 
+/**
+ * `GET /tenants/{tenantId}`: the workspace, as the backend's lean document (`Tenant` schema). Only what the
+ * interface reads is typed.
+ */
+export interface Workspace {
+  _id: string;
+  slug: string;
+  displayName: string;
+  status: 'pending_setup' | 'active' | 'suspended' | 'cancelled' | (string & {});
+  primaryDomainId: string | null;
+  logoUrl?: string | null;
+}
+
+export type DomainStatus = 'pending' | 'verified' | 'failed' | 'revoked' | 'reverification_required' | 'suspended' | 'released';
+
+/**
+ * One of a workspace's domains, as `GET /tenants/{tenantId}/domains` lists it (the `VerifiedDomain` schema).
+ * The TXT token is stored hashed and never listed, so a TXT record's value is known only from the answer to
+ * adding the domain (or registering the business). A CNAME's alias and target are listed.
+ */
+export interface WorkspaceDomain {
+  _id: string;
+  domain: string;
+  method: 'TXT' | 'CNAME';
+  status: DomainStatus;
+  isPrimary: boolean;
+  verifyHost?: string | null;
+  verifyTarget?: string | null;
+  verifiedAt?: string | null;
+  lastCheckedAt?: string | null;
+}
+
+/** The DNS record that proves a domain is the workspace's (`DomainVerificationInstructions`). `host` is `@` for the domain itself. */
+export interface DomainVerificationRecord {
+  method: 'TXT' | 'CNAME';
+  host: string;
+  value: string;
+  ttlSeconds: number;
+}
+
+/** `POST /tenants/{tenantId}/domains`: the new domain and, once only, the record to publish. */
+export interface AddedDomain {
+  domain: WorkspaceDomain;
+  verificationToken: string;
+  instructions: DomainVerificationRecord;
+}
+
+/** `POST …/domains/{domainId}/verify` when the record is found. A record not found is a failure (`DOMAIN_NOT_VERIFIED`, or `SERVICE_UNAVAILABLE` while DNS cannot be read). */
+export interface DomainVerified {
+  domain: WorkspaceDomain;
+  verified: true;
+  becamePrimary: boolean;
+  tenantActivated: boolean;
+}
+
 /** `GET /auth/passkey/list`: one passkey of the signed-in account. */
 export interface PasskeyItem {
   credentialId: string;

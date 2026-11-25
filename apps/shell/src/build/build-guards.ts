@@ -18,4 +18,5 @@ export function assertReleaseAddresses(command: 'build' | 'serve', env: Record<s
   if (wrong.length > 0) {
     throw new Error(`${wrong.join(' and ')} must be set to an https address for a release build. For a build that will only run on this machine (tests, bundle checks), set VITE_LOCAL_BUILD=local; \`pnpm build\` does.`);
   }
+  if (env.VITE_ADMIN_URL && !isSecureAddress(env.VITE_ADMIN_URL)) throw new Error('VITE_ADMIN_URL must be an https address in a release build, or left unset.');
 }

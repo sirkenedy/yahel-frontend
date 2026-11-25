@@ -1,4 +1,5 @@
 import { FieldError, Input, Label, Text, TextField as AriaTextField } from 'react-aria-components';
+import { useRef } from 'react';
 import type { Ref } from 'react';
 import { FlowIcon } from './flow-icon';
 
@@ -19,6 +20,8 @@ export interface CodeInputProps {
   isDisabled?: boolean;
   /** The input element, for moving focus to the code when it needs attention. */
   inputRef?: Ref<HTMLInputElement>;
+  /** Sends the form as soon as the last character is typed or a whole code is pasted, as pressing its submit button would. On by default. */
+  submitWhenFull?: boolean;
 }
 
 /**
@@ -26,13 +29,22 @@ export interface CodeInputProps {
  * box, Backspace steps back, the browser can offer the code from a message, and a screen reader meets
  * one labelled field instead of six.
  */
-export function CodeInput({ label, value, onChange, length = 6, characters = 'digits', help, error, name = 'code', isDisabled, inputRef }: CodeInputProps) {
+export function CodeInput({ label, value, onChange, length = 6, characters = 'digits', help, error, name = 'code', isDisabled, inputRef, submitWhenFull = true }: CodeInputProps) {
   const current = Math.min(value.length, length - 1);
+  // The boxes' row, to find the form without taking over the input's own ref.
+  const row = useRef<HTMLDivElement>(null);
+  const change = (typed: string) => {
+    const next = typed.replace(disallowed[characters], '').slice(0, length);
+    onChange(next);
+    // Only the change that completes the code sends it, so a code that was refused is not sent again until it is edited.
+    // After React has applied the new value, so the form reads the whole code.
+    if (submitWhenFull && next.length === length && value.length < length) setTimeout(() => row.current?.closest('form')?.requestSubmit(), 0);
+  };
   return (
     <AriaTextField
       className="ws-flow-code"
       value={value}
-      onChange={(next) => onChange(next.replace(disallowed[characters], '').slice(0, length))}
+      onChange={change}
       isInvalid={Boolean(error)}
       isDisabled={isDisabled}
       validationBehavior="aria"
@@ -41,7 +53,7 @@ export function CodeInput({ label, value, onChange, length = 6, characters = 'di
       inputMode={characters === 'digits' ? 'numeric' : 'text'}
     >
       <Label className="ws-flow-field__label">{label}</Label>
-      <div className="ws-flow-code__row">
+      <div ref={row} className="ws-flow-code__row">
         {Array.from({ length }, (_, index) => (
           <span key={index} className="ws-flow-code__box" data-current={index === current} aria-hidden="true">
             {value.charAt(index)}

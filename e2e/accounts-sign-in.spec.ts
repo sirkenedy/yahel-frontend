@@ -110,7 +110,6 @@ test.describe('accounts: sign in with a password', () => {
     page.on('framenavigated', (frame) => seen.push(frame.url()));
     await openCodeStep(page);
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
 
     const addresses = seen.join(' ');
@@ -142,7 +141,6 @@ test.describe('accounts: two-step sign-in', () => {
     await expect(page).toHaveURL(at('/signin/code'));
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
     const challenge = api.calls.find((call) => call.path === '/v1/auth/mfa/challenge');
@@ -176,8 +174,21 @@ test.describe('accounts: two-step sign-in', () => {
     await expect(page.getByText('We texted a code to +234')).toBeVisible();
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+  });
+
+  test('a complete code is sent on its own, once, and an incomplete one waits for Verify', async ({ page }) => {
+    const api = await mockApi(page);
+    await openCodeStep(page);
+    const challenges = () => api.calls.filter((call) => call.path === '/v1/auth/mfa/challenge');
+
+    await page.getByLabel('6-digit code').fill(secondStepCode.slice(0, 5));
+    await expect(page.getByRole('button', { name: 'Verify' })).toBeVisible();
+    expect(challenges()).toHaveLength(0);
+
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    expect(challenges()).toHaveLength(1);
   });
 
   test('sign-in by a backup code', async ({ page }) => {
@@ -196,9 +207,8 @@ test.describe('accounts: two-step sign-in', () => {
     await openCodeStep(page);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
+      await page.getByLabel('6-digit code').clear();
       await page.getByLabel('6-digit code').fill(`00000${attempt}`);
-      await page.getByRole('button', { name: 'Verify' }).click();
-      await expect(page.getByRole('button', { name: 'Verify' })).toBeEnabled();
       await expect(attempt < 4 ? page.getByLabel('6-digit code') : page.getByRole('alert')).toBeVisible();
       if (attempt < 4) await expect(page.getByLabel('6-digit code')).toHaveAccessibleDescription(/That code didn’t work/);
     }
@@ -351,6 +361,56 @@ test.describe('accounts: account chooser', () => {
   });
 });
 
+test.describe('accounts: reading the accounts on this device', () => {
+  const listCalls = (api: Awaited<ReturnType<typeof mockApi>>) => api.calls.filter((call) => call.path === '/v1/auth/accounts' && call.method === 'GET');
+  const watchAborted = (page: Page) => {
+    const aborted: string[] = [];
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/v1/auth/accounts')) aborted.push(request.url());
+    });
+    return aborted;
+  };
+  const settle = (page: Page) => page.waitForLoadState('networkidle');
+
+  test('opening the chooser asks once, and nothing is cancelled', async ({ page }) => {
+    const api = await mockApi(page);
+    const aborted = watchAborted(page);
+    await visit(page, '/signin');
+    await expect(page.getByRole('list', { name: 'Accounts on this device' }).getByRole('listitem')).toHaveCount(3);
+    await settle(page);
+    expect(listCalls(api)).toHaveLength(1);
+    expect(aborted).toEqual([]);
+  });
+
+  test('signing in reads the list once after the first read, and switching reads it once, with nothing cancelled', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [] });
+    const aborted = watchAborted(page);
+    await signInWithPassword(page);
+    await page.getByRole('heading', { name: 'Welcome back, Amara.' }).waitFor();
+    await settle(page);
+    const afterSignIn = listCalls(api).length;
+    expect(afterSignIn).toBe(2);
+
+    await page.getByRole('button', { name: `Account: ${credentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: 'Add another account' }).click();
+    await page.getByLabel('Email').fill(twoStepCredentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(twoStepCredentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByLabel('6-digit code').fill(secondStepCode);
+    await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
+    await settle(page);
+    const beforeSwitch = listCalls(api).length;
+
+    await page.getByRole('button', { name: `Account: ${twoStepCredentials.email}` }).click();
+    await page.getByRole('dialog', { name: 'Accounts' }).getByRole('button', { name: new RegExp(`^Switch to.*${credentials.email}`) }).click();
+    await expect(page.getByRole('heading', { name: 'Welcome back, Amara.' })).toBeVisible();
+    await settle(page);
+    expect(listCalls(api).length - beforeSwitch).toBe(1);
+    expect(aborted).toEqual([]);
+  });
+});
+
 test.describe('accounts: account menu', () => {
   const avatar = (page: Page, email = credentials.email) => page.getByRole('button', { name: `Account: ${email}` });
   const menu = (page: Page) => page.getByRole('dialog', { name: 'Accounts' });
@@ -394,7 +454,6 @@ test.describe('accounts: account menu', () => {
     await password(page).fill(twoStepCredentials.password);
     await page.getByRole('button', { name: 'Sign in' }).click();
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back, Kofi.' })).toBeVisible();
     expect(api.remembered().map(({ slot, signedIn }) => [slot, signedIn])).toEqual([[0, true], [1, true]]);
 
@@ -459,7 +518,6 @@ test.describe('accounts: recovery', () => {
     expect(api.calls.find((call) => call.path === '/v1/auth/forgot-password')!.body).toEqual({ email: credentials.email });
 
     await page.getByLabel('6-character code').fill(resetCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await page.getByLabel('New password', { exact: true }).fill(newPassword);
     await expect(page.getByText(/Strong · 22 characters/)).toBeVisible();
     await page.getByRole('button', { name: 'Save and sign in' }).click();
@@ -486,7 +544,6 @@ test.describe('accounts: recovery', () => {
     await page.clock.install();
     await openRecoverCodeStep(page);
     await page.getByLabel('6-character code').fill('WRONG1');
-    await page.getByRole('button', { name: 'Verify' }).click();
     await page.getByLabel('New password', { exact: true }).fill(newPassword);
     await page.getByRole('button', { name: 'Save and sign in' }).click();
 
@@ -625,6 +682,78 @@ test.describe('accounts: addresses, history and reload', () => {
     await page.getByLabel('Email').fill(credentials.email);
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(isMobile ? page.getByRole('heading', { name: 'Enter your password.' }) : password(page)).toBeFocused();
+  });
+});
+
+test.describe('accounts: signing in for Admin', () => {
+  // The demo build has no Admin address, so Admin's place is taken by the app: what is tested is who may leave.
+  const appUrl = 'http://localhost:5173/';
+  const forAdmin = `?return=${encodeURIComponent(appUrl)}&for=admin`;
+  const notice = (page: Page) => page.getByRole('status').filter({ hasText: 'Sign in with an administrator account.' });
+  const admin = { email: twoStepCredentials.email, displayName: 'Kofi Mensah', kind: 'business' as const, organisation: 'Northwind Studio', role: 'ADMIN' as const, signedIn: true };
+  const personal = { email: 'amara.okafor@yahel.example', displayName: 'Amara Okafor', signedIn: true };
+  const leaveForApp = (page: Page) => page.route(`${appUrl}**`, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<title>App</title>' }));
+
+  test('the chooser asks for an administrator account; a personal account stays, saying why; an administrator goes on', async ({ page }) => {
+    const api = await mockApi(page, { remembered: [admin, personal] });
+    await leaveForApp(page);
+    await visit(page, `/signin${forAdmin}`);
+
+    await expect(page).toHaveURL(/\/signin\/choose\?.*for=admin/);
+    await expect(notice(page)).toContainText('To sign in to Admin, use an administrator account for a Yahel workspace.');
+    await expect(page.getByText('to continue to Admin')).toBeVisible();
+
+    await page.getByRole('button', { name: new RegExp(`^Switch to.*${personal.email}`) }).click();
+    await expect(page.getByRole('alert')).toHaveText(`${personal.email} isn’t an administrator of a workspace.`);
+    await expect(page.getByRole('button', { name: new RegExp(`^Switch to.*${personal.email}`) })).toHaveAccessibleDescription(`${personal.email} isn’t an administrator of a workspace.`);
+    await expect(page).toHaveURL(/\/signin\/choose/);
+    expect(api.calls.filter((call) => call.path === '/v1/auth/refresh')).toHaveLength(0);
+
+    await page.getByRole('button', { name: new RegExp(`^Switch to.*${admin.email}`) }).click();
+    await page.waitForURL((url) => url.origin !== accountsUrl);
+    expect(page.url()).toBe(`${appUrl}u/0/`);
+  });
+
+  test('signing in with another account that is not an administrator comes back to the chooser, saying so', async ({ page }) => {
+    await mockApi(page, { remembered: [admin] });
+    await visit(page, `/signin${forAdmin}`);
+    await page.getByRole('button', { name: 'Use another account' }).click();
+    await expect(page).toHaveURL(/\/signin\/email\?.*for=admin/);
+    await expect(notice(page)).toBeVisible();
+
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Choose an account.' })).toBeVisible();
+    await expect(notice(page)).toBeVisible();
+    await expect(page.getByRole('alert')).toHaveText(`${credentials.email} isn’t an administrator of a workspace.`);
+  });
+
+  test('signing in with an administrator account goes straight on, as that account', async ({ page }) => {
+    await mockApi(page, { remembered: [], memberships: { [credentials.email]: { organisation: 'Northwind Studio', role: 'OWNER' } } });
+    await leaveForApp(page);
+    await visit(page, `/signin${forAdmin}`);
+    await expect(page).toHaveURL(/\/signin\/email/);
+    await expect(notice(page)).toBeVisible();
+
+    await page.getByLabel('Email').fill(credentials.email);
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await password(page).fill(credentials.password);
+    await page.getByRole('button', { name: 'Sign in' }).click();
+
+    await page.waitForURL((url) => url.origin !== accountsUrl);
+    expect(page.url()).toBe(`${appUrl}u/0/`);
+  });
+
+  test('says nothing of Admin for any other request, and never shows what the address asked', async ({ page }) => {
+    await mockApi(page);
+    await visit(page, `/signin?for=${encodeURIComponent('<b>Admin now</b>')}`);
+
+    await expect(page).toHaveURL(/\/signin\/choose/);
+    await expect(page.getByText('Sign in with an administrator account.')).toHaveCount(0);
+    await expect(page.getByRole('main')).not.toContainText('Admin now');
   });
 });
 
@@ -880,7 +1009,6 @@ test.describe('accounts: when things go wrong after the hard part', () => {
     );
 
     await page.getByLabel('6-digit code').fill(secondStepCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
 
     await expect(page.getByRole('heading', { name: 'Enter your password.' })).toBeVisible();
     await expect(page.getByRole('alert')).toContainText('That took too long');
@@ -1009,12 +1137,11 @@ test.describe('accounts: confirming an email at sign-in', () => {
     await expect(page.getByRole('button', { name: /^Send a new code in 0:\d{2}$/ })).toHaveAttribute('aria-disabled', 'true');
 
     await codeBoxes(page).fill('WRONG1');
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(codeBoxes(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
     await expect(codeBoxes(page)).toBeFocused();
 
+    await codeBoxes(page).clear();
     await codeBoxes(page).fill(emailCode);
-    await page.getByRole('button', { name: 'Verify' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Welcome back, Ngozi.' })).toBeVisible();
     expect(sent(api, '/v1/auth/verify-email').at(-1)?.body).toEqual({ email: pendingEmail, token: emailCode });
     expect(loginCalls(api)).toHaveLength(2);

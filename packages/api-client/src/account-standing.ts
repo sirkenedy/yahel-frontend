@@ -5,6 +5,9 @@ export type AccountStanding = { type: 'admin'; organisation: string } | { type: 
 
 const ADMIN_ROLES = new Set<ClientAccount['role']>(['OWNER', 'ADMIN']);
 
+/** Whether the browser's list says this account administers a workspace: what lets it into Admin (the API still decides). */
+export const isWorkspaceAdmin = (account: Pick<ClientAccount, 'kind' | 'role'>) => account.kind === 'business' && ADMIN_ROLES.has(account.role);
+
 /**
  * This tab's entry in the browser's account list: by its handle, or, for a session made before handles
  * existed, by its slot when exactly one entry holds that slot.

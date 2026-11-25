@@ -38,6 +38,8 @@ export interface AccountMenuLabels {
   signOutAll: string;
   privacy: string;
   terms: string;
+  /** The link to Admin, for an administrator. */
+  admin?: string;
 }
 
 export interface AccountMenuProps {
@@ -46,6 +48,8 @@ export interface AccountMenuProps {
   others: AccountMenuAccount[];
   labels: AccountMenuLabels;
   manageHref: string | null;
+  /** Admin for this account, shown only to an administrator of its workspace; the API still decides. */
+  adminHref?: string | null;
   privacyHref?: string | null;
   termsHref?: string | null;
   /** While an action is under way the menu's actions ignore further presses. */
@@ -62,7 +66,7 @@ export interface AccountMenuProps {
  * this browser, and the ways to add, switch and sign out. Opening it moves focus to "Manage your account";
  * Escape closes it and returns focus to the avatar; a press outside closes it.
  */
-export function AccountMenu({ current, others, labels, manageHref, privacyHref, termsHref, isBusy = false, onSignOut, onPick, onSignOutOf, onAdd, onSignOutAll }: AccountMenuProps) {
+export function AccountMenu({ current, others, labels, manageHref, adminHref, privacyHref, termsHref, isBusy = false, onSignOut, onPick, onSignOutOf, onAdd, onSignOutAll }: AccountMenuProps) {
   const [open, setOpen] = useState(false);
   const [othersShown, setOthersShown] = useState(true);
   const root = useRef<HTMLDivElement>(null);
@@ -166,6 +170,14 @@ export function AccountMenu({ current, others, labels, manageHref, privacyHref, 
                 </li>
               ))}
             </ul>
+          ) : null}
+          {adminHref && labels.admin ? (
+            <a className="ws-flow-menu__row ws-flow-menu__row--action" href={adminHref}>
+              <span className="ws-flow-avatar ws-flow-avatar--outline" aria-hidden="true">
+                <FlowIcon name="shield" />
+              </span>
+              {labels.admin}
+            </a>
           ) : null}
           <div className="ws-flow-menu__rule" />
           <Button className="ws-flow-menu__row ws-flow-menu__row--action" onPress={then(onAdd)} isDisabled={isBusy}>

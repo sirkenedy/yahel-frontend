@@ -37,7 +37,6 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: '+2348035550142' });
     await page.getByLabel('6-character code').fill(phoneCode);
-    await proceed(page, 'Verify');
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
     await expect(page.getByRole('button', { name: `Account: ${business.adminAddress}` })).toBeVisible();
     await proceed(page, 'I understand');
@@ -58,7 +57,6 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
     await fillCard(page);
     await proceed(page, 'Verify card');
     await page.getByLabel('6-digit code').fill(card.code);
-    await proceed(page, 'Confirm');
 
     await expect(heading(page, 'Your free trial has started.')).toBeVisible();
     await proceed(page, 'Go to Admin');
@@ -136,7 +134,6 @@ test.describe('accounts: create a workspace with a domain bought here', () => {
     await expect(page.getByLabel('Mobile number')).toHaveValue(business.phone);
     await proceed(page, 'Send code');
     await page.getByLabel('6-character code').fill(phoneCode);
-    await proceed(page, 'Verify');
     await proceed(page, 'I understand');
     await proceed(page, 'Continue to checkout');
     await expect(summary(page)).toContainText(business.boughtDomain);
@@ -145,7 +142,6 @@ test.describe('accounts: create a workspace with a domain bought here', () => {
     await fillCard(page);
     await proceed(page, 'Pay ₦18,500');
     await page.getByLabel('6-digit code').fill(card.code);
-    await proceed(page, 'Confirm');
     await expect(page.getByRole('main')).toContainText(`${business.boughtDomain} is being registered and will be ready in a few minutes.`);
     expect(sentBy(api)).toMatchObject({ domain: business.boughtDomain, email: business.boughtAdminAddress });
   });
@@ -203,7 +199,6 @@ test.describe('accounts: plan and checkout, once signed in', () => {
     await fillCard(page);
     await proceed(page, 'Verify card');
     await page.getByLabel('6-digit code').fill(card.wrongCode);
-    await proceed(page, 'Confirm');
     await expect(page.getByLabel('6-digit code')).toHaveAccessibleDescription(/That code didn’t work\./);
     await proceed(page, 'Use a different card');
     await expect(heading(page, 'Add your card.')).toBeVisible();
@@ -290,7 +285,6 @@ test.describe('accounts: workspace sign-up as a release build runs it', () => {
     await page.getByLabel('Mobile number').fill(business.phone);
     await proceed(page, 'Send code');
     await page.getByLabel('6-character code').fill(phoneCode);
-    await proceed(page, 'Verify');
     await proceed(page, 'I understand');
     await expect(heading(page, 'Protect Admin with a passkey.')).toBeVisible();
     expect(sentBy(api)).not.toHaveProperty('contactEmail');
@@ -339,6 +333,42 @@ test.describe('accounts: a workspace made while signed in', () => {
     await proceed(page);
     await heading(page, 'And who are you?').waitFor();
     await expect(page.getByLabel('Last name')).toHaveValue('Adeyemi');
+  });
+
+  test('from a personal account with a confirmed phone, the new administrator still checks its phone and is the account the tab ends on', async ({ page }) => {
+    const api = await mockApi(page, { verifiedPhones: [takenAddress] });
+    await stubAdmin(page);
+    await signInWithPassword(page, { email: takenAddress, password: 'Harmattan-in-Ibadan-88' });
+    await heading(page, 'Welcome back, Kemi.').waitFor();
+
+    await createWorkspaceTo(page, 'ready');
+    expect(sentBy(api)).toMatchObject({ email: business.adminAddress, contactEmail: business.contactEmail });
+    expect(business.contactEmail).not.toBe(takenAddress);
+
+    await proceed(page);
+    await expect(heading(page, 'Verify it’s you.')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
+    await page.getByLabel('Mobile number').fill(business.phone);
+    await proceed(page, 'Send code');
+    await expect(heading(page, 'Enter the code.')).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Account: / })).toHaveCount(0);
+    await page.getByLabel('6-character code').fill(phoneCode);
+
+    await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
+    const main = page.getByRole('main');
+    await expect(main).toContainText(business.adminAddress);
+    await expect(main).toContainText(`Admins manage every account on ${business.domain}.`);
+    await expect(main).toContainText(business.name);
+    await expect(main).not.toContainText(takenAddress);
+    expect(calls(api, '/v1/auth/phone-challenge/send')).toHaveLength(1);
+    expect(calls(api, '/v1/auth/phone-challenge/verify')).toHaveLength(1);
+    expect(api.calls.filter((call) => call.path.startsWith('/v1/me/recovery/phone'))).toHaveLength(0);
+
+    await page.getByRole('button', { name: `Account: ${business.adminAddress}` }).click();
+    const menu = page.getByRole('dialog', { name: 'Accounts' });
+    await expect(menu.getByRole('region', { name: 'Signed in as' })).toContainText(`Admin · ${business.name}`);
+    await expect(menu.getByRole('list', { name: 'Other accounts on this device' })).toContainText(takenAddress);
+    expect(api.remembered()).toEqual(expect.arrayContaining([expect.objectContaining({ email: takenAddress, signedIn: true }), expect.objectContaining({ email: business.adminAddress, signedIn: true })]));
   });
 
   test('from a business account, nothing is filled in', async ({ page }) => {

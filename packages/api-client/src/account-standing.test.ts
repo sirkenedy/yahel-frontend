@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { currentAccountOf, standingOf } from './account-standing';
+import { currentAccountOf, isWorkspaceAdmin, standingOf } from './account-standing';
 import type { ClientAccount } from './types';
 
 const entry = (overrides: Partial<ClientAccount> = {}): ClientAccount => ({ handle: 'h-0', slot: 0, displayName: 'Amara Okafor', initials: 'AO', avatarUrl: null, email: 'amara@northwind.example', kind: 'personal', organisation: null, role: null, signedIn: true, ...overrides });
@@ -36,5 +36,15 @@ describe('standingOf', () => {
     expect(standingOf(undefined, { accountType: 'personal' })).toEqual({ type: 'personal' });
     expect(standingOf(undefined, { accountType: 'business' })).toEqual({ type: 'work' });
     expect(standingOf(undefined, { accountType: 'managed' })).toEqual({ type: 'work' });
+  });
+});
+
+describe('isWorkspaceAdmin', () => {
+  it('admits an owner or admin of a workspace and nobody else', () => {
+    expect(isWorkspaceAdmin(entry({ kind: 'business', role: 'OWNER' }))).toBe(true);
+    expect(isWorkspaceAdmin(entry({ kind: 'business', role: 'ADMIN' }))).toBe(true);
+    expect(isWorkspaceAdmin(entry({ kind: 'business', role: 'MEMBER' }))).toBe(false);
+    expect(isWorkspaceAdmin(entry({ kind: 'business', role: null }))).toBe(false);
+    expect(isWorkspaceAdmin(entry({ kind: 'personal', role: 'OWNER' }))).toBe(false);
   });
 });

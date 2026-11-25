@@ -3,7 +3,7 @@ import { currentAccountOf, standingOf } from '@yahel/api-client';
 import type { AccountStanding, ClientAccount } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
 import type { AccountMenuProps } from '@yahel/ui';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useStore } from 'zustand';
 import { accountWords as w } from './messages';
 
@@ -28,8 +28,11 @@ export function useCurrentAccount(session: Session) {
   const { profile, slot, handle } = useStore(session.store);
   const signedIn = profile !== null && slot !== null;
   const list = useQuery({ ...accountsQuery(session), enabled: signedIn });
+  const shownFor = useRef(handle);
   useEffect(() => {
-    if (handle) void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+    if (shownFor.current === handle) return;
+    shownFor.current = handle;
+    if (handle) void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
   }, [handle, queryClient, session]);
   const accounts = list.data ?? [];
   const current = currentAccountOf(accounts, handle, slot);
@@ -46,6 +49,8 @@ export interface ShellMenuRoutes {
   addAccount: () => void;
   /** The accounts app's password step for a signed-out account of this browser, named by its handle. */
   signInTo: (handle: string) => void;
+  /** Admin as the account in `slot`, or `null` where there is no Admin to go to. */
+  admin?: (slot: number) => string | null;
 }
 
 /** The account menu in the app's header, for the account in this tab; `null` when nobody is signed in. */
@@ -63,13 +68,15 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
   // What one account's requests cached is never shown to another (rulebook 2.7).
   const forget = () => {
     queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
-    void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+    void queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
   };
 
   return {
     current: { name: current ? nameOf(current) : profile.displayName?.trim() || profile.email, email: profile.email, kind: standing && standing.type !== 'personal' ? 'organisation' : 'person', initials: current?.initials, avatarUrl: current?.avatarUrl ?? profile.photo?.urls?.thumbnail ?? profile.photo?.url, badge: standing && labelOf(standing, w.personalAccount) },
     others: others.map((account) => ({ id: account.handle, name: nameOf(account), email: account.email, kind: account.kind === 'business' ? 'organisation' : 'person', initials: account.initials, avatarUrl: account.avatarUrl, signedIn: account.signedIn })),
     manageHref: `/u/${slot}/account`,
+    // As in Google's account menu: an administrator of the workspace gets a way into Admin. Admin checks again.
+    adminHref: standing?.type === 'admin' ? (go.admin?.(slot) ?? null) : null,
     isBusy: action.isPending,
     onSignOut: () =>
       start(async () => {
@@ -90,7 +97,7 @@ export function useAccountMenu(session: Session, go: ShellMenuRoutes): Omit<Acco
         const account = others.find((known) => known.handle === id);
         if (!account) return;
         await session.signOut(account.slot).catch(() => undefined);
-        await queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey });
+        await queryClient.invalidateQueries({ queryKey: accountsQuery(session).queryKey }, { cancelRefetch: false });
       }),
     onAdd: go.addAccount,
     onSignOutAll: () =>

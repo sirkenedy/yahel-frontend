@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -358,6 +358,47 @@ describe('CodeInput', () => {
 
     expect(screen.getByLabelText('6-digit code')).toHaveValue('482910');
     expect(boxes(container)).toEqual(['4', '8', '2', '9', '1', '0']);
+  });
+
+  it('sends its form once the last character is typed or a whole code is pasted, and not again until the code changes', async () => {
+    const submitted = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    render(
+      <form onSubmit={submitted}>
+        <Harness />
+      </form>,
+    );
+    const user = userEvent.setup();
+    const input = screen.getByLabelText('6-digit code');
+
+    await user.type(input, '48291');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submitted).not.toHaveBeenCalled();
+
+    await user.type(input, '0');
+    await waitFor(() => expect(submitted).toHaveBeenCalledTimes(1));
+
+    await user.type(input, '7');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submitted).toHaveBeenCalledTimes(1);
+
+    await user.clear(input);
+    await user.paste('551204');
+    await waitFor(() => expect(submitted).toHaveBeenCalledTimes(2));
+  });
+
+  it('can leave the sending to its button', async () => {
+    const submitted = vi.fn((event: { preventDefault: () => void }) => event.preventDefault());
+    render(
+      <form onSubmit={submitted}>
+        <Harness submitWhenFull={false} />
+      </form>,
+    );
+
+    await userEvent.click(screen.getByLabelText('6-digit code'));
+    await userEvent.paste('482910');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(submitted).not.toHaveBeenCalled();
   });
 
   it('steps back one box on Backspace', async () => {

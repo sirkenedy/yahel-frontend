@@ -72,6 +72,12 @@ describe('an account asked for by its handle', () => {
     for (const account of ['amara@yahel.example', 'short', 'x'.repeat(65), 42, undefined, '<script>alert(1)</script>']) expect(validateSignInSearch({ account })).toEqual({});
   });
 
+  it('accepts only a known purpose, so an address cannot put words on the chooser', () => {
+    expect(validateSignInSearch({ for: 'admin' })).toEqual({ for: 'admin' });
+    expect(validateSignInSearch({ for: 'admin', account: 'handle-1-amara' })).toEqual({ for: 'admin', account: 'handle-1-amara' });
+    for (const purpose of ['Admin', 'mail', '<b>admin</b>', 1, ['admin'], undefined]) expect(validateSignInSearch({ for: purpose })).toEqual({});
+  });
+
   it('opens the password for a remembered account that is signed out, with its address from this browser’s list', async () => {
     const shared = context({ accounts: 2 });
     await loadSignInFacts(shared);

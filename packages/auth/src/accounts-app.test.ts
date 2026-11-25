@@ -14,4 +14,11 @@ describe('accountsAppAddresses', () => {
     expect(app.signInTo('amara@yahel.example')).toBe(app.signIn());
     expect(app.signInTo('short')).toBe(app.signIn());
   });
+
+  it('asks for an administrator account on every address when Admin is the one asking', () => {
+    const admin = accountsAppAddresses({ accountsUrl: 'https://accounts.yahel.example/', home: 'https://admin.yahel.example/', purpose: 'admin' });
+    expect(admin.signIn()).toBe('https://accounts.yahel.example/signin?return=https%3A%2F%2Fadmin.yahel.example%2F&for=admin');
+    expect(admin.addAccount()).toBe('https://accounts.yahel.example/signin/email?return=https%3A%2F%2Fadmin.yahel.example%2F&for=admin');
+    expect(admin.signInTo('k7Qd3rLm0pA2bXyZw9TcVe')).toBe('https://accounts.yahel.example/signin?account=k7Qd3rLm0pA2bXyZw9TcVe&return=https%3A%2F%2Fadmin.yahel.example%2F&for=admin');
+  });
 });

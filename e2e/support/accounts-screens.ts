@@ -140,6 +140,14 @@ const screens: Screen[] = [
     },
   },
   {
+    name: 'accounts chooser for Admin, an account refused',
+    open: async (page) => {
+      await visit(page, `/signin?return=${encodeURIComponent('http://localhost:5173/')}&for=admin`);
+      await page.getByRole('button', { name: /^Sign in to.*amara\.okafor@yahel\.example/ }).click();
+      await page.getByRole('alert').filter({ hasText: 'isn’t an administrator of a workspace.' }).waitFor();
+    },
+  },
+  {
     name: 'accounts chooser, removing',
     open: async (page) => {
       await visit(page, '/signin');
