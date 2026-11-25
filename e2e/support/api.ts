@@ -105,7 +105,31 @@ interface Account {
 }
 
 const staged = (value: string) => ({ value, requestedAt: new Date().toISOString(), usableAt: new Date(Date.now() + 7 * 86_400_000).toISOString() });
-const wellFormedPhone = (phone: string | undefined) => Boolean(phone?.startsWith('+')) && (phone ?? '').replace(/\D/g, '').length >= 8;
+// The backend reads a `+` number as itself, and any other against `countryCode`; without one it refuses a national number.
+const wellFormedPhone = (body: Record<string, string> | null) => Boolean(body?.phone?.startsWith('+') || body?.countryCode) && (body?.phone ?? '').replace(/\D/g, '').length >= 8;
+
+// A handful of what `GET /v1/countries/public` lists, enough for every grouping: Africa by its time zones, the rest of the world,
+// a territory whose calling code carries an area code, and a country with no states.
+const country = (isoCode: string, name: string, flag: string, phonecode: string, currency: string, zoneName: string) => ({ name, isoCode, flag, phonecode, currency, latitude: '0', longitude: '0', timezones: [{ zoneName, gmtOffset: 0, gmtOffsetName: 'UTC', abbreviation: 'UTC', tzName: zoneName }] });
+const countries = [
+  country('NG', 'Nigeria', '🇳🇬', '234', 'NGN', 'Africa/Lagos'),
+  country('GH', 'Ghana', '🇬🇭', '233', 'GHS', 'Africa/Accra'),
+  country('KE', 'Kenya', '🇰🇪', '254', 'KES', 'Africa/Nairobi'),
+  country('GB', 'United Kingdom', '🇬🇧', '44', 'GBP', 'Europe/London'),
+  country('US', 'United States', '🇺🇸', '1', 'USD', 'America/New_York'),
+  country('CA', 'Canada', '🇨🇦', '1', 'CAD', 'America/Toronto'),
+  country('JM', 'Jamaica', '🇯🇲', '+1-876', 'JMD', 'America/Jamaica'),
+];
+const statesOf: Record<string, { name: string; isoCode: string }[]> = {
+  NG: [
+    { name: 'Abuja Federal Capital Territory', isoCode: 'FC' },
+    { name: 'Lagos', isoCode: 'LA' },
+    { name: 'Oyo', isoCode: 'OY' },
+  ],
+  GB: [{ name: 'England', isoCode: 'ENG' }],
+  US: [{ name: 'California', isoCode: 'CA' }],
+  CA: [{ name: 'Ontario', isoCode: 'ON' }],
+};
 
 const emptyRecovery = () => ({
   recoveryEmail: { configured: false, value: null as string | null, lastUpdatedAt: null, pending: null as { value: string; requestedAt: string; usableAt: string } | null },
@@ -265,6 +289,14 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return issuedTokens ? ok(route, issuedTokens, 201) : fail(route, 409, 'TOO_MANY_ACCOUNTS');
     };
 
+    if (path === '/v1/countries/public') return ok(route, countries);
+    const listed = /^\/v1\/countries\/public\/(\w+)\/states(?:\/(\w+)\/cities)?$/.exec(path);
+    if (listed) {
+      const [, countryCode = '', stateCode] = listed;
+      const states = (statesOf[countryCode] ?? []).map((state) => ({ ...state, countryCode }));
+      return ok(route, stateCode ? (states.some((state) => state.isoCode === stateCode) ? [{ name: 'Ikeja', countryCode, stateCode }] : []) : states);
+    }
+
     // Advice only, as the backend gives it: whether a Yahel address is free, and checked alternatives. Names reserved
     // by the platform read as taken; so does any name with an account. `register` is still where a name is claimed.
     if (path === '/v1/auth/address-availability') {
@@ -338,9 +370,8 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     if (path === '/v1/auth/phone-challenge/send') {
       const check = phoneChecks.get(body?.challengeToken ?? '');
       if (!check || check.used) return fail(route, 401, 'INVALID_TOKEN');
-      const digits = (body?.phone ?? '').replace(/\D/g, '');
-      if (digits.length < 8) return fail(route, 400, 'BAD_REQUEST');
-      check.phone = digits;
+      if (!wellFormedPhone(body)) return fail(route, 400, 'BAD_REQUEST');
+      check.phone = (body?.phone ?? '').replace(/\D/g, '');
       return ok(route, { message: 'Code sent.', resendInSeconds: 30, sendsLeft: 4 });
     }
     if (path === '/v1/auth/phone-challenge/verify') {
@@ -471,7 +502,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
     if (path === '/v1/auth/passkey/list') return ok(route, passkeysOf(signedIn.email).map((passkey) => ({ ...passkey, aaguid: null, transports: ['internal'], lastUsedAt: null })));
     const methods = recoveryOf(signedIn.email);
     if (path === '/v1/auth/phone/send-otp') {
-      if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');
+      if (!wellFormedPhone(body)) return fail(route, 400, 'BAD_REQUEST');
       methods.phone.pending = { ...staged(`***${(body?.phone ?? '').slice(-4)}`), verified: false };
       return ok(route, { message: 'Verification code sent' }, 201);
     }
@@ -493,7 +524,7 @@ export async function mockApi(page: Page, options: MockApiOptions = {}): Promise
       return ok(route, methods);
     }
     if (path === '/v1/me/recovery/phone') {
-      if (!wellFormedPhone(body?.phone)) return fail(route, 400, 'BAD_REQUEST');
+      if (!body?.phone?.startsWith('+') || !wellFormedPhone(body)) return fail(route, 400, 'BAD_REQUEST');
       methods.phone.pending = { ...staged(`***${(body?.phone ?? '').slice(-4)}`), verified: false };
       return ok(route, methods);
     }

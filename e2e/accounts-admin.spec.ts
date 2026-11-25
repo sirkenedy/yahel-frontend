@@ -18,7 +18,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await page.getByLabel('Mobile number').fill(adminPhone.number);
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(page.getByRole('main')).toContainText(adminPhone.masked);
-    expect(sent(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: '+2348035550142' });
+    expect(sent(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: adminPhone.number, countryCode: 'NG' });
     await codeBoxes(page).fill(phoneCode);
 
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
@@ -97,7 +97,7 @@ test.describe('accounts: an administrator whose phone is still to be checked', (
     await number.fill('024 555 0142');
     await page.getByRole('button', { name: 'Send code' }).click();
     await expect(heading(page, 'Enter the code.')).toBeVisible();
-    expect(sent(api, '/v1/auth/phone-challenge/send').at(-1)?.body).toMatchObject({ phone: '+233245550142' });
+    expect(sent(api, '/v1/auth/phone-challenge/send').at(-1)?.body).toMatchObject({ phone: '024 555 0142', countryCode: 'GH' });
 
     // Six letters or digits, case-sensitive: the boxes take letters.
     await codeBoxes(page).fill('WRONG1');

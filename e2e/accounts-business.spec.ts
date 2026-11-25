@@ -35,7 +35,7 @@ test.describe('accounts: create a workspace with a domain the business owns', ()
     await page.getByLabel('Mobile number').fill(business.phone);
     await proceed(page, 'Send code');
     await expect(heading(page, 'Enter the code.')).toBeVisible();
-    expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: '+2348035550142' });
+    expect(calls(api, '/v1/auth/phone-challenge/send')[0]!.body).toEqual({ challengeToken: 'phone-check-1', phone: business.phone, countryCode: 'NG' });
     await page.getByLabel('6-character code').fill(phoneCode);
     await expect(heading(page, 'Welcome to your new account.')).toBeVisible();
     await expect(page.getByRole('button', { name: `Account: ${business.adminAddress}` })).toBeVisible();
@@ -203,6 +203,33 @@ test.describe('accounts: plan and checkout, once signed in', () => {
     await proceed(page, 'Use a different card');
     await expect(heading(page, 'Add your card.')).toBeVisible();
     await expect(page.getByLabel('Card number')).toHaveValue('');
+  });
+});
+
+test.describe('accounts: countries from the backend', () => {
+  test('every country the backend lists is offered with its flag, grouped, and one without states asks for the state in words', async ({ page }) => {
+    await mockApi(page);
+    await createWorkspaceTo(page, 'start');
+    const country = page.getByLabel('Country or region');
+    await expect(country).toHaveValue('NG');
+    await expect(country.getByRole('group', { name: 'Africa' }).getByRole('option')).toHaveText(['🇬🇭 Ghana', '🇰🇪 Kenya']);
+    await expect(country.getByRole('group', { name: 'Rest of the world' }).getByRole('option', { name: '🇯🇲 Jamaica' })).toBeAttached();
+
+    await createWorkspaceTo(page, 'registrant', { domain: 'bought', country: '🇰🇪 Kenya' });
+    await expect(page.getByRole('textbox', { name: 'State or region' })).toBeVisible();
+    await expect(page.getByLabel('Country code')).toHaveValue('KE');
+    await expect(page.getByLabel('Country code').locator('option:checked')).toHaveText('🇰🇪 +254 Kenya');
+  });
+
+  test('a list that does not load says so beside the field, and Try again loads it', async ({ page }) => {
+    await mockApi(page);
+    await page.route('**/api/v1/countries/public', (route) => route.abort('internetdisconnected'));
+    await createWorkspaceTo(page, 'start');
+    await expect(page.getByText('This list didn’t load. Try again in a moment.')).toBeVisible();
+
+    await page.unroute('**/api/v1/countries/public');
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByLabel('Country or region')).toHaveValue('NG');
   });
 });
 

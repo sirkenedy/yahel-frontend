@@ -238,7 +238,7 @@ test.describe('personal account: sign-in methods and ways back in', () => {
     await expect(heading(page, 'Enter the code.')).toBeVisible();
     await expect(page.getByText(`We sent a 6-character code to ${person.maskedPhone}.`)).toBeVisible();
     expect(registrations(api)[0]!.body).toMatchObject({ phone: person.internationalPhone });
-    expect(calls(api, '/v1/auth/phone/send-otp')[0]!.body).toEqual({ phone: person.internationalPhone });
+    expect(calls(api, '/v1/auth/phone/send-otp')[0]!.body).toEqual({ phone: person.phone, countryCode: 'NG' });
 
     await code(page).fill('zzzzzz');
     await expect(code(page)).toHaveAccessibleDescription(/That code didn’t work or has expired\./);
