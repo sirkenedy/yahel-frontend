@@ -254,7 +254,7 @@ export interface BusinessRegistration extends PhoneRequired {
 /** The body `POST /auth/register-business` takes: no date of birth is needed for a business, and `contactEmail` is a mailbox the person can open today. */
 export type RegisterBusinessBody = Omit<Schemas['RegisterBusinessDto'], 'deviceName'>;
 
-/** `POST /auth/phone-challenge/send`: the number to text the challenge's code to, in international form. */
+/** `POST /auth/phone-challenge/send`: the number to text the challenge's code to, international or national with `countryCode`. */
 export type PhoneChallengeSendBody = Schemas['PhoneChallengeSendDto'];
 
 /** `POST /auth/phone-challenge/verify`: the texted code (six letters or digits, case-sensitive). A right one issues the session. */
@@ -262,3 +262,8 @@ export type PhoneChallengeVerifyBody = Omit<Schemas['PhoneChallengeVerifyDto'], 
 
 /** What `POST /auth/phone-challenge/send` answers: when another code can be asked for, and how many are left. */
 export type PhoneChallengeSent = Schemas['PhoneChallengeSentResponseDto'];
+
+/** A country as the backend lists it. `phonecode` is digits ("234"), or for some territories the calling code with an area code ("+1-876"). */
+export type Country = Omit<Schemas['CountryResponseDto'], 'timezones'> & { timezones: { zoneName: string }[] };
+export type CountryState = Schemas['StateResponseDto'];
+export type City = Schemas['CityResponseDto'];
