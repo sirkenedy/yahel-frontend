@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import type { Page } from '@playwright/test';
 import { accountsScreens, settled } from './support/accounts-screens';
 import { mockApi, signIn } from './support/api';

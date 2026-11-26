@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import type { Page } from '@playwright/test';
 import { at, openEmailStep, openNewPasswordStep, openPasswordStep, setConnection, signInWithPassword } from './support/accounts';
 import { credentials, mockApi, phoneCode, requestId, suspendedCredentials } from './support/api';

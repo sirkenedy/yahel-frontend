@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { forgetAccountData, refreshAccounts } from '@yahel/auth';
 import type { Session } from '@yahel/auth';
 import { useEffect } from 'react';
-import { forgetAccountData, refreshAccounts } from '../../flow/accounts';
 import { say } from '../../flow/toasts';
 import { chromeMessages as m } from './messages';
 

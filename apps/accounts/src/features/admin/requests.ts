@@ -1,7 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@yahel/api-client';
+import { forgetAccountData } from '@yahel/auth';
 import type { PasskeyRegistrar, Session } from '@yahel/auth';
-import { forgetAccountData, isSignedInAs } from '../../flow/accounts';
+import { isSignedInAs } from '../../flow/accounts';
 import { countriesQuery, countryOf, internationalNumber } from '../../flow/countries';
 import { hasCode } from '../../flow/feedback';
 import { flowMessages as shared } from '../../flow/messages';

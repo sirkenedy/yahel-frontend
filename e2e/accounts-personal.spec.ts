@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/test';
 import type { Page } from '@playwright/test';
 import { accountsUrl, appUrl, armStepFailure, at, failNextStep, fillMobile, openPasswordStep, signInWithPassword, stubApp, stubPasskeys, visit } from './support/accounts';
 import { credentials, emailCode, mockApi, pendingEmail, pendingPassword, phoneCode, registeredEmail, requestId, takenAddress } from './support/api';

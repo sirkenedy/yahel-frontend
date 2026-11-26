@@ -1,12 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
-import type { QueryClient } from '@tanstack/react-query';
 import type { AccountDirectory, AccountStanding, ClientAccount } from '@yahel/api-client';
+import { ACCOUNTS_KEY } from '@yahel/auth';
 import type { SessionState } from '@yahel/auth';
 import type { AccountKind } from '@yahel/ui';
-
-// The accounts this browser remembers belong to the browser, not to any one account, so the key carries
-// no account. Everything an account's own requests put in the cache is cleared when the tab's account changes.
-const ACCOUNTS_KEY = ['accounts', 'on-this-device'] as const;
 
 export const accountsQuery = (directory: AccountDirectory) =>
   queryOptions({
@@ -17,15 +13,6 @@ export const accountsQuery = (directory: AccountDirectory) =>
     // A list that could not be read stays unread until the person asks again: the chooser says so and offers to.
     retryOnMount: false,
   });
-
-/** The list changed: read it again wherever it is shown. A read already under way is the one that answers; it is not cancelled and restarted. */
-export const refreshAccounts = (queryClient: QueryClient) => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }, { cancelRefetch: false });
-
-/** The tab's account changed: nothing one account's requests left in the cache may be seen by another (rulebook 2.7). */
-export const forgetAccountData = (queryClient: QueryClient) => {
-  queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== ACCOUNTS_KEY[0] });
-  void refreshAccounts(queryClient);
-};
 
 /**
  * Whether this tab is signed in as `email`: a flow setting up one account counts nobody else's session as its own

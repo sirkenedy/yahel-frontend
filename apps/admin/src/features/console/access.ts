@@ -1,7 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
 import type { AuthContext } from '@yahel/api-client';
-import { slotOf } from '@yahel/auth';
+import { keepAccountDataFor, slotOf } from '@yahel/auth';
 import type { AccountsApp, Session } from '@yahel/auth';
 
 /** The workspace this account administers in Admin, from its current context. */
@@ -46,8 +46,8 @@ export async function enterConsole({ session, queryClient, accountsApp }: Consol
   const { status, slot: using } = session.store.getState();
   if (!(status === 'signed-in' && using === slot)) {
     if (!(await session.switchTo(slot))) return { to: 'accounts', href: accountsApp.signIn() };
-    queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== 'accounts' });
   }
+  keepAccountDataFor(queryClient, session.store.getState().handle);
   const contexts = await queryClient.fetchQuery(contextsQuery(session, session.store.getState().handle));
   const workspace = workspaceOf(contexts);
   return workspace ? { to: 'console', workspace } : { to: 'accounts', href: accountsApp.signIn() };

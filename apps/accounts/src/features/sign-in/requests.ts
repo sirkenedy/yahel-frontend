@@ -1,8 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { currentAccountOf, isApiError, isWorkspaceAdmin } from '@yahel/api-client';
 import type { AccountCapabilities, RecoveryMethod, RecoveryOption } from '@yahel/api-client';
+import { forgetAccountData } from '@yahel/auth';
 import type { PasskeyClient, Session, SignInResult } from '@yahel/auth';
-import { accountsQuery, forgetAccountData } from '../../flow/accounts';
+import { accountsQuery } from '../../flow/accounts';
 import { confirmAndSignIn, resendConfirmation, signInOrConfirm } from '../../flow/email-confirmation';
 import { useFlowRequest } from '../../flow/use-flow-request';
 import { say } from '../../flow/toasts';
@@ -58,14 +59,16 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
       go();
       return;
     }
+    forgetAccountData(queryClient);
     store.dispatch({ type: 'not-admin', email: account.email });
     navigate('choose', { replace: true });
   };
 
   // A new account in this tab: nothing the last one's requests cached may be seen, and the chooser reads its list again.
+  // Leaving loads another page, which takes the cache with it; clearing it first only starts requests that page abandons.
   const finish = () => {
     store.dispatch({ type: 'signed-in' });
-    forgetAccountData(queryClient);
+    if (!leave) forgetAccountData(queryClient);
     if (leave && adminOnly) void leaveAsAdmin(leave);
     else if (leave) leave();
     else navigate('done', { replace: true });
@@ -226,7 +229,7 @@ export function useSignInRequests({ visit, session, capabilities, passkeys, stor
       const account = (await accountsNow()).find((known) => known.handle === handle);
       if (!account) return { to: 'gone' as const };
       if (!account.signedIn || !(await session.switchTo(account.slot, account.handle))) return { to: 'password' as const, email: account.email };
-      forgetAccountData(queryClient);
+      if (!leave) forgetAccountData(queryClient);
       return { to: 'done' as const, email: account.email };
     },
     onDone: (outcome) => {
