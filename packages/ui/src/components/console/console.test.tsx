@@ -88,7 +88,7 @@ describe('ConsoleSearch', () => {
   });
 });
 
-const labels = { skip: 'Skip to content', showMenu: 'Show menu', hideMenu: 'Hide menu', closeMenu: 'Close menu' };
+const labels = { skip: 'Skip to content', showMenu: 'Show menu', hideMenu: 'Hide menu', closeMenu: 'Close menu', menu: 'Menu' };
 
 describe('ConsoleShell', () => {
   it('opens the menu as a drawer on a narrow screen and closes it from its own header', async () => {
@@ -254,7 +254,7 @@ describe('Selection bar, filter chips and menus', () => {
         <BulkBar label="Actions for the selected people" count="2 people selected" clearLabel="Clear selection" onClear={onClear}>
           <ConsoleMenu look="bulk" label="Move to unit" items={[{ id: 'lagos', label: 'Lagos office' }, { id: 'x', label: 'Elsewhere', isDisabled: true }]} onAction={onAction} />
         </BulkBar>
-        <FilterChip removeLabel="Stop filtering by Lagos office" onRemove={onRemove}>
+        <FilterChip removeLabel="stop filtering" onRemove={onRemove}>
           Lagos office
         </FilterChip>
       </>,
@@ -266,7 +266,7 @@ describe('Selection bar, filter chips and menus', () => {
     expect(onAction).toHaveBeenCalledWith('lagos');
     await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
     expect(onClear).toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Stop filtering by Lagos office' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Lagos office, stop filtering' }));
     expect(onRemove).toHaveBeenCalled();
   });
 });

@@ -110,15 +110,16 @@ export function UnitTree({ label, units, mode, selected, onChange, toggleLabel, 
 export interface FilterChipProps {
   /** The visible text: the unit or value being filtered by. */
   children: ReactNode;
-  /** The button's name: "Stop filtering by Lagos office". */
+  /** Said after the visible text, out of view: "stop filtering". */
   removeLabel: string;
   onRemove: () => void;
 }
 
 /** One active filter, removed by pressing it. */
 export const FilterChip = ({ children, removeLabel, onRemove }: FilterChipProps) => (
-  <Button className="ws-console-filter-chip" aria-label={removeLabel} onPress={onRemove}>
+  <Button className="ws-console-filter-chip" onPress={onRemove}>
     {children}
+    <span className="ws-console-hidden">, {removeLabel}</span>
     <FlowIcon name="close" />
   </Button>
 );
@@ -185,12 +186,10 @@ export function ConsoleMenu({ label, icon, items, onAction, look = 'quiet', isDi
         <Menu className="ws-console-menu__list" onAction={(key) => onAction(String(key))} disabledKeys={items.filter((item) => item.isDisabled).map((item) => item.id)}>
           {items.map((item) => (
             <MenuItem key={item.id} id={item.id} className="ws-console-menu__item" textValue={item.label}>
-              <Text slot="label">{item.label}</Text>
-              {item.detail ? (
-                <Text slot="description" className="ws-console-menu__detail">
-                  {item.detail}
-                </Text>
-              ) : null}
+              <Text slot="label" className="ws-console-menu__text">
+                <span>{item.label}</span>
+                {item.detail ? <span className="ws-console-menu__detail">{item.detail}</span> : null}
+              </Text>
             </MenuItem>
           ))}
         </Menu>

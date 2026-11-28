@@ -157,7 +157,7 @@ export function UsersPage({ session, tenantId, organisation, slot, crumbs, crumb
                 <>
                   <span>{search.pick === 'one' ? m.scope.oneLabel : m.scope.several(pickedUnits.length)}</span>
                   {pickedUnits.map((unit) => (
-                    <FilterChip key={unit._id} removeLabel={m.scope.stop(unit.name)} onRemove={() => stop(unit._id)}>
+                    <FilterChip key={unit._id} removeLabel={m.scope.stop} onRemove={() => stop(unit._id)}>
                       {search.pick === 'one' ? m.scope.withInside(unit.name) : unit.name}
                     </FilterChip>
                   ))}

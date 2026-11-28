@@ -19,7 +19,7 @@
 
 /* The mark */
 .ws-console-mark { display: inline-flex; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-daylight-ink); }
-.ws-flow__brand-link .ws-console-mark, .ws-console__bar .ws-console-mark { text-decoration: none; }
+.ws-flow__brand-link .ws-console-mark, .ws-console__bar .ws-console-mark, .ws-console-drawer-head .ws-console-mark { text-decoration: none; }
 .ws-flow__brand-link { text-decoration: none; }
 .ws-console-mark svg { display: block; width: var(--ws-space-32); height: var(--ws-space-32); flex-shrink: 0; }
 .ws-console-mark__roof { fill: var(--ws-color-daylight-mark-pale); }
@@ -145,6 +145,8 @@
 .ws-console-table__link:focus-visible::after { outline: var(--ws-border-focus) solid var(--ws-color-daylight-accent); outline-offset: calc(var(--ws-border-focus) * -1); border-radius: var(--ws-radius-md); }
 .ws-console-person { display: flex; align-items: center; gap: var(--ws-space-12); min-width: 0; }
 .ws-console-person__text { display: flex; flex-direction: column; min-width: 0; }
+.ws-console-table .ws-console-person__text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-console-table td:not(.ws-console-table__select) { white-space: nowrap; }
 .ws-console-person__sub { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-regular); }
 .ws-console-table__empty { display: flex; flex-direction: column; align-items: center; gap: var(--ws-space-8); padding: var(--ws-space-48) var(--ws-space-24); text-align: center; }
 
@@ -242,6 +244,8 @@
 .ws-console-menu__item[data-disabled] { color: var(--ws-color-daylight-mute); cursor: default; }
 .ws-console-menu__detail { color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-note-size); line-height: var(--ws-type-flow-note-line); font-weight: var(--ws-weight-regular); }
 .ws-console-drawer-head { display: none; }
+.ws-console-hidden { position: absolute; width: var(--ws-border-hairline); height: var(--ws-border-hairline); overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ws-console-menu__text { display: flex; flex-direction: column; gap: var(--ws-space-2); }
 
 @media (max-width: 899.98px) {
   .ws-console__bar { padding-inline: var(--ws-space-8) var(--ws-space-12); gap: var(--ws-space-8); }

@@ -27,6 +27,8 @@ export interface ConsoleShellLabels {
   hideMenu: string;
   /** The button in the drawer's own header on a narrow screen: "Close menu". */
   closeMenu: string;
+  /** Names the side menu's region: "Menu". */
+  menu: string;
 }
 
 /** What the shell tells the side menu: whether it is narrowed to icons, its id, and what to call to widen it or after a page is chosen. */
@@ -62,7 +64,7 @@ export function ConsoleShell({ labels, brand, search, actions, nav, toast, child
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const navRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const shown = compact ? open : !collapsed;
 
   const overlay = compact && open;
@@ -96,7 +98,7 @@ export function ConsoleShell({ labels, brand, search, actions, nav, toast, child
       </header>
       <div className="ws-console__shell">
         {overlay ? <button type="button" className="ws-console__scrim" data-open tabIndex={-1} aria-label={labels.hideMenu} onClick={() => setOpen(false)} /> : null}
-        <div ref={navRef} className="ws-console-nav-host" data-open={overlay || undefined} inert={compact && !open ? true : undefined}>
+        <aside ref={navRef} className="ws-console-nav-host" aria-label={labels.menu} data-open={overlay || undefined} inert={compact && !open ? true : undefined}>
           {compact ? (
             <div className="ws-console-drawer-head">
               {brand}
@@ -113,7 +115,7 @@ export function ConsoleShell({ labels, brand, search, actions, nav, toast, child
             </div>
           ) : null}
           {nav({ collapsed: !compact && collapsed, id: navId, onExpand: () => setCollapsed(false), onNavigate: () => setOpen(false) })}
-        </div>
+        </aside>
         <main id={MAIN_ID} className="ws-console__main" tabIndex={-1}>
           {children}
         </main>

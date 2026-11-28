@@ -8,6 +8,7 @@ export const consoleMessages = {
   showMenu: 'Show menu',
   hideMenu: 'Hide menu',
   closeMenu: 'Close menu',
+  menu: 'Menu',
   navigation: 'Admin console',
   search: 'Search the Admin console',
   searchPlaceholder: 'Search people, settings and help',

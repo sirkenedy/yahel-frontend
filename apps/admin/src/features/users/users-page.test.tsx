@@ -53,12 +53,12 @@ describe('UsersPage', () => {
     const tree = await screen.findByRole('radiogroup', { name: m.units.tree });
     await userEvent.click(within(tree).getByRole('radio', { name: /Lagos office/ }));
     expect(bodyRows()).toHaveLength(2);
-    expect(screen.getByRole('button', { name: m.scope.stop('Lagos office') })).toHaveTextContent(m.scope.withInside('Lagos office'));
+    expect(screen.getByRole('button', { name: `${m.scope.withInside('Lagos office')}, ${m.scope.stop}` })).toBeInTheDocument();
     expect(screen.getByText(m.shownOf(2, 3))).toBeInTheDocument();
     await userEvent.click(screen.getByRole('radio', { name: m.units.several }));
     await userEvent.click(within(screen.getByRole('group', { name: m.units.tree })).getByRole('checkbox', { name: /Guests/ }));
     expect(screen.getByText(m.scope.several(2))).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: m.scope.stop('Lagos office') }));
+    await userEvent.click(screen.getByRole('button', { name: `Lagos office, ${m.scope.stop}` }));
     expect(screen.getByText(m.noneInUnits)).toBeInTheDocument();
   });
 

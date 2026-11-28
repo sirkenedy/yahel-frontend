@@ -33,7 +33,7 @@ export const usersMessages = {
     oneLabel: 'People in',
     several: (count: number) => `People in ${count} units:`,
     withInside: (name: string) => `${name} and its units`,
-    stop: (name: string) => `Stop filtering by ${name}`,
+    stop: 'stop filtering',
   },
   units: {
     title: 'Units',
