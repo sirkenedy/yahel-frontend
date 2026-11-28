@@ -2,14 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { isApiError } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { ConsoleCard, ConsoleDialog, FlowButton } from '@yahel/ui';
-import { useId, useState } from 'react';
 import { notify } from '../../toast';
 import { actionMessages as m } from './messages';
 import type { Person } from './people';
-import { memberQuery, membersQuery } from './queries';
-
-type Action = 'makeAdmin' | 'removeAdmin' | 'suspend' | 'reactivate' | 'delete' | 'resend' | 'cancelInvite';
+import { memberQuery } from './queries';
+import type { Unit } from './units';
 
 /** Why an administrator may not change `person`'s role or access, or `null` when they may. Shown beside the disabled controls. */
 export function lockOf(person: Person, everyone: readonly Person[], name: string) {
@@ -20,7 +17,7 @@ export function lockOf(person: Person, everyone: readonly Person[], name: string
   return null;
 }
 
-const failureOf = (error: unknown) => {
+export const failureOf = (error: unknown) => {
   if (!isApiError(error)) return m.failed.server;
   if (error.status === 0) return m.failed.offline;
   switch (error.code) {
@@ -39,158 +36,88 @@ const failureOf = (error: unknown) => {
   }
 };
 
-export interface UserActionsProps {
+export type MemberChange =
+  | { kind: 'role'; role: 'ADMIN' | 'MEMBER'; roleName: string }
+  | { kind: 'suspend' }
+  | { kind: 'reactivate' }
+  | { kind: 'delete' }
+  | { kind: 'resend' }
+  | { kind: 'cancelInvite' }
+  | { kind: 'unit'; unit: Unit }
+  | { kind: 'profile'; jobTitle: string; department: string };
+
+export interface MemberChangeContext {
   session: Session;
   tenantId: string;
   slot: string;
-  organisation: string;
-  person: Person;
-  everyone: readonly Person[];
+  memberId: string;
+  name: string;
 }
 
-/**
- * What an administrator can do to one person, on the endpoints that exist. A change of role, suspending and
- * deleting are confirmed in a dialog that names the change. The owner, yourself and the last administrator
- * cannot be changed: the controls stay in view, disabled, with the reason.
- */
-export function UserActions({ session, tenantId, slot, organisation, person, everyone }: UserActionsProps) {
+const said = (change: MemberChange, name: string) => {
+  const done = m.done_;
+  switch (change.kind) {
+    case 'role':
+      return done.role(name, change.roleName);
+    case 'suspend':
+      return done.suspended(name);
+    case 'reactivate':
+      return done.reactivated(name);
+    case 'delete':
+      return done.deleted(name);
+    case 'resend':
+      return done.resent(name);
+    case 'cancelInvite':
+      return done.cancelled(name);
+    case 'unit':
+      return done.moved(name, change.unit.name);
+    case 'profile':
+      return done.saved(name);
+  }
+};
+
+/** One change to one person, on the endpoints that exist: a toast says what happened, and the people lists are fetched again. */
+export function useMemberChange({ session, tenantId, slot, memberId: id, name }: MemberChangeContext, onDone?: () => void) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const reasonId = useId();
-  const [confirming, setConfirming] = useState<Action | null>(null);
-  const name = person.name ?? m.thisPerson;
-  const { member } = person;
-  const lock = lockOf(person, everyone, name);
   const api = session.api.tenants.members;
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['users', tenantId] }, { cancelRefetch: false });
 
-  const run = useMutation({
-    mutationFn: async (action: Action) => {
-      switch (action) {
-        case 'makeAdmin':
-          return api.update(tenantId, member._id, { role: 'ADMIN' });
-        case 'removeAdmin':
-          return api.update(tenantId, member._id, { role: 'MEMBER' });
+  return useMutation({
+    mutationFn: async (change: MemberChange) => {
+      switch (change.kind) {
+        case 'role':
+          return api.update(tenantId, id, { role: change.role });
         case 'suspend':
-          return api.suspend(tenantId, member._id);
+          return api.suspend(tenantId, id);
         case 'reactivate':
-          return api.reactivate(tenantId, member._id);
+          return api.reactivate(tenantId, id);
         case 'delete':
-          return api.remove(tenantId, member._id);
+          return api.remove(tenantId, id);
         case 'resend':
-          return api.resendInvite(tenantId, member._id);
+          return api.resendInvite(tenantId, id);
         case 'cancelInvite':
-          return api.cancelInvite(tenantId, member._id);
+          return api.cancelInvite(tenantId, id);
+        case 'unit':
+          return api.changeUnit(tenantId, id, change.unit._id);
+        case 'profile':
+          return api.update(tenantId, id, { jobTitle: change.jobTitle, department: change.department });
       }
     },
-    onSuccess: async (_, action) => {
-      setConfirming(null);
-      const said = { makeAdmin: m.done.madeAdmin, removeAdmin: m.done.removedAdmin, suspend: m.done.suspended, reactivate: m.done.reactivated, delete: m.done.deleted, resend: m.done.resent, cancelInvite: m.done.cancelled }[action];
-      const text = said(name);
+    onSuccess: async (_, change) => {
+      onDone?.();
+      const text = said(change, name);
       notify(text.charAt(0).toUpperCase() + text.slice(1));
-      if (action === 'delete' || action === 'cancelInvite') {
-        queryClient.removeQueries({ queryKey: memberQuery(session, tenantId, member._id).queryKey });
+      if (change.kind === 'delete' || change.kind === 'cancelInvite') {
+        queryClient.removeQueries({ queryKey: memberQuery(session, tenantId, id).queryKey });
         await navigate({ to: '/u/$slot/users', params: { slot } });
       }
-      await queryClient.invalidateQueries({ queryKey: membersQuery(session, tenantId).queryKey.slice(0, 2) });
+      await refresh();
     },
     onError: async (error) => {
-      setConfirming(null);
+      onDone?.();
       notify(failureOf(error), 'danger');
-      await queryClient.invalidateQueries({ queryKey: membersQuery(session, tenantId).queryKey.slice(0, 2) });
+      await refresh();
     },
   });
-
-  const confirmed: Partial<Record<Action, { title: string; body: string; extra?: string; verb: string; destructive?: boolean }>> = {
-    makeAdmin: { title: m.confirm.makeAdminTitle(name), body: m.confirm.makeAdmin(organisation), verb: m.makeAdmin },
-    removeAdmin: { title: m.confirm.removeAdminTitle(name), body: m.confirm.removeAdmin(organisation), verb: m.removeAdmin },
-    suspend: { title: m.confirm.suspendTitle(name), body: m.confirm.suspend(organisation), verb: m.suspend, destructive: true },
-    delete: { title: m.confirm.deleteTitle(name), body: m.confirm.delete(organisation), extra: m.confirm.deleteUndo, verb: m.delete, destructive: true },
-    cancelInvite: { title: m.confirm.cancelInviteTitle(name), body: m.confirm.cancelInvite, verb: m.cancelInvite, destructive: true },
-  };
-  const ask = (action: Action) => (confirmed[action] ? setConfirming(action) : run.mutate(action));
-  const pending = (action: Action) => run.isPending && run.variables === action;
-  const locked = { isDisabled: !!lock || run.isPending, 'aria-describedby': lock ? reasonId : undefined };
-  const dialog = confirming ? confirmed[confirming] : undefined;
-  const invitedNow = member.status === 'invited';
-
-  return (
-    <>
-      <div className="user-actions" role="group" aria-label={m.label}>
-        {invitedNow ? (
-          <>
-            <FlowButton onPress={() => ask('resend')} isPending={pending('resend')} pendingLabel={m.working} isDisabled={run.isPending}>
-              {m.resend}
-            </FlowButton>
-            <FlowButton onPress={() => ask('cancelInvite')} isDisabled={run.isPending || person.isYou}>
-              {m.cancelInvite}
-            </FlowButton>
-          </>
-        ) : (
-          <>
-            <FlowButton isDisabled aria-describedby={`${reasonId}-reset`}>
-              {m.resetPassword}
-            </FlowButton>
-            {member.role === 'ADMIN' ? (
-              <FlowButton onPress={() => ask('removeAdmin')} {...locked}>
-                {m.removeAdmin}
-              </FlowButton>
-            ) : (
-              <FlowButton onPress={() => ask('makeAdmin')} {...locked} isDisabled={locked.isDisabled || member.role === 'OWNER'}>
-                {m.makeAdmin}
-              </FlowButton>
-            )}
-            {member.status === 'suspended' ? (
-              <FlowButton onPress={() => ask('reactivate')} isPending={pending('reactivate')} pendingLabel={m.working} {...locked}>
-                {m.reactivate}
-              </FlowButton>
-            ) : (
-              <FlowButton onPress={() => ask('suspend')} {...locked}>
-                {m.suspend}
-              </FlowButton>
-            )}
-          </>
-        )}
-      </div>
-      {lock ? (
-        <p id={reasonId} className="ws-console-note">
-          {lock}
-        </p>
-      ) : null}
-      {invitedNow ? null : (
-        <p id={`${reasonId}-reset`} className="ws-console-note">
-          {m.resetLater}
-        </p>
-      )}
-      {invitedNow ? null : (
-        <ConsoleCard title={m.deleteTitle(name)} icon="warning">
-          <p className="ws-console-muted">{m.deleteLede}</p>
-          <div className="user-actions">
-            <FlowButton variant="destructive" onPress={() => ask('delete')} {...locked}>
-              {m.delete}
-            </FlowButton>
-          </div>
-        </ConsoleCard>
-      )}
-      <ConsoleDialog
-        isOpen={!!dialog}
-        onOpenChange={(open) => (open || run.isPending ? undefined : setConfirming(null))}
-        title={dialog?.title ?? ''}
-        actions={
-          <>
-            <FlowButton variant="quiet" onPress={() => setConfirming(null)} isDisabled={run.isPending}>
-              {m.cancel}
-            </FlowButton>
-            {confirming && dialog ? (
-              <FlowButton variant={dialog.destructive ? 'destructive' : 'primary'} onPress={() => run.mutate(confirming)} isPending={run.isPending} pendingLabel={m.working}>
-                {dialog.verb}
-              </FlowButton>
-            ) : null}
-          </>
-        }
-      >
-        <p>{dialog?.body}</p>
-        {dialog?.extra ? <p>{dialog.extra}</p> : null}
-      </ConsoleDialog>
-    </>
-  );
 }
