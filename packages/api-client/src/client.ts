@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AddedDomain, WorkspaceMember, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, City, ClientAccount, Country, CountryState, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
+import type { Acknowledgement, AddedDomain, WorkspaceMember, WorkspaceUnit, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, City, ClientAccount, Country, CountryState, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -205,7 +205,7 @@ export function createApiClient(options: ApiClientOptions) {
       },
       /** The workspace's organisational units: the organisation itself, Guests, and the units inside them. */
       units: {
-        list: (tenantId: string, signal?: AbortSignal) => request<Schemas['OuResponseDto'][]>('GET', '/api/v1/tenants/{tenantId}/ous', { auth: true, params: { tenantId }, signal }),
+        list: (tenantId: string, signal?: AbortSignal) => request<WorkspaceUnit[]>('GET', '/api/v1/tenants/{tenantId}/ous', { auth: true, params: { tenantId }, signal }),
       },
       /** The workspace's groups, each with its own address. */
       groups: {

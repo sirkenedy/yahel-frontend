@@ -154,6 +154,16 @@ export interface WorkspaceMember {
   updatedAt?: string;
 }
 
+/**
+ * One organisational unit, as `GET /tenants/{tenantId}/ous` lists it. The description declares `parentId` and
+ * `description` as objects; the lean `OrganizationalUnit` document carries the parent's id as a string and the
+ * description as text.
+ */
+export interface WorkspaceUnit extends Omit<Schemas['OuResponseDto'], 'parentId' | 'description'> {
+  parentId: string | null;
+  description?: string | null;
+}
+
 /** The DNS record that proves a domain is the workspace's (`DomainVerificationInstructions`). `host` is `@` for the domain itself. */
 export interface DomainVerificationRecord {
   method: 'TXT' | 'CNAME';
