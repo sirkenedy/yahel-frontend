@@ -44,7 +44,7 @@ export function ConsoleSearch({ label, placeholder, items, emptyLabel, onSelect 
         <FlowIcon name="search" />
         <Input className="ws-console-search__input" placeholder={placeholder} />
       </div>
-      <Popover className="ws-console-search__panel" placement="bottom start" offset={8}>
+      <Popover className="ws-console-search__panel" placement="bottom start" offset={8} isNonModal>
         <ListBox<ConsoleSearchItem> className="ws-console-search__list" renderEmptyState={() => <p className="ws-console-search__empty">{emptyLabel}</p>}>
           {(item) => (
             <ListBoxItem id={item.id} textValue={item.label} className="ws-console-search__option">

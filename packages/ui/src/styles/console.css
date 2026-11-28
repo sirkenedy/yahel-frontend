@@ -19,6 +19,8 @@
 
 /* The mark */
 .ws-console-mark { display: inline-flex; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-daylight-ink); }
+.ws-flow__brand-link .ws-console-mark, .ws-console__bar .ws-console-mark { text-decoration: none; }
+.ws-flow__brand-link { text-decoration: none; }
 .ws-console-mark svg { display: block; width: var(--ws-space-32); height: var(--ws-space-32); flex-shrink: 0; }
 .ws-console-mark__roof { fill: var(--ws-color-daylight-mark-pale); }
 .ws-console-mark__body { fill: var(--ws-color-daylight-accent); }
@@ -101,7 +103,7 @@
 .ws-console-link:hover { text-decoration: underline; text-underline-offset: var(--ws-space-4); }
 
 /* Cards */
-.ws-console-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--ws-size-layer-sm)), 1fr)); gap: var(--ws-space-16); }
+.ws-console-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--ws-flow-summary)), 1fr)); gap: var(--ws-space-16); }
 .ws-console-card { display: flex; flex-direction: column; gap: var(--ws-space-16); min-width: 0; padding: var(--ws-space-24); border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
 .ws-console-card__head { display: flex; align-items: center; gap: var(--ws-space-12); min-width: 0; }
 .ws-console-card__head > .ws-console-section-title { flex: 1 1 auto; min-width: 0; }
@@ -151,6 +153,8 @@
 .ws-console-overlay[data-entering] { animation: ws-console-fade var(--ws-duration-quick) var(--ws-easing-standard); }
 .ws-console-modal { box-sizing: border-box; width: 100%; max-width: var(--ws-size-layer-md); max-height: 100%; overflow-y: auto; border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: var(--ws-elevation-daylight); }
 .ws-console-modal[data-entering] { animation: ws-console-rise var(--ws-duration-standard) var(--ws-easing-standard); }
+.ws-console-dialog h2, .ws-console-dialog p { margin: 0; }
+.ws-console-modal { color: var(--ws-color-daylight-ink); font-family: var(--ws-font-text); font-size: var(--ws-type-console-body-size); line-height: var(--ws-type-console-body-line); }
 .ws-console-dialog { display: flex; flex-direction: column; gap: var(--ws-space-16); padding: var(--ws-space-24); outline: none; }
 .ws-console-dialog__title { font-family: var(--ws-font-display); font-size: var(--ws-type-console-section-size); line-height: var(--ws-type-console-section-line); font-weight: var(--ws-type-console-section-weight); }
 .ws-console-dialog__body { display: flex; flex-direction: column; gap: var(--ws-space-12); color: var(--ws-color-daylight-soft); }

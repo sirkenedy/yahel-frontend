@@ -6,7 +6,6 @@ import { ConsoleCard, ConsoleDialog, FlowButton } from '@yahel/ui';
 import { useId, useState } from 'react';
 import { notify } from '../../toast';
 import { actionMessages as m } from './messages';
-import { nameOf } from './people';
 import type { Person } from './people';
 import { memberQuery, membersQuery } from './queries';
 
@@ -59,7 +58,7 @@ export function UserActions({ session, tenantId, slot, organisation, person, eve
   const navigate = useNavigate();
   const reasonId = useId();
   const [confirming, setConfirming] = useState<Action | null>(null);
-  const name = nameOf(person);
+  const name = person.name ?? m.thisPerson;
   const { member } = person;
   const lock = lockOf(person, everyone, name);
   const api = session.api.tenants.members;
@@ -86,7 +85,8 @@ export function UserActions({ session, tenantId, slot, organisation, person, eve
     onSuccess: async (_, action) => {
       setConfirming(null);
       const said = { makeAdmin: m.done.madeAdmin, removeAdmin: m.done.removedAdmin, suspend: m.done.suspended, reactivate: m.done.reactivated, delete: m.done.deleted, resend: m.done.resent, cancelInvite: m.done.cancelled }[action];
-      notify(said(name));
+      const text = said(name);
+      notify(text.charAt(0).toUpperCase() + text.slice(1));
       if (action === 'delete' || action === 'cancelInvite') {
         queryClient.removeQueries({ queryKey: memberQuery(session, tenantId, member._id).queryKey });
         await navigate({ to: '/u/$slot/users', params: { slot } });

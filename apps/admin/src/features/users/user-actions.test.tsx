@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { ApiError } from '@yahel/api-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { dismissToast, useToast } from '../../toast';
-import { actionMessages as m, personWords as w } from './messages';
+import { actionMessages as m } from './messages';
 import { personOf } from './people';
 import { admin, invited, me, member, owner, testSession } from './test-session';
 import { UserActions, lockOf } from './user-actions';
@@ -49,11 +49,11 @@ describe('UserActions', () => {
   it('confirms making someone an admin, naming the change, then says it is done', async () => {
     const { api, user: u } = show('m-5');
     await u.click(screen.getByRole('button', { name: m.makeAdmin }));
-    const dialog = screen.getByRole('alertdialog', { name: m.confirm.makeAdminTitle(w.unnamed) });
+    const dialog = screen.getByRole('alertdialog', { name: m.confirm.makeAdminTitle(m.thisPerson) });
     expect(dialog).toHaveTextContent('Admins can manage people');
     await u.click(screen.getAllByRole('button', { name: m.makeAdmin }).at(-1)!);
     expect(api.update).toHaveBeenCalledWith('t-1', 'm-5', { role: 'ADMIN' });
-    expect(await screen.findByRole('status')).toHaveTextContent(m.done.madeAdmin(w.unnamed));
+    expect(await screen.findByRole('status')).toHaveTextContent('This person is now an admin.');
   });
 
   it('says what deleting does and does not transfer, and goes back to Users', async () => {

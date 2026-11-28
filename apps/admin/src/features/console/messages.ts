@@ -3,7 +3,7 @@ export const consoleMessages = {
   brand: 'Yahel Admin',
   word: 'yahel',
   product: 'admin',
-  home: 'Admin home',
+  home: 'Yahel Admin home',
   skip: 'Skip to content',
   showMenu: 'Show menu',
   hideMenu: 'Hide menu',

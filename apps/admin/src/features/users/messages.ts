@@ -29,7 +29,6 @@ export const personWords = {
   you: 'You',
   unnamed: 'Name not available yet',
   added: (date: string) => `Added ${date}`,
-  rowLabel: (name: string, detail: string) => `${name}, ${detail}`,
   notYet: 'Not yet',
   today: (time: string) => `Today, ${time}`,
 } as const;
@@ -62,6 +61,7 @@ export const userMessages = {
 
 export const actionMessages = {
   label: 'Actions',
+  thisPerson: 'this person',
   cancel: 'Cancel',
   resetPassword: 'Reset password',
   resetLater: 'Resetting a password comes in a later version.',

@@ -19,7 +19,7 @@ describe('UsersPage', () => {
     const table = await screen.findByRole('table', { name: m.table });
     const rows = within(table).getAllByRole('row').slice(1);
     expect(rows[0]).toHaveTextContent('Amara Okafor');
-    expect(within(rows[0]!).getByRole('link', { name: 'Amara Okafor' })).toHaveAttribute('href', '/u/0/users/m-me');
+    expect(within(rows[0]!).getByRole('link', { name: /Amara Okafor/ })).toHaveAttribute('href', '/u/0/users/m-me');
     expect(rows[1]).toHaveTextContent(w.status.invited);
     expect(screen.getByText(m.count(3, 'Northwind Studio'))).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Suspended/ }).closest('label')).toHaveTextContent('1');

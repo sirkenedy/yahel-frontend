@@ -24,7 +24,7 @@ body { margin: 0; min-height: 100dvh; background: var(--ws-color-daylight-canvas
 .home-progress { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--ws-flow-avatar-lg); height: var(--ws-flow-avatar-lg); border-radius: var(--ws-radius-full); box-shadow: inset 0 0 0 var(--ws-border-ring) var(--ws-color-daylight-tint); font-size: var(--ws-type-flow-note-size); font-weight: var(--ws-weight-bold); font-variant-numeric: tabular-nums; }
 .home-checklist__titles { display: flex; flex-direction: column; gap: var(--ws-space-2); min-width: 0; flex: 1 1 auto; }
 .home-checklist { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.home-checklist li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ws-space-8) var(--ws-space-12); padding: var(--ws-space-12) 0; }
+.home-checklist li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--ws-space-8) var(--ws-space-12); padding: var(--ws-space-12) 0; }
 .home-checklist li + li { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
 .home-checklist__mark { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: var(--ws-size-indicator); height: var(--ws-size-indicator); border-radius: var(--ws-radius-full); box-shadow: inset 0 0 0 var(--ws-border-control) var(--ws-color-daylight-line-strong); color: var(--ws-color-daylight-mute); }
 .home-checklist__mark .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); }
@@ -34,3 +34,8 @@ body { margin: 0; min-height: 100dvh; background: var(--ws-color-daylight-canvas
 .home-checklist__text { display: flex; flex-direction: column; gap: var(--ws-space-2); flex: 1 1 var(--ws-size-layer-sm); min-width: 0; }
 .home-checklist__title { font-weight: var(--ws-weight-bold); }
 .home-domain { font-weight: var(--ws-weight-bold); }
+
+@media (max-width: 599.98px) {
+  .home-checklist li { grid-template-columns: auto minmax(0, 1fr); }
+  .home-checklist li > :last-child:not(.home-checklist__text) { grid-column: 2; justify-self: start; }
+}

@@ -19,7 +19,7 @@ export function AdminMark({ label, word, product, context }: AdminMarkProps) {
       <span className="ws-console-mark" role="img" aria-label={label}>
         <AdminEmblem id={id} />
         <span className="ws-console-mark__word" aria-hidden="true">
-          <b>{word}</b>
+          <b>{word}</b>{' '}
           <span className="ws-console-mark__product">{product}</span>
         </span>
       </span>

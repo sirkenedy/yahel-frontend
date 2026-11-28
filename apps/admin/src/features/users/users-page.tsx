@@ -137,7 +137,6 @@ export function UsersPage({ session, tenantId, organisation, slot, crumbs, crumb
             rows={shown}
             rowKey={(person) => person.member._id}
             rowHref={(person) => `/u/${slot}/users/${person.member._id}`}
-            rowLabel={(person) => (person.name ? person.name : w.rowLabel(w.unnamed, w.added(whenOf(person.member.createdAt) ?? w.notYet)))}
             empty={empty}
           />
           <p className="ws-console-note">

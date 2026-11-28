@@ -122,7 +122,7 @@ export function HomePage({ session, tenantId, name, slot }: HomePageProps) {
                   ) : step.state === 'later' ? (
                     <StatusTag>{m.stepLater}</StatusTag>
                   ) : step.action ? (
-                    <FlowLink href={step.action.href} variant="primary">
+                    <FlowLink href={step.action.href} variant="quiet">
                       {step.action.label}
                     </FlowLink>
                   ) : null}

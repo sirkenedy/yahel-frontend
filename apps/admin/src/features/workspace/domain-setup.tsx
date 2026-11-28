@@ -106,9 +106,12 @@ export function DomainSetup({ session, tenantId, slot, step, domainId, links }: 
     <FlowShell skipLabel={m.context}>
       <FlowShell.Header
         brand={
-          <FlowShell.BrandLink href={home} label={m.exit}>
-            <AdminMark label={m.brand} word={m.word} product={m.product} context={m.context} />
-          </FlowShell.BrandLink>
+          <>
+            <FlowShell.BrandLink href={home} label={m.home}>
+              <AdminMark label={m.brand} word={m.word} product={m.product} />
+            </FlowShell.BrandLink>
+            <span className="ws-console-mark__label">{m.context}</span>
+          </>
         }
       >
         <FlowButton variant="round" aria-label={theme === 'dark' ? m.switchToLight : m.switchToDark} onPress={toggle}>
@@ -118,6 +121,7 @@ export function DomainSetup({ session, tenantId, slot, step, domainId, links }: 
           {m.exit}
         </FlowLink>
       </FlowShell.Header>
+      <section aria-label={m.rail}>
       <SetupRail
         label={m.rail}
         doneLabel={m.done}
@@ -128,6 +132,7 @@ export function DomainSetup({ session, tenantId, slot, step, domainId, links }: 
           { label: m.steps.protect, state: railState('protect') },
         ]}
       />
+      </section>
       <FlowShell.Main>
         <FlowShell.Question>{body}</FlowShell.Question>
       </FlowShell.Main>
@@ -199,12 +204,12 @@ function Screen({ screen, domain, check, home, at, onCheck, onShowRecords }: Scr
                 <RecordValue label={record.type === 'CNAME' ? m.pointsTo : m.value} value={record.value} />
               </dl>
               <p className="ws-console-note">{m.ttl}</p>
+              <p className="ws-console-note">{m.hostTip}</p>
+              {record.type === 'TXT' ? <p className="ws-console-note">{m.cnameLater}</p> : null}
             </section>
           ) : (
             <FlowNotice tone="warning">{m.noValue}</FlowNotice>
           )}
-          <p className="ws-console-note">{m.hostTip}</p>
-          {record.type === 'TXT' ? <p className="ws-console-note">{m.cnameLater}</p> : null}
           <FlowStep.Actions>
             <FlowButton variant="primary" onPress={onCheck} isDisabled={!record.value}>
               {m.check}
