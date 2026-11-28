@@ -47,6 +47,27 @@
         ],
         "type": "object"
       },
+      "AddMemberDto": {
+        "properties": {
+          "ref": {
+            "description": "ObjectId of the user or group to add",
+            "type": "string"
+          },
+          "type": {
+            "description": "Kind of subject to add to the audience",
+            "enum": [
+              "user",
+              "group"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "ref"
+        ],
+        "type": "object"
+      },
       "AddressAvailabilityDto": {
         "properties": {
           "name": {
@@ -151,6 +172,18 @@
         },
         "required": [
           "invitees"
+        ],
+        "type": "object"
+      },
+      "ChangeMemberOuDto": {
+        "properties": {
+          "ouId": {
+            "description": "The OU id to move this member into. Must belong to the same tenant.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ouId"
         ],
         "type": "object"
       },
@@ -374,8 +407,54 @@
         ],
         "type": "object"
       },
+      "CreateGroupDto": {
+        "properties": {
+          "description": {
+            "example": "lead the company innovation",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "emailDomain": {
+            "description": "Must be a verified domain for this tenant.",
+            "example": "afscl.org",
+            "type": "string"
+          },
+          "emailLocalPart": {
+            "example": "engineering",
+            "type": "string"
+          },
+          "labels": {
+            "example": [
+              "mailing",
+              "security"
+            ],
+            "items": {
+              "enum": [
+                "mailing",
+                "security"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "example": "Engineering",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "emailLocalPart",
+          "emailDomain"
+        ],
+        "type": "object"
+      },
       "CreateOuDto": {
         "properties": {
+          "description": {
+            "example": "The platform engineering team",
+            "type": "string"
+          },
           "name": {
             "example": "Engineering",
             "type": "string"
@@ -386,6 +465,25 @@
           },
           "policies": {
             "$ref": "#/components/schemas/OuPoliciesDto"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateTargetAudienceDto": {
+        "properties": {
+          "description": {
+            "example": "manager list here",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "name": {
+            "example": "Team managers",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "required": [
@@ -543,6 +641,24 @@
         ],
         "type": "object"
       },
+      "EmailAvailabilityResponseDto": {
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "domain_not_verified",
+              "already_taken"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "type": "object"
+      },
       "ForgotPasswordDto": {
         "properties": {
           "email": {
@@ -552,6 +668,88 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "GroupResponseDto": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "accessSettings": {
+            "description": "5×5 AccessPermission → AccessAudience → boolean",
+            "type": "object"
+          },
+          "accessType": {
+            "enum": [
+              "public",
+              "team",
+              "announcement_only",
+              "restricted",
+              "custom"
+            ],
+            "type": "string"
+          },
+          "allowExternalMembers": {
+            "type": "boolean"
+          },
+          "allowUserInviteExternal": {
+            "type": "boolean"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emailDomain": {
+            "type": "string"
+          },
+          "emailLocalPart": {
+            "type": "string"
+          },
+          "joinPolicy": {
+            "enum": [
+              "anyone_can_ask",
+              "anyone_can_join",
+              "invited_only"
+            ],
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "enum": [
+                "mailing",
+                "security"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "tenantId",
+          "name",
+          "emailLocalPart",
+          "emailDomain",
+          "email",
+          "labels",
+          "accessType",
+          "accessSettings",
+          "joinPolicy",
+          "allowExternalMembers",
+          "allowUserInviteExternal",
+          "createdBy"
         ],
         "type": "object"
       },
@@ -803,6 +1001,35 @@
         ],
         "type": "object"
       },
+      "MoveOuDto": {
+        "properties": {
+          "parentId": {
+            "description": "The new parent OU id. Must exist in the same tenant and must not be a descendant of the OU being moved.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parentId"
+        ],
+        "type": "object"
+      },
+      "NameAvailabilityResponseDto": {
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "already_taken"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "type": "object"
+      },
       "OuPoliciesDto": {
         "properties": {
           "inheritFromParent": {
@@ -815,6 +1042,65 @@
             "type": "number"
           }
         },
+        "type": "object"
+      },
+      "OuPoliciesResponseDto": {
+        "properties": {
+          "inheritFromParent": {
+            "type": "boolean"
+          },
+          "mfaRequired": {
+            "type": "boolean"
+          },
+          "sessionMaxHours": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "OuResponseDto": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "object"
+          },
+          "isGuest": {
+            "description": "True for the dedicated guest OU; edit, move and delete are all blocked when true.",
+            "type": "boolean"
+          },
+          "memberCount": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parentId": {
+            "description": "Null for the root OU",
+            "nullable": true,
+            "type": "object"
+          },
+          "path": {
+            "type": "string"
+          },
+          "policies": {
+            "$ref": "#/components/schemas/OuPoliciesResponseDto"
+          },
+          "tenantId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "tenantId",
+          "name",
+          "path",
+          "parentId",
+          "isGuest",
+          "memberCount"
+        ],
         "type": "object"
       },
       "PasskeyAuthenticateBeginDto": {
@@ -1174,7 +1460,13 @@
               "tenant.invite_member",
               "tenant.domain_verified",
               "tenant.member_joined",
-              "tenant.announcement_posted"
+              "tenant.announcement_posted",
+              "group.created",
+              "group.deleted",
+              "target_audience.created",
+              "target_audience.deleted",
+              "target_audience.member_added",
+              "target_audience.member_removed"
             ],
             "type": "string"
           },
@@ -1684,7 +1976,13 @@
               "tenant.invite_member",
               "tenant.domain_verified",
               "tenant.member_joined",
-              "tenant.announcement_posted"
+              "tenant.announcement_posted",
+              "group.created",
+              "group.deleted",
+              "target_audience.created",
+              "target_audience.deleted",
+              "target_audience.member_added",
+              "target_audience.member_removed"
             ],
             "type": "string"
           },
@@ -1771,7 +2069,7 @@
             "type": "string"
           },
           "expiresIn": {
-            "example": 900,
+            "example": 3600,
             "type": "number"
           },
           "refreshToken": {
@@ -1810,6 +2108,46 @@
         ],
         "type": "object"
       },
+      "TargetAudienceResponseDto": {
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "_id",
+          "tenantId",
+          "name",
+          "isDefault",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
       "TrustedContactConsentDto": {
         "properties": {
           "token": {
@@ -1833,6 +2171,59 @@
         "required": [
           "message"
         ],
+        "type": "object"
+      },
+      "UpdateAccessSettingsDto": {
+        "properties": {
+          "accessSettings": {
+            "description": "5×5 permission matrix: AccessPermission → AccessAudience → boolean. OWNERS column is always set true by the server.",
+            "type": "object"
+          },
+          "allowExternalMembers": {
+            "type": "boolean"
+          },
+          "allowUserInviteExternal": {
+            "description": "Ignored unless allowExternalMembers is true.",
+            "type": "boolean"
+          },
+          "joinPolicy": {
+            "enum": [
+              "anyone_can_ask",
+              "anyone_can_join",
+              "invited_only"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessSettings",
+          "joinPolicy",
+          "allowExternalMembers"
+        ],
+        "type": "object"
+      },
+      "UpdateGroupDto": {
+        "properties": {
+          "description": {
+            "example": "Owns the shared runtime and tooling",
+            "type": "string"
+          },
+          "labels": {
+            "description": "Full replacement list; Security once added is retained even if omitted",
+            "items": {
+              "enum": [
+                "mailing",
+                "security"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "example": "Platform Engineering",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "UpdateMemberDto": {
@@ -1863,6 +2254,10 @@
       },
       "UpdateOuDto": {
         "properties": {
+          "description": {
+            "example": "The platform engineering team",
+            "type": "string"
+          },
           "name": {
             "example": "Platform Engineering",
             "type": "string"
@@ -1959,6 +2354,22 @@
         "required": [
           "recoveryEmail"
         ],
+        "type": "object"
+      },
+      "UpdateTargetAudienceDto": {
+        "properties": {
+          "description": {
+            "example": "All team leads across engineering",
+            "maxLength": 150,
+            "type": "string"
+          },
+          "name": {
+            "example": "Team leads",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "UpdateTenantDto": {
@@ -4395,7 +4806,13 @@
                 "tenant.invite_member",
                 "tenant.domain_verified",
                 "tenant.member_joined",
-                "tenant.announcement_posted"
+                "tenant.announcement_posted",
+                "group.created",
+                "group.deleted",
+                "target_audience.created",
+                "target_audience.deleted",
+                "target_audience.member_added",
+                "target_audience.member_removed"
               ],
               "type": "string"
             }
@@ -4962,6 +5379,363 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantId}/groups": {
+      "get": {
+        "operationId": "GroupsController_findAll",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Partial match on name or email local-part",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated",
+            "in": "query",
+            "name": "labels",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "mailing",
+                  "security"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "accessType",
+            "required": false,
+            "schema": {
+              "enum": [
+                "public",
+                "team",
+                "announcement_only",
+                "restricted",
+                "custom"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Defaults to page",
+            "in": "query",
+            "name": "paginationMode",
+            "required": false,
+            "schema": {
+              "enum": [
+                "page",
+                "cursor"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor from a previous cursor-mode response",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GroupResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List groups for the tenant (paginated)",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "post": {
+        "operationId": "GroupsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a group — creator becomes the implicit owner",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/groups/email-availability": {
+      "get": {
+        "operationId": "GroupsController_checkEmailAvailability",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "local",
+            "required": true,
+            "schema": {
+              "example": "engineering",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "domain",
+            "required": true,
+            "schema": {
+              "example": "afscl.org",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailAvailabilityResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check whether a group email is available for this tenant",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/groups/{groupId}": {
+      "delete": {
+        "operationId": "GroupsController_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "get": {
+        "operationId": "GroupsController_findOne",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "patch": {
+        "operationId": "GroupsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGroupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update group name, description or labels",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/groups/{groupId}/access-settings": {
+      "patch": {
+        "operationId": "GroupsController_updateAccessSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAccessSettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Replace the access-settings matrix + join policy + external toggles; server detects the access type",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
     "/api/v1/tenants/{tenantId}/members": {
       "get": {
         "operationId": "TenantsController_listMembers",
@@ -5315,6 +6089,53 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantId}/members/{memberId}/ou": {
+      "patch": {
+        "operationId": "TenantsController_changeMemberOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberOuDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move a member into a different organizational unit",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
     "/api/v1/tenants/{tenantId}/members/{memberId}/reactivate": {
       "post": {
         "operationId": "TenantsController_reactivateMember",
@@ -5441,6 +6262,16 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OuResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -5477,7 +6308,14 @@
           "required": true
         },
         "responses": {
-          "201": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OuResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -5523,7 +6361,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete an OU — members moved to parent, blocked if child OUs exist",
+        "summary": "Delete an OU — members moved to parent, blocked if child OUs exist or if root/guest",
         "tags": [
           "Tenants"
         ]
@@ -5550,6 +6388,13 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OuResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -5595,6 +6440,13 @@
         },
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OuResponseDto"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -5603,9 +6455,395 @@
             "bearer": []
           }
         ],
-        "summary": "Update OU name or policies",
+        "summary": "Update OU name, description or policies (blocked on the Workspace Guests OU)",
         "tags": [
           "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/ous/{ouId}/move": {
+      "patch": {
+        "operationId": "TenantsController_moveOu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ouId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveOuDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OuResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move an OU under a new parent — cascades the subtree path rewrite",
+        "tags": [
+          "Tenants"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/target-audiences": {
+      "get": {
+        "operationId": "TargetAudiencesController_findAll",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Sort direction (default DESC)",
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Partial match on audience name",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter to only the default audience (or only non-default audiences)",
+            "in": "query",
+            "name": "isDefault",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Pagination mode — page (default) or cursor",
+            "in": "query",
+            "name": "paginationMode",
+            "required": false,
+            "schema": {
+              "enum": [
+                "page",
+                "cursor"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Opaque cursor returned by a previous cursor-mode response",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TargetAudienceResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List target audiences for the tenant",
+        "tags": [
+          "Target Audiences"
+        ]
+      },
+      "post": {
+        "operationId": "TargetAudiencesController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTargetAudienceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetAudienceResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new target audience",
+        "tags": [
+          "Target Audiences"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/target-audiences/name-availability": {
+      "get": {
+        "operationId": "TargetAudiencesController_checkNameAvailability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "example": "Team managers",
+              "maxLength": 40,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NameAvailabilityResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Check whether a target audience name is available for this tenant",
+        "tags": [
+          "Target Audiences"
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantId}/target-audiences/{audienceId}": {
+      "delete": {
+        "operationId": "TargetAudiencesController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "audienceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a target audience",
+        "tags": [
+          "Target Audiences"
+        ]
+      },
+      "get": {
+        "operationId": "TargetAudiencesController_findOne",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "audienceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetAudienceResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a single target audience",
+        "tags": [
+          "Target Audiences"
+        ]
+      },
+      "patch": {
+        "operationId": "TargetAudiencesController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "audienceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTargetAudienceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetAudienceResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update target audience name or description",
+        "tags": [
+          "Target Audiences"
         ]
       }
     }

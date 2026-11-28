@@ -1324,6 +1324,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{tenantId}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List groups for the tenant (paginated) */
+        get: operations["GroupsController_findAll"];
+        put?: never;
+        /** Create a group — creator becomes the implicit owner */
+        post: operations["GroupsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/groups/email-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check whether a group email is available for this tenant */
+        get: operations["GroupsController_checkEmailAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/groups/{groupId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single group */
+        get: operations["GroupsController_findOne"];
+        put?: never;
+        post?: never;
+        /** Delete the group */
+        delete: operations["GroupsController_delete"];
+        options?: never;
+        head?: never;
+        /** Update group name, description or labels */
+        patch: operations["GroupsController_update"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/groups/{groupId}/access-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Replace the access-settings matrix + join policy + external toggles; server detects the access type */
+        patch: operations["GroupsController_updateAccessSettings"];
+        trace?: never;
+    };
     "/api/v1/tenants/{tenantId}/members": {
         parameters: {
             query?: never;
@@ -1411,6 +1482,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{tenantId}/members/{memberId}/ou": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Move a member into a different organizational unit */
+        patch: operations["TenantsController_changeMemberOu"];
+        trace?: never;
+    };
     "/api/v1/tenants/{tenantId}/members/{memberId}/reactivate": {
         parameters: {
             query?: never;
@@ -1491,12 +1579,83 @@ export interface paths {
         get: operations["TenantsController_getOu"];
         put?: never;
         post?: never;
-        /** Delete an OU — members moved to parent, blocked if child OUs exist */
+        /** Delete an OU — members moved to parent, blocked if child OUs exist or if root/guest */
         delete: operations["TenantsController_deleteOu"];
         options?: never;
         head?: never;
-        /** Update OU name or policies */
+        /** Update OU name, description or policies (blocked on the Workspace Guests OU) */
         patch: operations["TenantsController_updateOu"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/ous/{ouId}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Move an OU under a new parent — cascades the subtree path rewrite */
+        patch: operations["TenantsController_moveOu"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/target-audiences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List target audiences for the tenant */
+        get: operations["TargetAudiencesController_findAll"];
+        put?: never;
+        /** Create a new target audience */
+        post: operations["TargetAudiencesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/target-audiences/name-availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check whether a target audience name is available for this tenant */
+        get: operations["TargetAudiencesController_checkNameAvailability"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{tenantId}/target-audiences/{audienceId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single target audience */
+        get: operations["TargetAudiencesController_findOne"];
+        put?: never;
+        post?: never;
+        /** Delete a target audience */
+        delete: operations["TargetAudiencesController_remove"];
+        options?: never;
+        head?: never;
+        /** Update target audience name or description */
+        patch: operations["TargetAudiencesController_update"];
         trace?: never;
     };
 }
@@ -1525,6 +1684,15 @@ export interface components {
              * @enum {string}
              */
             method: "TXT" | "CNAME";
+        };
+        AddMemberDto: {
+            /** @description ObjectId of the user or group to add */
+            ref: string;
+            /**
+             * @description Kind of subject to add to the audience
+             * @enum {string}
+             */
+            type: "user" | "group";
         };
         AddressAvailabilityDto: {
             /**
@@ -1574,6 +1742,10 @@ export interface components {
         };
         BulkInviteMembersDto: {
             invitees: components["schemas"]["InviteeDto"][];
+        };
+        ChangeMemberOuDto: {
+            /** @description The OU id to move this member into. Must belong to the same tenant. */
+            ouId: string;
         };
         ChangePasswordDto: {
             /** @example Current@123 */
@@ -1683,12 +1855,40 @@ export interface components {
             /** @example Africa/Lagos */
             timezones: Record<string, never>[];
         };
+        CreateGroupDto: {
+            /** @example lead the company innovation */
+            description?: string;
+            /**
+             * @description Must be a verified domain for this tenant.
+             * @example afscl.org
+             */
+            emailDomain: string;
+            /** @example engineering */
+            emailLocalPart: string;
+            /**
+             * @example [
+             *       "mailing",
+             *       "security"
+             *     ]
+             */
+            labels?: ("mailing" | "security")[];
+            /** @example Engineering */
+            name: string;
+        };
         CreateOuDto: {
+            /** @example The platform engineering team */
+            description?: string;
             /** @example Engineering */
             name: string;
             /** @description Parent OU id — omit for root level */
             parentId?: string;
             policies?: components["schemas"]["OuPoliciesDto"];
+        };
+        CreateTargetAudienceDto: {
+            /** @example manager list here */
+            description?: string;
+            /** @example Team managers */
+            name: string;
         };
         CreateTenantDto: {
             country?: components["schemas"]["CountryDto"];
@@ -1740,9 +1940,33 @@ export interface components {
             verifyHost?: Record<string, never> | null;
             verifyTarget?: Record<string, never> | null;
         };
+        EmailAvailabilityResponseDto: {
+            available: boolean;
+            /** @enum {string} */
+            reason?: "domain_not_verified" | "already_taken";
+        };
         ForgotPasswordDto: {
             /** @example jane@acme.com */
             email: string;
+        };
+        GroupResponseDto: {
+            _id: string;
+            /** @description 5×5 AccessPermission → AccessAudience → boolean */
+            accessSettings: Record<string, never>;
+            /** @enum {string} */
+            accessType: "public" | "team" | "announcement_only" | "restricted" | "custom";
+            allowExternalMembers: boolean;
+            allowUserInviteExternal: boolean;
+            createdBy: string;
+            description?: string;
+            email: string;
+            emailDomain: string;
+            emailLocalPart: string;
+            /** @enum {string} */
+            joinPolicy: "anyone_can_ask" | "anyone_can_join" | "invited_only";
+            labels: ("mailing" | "security")[];
+            name: string;
+            tenantId: string;
         };
         IdentifyDto: {
             /** @example jane@acme.com */
@@ -1870,10 +2094,37 @@ export interface components {
              */
             code: string;
         };
+        MoveOuDto: {
+            /** @description The new parent OU id. Must exist in the same tenant and must not be a descendant of the OU being moved. */
+            parentId: string;
+        };
+        NameAvailabilityResponseDto: {
+            available: boolean;
+            /** @enum {string} */
+            reason?: "already_taken";
+        };
         OuPoliciesDto: {
             inheritFromParent?: boolean;
             mfaRequired?: boolean;
             sessionMaxHours?: number;
+        };
+        OuPoliciesResponseDto: {
+            inheritFromParent?: boolean;
+            mfaRequired?: boolean;
+            sessionMaxHours?: number;
+        };
+        OuResponseDto: {
+            _id: string;
+            description?: Record<string, never> | null;
+            /** @description True for the dedicated guest OU; edit, move and delete are all blocked when true. */
+            isGuest: boolean;
+            memberCount: number;
+            name: string;
+            /** @description Null for the root OU */
+            parentId: Record<string, never> | null;
+            path: string;
+            policies?: components["schemas"]["OuPoliciesResponseDto"];
+            tenantId: string;
         };
         PasskeyAuthenticateBeginDto: {
             /**
@@ -2048,7 +2299,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted" | "group.created" | "group.deleted" | "target_audience.created" | "target_audience.deleted" | "target_audience.member_added" | "target_audience.member_removed";
             /** @description Recipient query — any supported type; no tenant scope enforced */
             recipientQuery: Record<string, never>;
             /** @description Tag the broadcast with a tenantId for audit + ownership scoping (optional) */
@@ -2285,7 +2536,7 @@ export interface components {
              * @description The notification event to broadcast
              * @enum {string}
              */
-            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+            event: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted" | "group.created" | "group.deleted" | "target_audience.created" | "target_audience.deleted" | "target_audience.member_added" | "target_audience.member_removed";
             /** @description Recipient query — { type: "tenantMembers" | "userIds" | ... }. Scope is enforced to the caller tenant. */
             recipientQuery: Record<string, never>;
         };
@@ -2326,7 +2577,7 @@ export interface components {
         SwitchContextResponseDto: {
             /** @example eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9... */
             accessToken: string;
-            /** @example 900 */
+            /** @example 3600 */
             expiresIn: number;
             /** @example b1f0c2... */
             refreshToken: string;
@@ -2343,6 +2594,18 @@ export interface components {
             /** @example Bearer */
             tokenType: string;
         };
+        TargetAudienceResponseDto: {
+            _id: string;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string;
+            description?: string;
+            isDefault: boolean;
+            name: string;
+            tenantId: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         TrustedContactConsentDto: {
             /**
              * @description Token embedded in the invitation link sent to the trusted contact
@@ -2353,6 +2616,23 @@ export interface components {
         TrustedContactConsentResponseDto: {
             /** @example Thanks — you have been added as a trusted recovery contact. */
             message: string;
+        };
+        UpdateAccessSettingsDto: {
+            /** @description 5×5 permission matrix: AccessPermission → AccessAudience → boolean. OWNERS column is always set true by the server. */
+            accessSettings: Record<string, never>;
+            allowExternalMembers: boolean;
+            /** @description Ignored unless allowExternalMembers is true. */
+            allowUserInviteExternal?: boolean;
+            /** @enum {string} */
+            joinPolicy: "anyone_can_ask" | "anyone_can_join" | "invited_only";
+        };
+        UpdateGroupDto: {
+            /** @example Owns the shared runtime and tooling */
+            description?: string;
+            /** @description Full replacement list; Security once added is retained even if omitted */
+            labels?: ("mailing" | "security")[];
+            /** @example Platform Engineering */
+            name?: string;
         };
         UpdateMemberDto: {
             /** @example Engineering */
@@ -2365,6 +2645,8 @@ export interface components {
             role?: "ADMIN" | "MEMBER" | "GUEST";
         };
         UpdateOuDto: {
+            /** @example The platform engineering team */
+            description?: string;
             /** @example Platform Engineering */
             name?: string;
             policies?: components["schemas"]["OuPoliciesDto"];
@@ -2412,6 +2694,12 @@ export interface components {
         UpdateRecoveryEmailDto: {
             /** @example recovery@example.com */
             recoveryEmail: string;
+        };
+        UpdateTargetAudienceDto: {
+            /** @example All team leads across engineering */
+            description?: string;
+            /** @example Team leads */
+            name?: string;
         };
         UpdateTenantDto: {
             country?: components["schemas"]["CountryDto"];
@@ -4006,7 +4294,7 @@ export interface operations {
                 /** @description Filter by recipient user ID */
                 userId?: string;
                 /** @description Filter by notification event */
-                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted";
+                event?: "auth.email_verification" | "auth.password_reset" | "auth.phone_otp" | "user.recovery_email_added" | "user.recovery_email_added_alert" | "user.trusted_contact_invited" | "user.trusted_contact_accepted" | "user.trusted_contact_declined" | "user.trusted_contact_pending_change_alert" | "user.trusted_contact_pending_removal_alert" | "auth.new_location_login" | "auth.new_device_login" | "tenant.setup_expired" | "tenant.invite_member" | "tenant.domain_verified" | "tenant.member_joined" | "tenant.announcement_posted" | "group.created" | "group.deleted" | "target_audience.created" | "target_audience.deleted" | "target_audience.member_added" | "target_audience.member_removed";
                 /** @description Filter by delivery channel */
                 channel?: "in_app" | "email" | "sms" | "push";
                 /** @description Filter by delivery status */
@@ -4305,6 +4593,173 @@ export interface operations {
             };
         };
     };
+    GroupsController_findAll: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                order?: "ASC" | "DESC";
+                /** @description Partial match on name or email local-part */
+                search?: string;
+                /** @description Comma-separated */
+                labels?: ("mailing" | "security")[];
+                accessType?: "public" | "team" | "announcement_only" | "restricted" | "custom";
+                /** @description Defaults to page */
+                paginationMode?: "page" | "cursor";
+                /** @description Opaque cursor from a previous cursor-mode response */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupResponseDto"][];
+                };
+            };
+        };
+    };
+    GroupsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupResponseDto"];
+                };
+            };
+        };
+    };
+    GroupsController_checkEmailAvailability: {
+        parameters: {
+            query: {
+                local: string;
+                domain: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailAvailabilityResponseDto"];
+                };
+            };
+        };
+    };
+    GroupsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupResponseDto"];
+                };
+            };
+        };
+    };
+    GroupsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GroupsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupResponseDto"];
+                };
+            };
+        };
+    };
+    GroupsController_updateAccessSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAccessSettingsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupResponseDto"];
+                };
+            };
+        };
+    };
     TenantsController_listMembers: {
         parameters: {
             query?: {
@@ -4469,6 +4924,30 @@ export interface operations {
             };
         };
     };
+    TenantsController_changeMemberOu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                memberId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeMemberOuDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     TenantsController_reactivateMember: {
         parameters: {
             query?: never;
@@ -4544,7 +5023,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OuResponseDto"][];
+                };
             };
         };
     };
@@ -4563,11 +5044,13 @@ export interface operations {
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OuResponseDto"];
+                };
             };
         };
     };
@@ -4587,7 +5070,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OuResponseDto"];
+                };
             };
         };
     };
@@ -4631,7 +5116,185 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["OuResponseDto"];
+                };
+            };
+        };
+    };
+    TenantsController_moveOu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                ouId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveOuDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OuResponseDto"];
+                };
+            };
+        };
+    };
+    TargetAudiencesController_findAll: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                /** @description Sort direction (default DESC) */
+                order?: "ASC" | "DESC";
+                /** @description Partial match on audience name */
+                search?: string;
+                /** @description Filter to only the default audience (or only non-default audiences) */
+                isDefault?: boolean;
+                /** @description Pagination mode — page (default) or cursor */
+                paginationMode?: "page" | "cursor";
+                /** @description Opaque cursor returned by a previous cursor-mode response */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                tenantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetAudienceResponseDto"][];
+                };
+            };
+        };
+    };
+    TargetAudiencesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTargetAudienceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetAudienceResponseDto"];
+                };
+            };
+        };
+    };
+    TargetAudiencesController_checkNameAvailability: {
+        parameters: {
+            query: {
+                name: string;
+            };
+            header?: never;
+            path: {
+                tenantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NameAvailabilityResponseDto"];
+                };
+            };
+        };
+    };
+    TargetAudiencesController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                audienceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetAudienceResponseDto"];
+                };
+            };
+        };
+    };
+    TargetAudiencesController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                audienceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
                 content?: never;
+            };
+        };
+    };
+    TargetAudiencesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenantId: string;
+                audienceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTargetAudienceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetAudienceResponseDto"];
+                };
             };
         };
     };

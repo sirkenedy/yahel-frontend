@@ -185,6 +185,8 @@ export function createApiClient(options: ApiClientOptions) {
       members: {
         /** The first `limit` (at most 100) people, newest first; removed people are left out. */
         list: (tenantId: string, signal?: AbortSignal, limit = 100) => request<WorkspaceMember[]>('GET', '/api/v1/tenants/{tenantId}/members', { auth: true, params: { tenantId }, query: { limit: String(limit) }, signal }),
+        /** People removed from the workspace, newest first. */
+        listRemoved: (tenantId: string, signal?: AbortSignal, limit = 100) => request<WorkspaceMember[]>('GET', '/api/v1/tenants/{tenantId}/members', { auth: true, params: { tenantId }, query: { limit: String(limit), status: 'removed' }, signal }),
         get: (tenantId: string, memberId: string, signal?: AbortSignal) => request<WorkspaceMember>('GET', '/api/v1/tenants/{tenantId}/members/{memberId}', { auth: true, params: { tenantId, memberId }, signal }),
         /** Only ADMIN, MEMBER or GUEST can be given. */
         update: (tenantId: string, memberId: string, body: Schemas['UpdateMemberDto']) => request<WorkspaceMember>('PATCH', '/api/v1/tenants/{tenantId}/members/{memberId}', { auth: true, params: { tenantId, memberId }, body }),
@@ -198,6 +200,16 @@ export function createApiClient(options: ApiClientOptions) {
         resendInvite: (tenantId: string, memberId: string) => request<unknown>('POST', '/api/v1/tenants/{tenantId}/members/{memberId}/resend-invite', { auth: true, params: { tenantId, memberId } }),
         /** Withdraws a pending invitation. Needs the acting administrator's second step. */
         cancelInvite: (tenantId: string, memberId: string) => request<unknown>('DELETE', '/api/v1/tenants/{tenantId}/members/{memberId}/invite', { auth: true, params: { tenantId, memberId } }),
+        /** Moves one person into a unit; their `ouPath` becomes the unit's path. */
+        changeUnit: (tenantId: string, memberId: string, ouId: string) => request<WorkspaceMember>('PATCH', '/api/v1/tenants/{tenantId}/members/{memberId}/ou', { auth: true, params: { tenantId, memberId }, body: { ouId } satisfies Schemas['ChangeMemberOuDto'] }),
+      },
+      /** The workspace's organisational units: the organisation itself, Guests, and the units inside them. */
+      units: {
+        list: (tenantId: string, signal?: AbortSignal) => request<Schemas['OuResponseDto'][]>('GET', '/api/v1/tenants/{tenantId}/ous', { auth: true, params: { tenantId }, signal }),
+      },
+      /** The workspace's groups, each with its own address. */
+      groups: {
+        list: (tenantId: string, signal?: AbortSignal) => request<Schemas['GroupResponseDto'][]>('GET', '/api/v1/tenants/{tenantId}/groups', { auth: true, params: { tenantId }, query: { limit: '100' }, signal }),
       },
     },
   };
