@@ -10,13 +10,13 @@ A pnpm monorepo. Nx runs tasks and caches them. Apps are client-rendered React a
 apps/
   shell/            home, account, the account menu; addresses carry the account's slot (/u/<slot>/); signing in is the accounts app's (VITE_ACCOUNTS_URL). Later: app launcher
   accounts/         sign in, account recovery, personal sign-up, workspace sign-up, an administrator's first sign-in
-  admin/            Admin (admin.yahel.com): Home and Domains for an owner or admin of the session's workspace (from /auth/contexts);
+  admin/            Admin (admin.yahel.com): the console (Home, Users, Domains, Domain setup, later pages) for an owner or admin of the session's workspace (from /auth/contexts);
                     addresses carry the slot (/u/<slot>/); signing in, and anyone who is not an administrator, go to the accounts app's chooser with for=admin (F-110)
   <product>/        one app per product (mail, drive, calendar, …), added when its backend exists
 packages/
   tokens/           design tokens: JSON source, build script, generated CSS and JSON
   ui/               component styles (CSS on tokens) and React components on React Aria; icons, fonts;
-                    the Daylight flow components used by the accounts app
+                    the Daylight flow components used by the accounts app; the console components Admin is built from
   api-client/       the only code that talks to the backend; types generated from its OpenAPI description;
                     account capabilities and the stand-ins for those the backend lacks
   auth/             session: sign-in, second step, token refresh, sign-out; passkeys (WebAuthn);
