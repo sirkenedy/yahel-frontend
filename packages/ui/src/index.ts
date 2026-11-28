@@ -54,6 +54,8 @@ export { ConsoleSearch } from './components/console/console-search';
 export type { ConsoleSearchItem, ConsoleSearchProps } from './components/console/console-search';
 export { ConsoleCard, ConsoleFacts, ConsolePage, ConsolePlaceholder, StatusTag } from './components/console/console-page';
 export type { ConsoleCardProps, ConsoleCrumb, ConsoleFactsProps, ConsolePageProps, ConsolePlaceholderProps, StatusTagProps, StatusTagTone } from './components/console/console-page';
+export { ConsoleDialog } from './components/console/console-dialog';
+export type { ConsoleDialogProps } from './components/console/console-dialog';
 export { DataTable } from './components/console/data-table';
 export type { DataTableColumn, DataTableProps } from './components/console/data-table';
 export { SetupRail, SetupStepList } from './components/console/setup';

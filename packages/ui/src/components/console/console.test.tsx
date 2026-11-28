@@ -9,6 +9,7 @@ import { ConsoleSearch } from './console-search';
 import { ConsoleShell } from './console-shell';
 import { SetupRail } from './setup';
 import { DataTable } from './data-table';
+import { ConsoleDialog } from './console-dialog';
 
 const items: ConsoleNavItem[] = [
   { id: 'home', label: 'Home', icon: 'home', href: '/home' },
@@ -159,5 +160,20 @@ describe('DataTable', () => {
   it('shows what it is given when there are no rows', () => {
     render(<DataTable label="Users" columns={columns} rows={[]} rowKey={(row) => row.id} rowHref={() => '/'} empty="No one yet" />);
     expect(screen.getByText('No one yet')).toBeInTheDocument();
+  });
+});
+
+describe('ConsoleDialog', () => {
+  it('asks the question, states the consequence and closes with Escape', async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ConsoleDialog isOpen onOpenChange={onOpenChange} title="Delete Tunde Bakare?" actions={<button type="button">Cancel</button>}>
+        They lose access straight away.
+      </ConsoleDialog>,
+    );
+    const dialog = screen.getByRole('alertdialog', { name: 'Delete Tunde Bakare?' });
+    expect(dialog).toHaveTextContent('They lose access straight away.');
+    await userEvent.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
