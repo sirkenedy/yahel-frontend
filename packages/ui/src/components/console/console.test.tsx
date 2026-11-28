@@ -8,6 +8,7 @@ import { ConsolePage, ConsolePlaceholder, StatusTag } from './console-page';
 import { ConsoleSearch } from './console-search';
 import { ConsoleShell } from './console-shell';
 import { SetupRail } from './setup';
+import { DataTable } from './data-table';
 
 const items: ConsoleNavItem[] = [
   { id: 'home', label: 'Home', icon: 'home', href: '/home' },
@@ -134,5 +135,29 @@ describe('SetupRail', () => {
     expect(items[0]).toHaveTextContent('Verify domain, done');
     expect(items[1]).toHaveAttribute('aria-current', 'step');
     expect(items[2]).toHaveTextContent('3Protect mail');
+  });
+});
+
+describe('DataTable', () => {
+  const rows = [
+    { id: 'a', name: 'Amara', role: 'Admin' },
+    { id: 'b', name: 'Tunde', role: 'User' },
+  ];
+  const columns = [
+    { id: 'name', header: 'Name', cell: (row: (typeof rows)[number]) => row.name },
+    { id: 'role', header: 'Role', cell: (row: (typeof rows)[number]) => row.role, secondary: true },
+  ];
+
+  it('names each row with a link to its page', () => {
+    render(<DataTable label="Users" columns={columns} rows={rows} rowKey={(row) => row.id} rowHref={(row) => `/users/${row.id}`} />);
+    const table = screen.getByRole('table', { name: 'Users' });
+    expect(within(table).getByRole('columnheader', { name: 'Role' })).toBeInTheDocument();
+    expect(within(table).getByRole('link', { name: 'Tunde' })).toHaveAttribute('href', '/users/b');
+    expect(within(table).getByRole('rowheader', { name: 'Amara' })).toBeInTheDocument();
+  });
+
+  it('shows what it is given when there are no rows', () => {
+    render(<DataTable label="Users" columns={columns} rows={[]} rowKey={(row) => row.id} rowHref={() => '/'} empty="No one yet" />);
+    expect(screen.getByText('No one yet')).toBeInTheDocument();
   });
 });

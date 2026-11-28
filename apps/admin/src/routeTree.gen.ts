@@ -19,6 +19,8 @@ import { Route as USlotConsoleBillingRouteImport } from './routes/u/$slot/_conso
 import { Route as USlotConsoleDomainsRouteImport } from './routes/u/$slot/_console/domains'
 import { Route as USlotConsoleSecurityRouteImport } from './routes/u/$slot/_console/security'
 import { Route as USlotConsoleLaterPageRouteImport } from './routes/u/$slot/_console/later.$page'
+import { Route as USlotConsoleUsersIndexRouteImport } from './routes/u/$slot/_console/users.index'
+import { Route as USlotConsoleUsersMemberIdRouteImport } from './routes/u/$slot/_console/users.$memberId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -69,6 +71,17 @@ const USlotConsoleLaterPageRoute = USlotConsoleLaterPageRouteImport.update({
   path: '/later/$page',
   getParentRoute: () => USlotConsoleRoute,
 } as any)
+const USlotConsoleUsersIndexRoute = USlotConsoleUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleUsersMemberIdRoute =
+  USlotConsoleUsersMemberIdRouteImport.update({
+    id: '/users/$memberId',
+    path: '/users/$memberId',
+    getParentRoute: () => USlotConsoleRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +93,8 @@ export interface FileRoutesByFullPath {
   '/u/$slot/security': typeof USlotConsoleSecurityRoute
   '/u/$slot/': typeof USlotConsoleIndexRoute
   '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,6 +105,8 @@ export interface FileRoutesByTo {
   '/u/$slot/domains': typeof USlotConsoleDomainsRoute
   '/u/$slot/security': typeof USlotConsoleSecurityRoute
   '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,6 +120,8 @@ export interface FileRoutesById {
   '/u/$slot/_console/security': typeof USlotConsoleSecurityRoute
   '/u/$slot/_console/': typeof USlotConsoleIndexRoute
   '/u/$slot/_console/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/_console/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/_console/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -116,6 +135,8 @@ export interface FileRouteTypes {
     | '/u/$slot/security'
     | '/u/$slot/'
     | '/u/$slot/later/$page'
+    | '/u/$slot/users/$memberId'
+    | '/u/$slot/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -126,6 +147,8 @@ export interface FileRouteTypes {
     | '/u/$slot/domains'
     | '/u/$slot/security'
     | '/u/$slot/later/$page'
+    | '/u/$slot/users/$memberId'
+    | '/u/$slot/users'
   id:
     | '__root__'
     | '/'
@@ -138,6 +161,8 @@ export interface FileRouteTypes {
     | '/u/$slot/_console/security'
     | '/u/$slot/_console/'
     | '/u/$slot/_console/later/$page'
+    | '/u/$slot/_console/users/$memberId'
+    | '/u/$slot/_console/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -217,6 +242,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof USlotConsoleLaterPageRouteImport
       parentRoute: typeof USlotConsoleRoute
     }
+    '/u/$slot/_console/users/': {
+      id: '/u/$slot/_console/users/'
+      path: '/users'
+      fullPath: '/u/$slot/users/'
+      preLoaderRoute: typeof USlotConsoleUsersIndexRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/$memberId': {
+      id: '/u/$slot/_console/users/$memberId'
+      path: '/users/$memberId'
+      fullPath: '/u/$slot/users/$memberId'
+      preLoaderRoute: typeof USlotConsoleUsersMemberIdRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
   }
 }
 
@@ -227,6 +266,8 @@ interface USlotConsoleRouteChildren {
   USlotConsoleSecurityRoute: typeof USlotConsoleSecurityRoute
   USlotConsoleIndexRoute: typeof USlotConsoleIndexRoute
   USlotConsoleLaterPageRoute: typeof USlotConsoleLaterPageRoute
+  USlotConsoleUsersMemberIdRoute: typeof USlotConsoleUsersMemberIdRoute
+  USlotConsoleUsersIndexRoute: typeof USlotConsoleUsersIndexRoute
 }
 
 const USlotConsoleRouteChildren: USlotConsoleRouteChildren = {
@@ -236,6 +277,8 @@ const USlotConsoleRouteChildren: USlotConsoleRouteChildren = {
   USlotConsoleSecurityRoute: USlotConsoleSecurityRoute,
   USlotConsoleIndexRoute: USlotConsoleIndexRoute,
   USlotConsoleLaterPageRoute: USlotConsoleLaterPageRoute,
+  USlotConsoleUsersMemberIdRoute: USlotConsoleUsersMemberIdRoute,
+  USlotConsoleUsersIndexRoute: USlotConsoleUsersIndexRoute,
 }
 
 const USlotConsoleRouteWithChildren = USlotConsoleRoute._addFileChildren(

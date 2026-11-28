@@ -132,7 +132,8 @@
 .ws-console-table-wrap { border-radius: var(--ws-radius-xl); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); overflow: hidden; }
 .ws-console-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .ws-console-table th { padding: var(--ws-space-12) var(--ws-space-16); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-console-caption-size); line-height: var(--ws-type-console-caption-line); font-weight: var(--ws-type-console-caption-weight); text-align: start; white-space: nowrap; border-block-end: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
-.ws-console-table td { padding: var(--ws-space-12) var(--ws-space-16); vertical-align: middle; }
+.ws-console-table td, .ws-console-table tbody th { padding: var(--ws-space-12) var(--ws-space-16); vertical-align: middle; text-align: start; font-weight: inherit; color: inherit; font-size: inherit; white-space: normal; border: 0; }
+.ws-console-table tbody tr + tr th { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
 .ws-console-table tbody tr { position: relative; }
 .ws-console-table tbody tr + tr td { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
 .ws-console-table tbody tr:hover { background: var(--ws-color-daylight-selected); }
@@ -183,10 +184,11 @@
   .ws-console-mark__label { display: none; }
   .ws-console-table thead { display: none; }
   .ws-console-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ws-space-4) var(--ws-space-12); padding: var(--ws-space-12) var(--ws-space-16); }
-  .ws-console-table td { padding: 0; border: 0; }
+  .ws-console-table td, .ws-console-table tbody th { padding: 0; border: 0; }
+  .ws-console-table tbody tr + tr th { border: 0; }
   .ws-console-table tbody tr + tr { border-block-start: var(--ws-border-hairline) solid var(--ws-color-daylight-line); }
   .ws-console-table tbody tr + tr td { border: 0; }
-  .ws-console-table td:first-child { flex: 1 1 100%; }
+  .ws-console-table tbody th { flex: 1 1 100%; }
   .ws-console-table td[data-secondary] { display: none; }
   .ws-console-dialog__actions > * { flex: 1 1 auto; }
 }
