@@ -1,0 +1,855 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-27T22:02:06Z"
+ },
+ "title": "Yahel Admin console",
+ "launch": {
+  "view": "canvas",
+  "page": "overview"
+ },
+ "pages": [
+  {
+   "id": "overview",
+   "name": "0 Overview"
+  },
+  {
+   "id": "prototype",
+   "name": "1 Clickable prototype"
+  },
+  {
+   "id": "setup",
+   "name": "2 Setup flow"
+  },
+  {
+   "id": "console",
+   "name": "3 Console"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "overview",
+   "title": "Admin / Overview"
+  },
+  "flow/Console.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Own domain \u00b7 light"
+  },
+  "flow/ConsoleDark.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Own domain \u00b7 dark"
+  },
+  "flow/ConsoleBought.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Bought domain \u00b7 light"
+  },
+  "flow/ConsoleHome.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Console \u00b7 light"
+  },
+  "setup/SetupIntroWeb.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 01 Start / Web, light"
+  },
+  "setup/SetupHostWeb.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host / Web, light"
+  },
+  "setup/SetupMethodWeb.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Web, light"
+  },
+  "setup/SetupConnectingWeb.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Web, light"
+  },
+  "setup/SetupRecordWeb.dc.html": {
+   "x": 6080,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Web, light"
+  },
+  "setup/SetupRecordCnameWeb.dc.html": {
+   "x": 7600,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Web, light"
+  },
+  "setup/SetupCheckingWeb.dc.html": {
+   "x": 9120,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Web, light"
+  },
+  "setup/SetupNotFoundWeb.dc.html": {
+   "x": 10640,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Web, light"
+  },
+  "setup/SetupVerifiedWeb.dc.html": {
+   "x": 12160,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Web, light"
+  },
+  "setup/SetupIntroWebDark.dc.html": {
+   "x": 0,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 01 Start / Web, dark"
+  },
+  "setup/SetupHostWebDark.dc.html": {
+   "x": 1520,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host / Web, dark"
+  },
+  "setup/SetupMethodWebDark.dc.html": {
+   "x": 3040,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Web, dark"
+  },
+  "setup/SetupConnectingWebDark.dc.html": {
+   "x": 4560,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Web, dark"
+  },
+  "setup/SetupRecordWebDark.dc.html": {
+   "x": 6080,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Web, dark"
+  },
+  "setup/SetupRecordCnameWebDark.dc.html": {
+   "x": 7600,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Web, dark"
+  },
+  "setup/SetupCheckingWebDark.dc.html": {
+   "x": 9120,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Web, dark"
+  },
+  "setup/SetupNotFoundWebDark.dc.html": {
+   "x": 10640,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Web, dark"
+  },
+  "setup/SetupVerifiedWebDark.dc.html": {
+   "x": 12160,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Web, dark"
+  },
+  "setup/MailPeopleWeb.dc.html": {
+   "x": 0,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Web, light"
+  },
+  "setup/MailAddPersonWeb.dc.html": {
+   "x": 1520,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Web, light"
+  },
+  "setup/MailAddPersonErrorWeb.dc.html": {
+   "x": 3040,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Web, light"
+  },
+  "setup/MailRecordsWeb.dc.html": {
+   "x": 4560,
+   "y": 2560,
+   "w": 1440,
+   "h": 1029,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Web, light"
+  },
+  "setup/MailCheckingWeb.dc.html": {
+   "x": 6080,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Web, light"
+  },
+  "setup/MailReadyWeb.dc.html": {
+   "x": 7600,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Web, light"
+  },
+  "setup/MailPeopleWebDark.dc.html": {
+   "x": 0,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Web, dark"
+  },
+  "setup/MailAddPersonWebDark.dc.html": {
+   "x": 1520,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Web, dark"
+  },
+  "setup/MailAddPersonErrorWebDark.dc.html": {
+   "x": 3040,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Web, dark"
+  },
+  "setup/MailRecordsWebDark.dc.html": {
+   "x": 4560,
+   "y": 3708,
+   "w": 1440,
+   "h": 1029,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Web, dark"
+  },
+  "setup/MailCheckingWebDark.dc.html": {
+   "x": 6080,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Web, dark"
+  },
+  "setup/MailReadyWebDark.dc.html": {
+   "x": 7600,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Web, dark"
+  },
+  "setup/ProtectRecordsWeb.dc.html": {
+   "x": 0,
+   "y": 5376,
+   "w": 1440,
+   "h": 1307,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Web, light"
+  },
+  "setup/ProtectCheckingWeb.dc.html": {
+   "x": 1520,
+   "y": 5376,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Web, light"
+  },
+  "setup/ProtectDoneWeb.dc.html": {
+   "x": 3040,
+   "y": 5376,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 03 All set / Web, light"
+  },
+  "setup/ProtectRecordsWebDark.dc.html": {
+   "x": 0,
+   "y": 6803,
+   "w": 1440,
+   "h": 1307,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Web, dark"
+  },
+  "setup/ProtectCheckingWebDark.dc.html": {
+   "x": 1520,
+   "y": 6803,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Web, dark"
+  },
+  "setup/ProtectDoneWebDark.dc.html": {
+   "x": 3040,
+   "y": 6803,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 03 All set / Web, dark"
+  },
+  "setup/BoughtAutoWeb.dc.html": {
+   "x": 0,
+   "y": 8750,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Web, light"
+  },
+  "setup/BoughtAutoWebDark.dc.html": {
+   "x": 0,
+   "y": 9770,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Web, dark"
+  },
+  "console/HomeWeb.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Web, light"
+  },
+  "console/HomePartialWeb.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Web, light"
+  },
+  "console/HomeCompleteWeb.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1187,
+   "page": "console",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Web, light"
+  },
+  "console/UsersWeb.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 04 Users / Web, light"
+  },
+  "console/UserDetailsWeb.dc.html": {
+   "x": 6080,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 05 User details / Web, light"
+  },
+  "console/HomeWebDark.dc.html": {
+   "x": 0,
+   "y": 1414,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Web, dark"
+  },
+  "console/HomePartialWebDark.dc.html": {
+   "x": 1520,
+   "y": 1414,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Web, dark"
+  },
+  "console/HomeCompleteWebDark.dc.html": {
+   "x": 3040,
+   "y": 1414,
+   "w": 1440,
+   "h": 1187,
+   "page": "console",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Web, dark"
+  },
+  "console/UsersWebDark.dc.html": {
+   "x": 4560,
+   "y": 1414,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 04 Users / Web, dark"
+  },
+  "console/UserDetailsWebDark.dc.html": {
+   "x": 6080,
+   "y": 1414,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 05 User details / Web, dark"
+  },
+  "console/UsersAddWeb.dc.html": {
+   "x": 0,
+   "y": 3348,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 01 Add a person / Web, light"
+  },
+  "console/UserDeleteWeb.dc.html": {
+   "x": 1520,
+   "y": 3348,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 02 Delete a user / Web, light"
+  },
+  "console/UsersAddWebDark.dc.html": {
+   "x": 0,
+   "y": 4368,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 01 Add a person / Web, dark"
+  },
+  "console/UserDeleteWebDark.dc.html": {
+   "x": 1520,
+   "y": 4368,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 02 Delete a user / Web, dark"
+  },
+  "console/UsersNoMatchWeb.dc.html": {
+   "x": 0,
+   "y": 5908,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 01 No results / Web, light"
+  },
+  "console/UsersNoMatchWebDark.dc.html": {
+   "x": 0,
+   "y": 6928,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 01 No results / Web, dark"
+  },
+  "console/DomainsWeb.dc.html": {
+   "x": 0,
+   "y": 8468,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 01 Domains / Web, light"
+  },
+  "console/BillingWeb.dc.html": {
+   "x": 1520,
+   "y": 8468,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Web, light"
+  },
+  "console/SecurityWeb.dc.html": {
+   "x": 3040,
+   "y": 8468,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 03 Security / Web, light"
+  },
+  "console/AppsWeb.dc.html": {
+   "x": 4560,
+   "y": 8468,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 04 Apps / Web, light"
+  },
+  "console/DomainsWebDark.dc.html": {
+   "x": 0,
+   "y": 9488,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 01 Domains / Web, dark"
+  },
+  "console/BillingWebDark.dc.html": {
+   "x": 1520,
+   "y": 9488,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Web, dark"
+  },
+  "console/SecurityWebDark.dc.html": {
+   "x": 3040,
+   "y": 9488,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 03 Security / Web, dark"
+  },
+  "console/AppsWebDark.dc.html": {
+   "x": 4560,
+   "y": 9488,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 04 Apps / Web, dark"
+  },
+  "setup/SetupHostListWeb.dc.html": {
+   "x": 13680,
+   "y": 0,
+   "w": 1440,
+   "h": 1162,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Web, light"
+  },
+  "setup/SetupHostNotFoundWeb.dc.html": {
+   "x": 15200,
+   "y": 0,
+   "w": 1440,
+   "h": 1303,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Web, light"
+  },
+  "setup/SetupHostListWebDark.dc.html": {
+   "x": 13680,
+   "y": 1423,
+   "w": 1440,
+   "h": 1162,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Web, dark"
+  },
+  "setup/SetupHostNotFoundWebDark.dc.html": {
+   "x": 15200,
+   "y": 1423,
+   "w": 1440,
+   "h": 1303,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Web, dark"
+  },
+  "console/HomeAccountMenuWeb.dc.html": {
+   "x": 7600,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 06 Account menu / Web, light"
+  },
+  "console/HomeMenuCollapsedWeb.dc.html": {
+   "x": 9120,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 07 Side menu collapsed / Web, light"
+  },
+  "console/HomeAccountMenuWebDark.dc.html": {
+   "x": 7600,
+   "y": 1414,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 06 Account menu / Web, dark"
+  },
+  "console/HomeMenuCollapsedWebDark.dc.html": {
+   "x": 9120,
+   "y": 1414,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 07 Side menu collapsed / Web, dark"
+  },
+  "console/PagePlaceholderWeb.dc.html": {
+   "x": 10640,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Web, light"
+  },
+  "console/MenuAllOpenWeb.dc.html": {
+   "x": 12160,
+   "y": 0,
+   "w": 1440,
+   "h": 2400,
+   "page": "console",
+   "title": "Admin / 01 Core views / 09 Side menu, every section open / Web, light"
+  },
+  "console/PagePlaceholderWebDark.dc.html": {
+   "x": 10640,
+   "y": 1414,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Web, dark"
+  },
+  "console/MenuAllOpenWebDark.dc.html": {
+   "x": 12160,
+   "y": 2520,
+   "w": 1440,
+   "h": 2400,
+   "page": "console",
+   "title": "Admin / 01 Core views / 09 Side menu, every section open / Web, dark"
+  },
+  "console/HomeMenuFooterHiddenWeb.dc.html": {
+   "x": 13680,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 10 Side menu, footer hidden / Web, light"
+  },
+  "console/HomeMenuFooterHiddenWebDark.dc.html": {
+   "x": 13680,
+   "y": 1414,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 10 Side menu, footer hidden / Web, dark"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "flow/Console.dc.html",
+  "flow/ConsoleDark.dc.html",
+  "flow/ConsoleBought.dc.html",
+  "flow/ConsoleHome.dc.html",
+  "setup/SetupIntroWeb.dc.html",
+  "setup/SetupHostWeb.dc.html",
+  "setup/SetupMethodWeb.dc.html",
+  "setup/SetupConnectingWeb.dc.html",
+  "setup/SetupRecordWeb.dc.html",
+  "setup/SetupRecordCnameWeb.dc.html",
+  "setup/SetupCheckingWeb.dc.html",
+  "setup/SetupNotFoundWeb.dc.html",
+  "setup/SetupVerifiedWeb.dc.html",
+  "setup/SetupIntroWebDark.dc.html",
+  "setup/SetupHostWebDark.dc.html",
+  "setup/SetupMethodWebDark.dc.html",
+  "setup/SetupConnectingWebDark.dc.html",
+  "setup/SetupRecordWebDark.dc.html",
+  "setup/SetupRecordCnameWebDark.dc.html",
+  "setup/SetupCheckingWebDark.dc.html",
+  "setup/SetupNotFoundWebDark.dc.html",
+  "setup/SetupVerifiedWebDark.dc.html",
+  "setup/MailPeopleWeb.dc.html",
+  "setup/MailAddPersonWeb.dc.html",
+  "setup/MailAddPersonErrorWeb.dc.html",
+  "setup/MailRecordsWeb.dc.html",
+  "setup/MailCheckingWeb.dc.html",
+  "setup/MailReadyWeb.dc.html",
+  "setup/MailPeopleWebDark.dc.html",
+  "setup/MailAddPersonWebDark.dc.html",
+  "setup/MailAddPersonErrorWebDark.dc.html",
+  "setup/MailRecordsWebDark.dc.html",
+  "setup/MailCheckingWebDark.dc.html",
+  "setup/MailReadyWebDark.dc.html",
+  "setup/ProtectRecordsWeb.dc.html",
+  "setup/ProtectCheckingWeb.dc.html",
+  "setup/ProtectDoneWeb.dc.html",
+  "setup/ProtectRecordsWebDark.dc.html",
+  "setup/ProtectCheckingWebDark.dc.html",
+  "setup/ProtectDoneWebDark.dc.html",
+  "setup/BoughtAutoWeb.dc.html",
+  "setup/BoughtAutoWebDark.dc.html",
+  "console/HomeWeb.dc.html",
+  "console/HomePartialWeb.dc.html",
+  "console/HomeCompleteWeb.dc.html",
+  "console/UsersWeb.dc.html",
+  "console/UserDetailsWeb.dc.html",
+  "console/HomeWebDark.dc.html",
+  "console/HomePartialWebDark.dc.html",
+  "console/HomeCompleteWebDark.dc.html",
+  "console/UsersWebDark.dc.html",
+  "console/UserDetailsWebDark.dc.html",
+  "console/UsersAddWeb.dc.html",
+  "console/UserDeleteWeb.dc.html",
+  "console/UsersAddWebDark.dc.html",
+  "console/UserDeleteWebDark.dc.html",
+  "console/UsersNoMatchWeb.dc.html",
+  "console/UsersNoMatchWebDark.dc.html",
+  "console/DomainsWeb.dc.html",
+  "console/BillingWeb.dc.html",
+  "console/SecurityWeb.dc.html",
+  "console/AppsWeb.dc.html",
+  "console/DomainsWebDark.dc.html",
+  "console/BillingWebDark.dc.html",
+  "console/SecurityWebDark.dc.html",
+  "console/AppsWebDark.dc.html",
+  "setup/SetupHostListWeb.dc.html",
+  "setup/SetupHostNotFoundWeb.dc.html",
+  "setup/SetupHostListWebDark.dc.html",
+  "setup/SetupHostNotFoundWebDark.dc.html",
+  "console/HomeAccountMenuWeb.dc.html",
+  "console/HomeMenuCollapsedWeb.dc.html",
+  "console/HomeAccountMenuWebDark.dc.html",
+  "console/HomeMenuCollapsedWebDark.dc.html",
+  "console/PagePlaceholderWeb.dc.html",
+  "console/MenuAllOpenWeb.dc.html",
+  "console/PagePlaceholderWebDark.dc.html",
+  "console/MenuAllOpenWebDark.dc.html",
+  "console/HomeMenuFooterHiddenWeb.dc.html",
+  "console/HomeMenuFooterHiddenWebDark.dc.html"
+ ],
+ "notes": {
+  "overview-guide": {
+   "x": 1520,
+   "y": 0,
+   "w": 900,
+   "page": "overview",
+   "size": "l",
+   "fill": "blue",
+   "text": "How this file is organised\n\n1 Clickable prototype: press Play. The dark bar switches between Own domain, Bought domain and Console. Fail next check makes the next DNS check find nothing.\n\n2 Setup flow: four rows, one per part of setup. Light boards on top, dark underneath.\n\n3 Console: the shared app sections as rows. 03 Sharing and people and 06 Empty, loading and error states have nothing in v1; setup\u2019s waiting and error screens are on page 2.\n\nBoard title: Admin / Section / Screen / Web, theme\nFiles: setup/<Screen>Web[Dark].dc.html and console/<Screen>Web[Dark].dc.html\n\nThe design system and onboarding live in the Yahel Design System file."
+  },
+  "proto-title": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin console \u00b7 Clickable prototype",
+   "kind": "title1",
+   "maxW": 5920,
+   "page": "prototype"
+  },
+  "setup-s1": {
+   "x": 0,
+   "y": -320,
+   "text": "Setup \u00b7 1 Verify your domain",
+   "kind": "title1",
+   "maxW": 16640,
+   "page": "setup"
+  },
+  "setup-s2": {
+   "x": 0,
+   "y": 2240,
+   "text": "Setup \u00b7 2 Switch on mail",
+   "kind": "title1",
+   "maxW": 9040,
+   "page": "setup"
+  },
+  "setup-s3": {
+   "x": 0,
+   "y": 5056,
+   "text": "Setup \u00b7 3 Protect your mail",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "setup"
+  },
+  "setup-s4": {
+   "x": 0,
+   "y": 8430,
+   "text": "Setup \u00b7 4 Domain bought with Yahel",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "setup"
+  },
+  "console-s1": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin \u00b7 01 Core views",
+   "kind": "title1",
+   "maxW": 15120,
+   "page": "console"
+  },
+  "console-s2": {
+   "x": 0,
+   "y": 3028,
+   "text": "Admin \u00b7 02 Create and edit",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "console"
+  },
+  "console-s3": {
+   "x": 0,
+   "y": 5588,
+   "text": "Admin \u00b7 04 Search and filters",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "console"
+  },
+  "console-s4": {
+   "x": 0,
+   "y": 8148,
+   "text": "Admin \u00b7 05 Settings",
+   "kind": "title1",
+   "maxW": 6000,
+   "page": "console"
+  }
+ },
+ "designSystems": []
+}
