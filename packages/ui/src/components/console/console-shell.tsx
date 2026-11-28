@@ -25,6 +25,8 @@ export interface ConsoleShellLabels {
   showMenu: string;
   /** The menu button while the menu is in view: "Hide menu". */
   hideMenu: string;
+  /** The button in the drawer's own header on a narrow screen: "Close menu". */
+  closeMenu: string;
 }
 
 /** What the shell tells the side menu: whether it is narrowed to icons, its id, and what to call to widen it or after a page is chosen. */
@@ -67,7 +69,7 @@ export function ConsoleShell({ labels, brand, search, actions, nav, toast, child
 
   useEffect(() => {
     if (!overlay) return;
-    navRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+    navRef.current?.querySelector<HTMLElement>('.ws-console-nav a, .ws-console-nav button')?.focus();
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setOpen(false);
@@ -94,7 +96,22 @@ export function ConsoleShell({ labels, brand, search, actions, nav, toast, child
       </header>
       <div className="ws-console__shell">
         {overlay ? <button type="button" className="ws-console__scrim" data-open tabIndex={-1} aria-label={labels.hideMenu} onClick={() => setOpen(false)} /> : null}
-        <div ref={navRef} className="ws-console-nav-host" data-open={overlay || undefined}>
+        <div ref={navRef} className="ws-console-nav-host" data-open={overlay || undefined} inert={compact && !open ? true : undefined}>
+          {compact ? (
+            <div className="ws-console-drawer-head">
+              {brand}
+              <Button
+                className="ws-console-iconbutton"
+                aria-label={labels.closeMenu}
+                onPress={() => {
+                  setOpen(false);
+                  toggleRef.current?.focus();
+                }}
+              >
+                <FlowIcon name="close" />
+              </Button>
+            </div>
+          ) : null}
           {nav({ collapsed: !compact && collapsed, id: navId, onExpand: () => setCollapsed(false), onNavigate: () => setOpen(false) })}
         </div>
         <main id={MAIN_ID} className="ws-console__main" tabIndex={-1}>

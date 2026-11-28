@@ -10,6 +10,8 @@ import { ConsoleShell } from './console-shell';
 import { SetupRail } from './setup';
 import { DataTable } from './data-table';
 import { ConsoleDialog } from './console-dialog';
+import { ConsolePanel } from './console-panel';
+import { BulkBar, ConsoleMenu, FilterChip, UnitTree } from './console-controls';
 
 const items: ConsoleNavItem[] = [
   { id: 'home', label: 'Home', icon: 'home', href: '/home' },
@@ -86,10 +88,31 @@ describe('ConsoleSearch', () => {
   });
 });
 
+const labels = { skip: 'Skip to content', showMenu: 'Show menu', hideMenu: 'Hide menu', closeMenu: 'Close menu' };
+
 describe('ConsoleShell', () => {
+  it('opens the menu as a drawer on a narrow screen and closes it from its own header', async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({ matches: true, media: query, addEventListener: () => undefined, removeEventListener: () => undefined })) as unknown as typeof window.matchMedia;
+    try {
+      render(
+        <ConsoleShell labels={labels} brand="Brand" nav={({ collapsed, id }) => <ConsoleNav id={id} label="Admin console" items={items} currentId="home" collapsed={collapsed} />}>
+          Page
+        </ConsoleShell>,
+      );
+      expect(screen.getByRole('button', { name: 'Close menu', hidden: true }).closest('[inert]')).not.toBeNull();
+      await userEvent.click(screen.getByRole('button', { name: 'Show menu' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Close menu' }));
+      expect(screen.getByRole('button', { name: 'Show menu' })).toHaveFocus();
+      expect(screen.getByRole('button', { name: 'Show menu' })).toHaveAttribute('aria-expanded', 'false');
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
   it('narrows and widens the side menu from the menu button', async () => {
     render(
-      <ConsoleShell labels={{ skip: 'Skip to content', showMenu: 'Show menu', hideMenu: 'Hide menu' }} brand="Brand" nav={({ collapsed, id }) => <ConsoleNav id={id} label="Admin console" items={items} currentId="home" collapsed={collapsed} />}>
+      <ConsoleShell labels={labels} brand="Brand" nav={({ collapsed, id }) => <ConsoleNav id={id} label="Admin console" items={items} currentId="home" collapsed={collapsed} />}>
         Page
       </ConsoleShell>,
     );
@@ -174,6 +197,91 @@ describe('ConsoleDialog', () => {
     const dialog = screen.getByRole('alertdialog', { name: 'Delete Tunde Bakare?' });
     expect(dialog).toHaveTextContent('They lose access straight away.');
     await userEvent.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('DataTable selection', () => {
+  const rows = [
+    { id: 'a', name: 'Amara' },
+    { id: 'b', name: 'Tunde' },
+  ];
+  const columns = [{ id: 'name', header: 'Name', cell: (row: (typeof rows)[number]) => row.name }];
+
+  it('ticks one row, then everyone shown, from the header box', async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <DataTable label="Users" columns={columns} rows={rows} rowKey={(row) => row.id} rowHref={() => '/'} selection={{ selected: new Set(), onChange, allLabel: 'Select everyone shown', rowLabel: (row) => `Select ${row.name}` }} />,
+    );
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Select Tunde' }));
+    expect(onChange).toHaveBeenLastCalledWith(new Set(['b']));
+    rerender(<DataTable label="Users" columns={columns} rows={rows} rowKey={(row) => row.id} rowHref={() => '/'} selection={{ selected: new Set(['b']), onChange, allLabel: 'Select everyone shown', rowLabel: (row) => `Select ${row.name}` }} />);
+    const all = screen.getByRole('checkbox', { name: 'Select everyone shown' }) as HTMLInputElement;
+    expect(all.indeterminate).toBe(true);
+    await userEvent.click(all);
+    expect(onChange).toHaveBeenLastCalledWith(new Set(['b', 'a']));
+  });
+});
+
+describe('UnitTree', () => {
+  const units = [
+    { id: 'root', name: 'Northwind', parentId: null, count: 6 },
+    { id: 'lagos', name: 'Lagos office', parentId: 'root', count: 4 },
+    { id: 'design', name: 'Design team', parentId: 'lagos', count: 2 },
+  ];
+
+  it('picks one unit, or several, and folds a unit away', async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<UnitTree label="Units" units={units} mode="one" selected={['root']} onChange={onChange} toggleLabel={(name, open) => `${open ? 'Collapse' : 'Expand'} ${name}`} />);
+    await userEvent.click(screen.getByRole('radio', { name: /Lagos office/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['lagos']);
+    rerender(<UnitTree label="Units" units={units} mode="several" selected={['lagos']} onChange={onChange} toggleLabel={(name, open) => `${open ? 'Collapse' : 'Expand'} ${name}`} />);
+    await userEvent.click(screen.getByRole('checkbox', { name: /Design team/ }));
+    expect(onChange).toHaveBeenLastCalledWith(['lagos', 'design']);
+    await userEvent.click(screen.getByRole('button', { name: 'Collapse Lagos office' }));
+    expect(screen.queryByRole('checkbox', { name: /Design team/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Expand Lagos office' })).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
+describe('Selection bar, filter chips and menus', () => {
+  it('acts on the selection and clears it', async () => {
+    const onClear = vi.fn();
+    const onRemove = vi.fn();
+    const onAction = vi.fn();
+    render(
+      <>
+        <BulkBar label="Actions for the selected people" count="2 people selected" clearLabel="Clear selection" onClear={onClear}>
+          <ConsoleMenu look="bulk" label="Move to unit" items={[{ id: 'lagos', label: 'Lagos office' }, { id: 'x', label: 'Elsewhere', isDisabled: true }]} onAction={onAction} />
+        </BulkBar>
+        <FilterChip removeLabel="Stop filtering by Lagos office" onRemove={onRemove}>
+          Lagos office
+        </FilterChip>
+      </>,
+    );
+    expect(screen.getByRole('toolbar', { name: 'Actions for the selected people' })).toHaveTextContent('2 people selected');
+    await userEvent.click(screen.getByRole('button', { name: 'Move to unit' }));
+    expect(screen.getByRole('menuitem', { name: 'Elsewhere' })).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Lagos office' }));
+    expect(onAction).toHaveBeenCalledWith('lagos');
+    await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+    expect(onClear).toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Stop filtering by Lagos office' }));
+    expect(onRemove).toHaveBeenCalled();
+  });
+});
+
+describe('ConsolePanel', () => {
+  it('names what it changes and closes from its close button', async () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ConsolePanel isOpen onOpenChange={onOpenChange} title="Edit Kofi's details" lede="Name and profile." closeLabel="Close" actions={<button type="button">Save</button>}>
+        Fields
+      </ConsolePanel>,
+    );
+    const panel = screen.getByRole('dialog', { name: "Edit Kofi's details" });
+    expect(panel).toHaveTextContent('Name and profile.');
+    await userEvent.click(within(panel).getByRole('button', { name: 'Close' }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

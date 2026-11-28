@@ -41,6 +41,11 @@ const outlines = {
   dashboard: 'M4.5 4.5h6v8h-6zM13.5 4.5h6v4h-6zM13.5 11.5h6v8h-6zM4.5 15.5h6v4h-6z',
   copy: 'M8.5 8.5h11v11h-11zM15.5 8.5v-4h-11v11h4',
   external: 'M13.5 4.5h6v6M19.5 4.5 11 13M17 13.5v6h-12.5v-12.5h6',
+  more: 'M6 12v.1M12 12v.1M18 12v.1',
+  download: 'M12 4.5v11M7 11l5 5 5-5M5 19.5h14',
+  edit: 'M4.5 19.5h4l10-10-4-4-10 10zM13 7l4 4',
+  trash: 'M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5',
+  unit: 'M9.5 4.5h5v4h-5zM4.5 15.5h5v4h-5zM14.5 15.5h5v4h-5zM12 8.5v3.5M7 15.5V12h10v3.5',
 } as const;
 
 export type FlowIconName = keyof typeof outlines;

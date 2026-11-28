@@ -92,7 +92,7 @@ export function ConsoleFrame({ session, accountsApp, links, workspace, slot, chi
 
   return (
     <ConsoleShell
-      labels={{ skip: m.skip, showMenu: m.showMenu, hideMenu: m.hideMenu }}
+      labels={{ skip: m.skip, showMenu: m.showMenu, hideMenu: m.hideMenu, closeMenu: m.closeMenu }}
       brand={
         <FlowLink href={`/u/${slot}/`} variant="link" aria-label={m.home}>
           <AdminMark label={m.brand} word={m.word} product={m.product} />
