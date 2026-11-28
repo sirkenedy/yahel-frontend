@@ -55,7 +55,7 @@ What exists and what is next. Tick items when they merge; never delete or reorde
 - [ ] Docs, Sheets, Slides (engine evaluation before any build)
 - [ ] Meet
 - [ ] Maps
-- [ ] Admin console. Started (F-110), now in the designed console (F-115 to F-119): the frame and full menu, Home, Domain setup (manual verification), Users and a person's page with role, suspend, delete and invitations, Domains, and Billing, Security and Apps as later pages. Next: browser tests and a bundle budget (maintainer: `playwright.config.ts`, `scripts/check-bundle-budget.mjs`), and the backend gaps below
+- [ ] Admin console. Started (F-110), now in the designed console (F-115 to F-119): the frame and full menu, Home, Domain setup (manual verification), Users and a person's page with role, suspend, delete and invitations, Domains, and since the design update (F-120): the menu drawer and bottom sheets on small screens, units with one or several picked, selection and bulk move, suspend and delete, Download (CSV, JSON), the More menu, Add people and Custom profile fields as designed (adding disabled), a person's page with banners, quick actions, cards and side panels (unit, role, profile) and the remove flow, and Billing, Security and Apps as later pages. Next: browser tests and a bundle budget (maintainer: `playwright.config.ts`, `scripts/check-bundle-budget.mjs`), and the backend gaps below
 
 ## Needs the backend team
 
@@ -91,6 +91,11 @@ Each is in `packages/api-client/src/standins/`, behind an interface in `capabili
 - [ ] Admin: transfer a person's mail and files before removal, and restore within a period (F-117)
 - [ ] Admin: domain host detection and connection, switching a TXT verification to CNAME, MX setup and SPF/DKIM/DMARC records and checks (F-118)
 - [ ] Admin: reset a person's password; billing, plan and trial data for Home and Billing
+- [ ] Admin: bulk endpoints for moving, suspending and deleting several people (one request per person today) (F-120)
+- [ ] Admin: sign a person out everywhere; a person's aliases (add, remove); which groups a person is in and changing them; a person's phone and personal email; changing a person's name and address (F-120)
+- [ ] Admin: narrower admin roles (Help desk, User admin, Groups admin) beside Super admin (F-120)
+- [ ] Admin: custom profile fields and which profile details people may edit themselves (F-120)
+- [ ] Admin: restore a removed account, and restore a person's deleted mail and files; storage use per person; "every profile field" in Download (F-120)
 - [ ] The maintenance window (`service-status.ts`): `GET /v1/status`, answered while the API is down, with the window in progress; or `Retry-After` on the 503
 
 ### Placeholders the business must confirm
