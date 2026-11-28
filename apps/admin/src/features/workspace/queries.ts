@@ -7,3 +7,6 @@ type Api = Pick<Session, 'api'>;
 export const workspaceQuery = ({ api }: Api, tenantId: string) => queryOptions({ queryKey: ['workspace', tenantId, 'details'], queryFn: ({ signal }) => api.tenants.get(tenantId, signal) });
 
 export const domainsQuery = ({ api }: Api, tenantId: string) => queryOptions({ queryKey: ['workspace', tenantId, 'domains'], queryFn: ({ signal }) => api.tenants.domains.list(tenantId, signal) });
+
+/** The people, for the counts on Home. Its own key: Home reads them without depending on the Users feature. */
+export const peopleCountQuery = ({ api }: Api, tenantId: string) => queryOptions({ queryKey: ['workspace', tenantId, 'people'], queryFn: ({ signal }) => api.tenants.members.list(tenantId, signal) });

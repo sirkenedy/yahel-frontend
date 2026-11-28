@@ -118,6 +118,8 @@ export interface WorkspaceDomain {
   method: 'TXT' | 'CNAME';
   status: DomainStatus;
   isPrimary: boolean;
+  /** Whether the domain's MX records point at Yahel's mail. */
+  mxConfigured?: boolean;
   verifyHost?: string | null;
   verifyTarget?: string | null;
   verificationToken?: string | null;
