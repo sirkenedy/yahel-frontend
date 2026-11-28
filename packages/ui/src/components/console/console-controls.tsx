@@ -1,5 +1,6 @@
 import { Button, Menu, MenuItem, MenuTrigger, Popover, Text } from 'react-aria-components';
 import { useEffect, useRef, useState } from 'react';
+import type { ButtonProps } from 'react-aria-components';
 import type { ReactNode } from 'react';
 import { FlowIcon } from '../flow/flow-icon';
 import type { FlowIconName } from '../flow/flow-icon';
@@ -143,6 +144,13 @@ export const BulkBar = ({ label, count, clearLabel, onClear, children }: BulkBar
       <FlowIcon name="close" />
     </Button>
   </div>
+);
+
+/** A button in the selection bar. */
+export const BulkButton = ({ children, ...props }: Omit<ButtonProps, 'className' | 'children'> & { children: ReactNode }) => (
+  <Button {...props} className="ws-console-bulk__button">
+    {children}
+  </Button>
 );
 
 export interface ConsoleMenuItem {

@@ -32,12 +32,13 @@ export const countsOf = (people: readonly Person[]) => {
 
 const fold = (value: string) => value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
-/** The people a search and a status chip leave: every word of the search must appear in the name, the address, the role or the status. */
-export const filterPeople = (people: readonly Person[], query: string, status: StatusFilter) => {
+/** The people a search and a status chip leave: every word of the search must appear in the name, the address, the unit, the role or the status. */
+export const filterPeople = (people: readonly Person[], query: string, status: StatusFilter, unitOf: (person: Person) => string = () => '') => {
   const words = fold(query).split(/\s+/).filter(Boolean);
-  return people.filter(({ member, name, email }) => {
+  return people.filter((person) => {
+    const { member, name, email } = person;
     if (status !== 'all' && member.status !== status) return false;
-    const text = fold([name, email, w.role[member.role], w.status[member.status]].filter(Boolean).join(' '));
+    const text = fold([name, email, unitOf(person), w.role[member.role], w.status[member.status]].filter(Boolean).join(' '));
     return words.every((word) => text.includes(word));
   });
 };

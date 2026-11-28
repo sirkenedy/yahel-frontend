@@ -60,7 +60,7 @@ export { DataTable } from './components/console/data-table';
 export type { DataTableColumn, DataTableProps, DataTableSelection } from './components/console/data-table';
 export { ConsolePanel } from './components/console/console-panel';
 export type { ConsolePanelProps } from './components/console/console-panel';
-export { BulkBar, ConsoleMenu, FilterChip, SelectBox, UnitTree } from './components/console/console-controls';
+export { BulkBar, BulkButton, ConsoleMenu, FilterChip, SelectBox, UnitTree } from './components/console/console-controls';
 export type { BulkBarProps, ConsoleMenuItem, ConsoleMenuProps, FilterChipProps, SelectBoxProps, UnitTreeProps, UnitTreeUnit } from './components/console/console-controls';
 export { SetupRail, SetupStepList } from './components/console/setup';
 export type { SetupRailProps, SetupStepListProps, SetupStepState } from './components/console/setup';

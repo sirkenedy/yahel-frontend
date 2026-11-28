@@ -21,6 +21,8 @@ import { Route as USlotConsoleSecurityRouteImport } from './routes/u/$slot/_cons
 import { Route as USlotConsoleLaterPageRouteImport } from './routes/u/$slot/_console/later.$page'
 import { Route as USlotConsoleUsersIndexRouteImport } from './routes/u/$slot/_console/users.index'
 import { Route as USlotConsoleUsersMemberIdRouteImport } from './routes/u/$slot/_console/users.$memberId'
+import { Route as USlotConsoleUsersAddRouteImport } from './routes/u/$slot/_console/users.add'
+import { Route as USlotConsoleUsersFieldsRouteImport } from './routes/u/$slot/_console/users.fields'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +84,16 @@ const USlotConsoleUsersMemberIdRoute =
     path: '/users/$memberId',
     getParentRoute: () => USlotConsoleRoute,
   } as any)
+const USlotConsoleUsersAddRoute = USlotConsoleUsersAddRouteImport.update({
+  id: '/users/add',
+  path: '/users/add',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleUsersFieldsRoute = USlotConsoleUsersFieldsRouteImport.update({
+  id: '/users/fields',
+  path: '/users/fields',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -94,6 +106,8 @@ export interface FileRoutesByFullPath {
   '/u/$slot/': typeof USlotConsoleIndexRoute
   '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
   '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/users/fields': typeof USlotConsoleUsersFieldsRoute
   '/u/$slot/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -106,6 +120,8 @@ export interface FileRoutesByTo {
   '/u/$slot/security': typeof USlotConsoleSecurityRoute
   '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
   '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/users/fields': typeof USlotConsoleUsersFieldsRoute
   '/u/$slot/users': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -121,6 +137,8 @@ export interface FileRoutesById {
   '/u/$slot/_console/': typeof USlotConsoleIndexRoute
   '/u/$slot/_console/later/$page': typeof USlotConsoleLaterPageRoute
   '/u/$slot/_console/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/_console/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/_console/users/fields': typeof USlotConsoleUsersFieldsRoute
   '/u/$slot/_console/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +154,8 @@ export interface FileRouteTypes {
     | '/u/$slot/'
     | '/u/$slot/later/$page'
     | '/u/$slot/users/$memberId'
+    | '/u/$slot/users/add'
+    | '/u/$slot/users/fields'
     | '/u/$slot/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -148,6 +168,8 @@ export interface FileRouteTypes {
     | '/u/$slot/security'
     | '/u/$slot/later/$page'
     | '/u/$slot/users/$memberId'
+    | '/u/$slot/users/add'
+    | '/u/$slot/users/fields'
     | '/u/$slot/users'
   id:
     | '__root__'
@@ -162,6 +184,8 @@ export interface FileRouteTypes {
     | '/u/$slot/_console/'
     | '/u/$slot/_console/later/$page'
     | '/u/$slot/_console/users/$memberId'
+    | '/u/$slot/_console/users/add'
+    | '/u/$slot/_console/users/fields'
     | '/u/$slot/_console/users/'
   fileRoutesById: FileRoutesById
 }
@@ -256,6 +280,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof USlotConsoleUsersMemberIdRouteImport
       parentRoute: typeof USlotConsoleRoute
     }
+    '/u/$slot/_console/users/add': {
+      id: '/u/$slot/_console/users/add'
+      path: '/users/add'
+      fullPath: '/u/$slot/users/add'
+      preLoaderRoute: typeof USlotConsoleUsersAddRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/fields': {
+      id: '/u/$slot/_console/users/fields'
+      path: '/users/fields'
+      fullPath: '/u/$slot/users/fields'
+      preLoaderRoute: typeof USlotConsoleUsersFieldsRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
   }
 }
 
@@ -267,6 +305,8 @@ interface USlotConsoleRouteChildren {
   USlotConsoleIndexRoute: typeof USlotConsoleIndexRoute
   USlotConsoleLaterPageRoute: typeof USlotConsoleLaterPageRoute
   USlotConsoleUsersMemberIdRoute: typeof USlotConsoleUsersMemberIdRoute
+  USlotConsoleUsersAddRoute: typeof USlotConsoleUsersAddRoute
+  USlotConsoleUsersFieldsRoute: typeof USlotConsoleUsersFieldsRoute
   USlotConsoleUsersIndexRoute: typeof USlotConsoleUsersIndexRoute
 }
 
@@ -278,6 +318,8 @@ const USlotConsoleRouteChildren: USlotConsoleRouteChildren = {
   USlotConsoleIndexRoute: USlotConsoleIndexRoute,
   USlotConsoleLaterPageRoute: USlotConsoleLaterPageRoute,
   USlotConsoleUsersMemberIdRoute: USlotConsoleUsersMemberIdRoute,
+  USlotConsoleUsersAddRoute: USlotConsoleUsersAddRoute,
+  USlotConsoleUsersFieldsRoute: USlotConsoleUsersFieldsRoute,
   USlotConsoleUsersIndexRoute: USlotConsoleUsersIndexRoute,
 }
 
