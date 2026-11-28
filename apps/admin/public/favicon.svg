@@ -1,5 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Yahel">
-  <rect width="48" height="48" rx="12" fill="#0064E0"/>
-  <circle cx="24" cy="24" r="12" fill="none" stroke="#FFFFFF" stroke-width="3.5"/>
-  <circle cx="24" cy="24" r="4" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Yahel Admin">
+  <defs>
+    <mask id="m" maskUnits="userSpaceOnUse" x="-4" y="-4" width="56" height="56">
+      <rect x="-4" y="-4" width="56" height="56" fill="#FFFFFF"/>
+      <path d="M2 21.3h44" stroke="#000000" stroke-width="2.6" fill="none"/>
+      <path d="M19 43V33a5 5 0 0 1 10 0v10z" fill="#000000"/>
+    </mask>
+  </defs>
+  <g mask="url(#m)">
+    <path d="M24 4 44 20H4z" fill="#C9D5FF"/>
+    <path d="M8 20h32v18a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5z" fill="#2C38C4"/>
+  </g>
 </svg>

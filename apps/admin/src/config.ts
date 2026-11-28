@@ -20,4 +20,8 @@ export const config = {
   /** The main app as the account in `slot`, for "Go to Yahel". */
   appHome: (slot: number) => new URL(`u/${slot}/`, appUrl).href,
   helpUrl: webAddress(env.VITE_HELP_URL),
+  /** The side menu's footer shows only the links that are set. */
+  feedbackUrl: webAddress(env.VITE_FEEDBACK_URL),
+  privacyUrl: webAddress(env.VITE_PRIVACY_URL),
+  termsUrl: webAddress(env.VITE_TERMS_URL),
 } as const;

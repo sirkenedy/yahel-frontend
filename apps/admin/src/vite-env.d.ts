@@ -7,6 +7,11 @@ interface ImportMetaEnv {
   readonly VITE_APP_URL?: string;
   /** Where "Learn more" and help lead, if anywhere. */
   readonly VITE_HELP_URL?: string;
+  /** Where "Send feedback" in the side menu leads. Unset, the link is not shown. */
+  readonly VITE_FEEDBACK_URL?: string;
+  /** The privacy policy and terms of service, linked from the side menu and the account menu. Unset, not shown. */
+  readonly VITE_PRIVACY_URL?: string;
+  readonly VITE_TERMS_URL?: string;
   /** `local` lets a build fall back to development addresses. Set by `pnpm build`; never by a release. */
   readonly VITE_LOCAL_BUILD?: string;
 }
