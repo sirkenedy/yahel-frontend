@@ -54,4 +54,6 @@ export { ConsoleSearch } from './components/console/console-search';
 export type { ConsoleSearchItem, ConsoleSearchProps } from './components/console/console-search';
 export { ConsoleCard, ConsoleFacts, ConsolePage, ConsolePlaceholder, StatusTag } from './components/console/console-page';
 export type { ConsoleCardProps, ConsoleCrumb, ConsoleFactsProps, ConsolePageProps, ConsolePlaceholderProps, StatusTagProps, StatusTagTone } from './components/console/console-page';
+export { SetupRail, SetupStepList } from './components/console/setup';
+export type { SetupRailProps, SetupStepListProps, SetupStepState } from './components/console/setup';
 export { RouterProvider as LinkRouter } from 'react-aria-components';

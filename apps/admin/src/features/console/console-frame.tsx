@@ -10,7 +10,7 @@ import type { ConsoleWorkspace } from './access';
 import { consoleMessages as m, menuMessages } from './messages';
 import { navIdOf, navItems, navPages } from './nav-tree';
 import { useAccountMenu } from './use-account-menu';
-import { useTheme } from './use-theme';
+import { useTheme } from '../../theme';
 
 export interface ConsoleLinks {
   /** The main app as the account in `slot`. */

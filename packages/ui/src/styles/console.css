@@ -158,13 +158,15 @@
 @keyframes ws-console-rise { from { opacity: 0; transform: translateY(var(--ws-space-12)); } }
 
 /* The setup shell's rail of three steps */
-.ws-console-rail { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ws-space-8) var(--ws-space-24); margin: 0; padding: 0 var(--ws-flow-gutter); list-style: none; }
+.ws-console-rail { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ws-space-8) var(--ws-space-24); margin: 0; padding: 0 var(--ws-flow-gutter); list-style: none; }
 .ws-console-rail li { display: flex; align-items: center; gap: var(--ws-space-8); color: var(--ws-color-daylight-mute); font-size: var(--ws-type-flow-label-size); font-weight: var(--ws-weight-semibold); }
 .ws-console-rail__dot { display: flex; align-items: center; justify-content: center; width: var(--ws-size-indicator); height: var(--ws-size-indicator); border-radius: var(--ws-radius-full); box-shadow: inset 0 0 0 var(--ws-border-control) var(--ws-color-daylight-line-strong); font-size: var(--ws-type-console-caption-size); }
 .ws-console-rail__dot .ws-flow-icon { width: var(--ws-icon-sm); height: var(--ws-icon-sm); }
 .ws-console-rail [data-state='now'] { color: var(--ws-color-daylight-link); }
 .ws-console-rail [data-state='now'] .ws-console-rail__dot { background: var(--ws-color-daylight-accent); box-shadow: none; color: var(--ws-color-daylight-on-accent); }
 .ws-console-rail [data-state='done'] .ws-console-rail__dot { background: var(--ws-color-daylight-success-tint); box-shadow: none; color: var(--ws-color-daylight-success); }
+.ws-console-steps .ws-console-rail__dot[data-state='done'] { background: var(--ws-color-daylight-success-tint); box-shadow: none; color: var(--ws-color-daylight-success); }
+.ws-console-steps .ws-console-rail__dot { flex-shrink: 0; }
 .ws-console-steps { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--ws-space-12); }
 .ws-console-steps li { display: flex; gap: var(--ws-space-16); padding: var(--ws-space-16); border-radius: var(--ws-radius-lg); background: var(--ws-color-daylight-surface); box-shadow: inset 0 0 0 var(--ws-border-hairline) var(--ws-color-daylight-line); }
 .ws-console-steps li > span:last-child { display: flex; flex-direction: column; gap: var(--ws-space-2); min-width: 0; flex: 1 1 auto; }

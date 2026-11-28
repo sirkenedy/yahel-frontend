@@ -7,6 +7,7 @@ import type { ConsoleNavItem } from './console-nav';
 import { ConsolePage, ConsolePlaceholder, StatusTag } from './console-page';
 import { ConsoleSearch } from './console-search';
 import { ConsoleShell } from './console-shell';
+import { SetupRail } from './setup';
 
 const items: ConsoleNavItem[] = [
   { id: 'home', label: 'Home', icon: 'home', href: '/home' },
@@ -112,5 +113,26 @@ describe('ConsolePage and its parts', () => {
     expect(within(screen.getByRole('navigation', { name: 'Breadcrumb' })).getByText('Alert center')).toHaveAttribute('aria-current', 'page');
     expect(within(screen.getByRole('list', { name: 'Planned' })).getByText('Audit log')).toBeInTheDocument();
     expect(screen.getByText('Active')).toBeInTheDocument();
+  });
+});
+
+describe('SetupRail', () => {
+  it('says which steps are done and which is current, not by colour alone', () => {
+    render(
+      <SetupRail
+        label="Setup steps"
+        doneLabel="done"
+        nowLabel="current step"
+        steps={[
+          { label: 'Verify domain', state: 'done' },
+          { label: 'Switch on mail', state: 'now' },
+          { label: 'Protect mail', state: 'next' },
+        ]}
+      />,
+    );
+    const items = within(screen.getByRole('list', { name: 'Setup steps' })).getAllByRole('listitem');
+    expect(items[0]).toHaveTextContent('Verify domain, done');
+    expect(items[1]).toHaveAttribute('aria-current', 'step');
+    expect(items[2]).toHaveTextContent('3Protect mail');
   });
 });

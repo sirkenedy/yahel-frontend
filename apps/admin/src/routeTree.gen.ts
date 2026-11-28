@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as USlotRouteImport } from './routes/u/$slot'
 import { Route as USlotConsoleRouteImport } from './routes/u/$slot/_console'
+import { Route as USlotSetupRouteImport } from './routes/u/$slot/setup'
 import { Route as USlotConsoleIndexRouteImport } from './routes/u/$slot/_console/index'
 import { Route as USlotConsoleAppsRouteImport } from './routes/u/$slot/_console/apps'
 import { Route as USlotConsoleBillingRouteImport } from './routes/u/$slot/_console/billing'
@@ -31,6 +32,11 @@ const USlotRoute = USlotRouteImport.update({
 } as any)
 const USlotConsoleRoute = USlotConsoleRouteImport.update({
   id: '/_console',
+  getParentRoute: () => USlotRoute,
+} as any)
+const USlotSetupRoute = USlotSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => USlotRoute,
 } as any)
 const USlotConsoleIndexRoute = USlotConsoleIndexRouteImport.update({
@@ -67,6 +73,7 @@ const USlotConsoleLaterPageRoute = USlotConsoleLaterPageRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/u/$slot': typeof USlotRouteWithChildren
+  '/u/$slot/setup': typeof USlotSetupRoute
   '/u/$slot/apps': typeof USlotConsoleAppsRoute
   '/u/$slot/billing': typeof USlotConsoleBillingRoute
   '/u/$slot/domains': typeof USlotConsoleDomainsRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/u/$slot': typeof USlotConsoleIndexRoute
+  '/u/$slot/setup': typeof USlotSetupRoute
   '/u/$slot/apps': typeof USlotConsoleAppsRoute
   '/u/$slot/billing': typeof USlotConsoleBillingRoute
   '/u/$slot/domains': typeof USlotConsoleDomainsRoute
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/u/$slot': typeof USlotRouteWithChildren
   '/u/$slot/_console': typeof USlotConsoleRouteWithChildren
+  '/u/$slot/setup': typeof USlotSetupRoute
   '/u/$slot/_console/apps': typeof USlotConsoleAppsRoute
   '/u/$slot/_console/billing': typeof USlotConsoleBillingRoute
   '/u/$slot/_console/domains': typeof USlotConsoleDomainsRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/u/$slot'
+    | '/u/$slot/setup'
     | '/u/$slot/apps'
     | '/u/$slot/billing'
     | '/u/$slot/domains'
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/u/$slot'
+    | '/u/$slot/setup'
     | '/u/$slot/apps'
     | '/u/$slot/billing'
     | '/u/$slot/domains'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/u/$slot'
     | '/u/$slot/_console'
+    | '/u/$slot/setup'
     | '/u/$slot/_console/apps'
     | '/u/$slot/_console/billing'
     | '/u/$slot/_console/domains'
@@ -154,6 +166,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/u/$slot'
       preLoaderRoute: typeof USlotConsoleRouteImport
+      parentRoute: typeof USlotRoute
+    }
+    '/u/$slot/setup': {
+      id: '/u/$slot/setup'
+      path: '/setup'
+      fullPath: '/u/$slot/setup'
+      preLoaderRoute: typeof USlotSetupRouteImport
       parentRoute: typeof USlotRoute
     }
     '/u/$slot/_console/': {
@@ -225,10 +244,12 @@ const USlotConsoleRouteWithChildren = USlotConsoleRoute._addFileChildren(
 
 interface USlotRouteChildren {
   USlotConsoleRoute: typeof USlotConsoleRouteWithChildren
+  USlotSetupRoute: typeof USlotSetupRoute
 }
 
 const USlotRouteChildren: USlotRouteChildren = {
   USlotConsoleRoute: USlotConsoleRouteWithChildren,
+  USlotSetupRoute: USlotSetupRoute,
 }
 
 const USlotRouteWithChildren = USlotRoute._addFileChildren(USlotRouteChildren)
