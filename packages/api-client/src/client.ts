@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import type { paths } from './schema';
-import type { Acknowledgement, AddedDomain, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, City, ClientAccount, Country, CountryState, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
+import type { Acknowledgement, AddedDomain, WorkspaceMember, WorkspaceUnit, AuthContext, DomainVerified, Workspace, WorkspaceDomain, AuthenticationResponseJSON, AuthTokens, BusinessRegistration, City, ClientAccount, Country, CountryState, LoginResult, PasskeyChallenge, PasskeyFinishBody, PasskeyItem, PasskeyRegistered, PasskeySignInResult, RegistrationResponseJSON, WebAuthnCreationOptions, WebAuthnRequestOptions, PhoneChallengeSendBody, PhoneChallengeSent, PhoneChallengeVerifyBody, Profile, RecoveryMethods, RefreshedTokens, RegisterBusinessBody, Schemas } from './types';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Path = keyof paths;
@@ -16,6 +16,8 @@ export interface ApiClientOptions {
 interface RequestOptions {
   body?: unknown;
   params?: Record<string, string>;
+  /** Appended to the address as `?key=value`. */
+  query?: Record<string, string>;
   auth?: boolean;
   signal?: AbortSignal;
 }
@@ -52,14 +54,14 @@ export const CLIENT_HEADER = { 'X-Yahel-Client': 'web' } as const;
 export function createApiClient(options: ApiClientOptions) {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Spec paths carry the global "/api" prefix; baseUrl already ends with it.
-  const url = (path: Path, params?: Record<string, string>) =>
-    options.baseUrl.replace(/\/api\/?$/, '') + path.replace(/\{(\w+)\}/g, (_, key: string) => encodeURIComponent(params?.[key] ?? ''));
+  const url = (path: Path, params?: Record<string, string>, query?: Record<string, string>) =>
+    options.baseUrl.replace(/\/api\/?$/, '') + path.replace(/\{(\w+)\}/g, (_, key: string) => encodeURIComponent(params?.[key] ?? '')) + (query ? `?${new URLSearchParams(query)}` : '');
 
   async function send<T>(method: Method, path: Path, request: RequestOptions, retried: boolean): Promise<T> {
     const token = request.auth ? options.getAccessToken?.() : null;
     let response: Response;
     try {
-      response = await doFetch(url(path, request.params), {
+      response = await doFetch(url(path, request.params, request.query), {
         method,
         // The browser's cookies (its secret and one refresh token per account) are the session; script never sees them.
         credentials: 'include',
@@ -178,6 +180,36 @@ export function createApiClient(options: ApiClientOptions) {
         setPrimary: (tenantId: string, domainId: string) => request<WorkspaceDomain>('PATCH', '/api/v1/tenants/{tenantId}/domains/{domainId}/set-primary', { auth: true, params: { tenantId, domainId } }),
         /** The primary domain cannot be removed (`PRIMARY_DOMAIN_LOCKED`). */
         remove: (tenantId: string, domainId: string) => request<null>('DELETE', '/api/v1/tenants/{tenantId}/domains/{domainId}', { auth: true, params: { tenantId, domainId } }),
+      },
+      /** A workspace's people; an owner or admin only. The owner cannot be suspended, removed or have their role changed (`FORBIDDEN`). */
+      members: {
+        /** The first `limit` (at most 100) people, newest first; removed people are left out. */
+        list: (tenantId: string, signal?: AbortSignal, limit = 100) => request<WorkspaceMember[]>('GET', '/api/v1/tenants/{tenantId}/members', { auth: true, params: { tenantId }, query: { limit: String(limit) }, signal }),
+        /** People removed from the workspace, newest first. */
+        listRemoved: (tenantId: string, signal?: AbortSignal, limit = 100) => request<WorkspaceMember[]>('GET', '/api/v1/tenants/{tenantId}/members', { auth: true, params: { tenantId }, query: { limit: String(limit), status: 'removed' }, signal }),
+        get: (tenantId: string, memberId: string, signal?: AbortSignal) => request<WorkspaceMember>('GET', '/api/v1/tenants/{tenantId}/members/{memberId}', { auth: true, params: { tenantId, memberId }, signal }),
+        /** Only ADMIN, MEMBER or GUEST can be given. */
+        update: (tenantId: string, memberId: string, body: Schemas['UpdateMemberDto']) => request<WorkspaceMember>('PATCH', '/api/v1/tenants/{tenantId}/members/{memberId}', { auth: true, params: { tenantId, memberId }, body }),
+        /** Only an active member can be suspended. */
+        suspend: (tenantId: string, memberId: string) => request<WorkspaceMember>('POST', '/api/v1/tenants/{tenantId}/members/{memberId}/suspend', { auth: true, params: { tenantId, memberId } }),
+        /** Only a suspended member; refused with `SEAT_LIMIT_REACHED` when the plan is full. */
+        reactivate: (tenantId: string, memberId: string) => request<WorkspaceMember>('POST', '/api/v1/tenants/{tenantId}/members/{memberId}/reactivate', { auth: true, params: { tenantId, memberId } }),
+        /** Removes the person from the workspace (a soft delete); nothing they own is moved. */
+        remove: (tenantId: string, memberId: string) => request<null>('DELETE', '/api/v1/tenants/{tenantId}/members/{memberId}', { auth: true, params: { tenantId, memberId } }),
+        /** Sends a pending invitation again. Needs the acting administrator's second step (`MfaRequiredGuard`). */
+        resendInvite: (tenantId: string, memberId: string) => request<unknown>('POST', '/api/v1/tenants/{tenantId}/members/{memberId}/resend-invite', { auth: true, params: { tenantId, memberId } }),
+        /** Withdraws a pending invitation. Needs the acting administrator's second step. */
+        cancelInvite: (tenantId: string, memberId: string) => request<unknown>('DELETE', '/api/v1/tenants/{tenantId}/members/{memberId}/invite', { auth: true, params: { tenantId, memberId } }),
+        /** Moves one person into a unit; their `ouPath` becomes the unit's path. */
+        changeUnit: (tenantId: string, memberId: string, ouId: string) => request<WorkspaceMember>('PATCH', '/api/v1/tenants/{tenantId}/members/{memberId}/ou', { auth: true, params: { tenantId, memberId }, body: { ouId } satisfies Schemas['ChangeMemberOuDto'] }),
+      },
+      /** The workspace's organisational units: the organisation itself, Guests, and the units inside them. */
+      units: {
+        list: (tenantId: string, signal?: AbortSignal) => request<WorkspaceUnit[]>('GET', '/api/v1/tenants/{tenantId}/ous', { auth: true, params: { tenantId }, signal }),
+      },
+      /** The workspace's groups, each with its own address. */
+      groups: {
+        list: (tenantId: string, signal?: AbortSignal) => request<Schemas['GroupResponseDto'][]>('GET', '/api/v1/tenants/{tenantId}/groups', { auth: true, params: { tenantId }, query: { limit: '100' }, signal }),
       },
     },
   };

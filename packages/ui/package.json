@@ -11,7 +11,8 @@
     "./styles.css": "./src/styles/index.css",
     "./daylight.css": "./src/styles/daylight.css",
     "./assets/*": "./assets/*",
-    "./accounts.css": "./src/styles/accounts.css"
+    "./accounts.css": "./src/styles/accounts.css",
+    "./console.css": "./src/styles/console.css"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

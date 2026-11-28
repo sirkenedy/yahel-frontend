@@ -6,6 +6,7 @@ The written design system for Yahel. This copy is canonical (decision F-8 in `..
 |---|---|
 | `docs/` | Principles, foundations, patterns, 60 component specs, decisions, coverage against Apple's HIG, research plan |
 | `canvas/` | Source of the design canvas, grouped by folder: `foundations/`, `components/`, `products/<product>/`, `website/`, `accounts/`, `decisions/`. Index in `canvas/README.md` |
+| `admin-console/` | The Admin console design, its own file: domain setup (verify, mail, protection), console home, users, side menu and settings placeholders, with a clickable prototype. Index in `admin-console/README.md` |
 | `../packages/tokens/` | Token source (`tokens/*.json`), build and contrast checks, generated `dist/tokens.css` and `dist/tokens.json` |
 | `../packages/ui/` | Component CSS, React components, icons, app icons, logo and fonts with their licences |
 

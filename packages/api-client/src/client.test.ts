@@ -181,6 +181,18 @@ describe('createApiClient', () => {
     ['domains.verify', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.verify('t-1', 'd-1'), 'POST', '/api/v1/tenants/t-1/domains/d-1/verify', { domain: { _id: 'd-1' }, verified: true, becamePrimary: true, tenantActivated: true }],
     ['domains.setPrimary', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.setPrimary('t-1', 'd-1'), 'PATCH', '/api/v1/tenants/t-1/domains/d-1/set-primary', { _id: 'd-1', isPrimary: true }],
     ['domains.remove', (api: ReturnType<typeof createApiClient>) => api.tenants.domains.remove('t-1', 'd-1'), 'DELETE', '/api/v1/tenants/t-1/domains/d-1', null],
+    ['members.list', (api: ReturnType<typeof createApiClient>) => api.tenants.members.list('t-1'), 'GET', '/api/v1/tenants/t-1/members?limit=100', [{ _id: 'm-1', globalIdentityId: 'g-1', tenantId: 't-1', role: 'OWNER', type: 'internal', status: 'active' }]],
+    ['members.listRemoved', (api: ReturnType<typeof createApiClient>) => api.tenants.members.listRemoved('t-1'), 'GET', '/api/v1/tenants/t-1/members?limit=100&status=removed', []],
+    ['members.changeUnit', (api: ReturnType<typeof createApiClient>) => api.tenants.members.changeUnit('t-1', 'm-1', 'ou-2'), 'PATCH', '/api/v1/tenants/t-1/members/m-1/ou', { _id: 'm-1', ouPath: '/lagos' }],
+    ['units.list', (api: ReturnType<typeof createApiClient>) => api.tenants.units.list('t-1'), 'GET', '/api/v1/tenants/t-1/ous', [{ _id: 'ou-1', name: 'Northwind', path: '/', parentId: null }]],
+    ['groups.list', (api: ReturnType<typeof createApiClient>) => api.tenants.groups.list('t-1'), 'GET', '/api/v1/tenants/t-1/groups?limit=100', [{ _id: 'g-1', name: 'Everyone' }]],
+    ['members.get', (api: ReturnType<typeof createApiClient>) => api.tenants.members.get('t-1', 'm-1'), 'GET', '/api/v1/tenants/t-1/members/m-1', { _id: 'm-1' }],
+    ['members.update', (api: ReturnType<typeof createApiClient>) => api.tenants.members.update('t-1', 'm-1', { role: 'ADMIN' }), 'PATCH', '/api/v1/tenants/t-1/members/m-1', { _id: 'm-1', role: 'ADMIN' }],
+    ['members.suspend', (api: ReturnType<typeof createApiClient>) => api.tenants.members.suspend('t-1', 'm-1'), 'POST', '/api/v1/tenants/t-1/members/m-1/suspend', { _id: 'm-1', status: 'suspended' }],
+    ['members.reactivate', (api: ReturnType<typeof createApiClient>) => api.tenants.members.reactivate('t-1', 'm-1'), 'POST', '/api/v1/tenants/t-1/members/m-1/reactivate', { _id: 'm-1', status: 'active' }],
+    ['members.remove', (api: ReturnType<typeof createApiClient>) => api.tenants.members.remove('t-1', 'm-1'), 'DELETE', '/api/v1/tenants/t-1/members/m-1', null],
+    ['members.resendInvite', (api: ReturnType<typeof createApiClient>) => api.tenants.members.resendInvite('t-1', 'm-1'), 'POST', '/api/v1/tenants/t-1/members/m-1/resend-invite', null],
+    ['members.cancelInvite', (api: ReturnType<typeof createApiClient>) => api.tenants.members.cancelInvite('t-1', 'm-1'), 'DELETE', '/api/v1/tenants/t-1/members/m-1/invite', null],
   ] as const)('tenants.%s sends %s to the workspace as the signed-in person', async (_, call, method, path, data) => {
     const fetchMock = vi.fn().mockResolvedValue(json(200, { success: true, data }));
     const api = createApiClient({ baseUrl: 'http://api.test/api', getAccessToken: () => 'token-1', fetch: fetchMock });

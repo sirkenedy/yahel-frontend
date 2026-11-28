@@ -1,0 +1,3781 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-27T22:02:06Z"
+ },
+ "title": "Yahel Admin console",
+ "launch": {
+  "view": "canvas",
+  "page": "overview"
+ },
+ "pages": [
+  {
+   "id": "overview",
+   "name": "0 Overview"
+  },
+  {
+   "id": "prototype",
+   "name": "1 Clickable prototype"
+  },
+  {
+   "id": "setup",
+   "name": "2 Setup flow"
+  },
+  {
+   "id": "console",
+   "name": "3 Console"
+  },
+  {
+   "id": "setupPhone",
+   "name": "4 Setup flow \u00b7 phone"
+  },
+  {
+   "id": "consolePhone",
+   "name": "5 Console \u00b7 phone"
+  },
+  {
+   "id": "setupTablet",
+   "name": "6 Setup flow \u00b7 tablet"
+  },
+  {
+   "id": "consoleTablet",
+   "name": "7 Console \u00b7 tablet"
+  }
+ ],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "overview",
+   "title": "Admin / Overview"
+  },
+  "flow/Console.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Own domain \u00b7 light"
+  },
+  "flow/ConsoleDark.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Own domain \u00b7 dark"
+  },
+  "flow/ConsoleBought.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Bought domain \u00b7 light"
+  },
+  "flow/ConsoleHome.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "prototype",
+   "expand": "fill",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Console \u00b7 light"
+  },
+  "setup/SetupIntroWeb.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 01 Start / Web, light"
+  },
+  "setup/SetupHostWeb.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Web, light"
+  },
+  "setup/SetupMethodWeb.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Web, light"
+  },
+  "setup/SetupConnectingWeb.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Web, light"
+  },
+  "setup/SetupRecordWeb.dc.html": {
+   "x": 6080,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Web, light"
+  },
+  "setup/SetupRecordCnameWeb.dc.html": {
+   "x": 7600,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Web, light"
+  },
+  "setup/SetupCheckingWeb.dc.html": {
+   "x": 9120,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Web, light"
+  },
+  "setup/SetupNotFoundWeb.dc.html": {
+   "x": 10640,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Web, light"
+  },
+  "setup/SetupVerifiedWeb.dc.html": {
+   "x": 12160,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Web, light"
+  },
+  "setup/SetupIntroWebDark.dc.html": {
+   "x": 0,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 01 Start / Web, dark"
+  },
+  "setup/SetupHostWebDark.dc.html": {
+   "x": 1520,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Web, dark"
+  },
+  "setup/SetupMethodWebDark.dc.html": {
+   "x": 3040,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Web, dark"
+  },
+  "setup/SetupConnectingWebDark.dc.html": {
+   "x": 4560,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Web, dark"
+  },
+  "setup/SetupRecordWebDark.dc.html": {
+   "x": 6080,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Web, dark"
+  },
+  "setup/SetupRecordCnameWebDark.dc.html": {
+   "x": 7600,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Web, dark"
+  },
+  "setup/SetupCheckingWebDark.dc.html": {
+   "x": 9120,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Web, dark"
+  },
+  "setup/SetupNotFoundWebDark.dc.html": {
+   "x": 10640,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Web, dark"
+  },
+  "setup/SetupVerifiedWebDark.dc.html": {
+   "x": 12160,
+   "y": 1020,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Web, dark"
+  },
+  "setup/MailPeopleWeb.dc.html": {
+   "x": 0,
+   "y": 2560,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Web, light"
+  },
+  "setup/MailAddPersonWeb.dc.html": {
+   "x": 1520,
+   "y": 2560,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Web, light"
+  },
+  "setup/MailAddPersonErrorWeb.dc.html": {
+   "x": 3040,
+   "y": 2560,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Web, light"
+  },
+  "setup/MailRecordsWeb.dc.html": {
+   "x": 4560,
+   "y": 2560,
+   "w": 1440,
+   "h": 1029,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Web, light"
+  },
+  "setup/MailCheckingWeb.dc.html": {
+   "x": 6080,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Web, light"
+  },
+  "setup/MailReadyWeb.dc.html": {
+   "x": 7600,
+   "y": 2560,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Web, light"
+  },
+  "setup/MailPeopleWebDark.dc.html": {
+   "x": 0,
+   "y": 3708,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Web, dark"
+  },
+  "setup/MailAddPersonWebDark.dc.html": {
+   "x": 1520,
+   "y": 3708,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Web, dark"
+  },
+  "setup/MailAddPersonErrorWebDark.dc.html": {
+   "x": 3040,
+   "y": 3708,
+   "w": 1440,
+   "h": 993,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Web, dark"
+  },
+  "setup/MailRecordsWebDark.dc.html": {
+   "x": 4560,
+   "y": 3708,
+   "w": 1440,
+   "h": 1029,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Web, dark"
+  },
+  "setup/MailCheckingWebDark.dc.html": {
+   "x": 6080,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Web, dark"
+  },
+  "setup/MailReadyWebDark.dc.html": {
+   "x": 7600,
+   "y": 3708,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Web, dark"
+  },
+  "setup/ProtectRecordsWeb.dc.html": {
+   "x": 0,
+   "y": 5376,
+   "w": 1440,
+   "h": 1307,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Web, light"
+  },
+  "setup/ProtectCheckingWeb.dc.html": {
+   "x": 1520,
+   "y": 5376,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Web, light"
+  },
+  "setup/ProtectDoneWeb.dc.html": {
+   "x": 3040,
+   "y": 5376,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 03 All set / Web, light"
+  },
+  "setup/ProtectRecordsWebDark.dc.html": {
+   "x": 0,
+   "y": 6803,
+   "w": 1440,
+   "h": 1307,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Web, dark"
+  },
+  "setup/ProtectCheckingWebDark.dc.html": {
+   "x": 1520,
+   "y": 6803,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Web, dark"
+  },
+  "setup/ProtectDoneWebDark.dc.html": {
+   "x": 3040,
+   "y": 6803,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 3 Protect your mail / 03 All set / Web, dark"
+  },
+  "setup/BoughtAutoWeb.dc.html": {
+   "x": 0,
+   "y": 8750,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Web, light"
+  },
+  "setup/BoughtAutoWebDark.dc.html": {
+   "x": 0,
+   "y": 9770,
+   "w": 1440,
+   "h": 900,
+   "page": "setup",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Web, dark"
+  },
+  "console/HomeWeb.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Web, light"
+  },
+  "console/HomePartialWeb.dc.html": {
+   "x": 1520,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Web, light"
+  },
+  "console/HomeCompleteWeb.dc.html": {
+   "x": 3040,
+   "y": 0,
+   "w": 1440,
+   "h": 1187,
+   "page": "console",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Web, light"
+  },
+  "console/UsersWeb.dc.html": {
+   "x": 4560,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 04 Users / Web, light"
+  },
+  "console/UserDetailsWeb.dc.html": {
+   "x": 6080,
+   "y": 0,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 01 Core views / 05 User details / Web, light"
+  },
+  "console/HomeWebDark.dc.html": {
+   "x": 0,
+   "y": 2520,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Web, dark"
+  },
+  "console/HomePartialWebDark.dc.html": {
+   "x": 1520,
+   "y": 2520,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Web, dark"
+  },
+  "console/HomeCompleteWebDark.dc.html": {
+   "x": 3040,
+   "y": 2520,
+   "w": 1440,
+   "h": 1187,
+   "page": "console",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Web, dark"
+  },
+  "console/UsersWebDark.dc.html": {
+   "x": 4560,
+   "y": 2520,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 04 Users / Web, dark"
+  },
+  "console/UserDetailsWebDark.dc.html": {
+   "x": 6080,
+   "y": 2520,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 01 Core views / 05 User details / Web, dark"
+  },
+  "console/UsersAddWeb.dc.html": {
+   "x": 0,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 01 Add people / Web, light"
+  },
+  "console/UserDeleteWeb.dc.html": {
+   "x": 1520,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Web, light"
+  },
+  "console/UsersAddWebDark.dc.html": {
+   "x": 0,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 01 Add people / Web, dark"
+  },
+  "console/UserDeleteWebDark.dc.html": {
+   "x": 1520,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Web, dark"
+  },
+  "console/UsersNoMatchWeb.dc.html": {
+   "x": 0,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 01 No results / Web, light"
+  },
+  "console/UsersNoMatchWebDark.dc.html": {
+   "x": 0,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 01 No results / Web, dark"
+  },
+  "console/DomainsWeb.dc.html": {
+   "x": 0,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 01 Domains / Web, light"
+  },
+  "console/BillingWeb.dc.html": {
+   "x": 1520,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Web, light"
+  },
+  "console/SecurityWeb.dc.html": {
+   "x": 3040,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 03 Security / Web, light"
+  },
+  "console/AppsWeb.dc.html": {
+   "x": 4560,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 04 Apps / Web, light"
+  },
+  "console/DomainsWebDark.dc.html": {
+   "x": 0,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 01 Domains / Web, dark"
+  },
+  "console/BillingWebDark.dc.html": {
+   "x": 1520,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Web, dark"
+  },
+  "console/SecurityWebDark.dc.html": {
+   "x": 3040,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 03 Security / Web, dark"
+  },
+  "console/AppsWebDark.dc.html": {
+   "x": 4560,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 04 Apps / Web, dark"
+  },
+  "setup/SetupHostListWeb.dc.html": {
+   "x": 13680,
+   "y": 0,
+   "w": 1440,
+   "h": 1162,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Web, light"
+  },
+  "setup/SetupHostNotFoundWeb.dc.html": {
+   "x": 15200,
+   "y": 0,
+   "w": 1440,
+   "h": 1303,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Web, light"
+  },
+  "setup/SetupHostListWebDark.dc.html": {
+   "x": 13680,
+   "y": 1423,
+   "w": 1440,
+   "h": 1162,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Web, dark"
+  },
+  "setup/SetupHostNotFoundWebDark.dc.html": {
+   "x": 15200,
+   "y": 1423,
+   "w": 1440,
+   "h": 1303,
+   "page": "setup",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Web, dark"
+  },
+  "console/HomeAccountMenuWeb.dc.html": {
+   "x": 7600,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 06 Account menu / Web, light"
+  },
+  "console/HomeMenuCollapsedWeb.dc.html": {
+   "x": 9120,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 07 Side menu collapsed / Web, light"
+  },
+  "console/HomeAccountMenuWebDark.dc.html": {
+   "x": 7600,
+   "y": 2520,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 06 Account menu / Web, dark"
+  },
+  "console/HomeMenuCollapsedWebDark.dc.html": {
+   "x": 9120,
+   "y": 2520,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 07 Side menu collapsed / Web, dark"
+  },
+  "console/PagePlaceholderWeb.dc.html": {
+   "x": 10640,
+   "y": 0,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Web, light"
+  },
+  "console/MenuAllOpenWeb.dc.html": {
+   "x": 12160,
+   "y": 0,
+   "w": 1440,
+   "h": 2400,
+   "page": "console",
+   "title": "Admin / 01 Core views / 09 Side menu, every section open / Web, light"
+  },
+  "console/PagePlaceholderWebDark.dc.html": {
+   "x": 10640,
+   "y": 2520,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Web, dark"
+  },
+  "console/MenuAllOpenWebDark.dc.html": {
+   "x": 12160,
+   "y": 2520,
+   "w": 1440,
+   "h": 2400,
+   "page": "console",
+   "title": "Admin / 01 Core views / 09 Side menu, every section open / Web, dark"
+  },
+  "console/HomeMenuFooterHiddenWeb.dc.html": {
+   "x": 13680,
+   "y": 0,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 10 Side menu, footer hidden / Web, light"
+  },
+  "console/HomeMenuFooterHiddenWebDark.dc.html": {
+   "x": 13680,
+   "y": 2520,
+   "w": 1440,
+   "h": 1295,
+   "page": "console",
+   "title": "Admin / 01 Core views / 10 Side menu, footer hidden / Web, dark"
+  },
+  "console/AddPeopleFilledWeb.dc.html": {
+   "x": 3040,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Web, light"
+  },
+  "console/AddPeopleFilledWebDark.dc.html": {
+   "x": 3040,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Web, dark"
+  },
+  "console/AddPeopleErrorsWeb.dc.html": {
+   "x": 4560,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Web, light"
+  },
+  "console/AddPeopleErrorsWebDark.dc.html": {
+   "x": 4560,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Web, dark"
+  },
+  "console/AddPeopleDoneWeb.dc.html": {
+   "x": 6080,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 05 People added / Web, light"
+  },
+  "console/AddPeopleDoneWebDark.dc.html": {
+   "x": 6080,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 05 People added / Web, dark"
+  },
+  "console/CustomFieldAddWeb.dc.html": {
+   "x": 7600,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Web, light"
+  },
+  "console/CustomFieldAddWebDark.dc.html": {
+   "x": 7600,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Web, dark"
+  },
+  "console/ProfileEditingWeb.dc.html": {
+   "x": 9120,
+   "y": 5560,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Web, light"
+  },
+  "console/ProfileEditingWebDark.dc.html": {
+   "x": 9120,
+   "y": 7008,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Web, dark"
+  },
+  "console/UsersUnitWeb.dc.html": {
+   "x": 1520,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Web, light"
+  },
+  "console/UsersUnitWebDark.dc.html": {
+   "x": 1520,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Web, dark"
+  },
+  "console/UsersMultiWeb.dc.html": {
+   "x": 3040,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Web, light"
+  },
+  "console/UsersMultiWebDark.dc.html": {
+   "x": 3040,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Web, dark"
+  },
+  "console/UsersSelectedWeb.dc.html": {
+   "x": 4560,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 04 People selected / Web, light"
+  },
+  "console/UsersSelectedWebDark.dc.html": {
+   "x": 4560,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 04 People selected / Web, dark"
+  },
+  "console/UsersMoveWeb.dc.html": {
+   "x": 6080,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Web, light"
+  },
+  "console/UsersMoveWebDark.dc.html": {
+   "x": 6080,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Web, dark"
+  },
+  "console/UsersMoreWeb.dc.html": {
+   "x": 7600,
+   "y": 8976,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 06 More options / Web, light"
+  },
+  "console/UsersMoreWebDark.dc.html": {
+   "x": 7600,
+   "y": 9996,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 04 Search and filters / 06 More options / Web, dark"
+  },
+  "console/UsersDownloadWeb.dc.html": {
+   "x": 6080,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 05 Download people / Web, light"
+  },
+  "console/UsersDownloadWebDark.dc.html": {
+   "x": 6080,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 05 Download people / Web, dark"
+  },
+  "console/CustomFieldsWeb.dc.html": {
+   "x": 7600,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Web, light"
+  },
+  "console/CustomFieldsWebDark.dc.html": {
+   "x": 7600,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Web, dark"
+  },
+  "console/RecentlyDeletedWeb.dc.html": {
+   "x": 9120,
+   "y": 11536,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Web, light"
+  },
+  "console/RecentlyDeletedWebDark.dc.html": {
+   "x": 9120,
+   "y": 12556,
+   "w": 1440,
+   "h": 900,
+   "page": "console",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Web, dark"
+  },
+  "setup/SetupIntroMobile.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 946,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 01 Start / Phone, light"
+  },
+  "setup/SetupIntroMobileDark.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 946,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 01 Start / Phone, dark"
+  },
+  "setup/SetupHostListMobile.dc.html": {
+   "x": 1020,
+   "y": 0,
+   "w": 390,
+   "h": 1255,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Phone, light"
+  },
+  "setup/SetupHostListMobileDark.dc.html": {
+   "x": 1490,
+   "y": 0,
+   "w": 390,
+   "h": 1255,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Phone, dark"
+  },
+  "setup/SetupHostMobile.dc.html": {
+   "x": 2040,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Phone, light"
+  },
+  "setup/SetupHostMobileDark.dc.html": {
+   "x": 2510,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Phone, dark"
+  },
+  "setup/SetupHostNotFoundMobile.dc.html": {
+   "x": 3060,
+   "y": 0,
+   "w": 390,
+   "h": 1458,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Phone, light"
+  },
+  "setup/SetupHostNotFoundMobileDark.dc.html": {
+   "x": 3530,
+   "y": 0,
+   "w": 390,
+   "h": 1458,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Phone, dark"
+  },
+  "setup/SetupMethodMobile.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 390,
+   "h": 947,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Phone, light"
+  },
+  "setup/SetupMethodMobileDark.dc.html": {
+   "x": 4550,
+   "y": 0,
+   "w": 390,
+   "h": 947,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Phone, dark"
+  },
+  "setup/SetupConnectingMobile.dc.html": {
+   "x": 5100,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Phone, light"
+  },
+  "setup/SetupConnectingMobileDark.dc.html": {
+   "x": 5570,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Phone, dark"
+  },
+  "setup/SetupRecordMobile.dc.html": {
+   "x": 6120,
+   "y": 0,
+   "w": 390,
+   "h": 1093,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Phone, light"
+  },
+  "setup/SetupRecordMobileDark.dc.html": {
+   "x": 6590,
+   "y": 0,
+   "w": 390,
+   "h": 1093,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Phone, dark"
+  },
+  "setup/SetupRecordCnameMobile.dc.html": {
+   "x": 7140,
+   "y": 0,
+   "w": 390,
+   "h": 1021,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Phone, light"
+  },
+  "setup/SetupRecordCnameMobileDark.dc.html": {
+   "x": 7610,
+   "y": 0,
+   "w": 390,
+   "h": 1021,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Phone, dark"
+  },
+  "setup/SetupCheckingMobile.dc.html": {
+   "x": 8160,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Phone, light"
+  },
+  "setup/SetupCheckingMobileDark.dc.html": {
+   "x": 8630,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Phone, dark"
+  },
+  "setup/SetupNotFoundMobile.dc.html": {
+   "x": 9180,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Phone, light"
+  },
+  "setup/SetupNotFoundMobileDark.dc.html": {
+   "x": 9650,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Phone, dark"
+  },
+  "setup/SetupVerifiedMobile.dc.html": {
+   "x": 10200,
+   "y": 0,
+   "w": 390,
+   "h": 1060,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Phone, light"
+  },
+  "setup/SetupVerifiedMobileDark.dc.html": {
+   "x": 10670,
+   "y": 0,
+   "w": 390,
+   "h": 1060,
+   "page": "setupPhone",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Phone, dark"
+  },
+  "setup/MailPeopleMobile.dc.html": {
+   "x": 0,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Phone, light"
+  },
+  "setup/MailPeopleMobileDark.dc.html": {
+   "x": 470,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Phone, dark"
+  },
+  "setup/MailAddPersonMobile.dc.html": {
+   "x": 1020,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Phone, light"
+  },
+  "setup/MailAddPersonMobileDark.dc.html": {
+   "x": 1490,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Phone, dark"
+  },
+  "setup/MailAddPersonErrorMobile.dc.html": {
+   "x": 2040,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Phone, light"
+  },
+  "setup/MailAddPersonErrorMobileDark.dc.html": {
+   "x": 2510,
+   "y": 2098,
+   "w": 390,
+   "h": 1063,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Phone, dark"
+  },
+  "setup/MailRecordsMobile.dc.html": {
+   "x": 3060,
+   "y": 2098,
+   "w": 390,
+   "h": 1312,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Phone, light"
+  },
+  "setup/MailRecordsMobileDark.dc.html": {
+   "x": 3530,
+   "y": 2098,
+   "w": 390,
+   "h": 1312,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Phone, dark"
+  },
+  "setup/MailCheckingMobile.dc.html": {
+   "x": 4080,
+   "y": 2098,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Phone, light"
+  },
+  "setup/MailCheckingMobileDark.dc.html": {
+   "x": 4550,
+   "y": 2098,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Phone, dark"
+  },
+  "setup/MailReadyMobile.dc.html": {
+   "x": 5100,
+   "y": 2098,
+   "w": 390,
+   "h": 1053,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Phone, light"
+  },
+  "setup/MailReadyMobileDark.dc.html": {
+   "x": 5570,
+   "y": 2098,
+   "w": 390,
+   "h": 1053,
+   "page": "setupPhone",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Phone, dark"
+  },
+  "setup/ProtectRecordsMobile.dc.html": {
+   "x": 0,
+   "y": 4050,
+   "w": 390,
+   "h": 1784,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Phone, light"
+  },
+  "setup/ProtectRecordsMobileDark.dc.html": {
+   "x": 470,
+   "y": 4050,
+   "w": 390,
+   "h": 1784,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Phone, dark"
+  },
+  "setup/ProtectCheckingMobile.dc.html": {
+   "x": 1020,
+   "y": 4050,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Phone, light"
+  },
+  "setup/ProtectCheckingMobileDark.dc.html": {
+   "x": 1490,
+   "y": 4050,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Phone, dark"
+  },
+  "setup/ProtectDoneMobile.dc.html": {
+   "x": 2040,
+   "y": 4050,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 03 All set / Phone, light"
+  },
+  "setup/ProtectDoneMobileDark.dc.html": {
+   "x": 2510,
+   "y": 4050,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 3 Protect your mail / 03 All set / Phone, dark"
+  },
+  "setup/BoughtAutoMobile.dc.html": {
+   "x": 0,
+   "y": 6474,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Phone, light"
+  },
+  "setup/BoughtAutoMobileDark.dc.html": {
+   "x": 470,
+   "y": 6474,
+   "w": 390,
+   "h": 844,
+   "page": "setupPhone",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Phone, dark"
+  },
+  "console/HomeMobile.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Phone, light"
+  },
+  "console/HomeMobileDark.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Phone, dark"
+  },
+  "console/HomePartialMobile.dc.html": {
+   "x": 1020,
+   "y": 0,
+   "w": 390,
+   "h": 1869,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Phone, light"
+  },
+  "console/HomePartialMobileDark.dc.html": {
+   "x": 1490,
+   "y": 0,
+   "w": 390,
+   "h": 1869,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Phone, dark"
+  },
+  "console/HomeCompleteMobile.dc.html": {
+   "x": 2040,
+   "y": 0,
+   "w": 390,
+   "h": 1628,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Phone, light"
+  },
+  "console/HomeCompleteMobileDark.dc.html": {
+   "x": 2510,
+   "y": 0,
+   "w": 390,
+   "h": 1628,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Phone, dark"
+  },
+  "console/UsersMobile.dc.html": {
+   "x": 3060,
+   "y": 0,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 04 Users / Phone, light"
+  },
+  "console/UsersMobileDark.dc.html": {
+   "x": 3530,
+   "y": 0,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 04 Users / Phone, dark"
+  },
+  "console/UserDetailsMobile.dc.html": {
+   "x": 4080,
+   "y": 0,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 05 User details / Phone, light"
+  },
+  "console/UserDetailsMobileDark.dc.html": {
+   "x": 4550,
+   "y": 0,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 05 User details / Phone, dark"
+  },
+  "console/HomeAccountMenuMobile.dc.html": {
+   "x": 5100,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 06 Account menu / Phone, light"
+  },
+  "console/HomeAccountMenuMobileDark.dc.html": {
+   "x": 5570,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 06 Account menu / Phone, dark"
+  },
+  "console/PagePlaceholderMobile.dc.html": {
+   "x": 6120,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Phone, light"
+  },
+  "console/PagePlaceholderMobileDark.dc.html": {
+   "x": 6590,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Phone, dark"
+  },
+  "console/HomeMenuDrawerMobile.dc.html": {
+   "x": 7140,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 11 Side menu open / Phone, light"
+  },
+  "console/HomeMenuDrawerMobileDark.dc.html": {
+   "x": 7610,
+   "y": 0,
+   "w": 390,
+   "h": 1871,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 11 Side menu open / Phone, dark"
+  },
+  "console/UsersAddMobile.dc.html": {
+   "x": 0,
+   "y": 2980,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 01 Add people / Phone, light"
+  },
+  "console/UsersAddMobileDark.dc.html": {
+   "x": 470,
+   "y": 2980,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 01 Add people / Phone, dark"
+  },
+  "console/UserDeleteMobile.dc.html": {
+   "x": 1020,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Phone, light"
+  },
+  "console/UserDeleteMobileDark.dc.html": {
+   "x": 1490,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Phone, dark"
+  },
+  "console/AddPeopleFilledMobile.dc.html": {
+   "x": 2040,
+   "y": 2980,
+   "w": 390,
+   "h": 1309,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Phone, light"
+  },
+  "console/AddPeopleFilledMobileDark.dc.html": {
+   "x": 2510,
+   "y": 2980,
+   "w": 390,
+   "h": 1309,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Phone, dark"
+  },
+  "console/AddPeopleErrorsMobile.dc.html": {
+   "x": 3060,
+   "y": 2980,
+   "w": 390,
+   "h": 1434,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Phone, light"
+  },
+  "console/AddPeopleErrorsMobileDark.dc.html": {
+   "x": 3530,
+   "y": 2980,
+   "w": 390,
+   "h": 1434,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Phone, dark"
+  },
+  "console/AddPeopleDoneMobile.dc.html": {
+   "x": 4080,
+   "y": 2980,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 05 People added / Phone, light"
+  },
+  "console/AddPeopleDoneMobileDark.dc.html": {
+   "x": 4550,
+   "y": 2980,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 05 People added / Phone, dark"
+  },
+  "console/CustomFieldAddMobile.dc.html": {
+   "x": 5100,
+   "y": 2980,
+   "w": 390,
+   "h": 983,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Phone, light"
+  },
+  "console/CustomFieldAddMobileDark.dc.html": {
+   "x": 5570,
+   "y": 2980,
+   "w": 390,
+   "h": 983,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Phone, dark"
+  },
+  "console/ProfileEditingMobile.dc.html": {
+   "x": 6120,
+   "y": 2980,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Phone, light"
+  },
+  "console/ProfileEditingMobileDark.dc.html": {
+   "x": 6590,
+   "y": 2980,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Phone, dark"
+  },
+  "console/UsersNoMatchMobile.dc.html": {
+   "x": 0,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 01 No results / Phone, light"
+  },
+  "console/UsersNoMatchMobileDark.dc.html": {
+   "x": 470,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 01 No results / Phone, dark"
+  },
+  "console/UsersUnitMobile.dc.html": {
+   "x": 1020,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Phone, light"
+  },
+  "console/UsersUnitMobileDark.dc.html": {
+   "x": 1490,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Phone, dark"
+  },
+  "console/UsersMultiMobile.dc.html": {
+   "x": 2040,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Phone, light"
+  },
+  "console/UsersMultiMobileDark.dc.html": {
+   "x": 2510,
+   "y": 5883,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Phone, dark"
+  },
+  "console/UsersSelectedMobile.dc.html": {
+   "x": 3060,
+   "y": 5883,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 04 People selected / Phone, light"
+  },
+  "console/UsersSelectedMobileDark.dc.html": {
+   "x": 3530,
+   "y": 5883,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 04 People selected / Phone, dark"
+  },
+  "console/UsersMoveMobile.dc.html": {
+   "x": 4080,
+   "y": 5883,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Phone, light"
+  },
+  "console/UsersMoveMobileDark.dc.html": {
+   "x": 4550,
+   "y": 5883,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Phone, dark"
+  },
+  "console/UsersMoreMobile.dc.html": {
+   "x": 5100,
+   "y": 5883,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 06 More options / Phone, light"
+  },
+  "console/UsersMoreMobileDark.dc.html": {
+   "x": 5570,
+   "y": 5883,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 06 More options / Phone, dark"
+  },
+  "console/UsersUnitsOpenMobile.dc.html": {
+   "x": 6120,
+   "y": 5883,
+   "w": 390,
+   "h": 1289,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 07 Units panel open / Phone, light"
+  },
+  "console/UsersUnitsOpenMobileDark.dc.html": {
+   "x": 6590,
+   "y": 5883,
+   "w": 390,
+   "h": 1289,
+   "page": "consolePhone",
+   "title": "Admin / 04 Search and filters / 07 Units panel open / Phone, dark"
+  },
+  "console/DomainsMobile.dc.html": {
+   "x": 0,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 01 Domains / Phone, light"
+  },
+  "console/DomainsMobileDark.dc.html": {
+   "x": 470,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 01 Domains / Phone, dark"
+  },
+  "console/BillingMobile.dc.html": {
+   "x": 1020,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Phone, light"
+  },
+  "console/BillingMobileDark.dc.html": {
+   "x": 1490,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Phone, dark"
+  },
+  "console/SecurityMobile.dc.html": {
+   "x": 2040,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 03 Security / Phone, light"
+  },
+  "console/SecurityMobileDark.dc.html": {
+   "x": 2510,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 03 Security / Phone, dark"
+  },
+  "console/AppsMobile.dc.html": {
+   "x": 3060,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 04 Apps / Phone, light"
+  },
+  "console/AppsMobileDark.dc.html": {
+   "x": 3530,
+   "y": 7812,
+   "w": 390,
+   "h": 844,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 04 Apps / Phone, dark"
+  },
+  "console/UsersDownloadMobile.dc.html": {
+   "x": 4080,
+   "y": 7812,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 05 Download people / Phone, light"
+  },
+  "console/UsersDownloadMobileDark.dc.html": {
+   "x": 4550,
+   "y": 7812,
+   "w": 390,
+   "h": 1067,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 05 Download people / Phone, dark"
+  },
+  "console/CustomFieldsMobile.dc.html": {
+   "x": 5100,
+   "y": 7812,
+   "w": 390,
+   "h": 983,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Phone, light"
+  },
+  "console/CustomFieldsMobileDark.dc.html": {
+   "x": 5570,
+   "y": 7812,
+   "w": 390,
+   "h": 983,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Phone, dark"
+  },
+  "console/RecentlyDeletedMobile.dc.html": {
+   "x": 6120,
+   "y": 7812,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Phone, light"
+  },
+  "console/RecentlyDeletedMobileDark.dc.html": {
+   "x": 6590,
+   "y": 7812,
+   "w": 390,
+   "h": 923,
+   "page": "consolePhone",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Phone, dark"
+  },
+  "flow/ConsolePhone.dc.html": {
+   "x": 6080,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "page": "prototype",
+   "is_interactive": true,
+   "title": "Admin / Prototype / Own domain \u00b7 phone"
+  },
+  "console/UserInvitedWeb.dc.html": {
+   "x": 15200,
+   "y": 0,
+   "w": 1440,
+   "h": 1432,
+   "page": "console",
+   "title": "Admin / 01 Core views / 12 User details, invited / Web, light"
+  },
+  "console/UserInvitedWebDark.dc.html": {
+   "x": 15200,
+   "y": 2520,
+   "w": 1440,
+   "h": 1432,
+   "page": "console",
+   "title": "Admin / 01 Core views / 12 User details, invited / Web, dark"
+  },
+  "console/UserSuspendedWeb.dc.html": {
+   "x": 16720,
+   "y": 0,
+   "w": 1440,
+   "h": 1432,
+   "page": "console",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Web, light"
+  },
+  "console/UserSuspendedWebDark.dc.html": {
+   "x": 16720,
+   "y": 2520,
+   "w": 1440,
+   "h": 1432,
+   "page": "console",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Web, dark"
+  },
+  "console/UserRemoveHandoverWeb.dc.html": {
+   "x": 10640,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Web, light"
+  },
+  "console/UserRemoveHandoverWebDark.dc.html": {
+   "x": 10640,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Web, dark"
+  },
+  "console/UserEditWeb.dc.html": {
+   "x": 12160,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Web, light"
+  },
+  "console/UserEditWebDark.dc.html": {
+   "x": 12160,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Web, dark"
+  },
+  "console/UserAliasesWeb.dc.html": {
+   "x": 13680,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Web, light"
+  },
+  "console/UserAliasesWebDark.dc.html": {
+   "x": 13680,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Web, dark"
+  },
+  "console/UserGroupsWeb.dc.html": {
+   "x": 15200,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 11 Groups / Web, light"
+  },
+  "console/UserGroupsWebDark.dc.html": {
+   "x": 15200,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 11 Groups / Web, dark"
+  },
+  "console/UserUnitWeb.dc.html": {
+   "x": 16720,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Web, light"
+  },
+  "console/UserUnitWebDark.dc.html": {
+   "x": 16720,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Web, dark"
+  },
+  "console/UserRoleWeb.dc.html": {
+   "x": 18240,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Web, light"
+  },
+  "console/UserRoleWebDark.dc.html": {
+   "x": 18240,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Web, dark"
+  },
+  "console/ResetPasswordWeb.dc.html": {
+   "x": 19760,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Web, light"
+  },
+  "console/ResetPasswordWebDark.dc.html": {
+   "x": 19760,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Web, dark"
+  },
+  "console/ResetPasswordOwnWeb.dc.html": {
+   "x": 21280,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Web, light"
+  },
+  "console/ResetPasswordOwnWebDark.dc.html": {
+   "x": 21280,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Web, dark"
+  },
+  "console/ResetPasswordDoneWeb.dc.html": {
+   "x": 22800,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Web, light"
+  },
+  "console/ResetPasswordDoneWebDark.dc.html": {
+   "x": 22800,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Web, dark"
+  },
+  "console/UserSuspendWeb.dc.html": {
+   "x": 24320,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Web, light"
+  },
+  "console/UserSuspendWebDark.dc.html": {
+   "x": 24320,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Web, dark"
+  },
+  "console/RestoreDataWeb.dc.html": {
+   "x": 25840,
+   "y": 5560,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Web, light"
+  },
+  "console/RestoreDataWebDark.dc.html": {
+   "x": 25840,
+   "y": 7008,
+   "w": 1440,
+   "h": 1328,
+   "page": "console",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Web, dark"
+  },
+  "console/UserInvitedMobile.dc.html": {
+   "x": 8160,
+   "y": 0,
+   "w": 390,
+   "h": 2336,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 12 User details, invited / Phone, light"
+  },
+  "console/UserInvitedMobileDark.dc.html": {
+   "x": 8630,
+   "y": 0,
+   "w": 390,
+   "h": 2336,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 12 User details, invited / Phone, dark"
+  },
+  "console/UserSuspendedMobile.dc.html": {
+   "x": 9180,
+   "y": 0,
+   "w": 390,
+   "h": 2340,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Phone, light"
+  },
+  "console/UserSuspendedMobileDark.dc.html": {
+   "x": 9650,
+   "y": 0,
+   "w": 390,
+   "h": 2340,
+   "page": "consolePhone",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Phone, dark"
+  },
+  "console/UserRemoveHandoverMobile.dc.html": {
+   "x": 7140,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Phone, light"
+  },
+  "console/UserRemoveHandoverMobileDark.dc.html": {
+   "x": 7610,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Phone, dark"
+  },
+  "console/UserEditMobile.dc.html": {
+   "x": 8160,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Phone, light"
+  },
+  "console/UserEditMobileDark.dc.html": {
+   "x": 8630,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Phone, dark"
+  },
+  "console/UserAliasesMobile.dc.html": {
+   "x": 9180,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Phone, light"
+  },
+  "console/UserAliasesMobileDark.dc.html": {
+   "x": 9650,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Phone, dark"
+  },
+  "console/UserGroupsMobile.dc.html": {
+   "x": 10200,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 11 Groups / Phone, light"
+  },
+  "console/UserGroupsMobileDark.dc.html": {
+   "x": 10670,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 11 Groups / Phone, dark"
+  },
+  "console/UserUnitMobile.dc.html": {
+   "x": 11220,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Phone, light"
+  },
+  "console/UserUnitMobileDark.dc.html": {
+   "x": 11690,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Phone, dark"
+  },
+  "console/UserRoleMobile.dc.html": {
+   "x": 12240,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Phone, light"
+  },
+  "console/UserRoleMobileDark.dc.html": {
+   "x": 12710,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Phone, dark"
+  },
+  "console/ResetPasswordMobile.dc.html": {
+   "x": 13260,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Phone, light"
+  },
+  "console/ResetPasswordMobileDark.dc.html": {
+   "x": 13730,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Phone, dark"
+  },
+  "console/ResetPasswordOwnMobile.dc.html": {
+   "x": 14280,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Phone, light"
+  },
+  "console/ResetPasswordOwnMobileDark.dc.html": {
+   "x": 14750,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Phone, dark"
+  },
+  "console/ResetPasswordDoneMobile.dc.html": {
+   "x": 15300,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Phone, light"
+  },
+  "console/ResetPasswordDoneMobileDark.dc.html": {
+   "x": 15770,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Phone, dark"
+  },
+  "console/UserSuspendMobile.dc.html": {
+   "x": 16320,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Phone, light"
+  },
+  "console/UserSuspendMobileDark.dc.html": {
+   "x": 16790,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Phone, dark"
+  },
+  "console/RestoreDataMobile.dc.html": {
+   "x": 17340,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Phone, light"
+  },
+  "console/RestoreDataMobileDark.dc.html": {
+   "x": 17810,
+   "y": 2980,
+   "w": 390,
+   "h": 2263,
+   "page": "consolePhone",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Phone, dark"
+  },
+  "console/HomeTablet.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Tablet, light"
+  },
+  "console/HomeTabletDark.dc.html": {
+   "x": 888,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 01 Home, setup to do / Tablet, dark"
+  },
+  "console/HomePartialTablet.dc.html": {
+   "x": 1896,
+   "y": 0,
+   "w": 768,
+   "h": 1255,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Tablet, light"
+  },
+  "console/HomePartialTabletDark.dc.html": {
+   "x": 2784,
+   "y": 0,
+   "w": 768,
+   "h": 1255,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 02 Home, domain verified / Tablet, dark"
+  },
+  "console/HomeCompleteTablet.dc.html": {
+   "x": 3792,
+   "y": 0,
+   "w": 768,
+   "h": 1147,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Tablet, light"
+  },
+  "console/HomeCompleteTabletDark.dc.html": {
+   "x": 4680,
+   "y": 0,
+   "w": 768,
+   "h": 1147,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 03 Home, setup complete / Tablet, dark"
+  },
+  "console/UsersTablet.dc.html": {
+   "x": 5688,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 04 Users / Tablet, light"
+  },
+  "console/UsersTabletDark.dc.html": {
+   "x": 6576,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 04 Users / Tablet, dark"
+  },
+  "console/UserDetailsTablet.dc.html": {
+   "x": 7584,
+   "y": 0,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 05 User details / Tablet, light"
+  },
+  "console/UserDetailsTabletDark.dc.html": {
+   "x": 8472,
+   "y": 0,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 05 User details / Tablet, dark"
+  },
+  "console/HomeAccountMenuTablet.dc.html": {
+   "x": 9480,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 06 Account menu / Tablet, light"
+  },
+  "console/HomeAccountMenuTabletDark.dc.html": {
+   "x": 10368,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 06 Account menu / Tablet, dark"
+  },
+  "console/PagePlaceholderTablet.dc.html": {
+   "x": 11376,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Tablet, light"
+  },
+  "console/PagePlaceholderTabletDark.dc.html": {
+   "x": 12264,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 08 Section not designed yet / Tablet, dark"
+  },
+  "console/HomeMenuDrawerTablet.dc.html": {
+   "x": 13272,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 11 Side menu open / Tablet, light"
+  },
+  "console/HomeMenuDrawerTabletDark.dc.html": {
+   "x": 14160,
+   "y": 0,
+   "w": 768,
+   "h": 1275,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 11 Side menu open / Tablet, dark"
+  },
+  "console/UserInvitedTablet.dc.html": {
+   "x": 15168,
+   "y": 0,
+   "w": 768,
+   "h": 1425,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 12 User details, invited / Tablet, light"
+  },
+  "console/UserInvitedTabletDark.dc.html": {
+   "x": 16056,
+   "y": 0,
+   "w": 768,
+   "h": 1425,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 12 User details, invited / Tablet, dark"
+  },
+  "console/UserSuspendedTablet.dc.html": {
+   "x": 17064,
+   "y": 0,
+   "w": 768,
+   "h": 1425,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Tablet, light"
+  },
+  "console/UserSuspendedTabletDark.dc.html": {
+   "x": 17952,
+   "y": 0,
+   "w": 768,
+   "h": 1425,
+   "page": "consoleTablet",
+   "title": "Admin / 01 Core views / 13 User details, suspended / Tablet, dark"
+  },
+  "console/UsersAddTablet.dc.html": {
+   "x": 0,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 01 Add people / Tablet, light"
+  },
+  "console/UsersAddTabletDark.dc.html": {
+   "x": 888,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 01 Add people / Tablet, dark"
+  },
+  "console/UserDeleteTablet.dc.html": {
+   "x": 1896,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Tablet, light"
+  },
+  "console/UserDeleteTabletDark.dc.html": {
+   "x": 2784,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 02 Remove a user / Tablet, dark"
+  },
+  "console/AddPeopleFilledTablet.dc.html": {
+   "x": 3792,
+   "y": 2065,
+   "w": 768,
+   "h": 1110,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Tablet, light"
+  },
+  "console/AddPeopleFilledTabletDark.dc.html": {
+   "x": 4680,
+   "y": 2065,
+   "w": 768,
+   "h": 1110,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 03 Add people, filling in / Tablet, dark"
+  },
+  "console/AddPeopleErrorsTablet.dc.html": {
+   "x": 5688,
+   "y": 2065,
+   "w": 768,
+   "h": 1197,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Tablet, light"
+  },
+  "console/AddPeopleErrorsTabletDark.dc.html": {
+   "x": 6576,
+   "y": 2065,
+   "w": 768,
+   "h": 1197,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 04 Add people, problems to fix / Tablet, dark"
+  },
+  "console/AddPeopleDoneTablet.dc.html": {
+   "x": 7584,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 05 People added / Tablet, light"
+  },
+  "console/AddPeopleDoneTabletDark.dc.html": {
+   "x": 8472,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 05 People added / Tablet, dark"
+  },
+  "console/CustomFieldAddTablet.dc.html": {
+   "x": 9480,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Tablet, light"
+  },
+  "console/CustomFieldAddTabletDark.dc.html": {
+   "x": 10368,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 06 Add custom fields / Tablet, dark"
+  },
+  "console/ProfileEditingTablet.dc.html": {
+   "x": 11376,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Tablet, light"
+  },
+  "console/ProfileEditingTabletDark.dc.html": {
+   "x": 12264,
+   "y": 2065,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 07 Let people edit their profile / Tablet, dark"
+  },
+  "console/UserRemoveHandoverTablet.dc.html": {
+   "x": 13272,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Tablet, light"
+  },
+  "console/UserRemoveHandoverTabletDark.dc.html": {
+   "x": 14160,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 08 Remove a user, hand over work / Tablet, dark"
+  },
+  "console/UserEditTablet.dc.html": {
+   "x": 15168,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Tablet, light"
+  },
+  "console/UserEditTabletDark.dc.html": {
+   "x": 16056,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 09 Edit details / Tablet, dark"
+  },
+  "console/UserAliasesTablet.dc.html": {
+   "x": 17064,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Tablet, light"
+  },
+  "console/UserAliasesTabletDark.dc.html": {
+   "x": 17952,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 10 Addresses and aliases / Tablet, dark"
+  },
+  "console/UserGroupsTablet.dc.html": {
+   "x": 18960,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 11 Groups / Tablet, light"
+  },
+  "console/UserGroupsTabletDark.dc.html": {
+   "x": 19848,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 11 Groups / Tablet, dark"
+  },
+  "console/UserUnitTablet.dc.html": {
+   "x": 20856,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Tablet, light"
+  },
+  "console/UserUnitTabletDark.dc.html": {
+   "x": 21744,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 12 Change unit / Tablet, dark"
+  },
+  "console/UserRoleTablet.dc.html": {
+   "x": 22752,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Tablet, light"
+  },
+  "console/UserRoleTabletDark.dc.html": {
+   "x": 23640,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 13 Admin role / Tablet, dark"
+  },
+  "console/ResetPasswordTablet.dc.html": {
+   "x": 24648,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Tablet, light"
+  },
+  "console/ResetPasswordTabletDark.dc.html": {
+   "x": 25536,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 14 Reset password / Tablet, dark"
+  },
+  "console/ResetPasswordOwnTablet.dc.html": {
+   "x": 26544,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Tablet, light"
+  },
+  "console/ResetPasswordOwnTabletDark.dc.html": {
+   "x": 27432,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 15 Reset password, set it myself / Tablet, dark"
+  },
+  "console/ResetPasswordDoneTablet.dc.html": {
+   "x": 28440,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Tablet, light"
+  },
+  "console/ResetPasswordDoneTabletDark.dc.html": {
+   "x": 29328,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 16 Reset password, done / Tablet, dark"
+  },
+  "console/UserSuspendTablet.dc.html": {
+   "x": 30336,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Tablet, light"
+  },
+  "console/UserSuspendTabletDark.dc.html": {
+   "x": 31224,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 17 Suspend / Tablet, dark"
+  },
+  "console/RestoreDataTablet.dc.html": {
+   "x": 32232,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Tablet, light"
+  },
+  "console/RestoreDataTabletDark.dc.html": {
+   "x": 33120,
+   "y": 2065,
+   "w": 768,
+   "h": 1321,
+   "page": "consoleTablet",
+   "title": "Admin / 02 Create and edit / 18 Restore deleted data / Tablet, dark"
+  },
+  "console/UsersNoMatchTablet.dc.html": {
+   "x": 0,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 01 No results / Tablet, light"
+  },
+  "console/UsersNoMatchTabletDark.dc.html": {
+   "x": 888,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 01 No results / Tablet, dark"
+  },
+  "console/UsersUnitTablet.dc.html": {
+   "x": 1896,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Tablet, light"
+  },
+  "console/UsersUnitTabletDark.dc.html": {
+   "x": 2784,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 02 One unit picked / Tablet, dark"
+  },
+  "console/UsersMultiTablet.dc.html": {
+   "x": 3792,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Tablet, light"
+  },
+  "console/UsersMultiTabletDark.dc.html": {
+   "x": 4680,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 03 Several units picked / Tablet, dark"
+  },
+  "console/UsersSelectedTablet.dc.html": {
+   "x": 5688,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 04 People selected / Tablet, light"
+  },
+  "console/UsersSelectedTabletDark.dc.html": {
+   "x": 6576,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 04 People selected / Tablet, dark"
+  },
+  "console/UsersMoveTablet.dc.html": {
+   "x": 7584,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Tablet, light"
+  },
+  "console/UsersMoveTabletDark.dc.html": {
+   "x": 8472,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 05 Move to unit / Tablet, dark"
+  },
+  "console/UsersMoreTablet.dc.html": {
+   "x": 9480,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 06 More options / Tablet, light"
+  },
+  "console/UsersMoreTabletDark.dc.html": {
+   "x": 10368,
+   "y": 4026,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 06 More options / Tablet, dark"
+  },
+  "console/UsersUnitsOpenTablet.dc.html": {
+   "x": 11376,
+   "y": 4026,
+   "w": 768,
+   "h": 1171,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 07 Units panel open / Tablet, light"
+  },
+  "console/UsersUnitsOpenTabletDark.dc.html": {
+   "x": 12264,
+   "y": 4026,
+   "w": 768,
+   "h": 1171,
+   "page": "consoleTablet",
+   "title": "Admin / 04 Search and filters / 07 Units panel open / Tablet, dark"
+  },
+  "console/DomainsTablet.dc.html": {
+   "x": 0,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 01 Domains / Tablet, light"
+  },
+  "console/DomainsTabletDark.dc.html": {
+   "x": 888,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 01 Domains / Tablet, dark"
+  },
+  "console/BillingTablet.dc.html": {
+   "x": 1896,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Tablet, light"
+  },
+  "console/BillingTabletDark.dc.html": {
+   "x": 2784,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 02 Billing (Phase 4) / Tablet, dark"
+  },
+  "console/SecurityTablet.dc.html": {
+   "x": 3792,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 03 Security / Tablet, light"
+  },
+  "console/SecurityTabletDark.dc.html": {
+   "x": 4680,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 03 Security / Tablet, dark"
+  },
+  "console/AppsTablet.dc.html": {
+   "x": 5688,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 04 Apps / Tablet, light"
+  },
+  "console/AppsTabletDark.dc.html": {
+   "x": 6576,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 04 Apps / Tablet, dark"
+  },
+  "console/UsersDownloadTablet.dc.html": {
+   "x": 7584,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 05 Download people / Tablet, light"
+  },
+  "console/UsersDownloadTabletDark.dc.html": {
+   "x": 8472,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 05 Download people / Tablet, dark"
+  },
+  "console/CustomFieldsTablet.dc.html": {
+   "x": 9480,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Tablet, light"
+  },
+  "console/CustomFieldsTabletDark.dc.html": {
+   "x": 10368,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 06 Custom profile fields / Tablet, dark"
+  },
+  "console/RecentlyDeletedTablet.dc.html": {
+   "x": 11376,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Tablet, light"
+  },
+  "console/RecentlyDeletedTabletDark.dc.html": {
+   "x": 12264,
+   "y": 5837,
+   "w": 768,
+   "h": 1024,
+   "page": "consoleTablet",
+   "title": "Admin / 05 Settings / 07 Recently deleted / Tablet, dark"
+  },
+  "setup/SetupIntroTablet.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 01 Start / Tablet, light"
+  },
+  "setup/SetupIntroTabletDark.dc.html": {
+   "x": 888,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 01 Start / Tablet, dark"
+  },
+  "setup/SetupHostListTablet.dc.html": {
+   "x": 1896,
+   "y": 0,
+   "w": 768,
+   "h": 1162,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Tablet, light"
+  },
+  "setup/SetupHostListTabletDark.dc.html": {
+   "x": 2784,
+   "y": 0,
+   "w": 768,
+   "h": 1162,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, choosing another / Tablet, dark"
+  },
+  "setup/SetupHostTablet.dc.html": {
+   "x": 3792,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Tablet, light"
+  },
+  "setup/SetupHostTabletDark.dc.html": {
+   "x": 4680,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, detected / Tablet, dark"
+  },
+  "setup/SetupHostNotFoundTablet.dc.html": {
+   "x": 5688,
+   "y": 0,
+   "w": 768,
+   "h": 1303,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Tablet, light"
+  },
+  "setup/SetupHostNotFoundTabletDark.dc.html": {
+   "x": 6576,
+   "y": 0,
+   "w": 768,
+   "h": 1303,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 02 Domain host, not detected / Tablet, dark"
+  },
+  "setup/SetupMethodTablet.dc.html": {
+   "x": 7584,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Tablet, light"
+  },
+  "setup/SetupMethodTabletDark.dc.html": {
+   "x": 8472,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 03 How to verify / Tablet, dark"
+  },
+  "setup/SetupConnectingTablet.dc.html": {
+   "x": 9480,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Tablet, light"
+  },
+  "setup/SetupConnectingTabletDark.dc.html": {
+   "x": 10368,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 04 Connecting / Tablet, dark"
+  },
+  "setup/SetupRecordTablet.dc.html": {
+   "x": 11376,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Tablet, light"
+  },
+  "setup/SetupRecordTabletDark.dc.html": {
+   "x": 12264,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 05 Add TXT record / Tablet, dark"
+  },
+  "setup/SetupRecordCnameTablet.dc.html": {
+   "x": 13272,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Tablet, light"
+  },
+  "setup/SetupRecordCnameTabletDark.dc.html": {
+   "x": 14160,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 06 Add CNAME instead / Tablet, dark"
+  },
+  "setup/SetupCheckingTablet.dc.html": {
+   "x": 15168,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Tablet, light"
+  },
+  "setup/SetupCheckingTabletDark.dc.html": {
+   "x": 16056,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 07 Checking / Tablet, dark"
+  },
+  "setup/SetupNotFoundTablet.dc.html": {
+   "x": 17064,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Tablet, light"
+  },
+  "setup/SetupNotFoundTabletDark.dc.html": {
+   "x": 17952,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 08 Record not found / Tablet, dark"
+  },
+  "setup/SetupVerifiedTablet.dc.html": {
+   "x": 18960,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Tablet, light"
+  },
+  "setup/SetupVerifiedTabletDark.dc.html": {
+   "x": 19848,
+   "y": 0,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 1 Verify your domain / 09 Verified / Tablet, dark"
+  },
+  "setup/MailPeopleTablet.dc.html": {
+   "x": 0,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Tablet, light"
+  },
+  "setup/MailPeopleTabletDark.dc.html": {
+   "x": 888,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 01 Who gets mail / Tablet, dark"
+  },
+  "setup/MailAddPersonTablet.dc.html": {
+   "x": 1896,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Tablet, light"
+  },
+  "setup/MailAddPersonTabletDark.dc.html": {
+   "x": 2784,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 02 Add a person / Tablet, dark"
+  },
+  "setup/MailAddPersonErrorTablet.dc.html": {
+   "x": 3792,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Tablet, light"
+  },
+  "setup/MailAddPersonErrorTabletDark.dc.html": {
+   "x": 4680,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 03 Username taken / Tablet, dark"
+  },
+  "setup/MailRecordsTablet.dc.html": {
+   "x": 5688,
+   "y": 1943,
+   "w": 768,
+   "h": 1029,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Tablet, light"
+  },
+  "setup/MailRecordsTabletDark.dc.html": {
+   "x": 6576,
+   "y": 1943,
+   "w": 768,
+   "h": 1029,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 04 MX records / Tablet, dark"
+  },
+  "setup/MailCheckingTablet.dc.html": {
+   "x": 7584,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Tablet, light"
+  },
+  "setup/MailCheckingTabletDark.dc.html": {
+   "x": 8472,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 05 Checking / Tablet, dark"
+  },
+  "setup/MailReadyTablet.dc.html": {
+   "x": 9480,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Tablet, light"
+  },
+  "setup/MailReadyTabletDark.dc.html": {
+   "x": 10368,
+   "y": 1943,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 2 Switch on mail / 06 Mail is on / Tablet, dark"
+  },
+  "setup/ProtectRecordsTablet.dc.html": {
+   "x": 0,
+   "y": 3612,
+   "w": 768,
+   "h": 1307,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Tablet, light"
+  },
+  "setup/ProtectRecordsTabletDark.dc.html": {
+   "x": 888,
+   "y": 3612,
+   "w": 768,
+   "h": 1307,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 01 SPF, DKIM, DMARC / Tablet, dark"
+  },
+  "setup/ProtectCheckingTablet.dc.html": {
+   "x": 1896,
+   "y": 3612,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Tablet, light"
+  },
+  "setup/ProtectCheckingTabletDark.dc.html": {
+   "x": 2784,
+   "y": 3612,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 02 Checking / Tablet, dark"
+  },
+  "setup/ProtectDoneTablet.dc.html": {
+   "x": 3792,
+   "y": 3612,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 03 All set / Tablet, light"
+  },
+  "setup/ProtectDoneTabletDark.dc.html": {
+   "x": 4680,
+   "y": 3612,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 3 Protect your mail / 03 All set / Tablet, dark"
+  },
+  "setup/BoughtAutoTablet.dc.html": {
+   "x": 0,
+   "y": 5559,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Tablet, light"
+  },
+  "setup/BoughtAutoTabletDark.dc.html": {
+   "x": 888,
+   "y": 5559,
+   "w": 768,
+   "h": 1024,
+   "page": "setupTablet",
+   "title": "Admin / 4 Domain bought with Yahel / 01 Set up automatically / Tablet, dark"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "flow/Console.dc.html",
+  "flow/ConsoleDark.dc.html",
+  "flow/ConsoleBought.dc.html",
+  "flow/ConsoleHome.dc.html",
+  "setup/SetupIntroWeb.dc.html",
+  "setup/SetupHostWeb.dc.html",
+  "setup/SetupMethodWeb.dc.html",
+  "setup/SetupConnectingWeb.dc.html",
+  "setup/SetupRecordWeb.dc.html",
+  "setup/SetupRecordCnameWeb.dc.html",
+  "setup/SetupCheckingWeb.dc.html",
+  "setup/SetupNotFoundWeb.dc.html",
+  "setup/SetupVerifiedWeb.dc.html",
+  "setup/SetupIntroWebDark.dc.html",
+  "setup/SetupHostWebDark.dc.html",
+  "setup/SetupMethodWebDark.dc.html",
+  "setup/SetupConnectingWebDark.dc.html",
+  "setup/SetupRecordWebDark.dc.html",
+  "setup/SetupRecordCnameWebDark.dc.html",
+  "setup/SetupCheckingWebDark.dc.html",
+  "setup/SetupNotFoundWebDark.dc.html",
+  "setup/SetupVerifiedWebDark.dc.html",
+  "setup/MailPeopleWeb.dc.html",
+  "setup/MailAddPersonWeb.dc.html",
+  "setup/MailAddPersonErrorWeb.dc.html",
+  "setup/MailRecordsWeb.dc.html",
+  "setup/MailCheckingWeb.dc.html",
+  "setup/MailReadyWeb.dc.html",
+  "setup/MailPeopleWebDark.dc.html",
+  "setup/MailAddPersonWebDark.dc.html",
+  "setup/MailAddPersonErrorWebDark.dc.html",
+  "setup/MailRecordsWebDark.dc.html",
+  "setup/MailCheckingWebDark.dc.html",
+  "setup/MailReadyWebDark.dc.html",
+  "setup/ProtectRecordsWeb.dc.html",
+  "setup/ProtectCheckingWeb.dc.html",
+  "setup/ProtectDoneWeb.dc.html",
+  "setup/ProtectRecordsWebDark.dc.html",
+  "setup/ProtectCheckingWebDark.dc.html",
+  "setup/ProtectDoneWebDark.dc.html",
+  "setup/BoughtAutoWeb.dc.html",
+  "setup/BoughtAutoWebDark.dc.html",
+  "console/HomeWeb.dc.html",
+  "console/HomePartialWeb.dc.html",
+  "console/HomeCompleteWeb.dc.html",
+  "console/UsersWeb.dc.html",
+  "console/UserDetailsWeb.dc.html",
+  "console/HomeWebDark.dc.html",
+  "console/HomePartialWebDark.dc.html",
+  "console/HomeCompleteWebDark.dc.html",
+  "console/UsersWebDark.dc.html",
+  "console/UserDetailsWebDark.dc.html",
+  "console/UsersAddWeb.dc.html",
+  "console/UserDeleteWeb.dc.html",
+  "console/UsersAddWebDark.dc.html",
+  "console/UserDeleteWebDark.dc.html",
+  "console/UsersNoMatchWeb.dc.html",
+  "console/UsersNoMatchWebDark.dc.html",
+  "console/DomainsWeb.dc.html",
+  "console/BillingWeb.dc.html",
+  "console/SecurityWeb.dc.html",
+  "console/AppsWeb.dc.html",
+  "console/DomainsWebDark.dc.html",
+  "console/BillingWebDark.dc.html",
+  "console/SecurityWebDark.dc.html",
+  "console/AppsWebDark.dc.html",
+  "setup/SetupHostListWeb.dc.html",
+  "setup/SetupHostNotFoundWeb.dc.html",
+  "setup/SetupHostListWebDark.dc.html",
+  "setup/SetupHostNotFoundWebDark.dc.html",
+  "console/HomeAccountMenuWeb.dc.html",
+  "console/HomeMenuCollapsedWeb.dc.html",
+  "console/HomeAccountMenuWebDark.dc.html",
+  "console/HomeMenuCollapsedWebDark.dc.html",
+  "console/PagePlaceholderWeb.dc.html",
+  "console/MenuAllOpenWeb.dc.html",
+  "console/PagePlaceholderWebDark.dc.html",
+  "console/MenuAllOpenWebDark.dc.html",
+  "console/HomeMenuFooterHiddenWeb.dc.html",
+  "console/HomeMenuFooterHiddenWebDark.dc.html",
+  "console/AddPeopleFilledWeb.dc.html",
+  "console/AddPeopleFilledWebDark.dc.html",
+  "console/AddPeopleErrorsWeb.dc.html",
+  "console/AddPeopleErrorsWebDark.dc.html",
+  "console/AddPeopleDoneWeb.dc.html",
+  "console/AddPeopleDoneWebDark.dc.html",
+  "console/CustomFieldAddWeb.dc.html",
+  "console/CustomFieldAddWebDark.dc.html",
+  "console/ProfileEditingWeb.dc.html",
+  "console/ProfileEditingWebDark.dc.html",
+  "console/UsersUnitWeb.dc.html",
+  "console/UsersUnitWebDark.dc.html",
+  "console/UsersMultiWeb.dc.html",
+  "console/UsersMultiWebDark.dc.html",
+  "console/UsersSelectedWeb.dc.html",
+  "console/UsersSelectedWebDark.dc.html",
+  "console/UsersMoveWeb.dc.html",
+  "console/UsersMoveWebDark.dc.html",
+  "console/UsersMoreWeb.dc.html",
+  "console/UsersMoreWebDark.dc.html",
+  "console/UsersDownloadWeb.dc.html",
+  "console/UsersDownloadWebDark.dc.html",
+  "console/CustomFieldsWeb.dc.html",
+  "console/CustomFieldsWebDark.dc.html",
+  "console/RecentlyDeletedWeb.dc.html",
+  "console/RecentlyDeletedWebDark.dc.html",
+  "setup/SetupIntroMobile.dc.html",
+  "setup/SetupIntroMobileDark.dc.html",
+  "setup/SetupHostListMobile.dc.html",
+  "setup/SetupHostListMobileDark.dc.html",
+  "setup/SetupHostMobile.dc.html",
+  "setup/SetupHostMobileDark.dc.html",
+  "setup/SetupHostNotFoundMobile.dc.html",
+  "setup/SetupHostNotFoundMobileDark.dc.html",
+  "setup/SetupMethodMobile.dc.html",
+  "setup/SetupMethodMobileDark.dc.html",
+  "setup/SetupConnectingMobile.dc.html",
+  "setup/SetupConnectingMobileDark.dc.html",
+  "setup/SetupRecordMobile.dc.html",
+  "setup/SetupRecordMobileDark.dc.html",
+  "setup/SetupRecordCnameMobile.dc.html",
+  "setup/SetupRecordCnameMobileDark.dc.html",
+  "setup/SetupCheckingMobile.dc.html",
+  "setup/SetupCheckingMobileDark.dc.html",
+  "setup/SetupNotFoundMobile.dc.html",
+  "setup/SetupNotFoundMobileDark.dc.html",
+  "setup/SetupVerifiedMobile.dc.html",
+  "setup/SetupVerifiedMobileDark.dc.html",
+  "setup/MailPeopleMobile.dc.html",
+  "setup/MailPeopleMobileDark.dc.html",
+  "setup/MailAddPersonMobile.dc.html",
+  "setup/MailAddPersonMobileDark.dc.html",
+  "setup/MailAddPersonErrorMobile.dc.html",
+  "setup/MailAddPersonErrorMobileDark.dc.html",
+  "setup/MailRecordsMobile.dc.html",
+  "setup/MailRecordsMobileDark.dc.html",
+  "setup/MailCheckingMobile.dc.html",
+  "setup/MailCheckingMobileDark.dc.html",
+  "setup/MailReadyMobile.dc.html",
+  "setup/MailReadyMobileDark.dc.html",
+  "setup/ProtectRecordsMobile.dc.html",
+  "setup/ProtectRecordsMobileDark.dc.html",
+  "setup/ProtectCheckingMobile.dc.html",
+  "setup/ProtectCheckingMobileDark.dc.html",
+  "setup/ProtectDoneMobile.dc.html",
+  "setup/ProtectDoneMobileDark.dc.html",
+  "setup/BoughtAutoMobile.dc.html",
+  "setup/BoughtAutoMobileDark.dc.html",
+  "console/HomeMobile.dc.html",
+  "console/HomeMobileDark.dc.html",
+  "console/HomePartialMobile.dc.html",
+  "console/HomePartialMobileDark.dc.html",
+  "console/HomeCompleteMobile.dc.html",
+  "console/HomeCompleteMobileDark.dc.html",
+  "console/UsersMobile.dc.html",
+  "console/UsersMobileDark.dc.html",
+  "console/UserDetailsMobile.dc.html",
+  "console/UserDetailsMobileDark.dc.html",
+  "console/HomeAccountMenuMobile.dc.html",
+  "console/HomeAccountMenuMobileDark.dc.html",
+  "console/PagePlaceholderMobile.dc.html",
+  "console/PagePlaceholderMobileDark.dc.html",
+  "console/HomeMenuDrawerMobile.dc.html",
+  "console/HomeMenuDrawerMobileDark.dc.html",
+  "console/UsersAddMobile.dc.html",
+  "console/UsersAddMobileDark.dc.html",
+  "console/UserDeleteMobile.dc.html",
+  "console/UserDeleteMobileDark.dc.html",
+  "console/AddPeopleFilledMobile.dc.html",
+  "console/AddPeopleFilledMobileDark.dc.html",
+  "console/AddPeopleErrorsMobile.dc.html",
+  "console/AddPeopleErrorsMobileDark.dc.html",
+  "console/AddPeopleDoneMobile.dc.html",
+  "console/AddPeopleDoneMobileDark.dc.html",
+  "console/CustomFieldAddMobile.dc.html",
+  "console/CustomFieldAddMobileDark.dc.html",
+  "console/ProfileEditingMobile.dc.html",
+  "console/ProfileEditingMobileDark.dc.html",
+  "console/UsersNoMatchMobile.dc.html",
+  "console/UsersNoMatchMobileDark.dc.html",
+  "console/UsersUnitMobile.dc.html",
+  "console/UsersUnitMobileDark.dc.html",
+  "console/UsersMultiMobile.dc.html",
+  "console/UsersMultiMobileDark.dc.html",
+  "console/UsersSelectedMobile.dc.html",
+  "console/UsersSelectedMobileDark.dc.html",
+  "console/UsersMoveMobile.dc.html",
+  "console/UsersMoveMobileDark.dc.html",
+  "console/UsersMoreMobile.dc.html",
+  "console/UsersMoreMobileDark.dc.html",
+  "console/UsersUnitsOpenMobile.dc.html",
+  "console/UsersUnitsOpenMobileDark.dc.html",
+  "console/DomainsMobile.dc.html",
+  "console/DomainsMobileDark.dc.html",
+  "console/BillingMobile.dc.html",
+  "console/BillingMobileDark.dc.html",
+  "console/SecurityMobile.dc.html",
+  "console/SecurityMobileDark.dc.html",
+  "console/AppsMobile.dc.html",
+  "console/AppsMobileDark.dc.html",
+  "console/UsersDownloadMobile.dc.html",
+  "console/UsersDownloadMobileDark.dc.html",
+  "console/CustomFieldsMobile.dc.html",
+  "console/CustomFieldsMobileDark.dc.html",
+  "console/RecentlyDeletedMobile.dc.html",
+  "console/RecentlyDeletedMobileDark.dc.html",
+  "flow/ConsolePhone.dc.html",
+  "console/UserInvitedWeb.dc.html",
+  "console/UserInvitedWebDark.dc.html",
+  "console/UserSuspendedWeb.dc.html",
+  "console/UserSuspendedWebDark.dc.html",
+  "console/UserRemoveHandoverWeb.dc.html",
+  "console/UserRemoveHandoverWebDark.dc.html",
+  "console/UserEditWeb.dc.html",
+  "console/UserEditWebDark.dc.html",
+  "console/UserAliasesWeb.dc.html",
+  "console/UserAliasesWebDark.dc.html",
+  "console/UserGroupsWeb.dc.html",
+  "console/UserGroupsWebDark.dc.html",
+  "console/UserUnitWeb.dc.html",
+  "console/UserUnitWebDark.dc.html",
+  "console/UserRoleWeb.dc.html",
+  "console/UserRoleWebDark.dc.html",
+  "console/ResetPasswordWeb.dc.html",
+  "console/ResetPasswordWebDark.dc.html",
+  "console/ResetPasswordOwnWeb.dc.html",
+  "console/ResetPasswordOwnWebDark.dc.html",
+  "console/ResetPasswordDoneWeb.dc.html",
+  "console/ResetPasswordDoneWebDark.dc.html",
+  "console/UserSuspendWeb.dc.html",
+  "console/UserSuspendWebDark.dc.html",
+  "console/RestoreDataWeb.dc.html",
+  "console/RestoreDataWebDark.dc.html",
+  "console/UserInvitedMobile.dc.html",
+  "console/UserInvitedMobileDark.dc.html",
+  "console/UserSuspendedMobile.dc.html",
+  "console/UserSuspendedMobileDark.dc.html",
+  "console/UserRemoveHandoverMobile.dc.html",
+  "console/UserRemoveHandoverMobileDark.dc.html",
+  "console/UserEditMobile.dc.html",
+  "console/UserEditMobileDark.dc.html",
+  "console/UserAliasesMobile.dc.html",
+  "console/UserAliasesMobileDark.dc.html",
+  "console/UserGroupsMobile.dc.html",
+  "console/UserGroupsMobileDark.dc.html",
+  "console/UserUnitMobile.dc.html",
+  "console/UserUnitMobileDark.dc.html",
+  "console/UserRoleMobile.dc.html",
+  "console/UserRoleMobileDark.dc.html",
+  "console/ResetPasswordMobile.dc.html",
+  "console/ResetPasswordMobileDark.dc.html",
+  "console/ResetPasswordOwnMobile.dc.html",
+  "console/ResetPasswordOwnMobileDark.dc.html",
+  "console/ResetPasswordDoneMobile.dc.html",
+  "console/ResetPasswordDoneMobileDark.dc.html",
+  "console/UserSuspendMobile.dc.html",
+  "console/UserSuspendMobileDark.dc.html",
+  "console/RestoreDataMobile.dc.html",
+  "console/RestoreDataMobileDark.dc.html",
+  "console/HomeTablet.dc.html",
+  "console/HomePartialTablet.dc.html",
+  "console/HomeCompleteTablet.dc.html",
+  "console/UsersTablet.dc.html",
+  "console/UserDetailsTablet.dc.html",
+  "console/UserInvitedTablet.dc.html",
+  "console/UserSuspendedTablet.dc.html",
+  "console/HomeAccountMenuTablet.dc.html",
+  "console/PagePlaceholderTablet.dc.html",
+  "console/UsersAddTablet.dc.html",
+  "console/AddPeopleFilledTablet.dc.html",
+  "console/AddPeopleErrorsTablet.dc.html",
+  "console/AddPeopleDoneTablet.dc.html",
+  "console/CustomFieldAddTablet.dc.html",
+  "console/ProfileEditingTablet.dc.html",
+  "console/UserDeleteTablet.dc.html",
+  "console/UserRemoveHandoverTablet.dc.html",
+  "console/UserEditTablet.dc.html",
+  "console/UserAliasesTablet.dc.html",
+  "console/UserGroupsTablet.dc.html",
+  "console/UserUnitTablet.dc.html",
+  "console/UserRoleTablet.dc.html",
+  "console/ResetPasswordTablet.dc.html",
+  "console/ResetPasswordOwnTablet.dc.html",
+  "console/ResetPasswordDoneTablet.dc.html",
+  "console/UserSuspendTablet.dc.html",
+  "console/RestoreDataTablet.dc.html",
+  "console/UsersNoMatchTablet.dc.html",
+  "console/UsersUnitTablet.dc.html",
+  "console/UsersMultiTablet.dc.html",
+  "console/UsersSelectedTablet.dc.html",
+  "console/UsersMoveTablet.dc.html",
+  "console/UsersMoreTablet.dc.html",
+  "console/DomainsTablet.dc.html",
+  "console/BillingTablet.dc.html",
+  "console/SecurityTablet.dc.html",
+  "console/AppsTablet.dc.html",
+  "console/UsersDownloadTablet.dc.html",
+  "console/CustomFieldsTablet.dc.html",
+  "console/RecentlyDeletedTablet.dc.html",
+  "console/HomeMenuDrawerTablet.dc.html",
+  "console/UsersUnitsOpenTablet.dc.html",
+  "console/HomeTabletDark.dc.html",
+  "console/HomePartialTabletDark.dc.html",
+  "console/HomeCompleteTabletDark.dc.html",
+  "console/UsersTabletDark.dc.html",
+  "console/UserDetailsTabletDark.dc.html",
+  "console/UserInvitedTabletDark.dc.html",
+  "console/UserSuspendedTabletDark.dc.html",
+  "console/HomeAccountMenuTabletDark.dc.html",
+  "console/PagePlaceholderTabletDark.dc.html",
+  "console/UsersAddTabletDark.dc.html",
+  "console/AddPeopleFilledTabletDark.dc.html",
+  "console/AddPeopleErrorsTabletDark.dc.html",
+  "console/AddPeopleDoneTabletDark.dc.html",
+  "console/CustomFieldAddTabletDark.dc.html",
+  "console/ProfileEditingTabletDark.dc.html",
+  "console/UserDeleteTabletDark.dc.html",
+  "console/UserRemoveHandoverTabletDark.dc.html",
+  "console/UserEditTabletDark.dc.html",
+  "console/UserAliasesTabletDark.dc.html",
+  "console/UserGroupsTabletDark.dc.html",
+  "console/UserUnitTabletDark.dc.html",
+  "console/UserRoleTabletDark.dc.html",
+  "console/ResetPasswordTabletDark.dc.html",
+  "console/ResetPasswordOwnTabletDark.dc.html",
+  "console/ResetPasswordDoneTabletDark.dc.html",
+  "console/UserSuspendTabletDark.dc.html",
+  "console/RestoreDataTabletDark.dc.html",
+  "console/UsersNoMatchTabletDark.dc.html",
+  "console/UsersUnitTabletDark.dc.html",
+  "console/UsersMultiTabletDark.dc.html",
+  "console/UsersSelectedTabletDark.dc.html",
+  "console/UsersMoveTabletDark.dc.html",
+  "console/UsersMoreTabletDark.dc.html",
+  "console/DomainsTabletDark.dc.html",
+  "console/BillingTabletDark.dc.html",
+  "console/SecurityTabletDark.dc.html",
+  "console/AppsTabletDark.dc.html",
+  "console/UsersDownloadTabletDark.dc.html",
+  "console/CustomFieldsTabletDark.dc.html",
+  "console/RecentlyDeletedTabletDark.dc.html",
+  "console/HomeMenuDrawerTabletDark.dc.html",
+  "console/UsersUnitsOpenTabletDark.dc.html",
+  "setup/SetupIntroTablet.dc.html",
+  "setup/SetupHostTablet.dc.html",
+  "setup/SetupHostListTablet.dc.html",
+  "setup/SetupHostNotFoundTablet.dc.html",
+  "setup/SetupMethodTablet.dc.html",
+  "setup/SetupConnectingTablet.dc.html",
+  "setup/SetupRecordTablet.dc.html",
+  "setup/SetupRecordCnameTablet.dc.html",
+  "setup/SetupCheckingTablet.dc.html",
+  "setup/SetupNotFoundTablet.dc.html",
+  "setup/SetupVerifiedTablet.dc.html",
+  "setup/MailPeopleTablet.dc.html",
+  "setup/MailAddPersonTablet.dc.html",
+  "setup/MailAddPersonErrorTablet.dc.html",
+  "setup/MailRecordsTablet.dc.html",
+  "setup/MailCheckingTablet.dc.html",
+  "setup/MailReadyTablet.dc.html",
+  "setup/ProtectRecordsTablet.dc.html",
+  "setup/ProtectCheckingTablet.dc.html",
+  "setup/ProtectDoneTablet.dc.html",
+  "setup/BoughtAutoTablet.dc.html",
+  "setup/SetupIntroTabletDark.dc.html",
+  "setup/SetupHostTabletDark.dc.html",
+  "setup/SetupHostListTabletDark.dc.html",
+  "setup/SetupHostNotFoundTabletDark.dc.html",
+  "setup/SetupMethodTabletDark.dc.html",
+  "setup/SetupConnectingTabletDark.dc.html",
+  "setup/SetupRecordTabletDark.dc.html",
+  "setup/SetupRecordCnameTabletDark.dc.html",
+  "setup/SetupCheckingTabletDark.dc.html",
+  "setup/SetupNotFoundTabletDark.dc.html",
+  "setup/SetupVerifiedTabletDark.dc.html",
+  "setup/MailPeopleTabletDark.dc.html",
+  "setup/MailAddPersonTabletDark.dc.html",
+  "setup/MailAddPersonErrorTabletDark.dc.html",
+  "setup/MailRecordsTabletDark.dc.html",
+  "setup/MailCheckingTabletDark.dc.html",
+  "setup/MailReadyTabletDark.dc.html",
+  "setup/ProtectRecordsTabletDark.dc.html",
+  "setup/ProtectCheckingTabletDark.dc.html",
+  "setup/ProtectDoneTabletDark.dc.html",
+  "setup/BoughtAutoTabletDark.dc.html"
+ ],
+ "notes": {
+  "overview-guide": {
+   "x": 1520,
+   "y": 0,
+   "w": 900,
+   "page": "overview",
+   "size": "l",
+   "fill": "blue",
+   "text": "How this file is organised\n\n1 Clickable prototype: press Play. The dark bar switches between Own domain, Bought domain and Console. Fail next check makes the next DNS check find nothing.\n\n2 Setup flow: four rows, one per part of setup. Light boards on top, dark underneath.\n\n4 and 5: phone versions of every screen, light and dark side by side.\n\n3 Console: the shared app sections as rows. 03 Sharing and people and 06 Empty, loading and error states have nothing in v1; setup\u2019s waiting and error screens are on page 2.\n\nBoard title: Admin / Section / Screen / Web, theme\nFiles: setup/<Screen>Web[Dark].dc.html and console/<Screen>Web[Dark].dc.html\n\nThe design system and onboarding live in the Yahel Design System file."
+  },
+  "proto-title": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin console \u00b7 Clickable prototype",
+   "kind": "title1",
+   "maxW": 6470,
+   "page": "prototype"
+  },
+  "setup-s1": {
+   "x": 0,
+   "y": -320,
+   "text": "Setup \u00b7 1 Verify your domain",
+   "kind": "title1",
+   "maxW": 16640,
+   "page": "setup"
+  },
+  "setup-s2": {
+   "x": 0,
+   "y": 2240,
+   "text": "Setup \u00b7 2 Switch on mail",
+   "kind": "title1",
+   "maxW": 9040,
+   "page": "setup"
+  },
+  "setup-s3": {
+   "x": 0,
+   "y": 5056,
+   "text": "Setup \u00b7 3 Protect your mail",
+   "kind": "title1",
+   "maxW": 4480,
+   "page": "setup"
+  },
+  "setup-s4": {
+   "x": 0,
+   "y": 8430,
+   "text": "Setup \u00b7 4 Domain bought with Yahel",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "setup"
+  },
+  "setupPhone-guide": {
+   "x": 0,
+   "y": -1760,
+   "w": 900,
+   "page": "setupPhone",
+   "size": "l",
+   "fill": "blue",
+   "text": "Phone versions, 390 wide\n\nEach screen appears twice: light on the left, dark on the right. Rows match the desktop pages.\n\nOn phones the side menu becomes a drawer, lists become stacked rows, wide forms stack into cards and dialogs open as bottom sheets."
+  },
+  "consolePhone-guide": {
+   "x": 0,
+   "y": -1760,
+   "w": 900,
+   "page": "consolePhone",
+   "size": "l",
+   "fill": "blue",
+   "text": "Phone versions, 390 wide\n\nEach screen appears twice: light on the left, dark on the right. Rows match the desktop pages.\n\nOn phones the side menu becomes a drawer, lists become stacked rows, wide forms stack into cards and dialogs open as bottom sheets."
+  },
+  "console-t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin \u00b7 01 Core views",
+   "kind": "title1",
+   "maxW": 18160,
+   "page": "console"
+  },
+  "console-t2": {
+   "x": 0,
+   "y": 5240,
+   "text": "Admin \u00b7 02 Create and edit",
+   "kind": "title1",
+   "maxW": 27280,
+   "page": "console"
+  },
+  "console-t3": {
+   "x": 0,
+   "y": 8656,
+   "text": "Admin \u00b7 04 Search and filters",
+   "kind": "title1",
+   "maxW": 9040,
+   "page": "console"
+  },
+  "console-t4": {
+   "x": 0,
+   "y": 11216,
+   "text": "Admin \u00b7 05 Settings",
+   "kind": "title1",
+   "maxW": 10560,
+   "page": "console"
+  },
+  "consolePhone-t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin \u00b7 01 Core views \u00b7 phone",
+   "kind": "title1",
+   "maxW": 10040,
+   "page": "consolePhone"
+  },
+  "consolePhone-t2": {
+   "x": 0,
+   "y": 2660,
+   "text": "Admin \u00b7 02 Create and edit \u00b7 phone",
+   "kind": "title1",
+   "maxW": 18200,
+   "page": "consolePhone"
+  },
+  "consolePhone-t3": {
+   "x": 0,
+   "y": 5563,
+   "text": "Admin \u00b7 04 Search and filters \u00b7 phone",
+   "kind": "title1",
+   "maxW": 6980,
+   "page": "consolePhone"
+  },
+  "consolePhone-t4": {
+   "x": 0,
+   "y": 7492,
+   "text": "Admin \u00b7 05 Settings \u00b7 phone",
+   "kind": "title1",
+   "maxW": 6980,
+   "page": "consolePhone"
+  },
+  "setupPhone-t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Setup \u00b7 1 Verify your domain \u00b7 phone",
+   "kind": "title1",
+   "maxW": 11060,
+   "page": "setupPhone"
+  },
+  "setupPhone-t2": {
+   "x": 0,
+   "y": 1778,
+   "text": "Setup \u00b7 2 Switch on mail \u00b7 phone",
+   "kind": "title1",
+   "maxW": 5960,
+   "page": "setupPhone"
+  },
+  "setupPhone-t3": {
+   "x": 0,
+   "y": 3730,
+   "text": "Setup \u00b7 3 Protect your mail \u00b7 phone",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "setupPhone"
+  },
+  "setupPhone-t4": {
+   "x": 0,
+   "y": 6154,
+   "text": "Setup \u00b7 4 Domain bought with Yahel \u00b7 phone",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "setupPhone"
+  },
+  "consoleTablet-t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Admin \u00b7 01 Core views \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 18720,
+   "page": "consoleTablet"
+  },
+  "consoleTablet-t2": {
+   "x": 0,
+   "y": 1745,
+   "text": "Admin \u00b7 02 Create and edit \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 33888,
+   "page": "consoleTablet"
+  },
+  "consoleTablet-t3": {
+   "x": 0,
+   "y": 3706,
+   "text": "Admin \u00b7 04 Search and filters \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 13032,
+   "page": "consoleTablet"
+  },
+  "consoleTablet-t4": {
+   "x": 0,
+   "y": 5517,
+   "text": "Admin \u00b7 05 Settings \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 13032,
+   "page": "consoleTablet"
+  },
+  "setupTablet-t1": {
+   "x": 0,
+   "y": -320,
+   "text": "Setup \u00b7 1 Verify your domain \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 20616,
+   "page": "setupTablet"
+  },
+  "setupTablet-t2": {
+   "x": 0,
+   "y": 1623,
+   "text": "Setup \u00b7 2 Switch on mail \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 11136,
+   "page": "setupTablet"
+  },
+  "setupTablet-t3": {
+   "x": 0,
+   "y": 3292,
+   "text": "Setup \u00b7 3 Protect your mail \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 5448,
+   "page": "setupTablet"
+  },
+  "setupTablet-t4": {
+   "x": 0,
+   "y": 5239,
+   "text": "Setup \u00b7 4 Domain bought with Yahel \u00b7 tablet",
+   "kind": "title1",
+   "maxW": 2960,
+   "page": "setupTablet"
+  },
+  "setupTablet-guide": {
+   "x": 0,
+   "y": -1760,
+   "w": 900,
+   "page": "setupTablet",
+   "size": "l",
+   "fill": "blue",
+   "text": "Tablet versions, 768 wide\n\nEach screen appears twice: light on the left, dark on the right. Rows match the desktop pages.\n\nOn tablets the side menu becomes a drawer, the Users table drops the 2-step column, wide forms stack into two-column cards, and dialogs stay centred."
+  },
+  "consoleTablet-guide": {
+   "x": 0,
+   "y": -1760,
+   "w": 900,
+   "page": "consoleTablet",
+   "size": "l",
+   "fill": "blue",
+   "text": "Tablet versions, 768 wide\n\nEach screen appears twice: light on the left, dark on the right. Rows match the desktop pages.\n\nOn tablets the side menu becomes a drawer, the Users table drops the 2-step column, wide forms stack into two-column cards, and dialogs stay centred."
+  }
+ },
+ "designSystems": []
+}

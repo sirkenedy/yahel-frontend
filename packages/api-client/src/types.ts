@@ -118,11 +118,50 @@ export interface WorkspaceDomain {
   method: 'TXT' | 'CNAME';
   status: DomainStatus;
   isPrimary: boolean;
+  /** Whether the domain's MX records point at Yahel's mail. */
+  mxConfigured?: boolean;
   verifyHost?: string | null;
   verifyTarget?: string | null;
   verificationToken?: string | null;
   verifiedAt?: string | null;
   lastCheckedAt?: string | null;
+}
+
+export type MemberRole = 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST';
+export type MemberStatus = 'active' | 'invited' | 'suspended' | 'removed';
+
+/**
+ * One membership of a workspace, as `GET /tenants/{tenantId}/members` lists it and `GET …/members/{memberId}`
+ * answers (the lean `TenantMembership` document). It carries no name or address: those belong to the person's
+ * identity (`globalIdentityId`), which no endpoint an administrator can call resolves yet.
+ */
+export interface WorkspaceMember {
+  _id: string;
+  globalIdentityId: string;
+  tenantId: string;
+  role: MemberRole;
+  type: 'internal' | 'guest';
+  status: MemberStatus;
+  ouPath?: string | null;
+  department?: string | null;
+  jobTitle?: string | null;
+  inviteExpiresAt?: string | null;
+  invitedBy?: string | null;
+  joinedAt?: string | null;
+  lastActiveAt?: string | null;
+  suspendedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * One organisational unit, as `GET /tenants/{tenantId}/ous` lists it. The description declares `parentId` and
+ * `description` as objects; the lean `OrganizationalUnit` document carries the parent's id as a string and the
+ * description as text.
+ */
+export interface WorkspaceUnit extends Omit<Schemas['OuResponseDto'], 'parentId' | 'description'> {
+  parentId: string | null;
+  description?: string | null;
 }
 
 /** The DNS record that proves a domain is the workspace's (`DomainVerificationInstructions`). `host` is `@` for the domain itself. */

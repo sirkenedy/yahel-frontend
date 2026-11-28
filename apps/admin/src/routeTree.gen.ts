@@ -11,8 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as USlotRouteImport } from './routes/u/$slot'
-import { Route as USlotIndexRouteImport } from './routes/u/$slot/index'
-import { Route as USlotDomainsRouteImport } from './routes/u/$slot/domains'
+import { Route as USlotConsoleRouteImport } from './routes/u/$slot/_console'
+import { Route as USlotSetupRouteImport } from './routes/u/$slot/setup'
+import { Route as USlotConsoleIndexRouteImport } from './routes/u/$slot/_console/index'
+import { Route as USlotConsoleAppsRouteImport } from './routes/u/$slot/_console/apps'
+import { Route as USlotConsoleBillingRouteImport } from './routes/u/$slot/_console/billing'
+import { Route as USlotConsoleDomainsRouteImport } from './routes/u/$slot/_console/domains'
+import { Route as USlotConsoleSecurityRouteImport } from './routes/u/$slot/_console/security'
+import { Route as USlotConsoleLaterPageRouteImport } from './routes/u/$slot/_console/later.$page'
+import { Route as USlotConsoleUsersIndexRouteImport } from './routes/u/$slot/_console/users.index'
+import { Route as USlotConsoleUsersMemberIdRouteImport } from './routes/u/$slot/_console/users.$memberId'
+import { Route as USlotConsoleUsersAddRouteImport } from './routes/u/$slot/_console/users.add'
+import { Route as USlotConsoleUsersFieldsRouteImport } from './routes/u/$slot/_console/users.fields'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,41 +34,159 @@ const USlotRoute = USlotRouteImport.update({
   path: '/u/$slot',
   getParentRoute: () => rootRouteImport,
 } as any)
-const USlotIndexRoute = USlotIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const USlotConsoleRoute = USlotConsoleRouteImport.update({
+  id: '/_console',
   getParentRoute: () => USlotRoute,
 } as any)
-const USlotDomainsRoute = USlotDomainsRouteImport.update({
+const USlotSetupRoute = USlotSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => USlotRoute,
+} as any)
+const USlotConsoleIndexRoute = USlotConsoleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleAppsRoute = USlotConsoleAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleBillingRoute = USlotConsoleBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleDomainsRoute = USlotConsoleDomainsRouteImport.update({
   id: '/domains',
   path: '/domains',
-  getParentRoute: () => USlotRoute,
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleSecurityRoute = USlotConsoleSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleLaterPageRoute = USlotConsoleLaterPageRouteImport.update({
+  id: '/later/$page',
+  path: '/later/$page',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleUsersIndexRoute = USlotConsoleUsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleUsersMemberIdRoute =
+  USlotConsoleUsersMemberIdRouteImport.update({
+    id: '/users/$memberId',
+    path: '/users/$memberId',
+    getParentRoute: () => USlotConsoleRoute,
+  } as any)
+const USlotConsoleUsersAddRoute = USlotConsoleUsersAddRouteImport.update({
+  id: '/users/add',
+  path: '/users/add',
+  getParentRoute: () => USlotConsoleRoute,
+} as any)
+const USlotConsoleUsersFieldsRoute = USlotConsoleUsersFieldsRouteImport.update({
+  id: '/users/fields',
+  path: '/users/fields',
+  getParentRoute: () => USlotConsoleRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/u/$slot': typeof USlotRouteWithChildren
-  '/u/$slot/domains': typeof USlotDomainsRoute
-  '/u/$slot/': typeof USlotIndexRoute
+  '/u/$slot/setup': typeof USlotSetupRoute
+  '/u/$slot/apps': typeof USlotConsoleAppsRoute
+  '/u/$slot/billing': typeof USlotConsoleBillingRoute
+  '/u/$slot/domains': typeof USlotConsoleDomainsRoute
+  '/u/$slot/security': typeof USlotConsoleSecurityRoute
+  '/u/$slot/': typeof USlotConsoleIndexRoute
+  '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/users/fields': typeof USlotConsoleUsersFieldsRoute
+  '/u/$slot/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/u/$slot/domains': typeof USlotDomainsRoute
-  '/u/$slot': typeof USlotIndexRoute
+  '/u/$slot': typeof USlotConsoleIndexRoute
+  '/u/$slot/setup': typeof USlotSetupRoute
+  '/u/$slot/apps': typeof USlotConsoleAppsRoute
+  '/u/$slot/billing': typeof USlotConsoleBillingRoute
+  '/u/$slot/domains': typeof USlotConsoleDomainsRoute
+  '/u/$slot/security': typeof USlotConsoleSecurityRoute
+  '/u/$slot/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/users/fields': typeof USlotConsoleUsersFieldsRoute
+  '/u/$slot/users': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/u/$slot': typeof USlotRouteWithChildren
-  '/u/$slot/domains': typeof USlotDomainsRoute
-  '/u/$slot/': typeof USlotIndexRoute
+  '/u/$slot/_console': typeof USlotConsoleRouteWithChildren
+  '/u/$slot/setup': typeof USlotSetupRoute
+  '/u/$slot/_console/apps': typeof USlotConsoleAppsRoute
+  '/u/$slot/_console/billing': typeof USlotConsoleBillingRoute
+  '/u/$slot/_console/domains': typeof USlotConsoleDomainsRoute
+  '/u/$slot/_console/security': typeof USlotConsoleSecurityRoute
+  '/u/$slot/_console/': typeof USlotConsoleIndexRoute
+  '/u/$slot/_console/later/$page': typeof USlotConsoleLaterPageRoute
+  '/u/$slot/_console/users/$memberId': typeof USlotConsoleUsersMemberIdRoute
+  '/u/$slot/_console/users/add': typeof USlotConsoleUsersAddRoute
+  '/u/$slot/_console/users/fields': typeof USlotConsoleUsersFieldsRoute
+  '/u/$slot/_console/users/': typeof USlotConsoleUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/u/$slot' | '/u/$slot/domains' | '/u/$slot/'
+  fullPaths:
+    | '/'
+    | '/u/$slot'
+    | '/u/$slot/setup'
+    | '/u/$slot/apps'
+    | '/u/$slot/billing'
+    | '/u/$slot/domains'
+    | '/u/$slot/security'
+    | '/u/$slot/'
+    | '/u/$slot/later/$page'
+    | '/u/$slot/users/$memberId'
+    | '/u/$slot/users/add'
+    | '/u/$slot/users/fields'
+    | '/u/$slot/users/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/u/$slot/domains' | '/u/$slot'
-  id: '__root__' | '/' | '/u/$slot' | '/u/$slot/domains' | '/u/$slot/'
+  to:
+    | '/'
+    | '/u/$slot'
+    | '/u/$slot/setup'
+    | '/u/$slot/apps'
+    | '/u/$slot/billing'
+    | '/u/$slot/domains'
+    | '/u/$slot/security'
+    | '/u/$slot/later/$page'
+    | '/u/$slot/users/$memberId'
+    | '/u/$slot/users/add'
+    | '/u/$slot/users/fields'
+    | '/u/$slot/users'
+  id:
+    | '__root__'
+    | '/'
+    | '/u/$slot'
+    | '/u/$slot/_console'
+    | '/u/$slot/setup'
+    | '/u/$slot/_console/apps'
+    | '/u/$slot/_console/billing'
+    | '/u/$slot/_console/domains'
+    | '/u/$slot/_console/security'
+    | '/u/$slot/_console/'
+    | '/u/$slot/_console/later/$page'
+    | '/u/$slot/_console/users/$memberId'
+    | '/u/$slot/_console/users/add'
+    | '/u/$slot/_console/users/fields'
+    | '/u/$slot/_console/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -82,31 +210,131 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof USlotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/u/$slot/': {
-      id: '/u/$slot/'
-      path: '/'
-      fullPath: '/u/$slot/'
-      preLoaderRoute: typeof USlotIndexRouteImport
+    '/u/$slot/_console': {
+      id: '/u/$slot/_console'
+      path: ''
+      fullPath: '/u/$slot'
+      preLoaderRoute: typeof USlotConsoleRouteImport
       parentRoute: typeof USlotRoute
     }
-    '/u/$slot/domains': {
-      id: '/u/$slot/domains'
+    '/u/$slot/setup': {
+      id: '/u/$slot/setup'
+      path: '/setup'
+      fullPath: '/u/$slot/setup'
+      preLoaderRoute: typeof USlotSetupRouteImport
+      parentRoute: typeof USlotRoute
+    }
+    '/u/$slot/_console/': {
+      id: '/u/$slot/_console/'
+      path: '/'
+      fullPath: '/u/$slot/'
+      preLoaderRoute: typeof USlotConsoleIndexRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/apps': {
+      id: '/u/$slot/_console/apps'
+      path: '/apps'
+      fullPath: '/u/$slot/apps'
+      preLoaderRoute: typeof USlotConsoleAppsRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/billing': {
+      id: '/u/$slot/_console/billing'
+      path: '/billing'
+      fullPath: '/u/$slot/billing'
+      preLoaderRoute: typeof USlotConsoleBillingRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/domains': {
+      id: '/u/$slot/_console/domains'
       path: '/domains'
       fullPath: '/u/$slot/domains'
-      preLoaderRoute: typeof USlotDomainsRouteImport
-      parentRoute: typeof USlotRoute
+      preLoaderRoute: typeof USlotConsoleDomainsRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/security': {
+      id: '/u/$slot/_console/security'
+      path: '/security'
+      fullPath: '/u/$slot/security'
+      preLoaderRoute: typeof USlotConsoleSecurityRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/later/$page': {
+      id: '/u/$slot/_console/later/$page'
+      path: '/later/$page'
+      fullPath: '/u/$slot/later/$page'
+      preLoaderRoute: typeof USlotConsoleLaterPageRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/': {
+      id: '/u/$slot/_console/users/'
+      path: '/users'
+      fullPath: '/u/$slot/users/'
+      preLoaderRoute: typeof USlotConsoleUsersIndexRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/$memberId': {
+      id: '/u/$slot/_console/users/$memberId'
+      path: '/users/$memberId'
+      fullPath: '/u/$slot/users/$memberId'
+      preLoaderRoute: typeof USlotConsoleUsersMemberIdRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/add': {
+      id: '/u/$slot/_console/users/add'
+      path: '/users/add'
+      fullPath: '/u/$slot/users/add'
+      preLoaderRoute: typeof USlotConsoleUsersAddRouteImport
+      parentRoute: typeof USlotConsoleRoute
+    }
+    '/u/$slot/_console/users/fields': {
+      id: '/u/$slot/_console/users/fields'
+      path: '/users/fields'
+      fullPath: '/u/$slot/users/fields'
+      preLoaderRoute: typeof USlotConsoleUsersFieldsRouteImport
+      parentRoute: typeof USlotConsoleRoute
     }
   }
 }
 
+interface USlotConsoleRouteChildren {
+  USlotConsoleAppsRoute: typeof USlotConsoleAppsRoute
+  USlotConsoleBillingRoute: typeof USlotConsoleBillingRoute
+  USlotConsoleDomainsRoute: typeof USlotConsoleDomainsRoute
+  USlotConsoleSecurityRoute: typeof USlotConsoleSecurityRoute
+  USlotConsoleIndexRoute: typeof USlotConsoleIndexRoute
+  USlotConsoleLaterPageRoute: typeof USlotConsoleLaterPageRoute
+  USlotConsoleUsersMemberIdRoute: typeof USlotConsoleUsersMemberIdRoute
+  USlotConsoleUsersAddRoute: typeof USlotConsoleUsersAddRoute
+  USlotConsoleUsersFieldsRoute: typeof USlotConsoleUsersFieldsRoute
+  USlotConsoleUsersIndexRoute: typeof USlotConsoleUsersIndexRoute
+}
+
+const USlotConsoleRouteChildren: USlotConsoleRouteChildren = {
+  USlotConsoleAppsRoute: USlotConsoleAppsRoute,
+  USlotConsoleBillingRoute: USlotConsoleBillingRoute,
+  USlotConsoleDomainsRoute: USlotConsoleDomainsRoute,
+  USlotConsoleSecurityRoute: USlotConsoleSecurityRoute,
+  USlotConsoleIndexRoute: USlotConsoleIndexRoute,
+  USlotConsoleLaterPageRoute: USlotConsoleLaterPageRoute,
+  USlotConsoleUsersMemberIdRoute: USlotConsoleUsersMemberIdRoute,
+  USlotConsoleUsersAddRoute: USlotConsoleUsersAddRoute,
+  USlotConsoleUsersFieldsRoute: USlotConsoleUsersFieldsRoute,
+  USlotConsoleUsersIndexRoute: USlotConsoleUsersIndexRoute,
+}
+
+const USlotConsoleRouteWithChildren = USlotConsoleRoute._addFileChildren(
+  USlotConsoleRouteChildren,
+)
+
 interface USlotRouteChildren {
-  USlotDomainsRoute: typeof USlotDomainsRoute
-  USlotIndexRoute: typeof USlotIndexRoute
+  USlotConsoleRoute: typeof USlotConsoleRouteWithChildren
+  USlotSetupRoute: typeof USlotSetupRoute
 }
 
 const USlotRouteChildren: USlotRouteChildren = {
-  USlotDomainsRoute: USlotDomainsRoute,
-  USlotIndexRoute: USlotIndexRoute,
+  USlotConsoleRoute: USlotConsoleRouteWithChildren,
+  USlotSetupRoute: USlotSetupRoute,
 }
 
 const USlotRouteWithChildren = USlotRoute._addFileChildren(USlotRouteChildren)

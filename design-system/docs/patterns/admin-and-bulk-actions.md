@@ -4,7 +4,7 @@ An administrator's action can change what hundreds of people can open. The Admin
 
 ## When this applies
 
-The Admin console (users, groups, devices, policies, audit, billing), and any bulk action on a selection elsewhere in the suite. The Admin console uses the same components, tokens and accent as every other app. It has no separate visual language.
+The Admin console (users, groups, devices, policies, audit, billing), and any bulk action on a selection elsewhere in the suite. The Admin console uses the Daylight look, as the accounts app does: the same tokens and accent, laid out as a console (`@yahel/ui/console.css`, `decisions.md` F-115).
 
 ## Tables
 

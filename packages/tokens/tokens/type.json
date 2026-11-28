@@ -18,6 +18,10 @@
     "flow-link": { "weight": 600, "tracking": "0", "touch": [15,20], "pointer": [15,20], "emphasized": 700 },
     "flow-label": { "weight": 600, "tracking": "0", "touch": [14,20], "pointer": [14,20], "emphasized": 700 },
     "flow-note": { "weight": 400, "tracking": "0", "touch": [13,19], "pointer": [13,19], "emphasized": 600 },
-    "flow-digit": { "weight": 600, "tracking": "0", "touch": [28,32], "pointer": [28,32], "emphasized": 700 }
+    "flow-digit": { "weight": 600, "tracking": "0", "touch": [28,32], "pointer": [28,32], "emphasized": 700 },
+    "console-title": { "weight": 650, "tracking": "-0.025em", "touch": [29,34], "pointer": [34,38], "emphasized": 700 },
+    "console-section": { "weight": 650, "tracking": "-0.015em", "touch": [19,23], "pointer": [19,23], "emphasized": 700 },
+    "console-body": { "weight": 400, "tracking": "0", "touch": [15,22], "pointer": [14.5,21], "emphasized": 600 },
+    "console-caption": { "weight": 600, "tracking": "0", "touch": [12.5,16], "pointer": [12.5,16], "emphasized": 700 }
   }
 }

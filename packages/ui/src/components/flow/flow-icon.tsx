@@ -32,6 +32,20 @@ const outlines = {
   shield: 'M12 3.5l7 2.6v5.6c0 4.2-2.9 7.3-7 8.8-4.1-1.5-7-4.6-7-8.8V6.1z',
   'chevron-down': 'M6 9.5l6 6 6-6',
   'chevron-forward': 'M9.5 6l6 6-6 6',
+  menu: 'M4 7h16M4 12h16M4 17h16',
+  home: 'M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z',
+  grid: 'M4.5 4.5h6v6h-6zM13.5 4.5h6v6h-6zM4.5 13.5h6v6h-6zM13.5 13.5h6v6h-6z',
+  help: 'M12 3.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zM9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.4M12 16.6v.1',
+  database: 'M5 6c0-1.4 3.1-2.5 7-2.5s7 1.1 7 2.5-3.1 2.5-7 2.5S5 7.4 5 6zM5 6v12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5',
+  card: 'M3.5 6.5h17v11h-17zM3.5 10h17M7 14.5h3',
+  dashboard: 'M4.5 4.5h6v8h-6zM13.5 4.5h6v4h-6zM13.5 11.5h6v8h-6zM4.5 15.5h6v4h-6z',
+  copy: 'M8.5 8.5h11v11h-11zM15.5 8.5v-4h-11v11h4',
+  external: 'M13.5 4.5h6v6M19.5 4.5 11 13M17 13.5v6h-12.5v-12.5h6',
+  more: 'M6 12v.1M12 12v.1M18 12v.1',
+  download: 'M12 4.5v11M7 11l5 5 5-5M5 19.5h14',
+  edit: 'M4.5 19.5h4l10-10-4-4-10 10zM13 7l4 4',
+  trash: 'M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 12.5h9l1-12.5',
+  unit: 'M9.5 4.5h5v4h-5zM4.5 15.5h5v4h-5zM14.5 15.5h5v4h-5zM12 8.5v3.5M7 15.5V12h10v3.5',
 } as const;
 
 export type FlowIconName = keyof typeof outlines;

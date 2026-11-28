@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { WorkspaceDomain } from '@yahel/api-client';
 import type { Session } from '@yahel/auth';
-import { Banner, Button, Card, TextField } from '@yahel/ui';
+import { ConsoleCard, ConsoleDialog, ConsoleFacts, ConsolePage, FlowButton, FlowLink, FlowNotice, FlowTextField, StatusTag } from '@yahel/ui';
+import type { ConsoleCrumb } from '@yahel/ui';
 import { useState } from 'react';
-import { recordOf, needsRecord } from './domain-record';
+import { notify } from '../../toast';
+import { needsRecord } from './domain-record';
 import { failureOf } from './feedback';
 import { domainMessages as m } from './messages';
 import { domainsQuery } from './queries';
@@ -11,199 +13,128 @@ import { domainsQuery } from './queries';
 export interface DomainsPageProps {
   session: Session;
   tenantId: string;
+  slot: string;
+  crumbs?: ConsoleCrumb[];
+  crumbsLabel?: string;
 }
 
 const DOMAIN = /^(?=.{4,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/;
 const normalised = (value: string) => value.trim().toLowerCase().replace(/^@+/, '').replace(/\.$/, '');
 
-type Notice = { tone: 'neutral' | 'danger'; text: string } | null;
-
-/** The workspace's domains: each one's state, the record a pending one needs, and verifying, making primary, adding and removing. */
-export function DomainsPage({ session, tenantId }: DomainsPageProps) {
+/** The organisation's domains: the primary one and how it is set up, the others, and adding one. Verifying happens in Domain setup. */
+export function DomainsPage({ session, tenantId, slot, crumbs, crumbsLabel }: DomainsPageProps) {
   const domains = useQuery(domainsQuery(session, tenantId));
-  const [notice, setNotice] = useState<Notice>(null);
+  const primary = domains.data?.find((domain) => domain.isPrimary) ?? null;
+  const others = domains.data?.filter((domain) => domain !== primary) ?? [];
 
   return (
-    <div className="page">
-      <header className="stack">
-        <h1 className="ws-large-title">{m.title}</h1>
-        <p className="ws-secondary">{m.lede}</p>
-      </header>
-      {notice ? <Banner tone={notice.tone}>{notice.text}</Banner> : null}
+    <ConsolePage crumbs={crumbs} crumbsLabel={crumbsLabel} title={m.title} lede={m.lede}>
       {domains.isPending ? (
         <div role="status" aria-label={m.loading} className="ws-skeleton console__placeholder" />
       ) : domains.isError ? (
-        <Banner tone="danger">
-          <span className="row">
-            <span className="grow">{m.failed}</span>
-            <Button onPress={() => void domains.refetch()}>{m.tryAgain}</Button>
-          </span>
-        </Banner>
-      ) : domains.data.length === 0 ? (
-        <Card>
-          <p>{m.empty}</p>
-        </Card>
+        <FlowNotice tone="danger" actions={<FlowButton onPress={() => void domains.refetch()}>{m.tryAgain}</FlowButton>}>
+          {m.failed}
+        </FlowNotice>
       ) : (
-        <ul className="domains" aria-label={m.list}>
-          {domains.data.map((domain) => (
-            <DomainItem key={domain._id} session={session} tenantId={tenantId} domain={domain} onNotice={setNotice} />
-          ))}
-        </ul>
+        <>
+          {domains.data.length === 0 ? <FlowNotice>{m.empty}</FlowNotice> : null}
+          {primary ? <DomainCard session={session} tenantId={tenantId} slot={slot} domain={primary} /> : null}
+          {others.length ? (
+            <section className="ws-console-page" aria-labelledby="domains-others">
+              <h2 id="domains-others" className="ws-console-section-title">
+                {m.others}
+              </h2>
+              {others.map((domain) => (
+                <DomainCard key={domain._id} session={session} tenantId={tenantId} slot={slot} domain={domain} level={3} />
+              ))}
+            </section>
+          ) : null}
+          <p className="ws-console-note">{m.later}</p>
+        </>
       )}
-      <AddDomain session={session} tenantId={tenantId} onNotice={setNotice} />
-    </div>
+      <AddDomain session={session} tenantId={tenantId} />
+    </ConsolePage>
   );
 }
 
-interface DomainItemProps {
+interface DomainCardProps {
   session: Session;
   tenantId: string;
+  slot: string;
   domain: WorkspaceDomain;
-  onNotice: (notice: Notice) => void;
+  level?: 2 | 3;
 }
 
-function DomainItem({ session, tenantId, domain, onNotice }: DomainItemProps) {
+function DomainCard({ session, tenantId, slot, domain, level = 2 }: DomainCardProps) {
   const queryClient = useQueryClient();
-  const [problem, setProblem] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const refresh = () => queryClient.invalidateQueries({ queryKey: domainsQuery(session, tenantId).queryKey });
-  const fail = (action: Parameters<typeof failureOf>[1]) => (error: unknown) => {
-    setProblem(failureOf(error, action, domain.domain));
-    void refresh();
-  };
-  const verify = useMutation({
-    mutationFn: () => session.api.tenants.domains.verify(tenantId, domain._id),
-    onMutate: () => setProblem(null),
-    onSuccess: () => {
-      onNotice({ tone: 'neutral', text: m.verified(domain.domain) });
-      return refresh();
-    },
-    onError: fail('verify'),
-  });
   const primary = useMutation({
     mutationFn: () => session.api.tenants.domains.setPrimary(tenantId, domain._id),
-    onMutate: () => setProblem(null),
-    onSuccess: () => {
-      onNotice({ tone: 'neutral', text: m.madePrimary(domain.domain) });
-      return refresh();
-    },
-    onError: fail('primary'),
+    onSuccess: () => notify(m.madePrimary(domain.domain)),
+    onError: (error) => notify(failureOf(error, 'primary', domain.domain), 'danger'),
+    onSettled: refresh,
   });
   const remove = useMutation({
     mutationFn: () => session.api.tenants.domains.remove(tenantId, domain._id),
-    onMutate: () => setProblem(null),
-    onSuccess: () => {
-      onNotice({ tone: 'neutral', text: m.removed(domain.domain) });
+    onSuccess: () => notify(m.removed(domain.domain)),
+    onError: (error) => notify(failureOf(error, 'remove', domain.domain), 'danger'),
+    onSettled: () => {
+      setConfirming(false);
       return refresh();
     },
-    onError: (error) => {
-      setConfirming(false);
-      fail('remove')(error);
-    },
   });
-  const busy = verify.isPending || primary.isPending || remove.isPending;
-  const record = needsRecord(domain) ? recordOf(domain) : null;
-  const status = m.status[domain.status] ?? domain.status;
+  const verified = domain.status === 'verified';
+  const busy = primary.isPending || remove.isPending;
 
   return (
-    <li>
-      <Card className="stack domain">
-        <div className="row">
-          <h2 className="ws-title-3 grow" translate="no">
-            {domain.domain}
-          </h2>
-          {domain.isPrimary ? <span className="ws-tag ws-tag--accent">{m.primary}</span> : null}
-          <span className={`ws-tag ${domain.status === 'verified' ? 'ws-tag--success' : 'ws-tag--warning'}`}>{status}</span>
-        </div>
-        {record ? <RecordDetails domain={domain.domain} record={record} recheck={domain.status === 'reverification_required'} /> : null}
-        {problem ? <Banner tone="danger">{problem}</Banner> : null}
-        {confirming ? (
-          <div className="stack">
-            <p>{m.confirmRemove(domain.domain)}</p>
-            <div className="row">
-              <Button variant="destructive" onPress={() => remove.mutate()} isPending={remove.isPending} pendingLabel={m.removing}>
-                {m.remove}
-              </Button>
-              <Button onPress={() => setConfirming(false)} isDisabled={remove.isPending}>
-                {m.cancel}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="row">
-            {record ? (
-              <Button variant="primary" onPress={() => verify.mutate()} isPending={verify.isPending} pendingLabel={m.verifying} isDisabled={busy && !verify.isPending}>
-                {m.verify}
-              </Button>
-            ) : null}
-            {domain.status === 'verified' && !domain.isPrimary ? (
-              <Button onPress={() => primary.mutate()} isPending={primary.isPending} pendingLabel={m.makingPrimary} isDisabled={busy && !primary.isPending}>
-                {m.makePrimary}
-              </Button>
-            ) : null}
-            {domain.isPrimary ? null : (
-              <Button variant="plain" aria-label={m.removeLabel(domain.domain)} onPress={() => setConfirming(true)} isDisabled={busy}>
-                {m.remove}
-              </Button>
-            )}
-          </div>
-        )}
-      </Card>
-    </li>
-  );
-}
-
-function RecordDetails({ domain, record, recheck }: { domain: string; record: ReturnType<typeof recordOf>; recheck: boolean }) {
-  return (
-    <section className="stack record" aria-label={m.recordTitle}>
-      <h3 className="ws-headline">{m.recordTitle}</h3>
-      <p className="ws-secondary">{recheck ? m.recordRecheck(domain) : m.recordSteps(domain)}</p>
-      <dl className="details">
-        <div>
-          <dt>{m.type}</dt>
-          <dd translate="no">{record.type}</dd>
-        </div>
-        <div>
-          <dt>{m.host}</dt>
-          <dd className="row">
-            <code className="grow">{record.host ?? m.hostSelf}</code>
-            <CopyButton what={m.host} text={record.host ?? '@'} />
-          </dd>
-        </div>
-        {record.value ? (
-          <div>
-            <dt>{m.value}</dt>
-            <dd className="row">
-              <code className="grow record__value">{record.value}</code>
-              <CopyButton what={m.value} text={record.value} />
-            </dd>
-          </div>
+    <ConsoleCard title={domain.domain} icon="globe" level={level} action={domain.isPrimary ? <StatusTag tone="info">{m.primary}</StatusTag> : null}>
+      <ConsoleFacts
+        facts={[
+          { label: m.ownership, value: <StatusTag tone={verified ? 'success' : 'warning'}>{m.status[domain.status] ?? domain.status}</StatusTag> },
+          { label: m.mail, value: <StatusTag tone={domain.mxConfigured ? 'success' : 'neutral'}>{domain.mxConfigured ? m.on : m.off}</StatusTag> },
+          { label: m.protection, value: <StatusTag>{m.notYet}</StatusTag> },
+        ]}
+      />
+      <div className="user-actions">
+        {needsRecord(domain) ? (
+          <FlowLink href={`/u/${slot}/setup?step=record&domain=${encodeURIComponent(domain._id)}`} variant="primary" aria-label={m.verifyLabel(domain.domain)}>
+            {m.verify}
+          </FlowLink>
         ) : null}
-      </dl>
-    </section>
+        {verified && !domain.isPrimary ? (
+          <FlowButton onPress={() => primary.mutate()} isPending={primary.isPending} pendingLabel={m.makingPrimary} isDisabled={busy}>
+            {m.makePrimary}
+          </FlowButton>
+        ) : null}
+        {domain.isPrimary ? null : (
+          <FlowButton variant="destructive" aria-label={m.removeLabel(domain.domain)} onPress={() => setConfirming(true)} isDisabled={busy}>
+            {m.remove}
+          </FlowButton>
+        )}
+      </div>
+      <ConsoleDialog
+        isOpen={confirming}
+        onOpenChange={(open) => (open || remove.isPending ? undefined : setConfirming(false))}
+        title={m.removeTitle(domain.domain)}
+        actions={
+          <>
+            <FlowButton variant="quiet" onPress={() => setConfirming(false)} isDisabled={remove.isPending}>
+              {m.cancel}
+            </FlowButton>
+            <FlowButton variant="destructive" onPress={() => remove.mutate()} isPending={remove.isPending} pendingLabel={m.removing}>
+              {m.remove}
+            </FlowButton>
+          </>
+        }
+      >
+        <p>{m.removeBody}</p>
+      </ConsoleDialog>
+    </ConsoleCard>
   );
 }
 
-function CopyButton({ what, text }: { what: string; text: string }) {
-  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const copy = () =>
-    navigator.clipboard
-      ?.writeText(text)
-      .then(() => setState('copied'))
-      .catch(() => setState('failed')) ?? setState('failed');
-  return (
-    <>
-      <Button variant="tinted" onPress={() => void copy()} aria-label={m.copy(what)}>
-        {state === 'copied' ? m.copied : m.copy(what)}
-      </Button>
-      <span role="status" className={state === 'failed' ? 'ws-footnote' : 'ws-flow-hidden'}>
-        {state === 'failed' ? m.copyFailed : state === 'copied' ? m.copied : ''}
-      </span>
-    </>
-  );
-}
-
-function AddDomain({ session, tenantId, onNotice }: { session: Session; tenantId: string; onNotice: (notice: Notice) => void }) {
+function AddDomain({ session, tenantId }: { session: Session; tenantId: string }) {
   const queryClient = useQueryClient();
   const [value, setValue] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -211,7 +142,7 @@ function AddDomain({ session, tenantId, onNotice }: { session: Session; tenantId
     mutationFn: (domain: string) => session.api.tenants.domains.add(tenantId, { domain, method: 'TXT', autoProvisionMode: 'off' }),
     onSuccess: (added) => {
       setValue('');
-      onNotice({ tone: 'neutral', text: m.added(added.domain.domain) });
+      notify(m.added(added.domain.domain));
       return queryClient.invalidateQueries({ queryKey: domainsQuery(session, tenantId).queryKey });
     },
     onError: (error, domain) => setProblem(failureOf(error, 'add', domain)),
@@ -228,23 +159,22 @@ function AddDomain({ session, tenantId, onNotice }: { session: Session; tenantId
   };
 
   return (
-    <Card className="stack">
-      <h2 className="ws-title-3">{m.addTitle}</h2>
+    <ConsoleCard title={m.addTitle} icon="plus">
       <form
-        className="row add-domain"
+        className="users-tools"
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
           submit();
         }}
       >
-        <span className="grow">
-          <TextField label={m.addLabel} help={m.addHelp} value={value} onChange={setValue} error={problem ?? undefined} autoComplete="off" spellCheck="false" inputMode="url" />
+        <span className="users-tools__search">
+          <FlowTextField label={m.addLabel} help={m.addHelp} value={value} onChange={setValue} error={problem ?? undefined} autoComplete="off" spellCheck="false" inputMode="url" />
         </span>
-        <Button type="submit" isPending={add.isPending} pendingLabel={m.adding}>
+        <FlowButton type="submit" isPending={add.isPending} pendingLabel={m.adding}>
           {m.add}
-        </Button>
+        </FlowButton>
       </form>
-    </Card>
+    </ConsoleCard>
   );
 }
